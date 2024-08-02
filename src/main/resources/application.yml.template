@@ -1,0 +1,68 @@
+server:
+  error:
+    whitelabel:
+      enabled: false
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+  max-http-request-header-size: 80KB
+
+logging:
+  level:
+    root: SPRING_LOG_LEVEL
+
+spring:
+  jpa:
+    open-in-view: false
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  main:
+    allow-circular-references: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Custom section starts
+          # Server-uri without /auth since keycloak 17
+          principal-attribute: preferred_username
+          # url must end without /
+          server-uri: SPRING_KEYCLOAK_AUTH_SERVER_URL
+          truststore: classpath:pki_chain.truststore
+          truststore-password: l129VwykBVwp5FlfdPe7qQ9GOaq2rckC
+          client-id: SPRING_KEYCLOAK_CLIENT_ID
+          # Client-secret is only used in the tests
+          client-secret: SPRING_KEYCLOAK_CLIENT_SECRET
+          realm: SPRING_KEYCLOAK_REALM
+          admin-username: admin-test
+          admin-password: admin-test
+          # Custom section ends
+          jws-algorithm: RSA256
+          domain-role-group-claim-name: SPRING_GROUP_MAPPER_NAME
+          domain-role-group-context-name: Domain
+          issuer-uri: ${spring.security.oauth2.resourceserver.jwt.server-uri}/realms/${spring.security.oauth2.resourceserver.jwt.realm}
+          jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
+
+audittrail:
+  oidc-group-mapper:
+    token-claim-name: SPRING_GROUP_MAPPER_NAME
+    group-names:
+      isHuman: Human
+      isTechnical: Technical
+      isNoAuditing: Unaudited
+      isAuditEverything: AuditEverything
+
+app:
+  response:
+    # Possible entries: application/json or text/plain
+    preferred-media-type: application/json
+  datasource:
+    ace:
+      url: jdbc:postgresql://SPRING_DATASOURCE_HOST:SPRING_DATASOURCE_PORT/SPRING_DATASOURCE_NAME
+      username: SPRING_DATASOURCE_USERNAME
+      password: SPRING_DATASOURCE_PASSWORD
+      configuration:
+        maximum-pool-size: SPRING_DATASOURCE_MAX_POOLSIZE

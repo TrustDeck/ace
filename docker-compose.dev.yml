@@ -1,0 +1,65 @@
+volumes:
+  ace_postgresql_data: {}
+
+networks:
+  ace:
+    name: ace
+    driver: bridge
+
+services:
+  ace-keycloak:
+    container_name: ace-keycloak
+    image: quay.io/keycloak/keycloak:latest
+    depends_on:
+      - ace-postgresql
+    networks:
+      - ace
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e \"GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n\" >&3;grep \"HTTP/1.1 200 OK\" <&3"]
+      interval: 5s
+      timeout: 2s
+      retries: 15
+    environment:
+      # https://www.keycloak.org/server/all-config
+      KC_HTTP_ENABLED: false
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_BACKCHANNEL: false
+      KC_LOG_LEVEL: DEBUG
+      TZ: Europe/Berlin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://ace-postgresql:5432/keycloak?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Berlin
+      KC_DB_USERNAME: #CHANGE ME, e.g. ace-manager
+      KC_DB_PASSWORD: #CHANGE ME, e.g. ace-manager-password
+      KC_DB_SCHEMA: public
+      KEYCLOAK_ADMIN: #CHANGE ME, e.g. keycloak-admin
+      KEYCLOAK_ADMIN_PASSWORD: #CHANGE ME, e.g. keycloak-admin-password
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      KC_FEATURES: docker,token-exchange,preview
+      # Do not use this in production see this: https://www.keycloak.org/server/containers
+    command: start-dev
+    ports:
+      - "8081:8080"
+      - "8443:8443"
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  ace-postgresql:
+    container_name: ace-postgresql
+    image: postgres:15.3-alpine
+    networks:
+      - ace
+    ports:
+      - "5432:5432"
+    environment:
+      - TZ=Europe/Berlin
+      - POSTGRES_USER= #CHANGE ME, e.g. ace-manager
+      - POSTGRES_PASSWORD= #CHANGE ME, e.g. ace-manager-password
+      - POSTGRES_DB=ace
+    volumes:
+      - ./src/main/resources/ace-schema.sql:/docker-entrypoint-initdb.d/ace-schema.sql
+      - ./src/main/resources/keycloak-example.sql:/docker-entrypoint-initdb.d/keycloak-example.sql
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ace_postgresql_data:/var/lib/postgresql/data

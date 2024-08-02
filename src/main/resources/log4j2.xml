@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Configuration>
+    <Properties>
+        <!--https://logging.apache.org/log4j/2.x/manual/layouts.html#PatternLayout-->
+        <Property name="ERROR_LOG_PATTERN">
+            [%style{%level}{red}] %thread %threadId %d{DEFAULT} ${hostName} %logger{-10}:%line %message%n%exception
+        </Property>
+        <Property name="WARN_LOG_PATTERN">
+            [%style{%level}{yellow}] %thread %threadId %d{DEFAULT} ${hostName} %logger{-10}:%line %message%n%exception
+        </Property>
+        <Property name="INFO_LOG_PATTERN">
+            [%style{%level}{blue}] %thread %threadId %d{DEFAULT} ${hostName} %logger{-10}:%line %message%n%exception
+        </Property>
+        <Property name="DIAG_LOG_PATTERN">
+            [%level] %thread %threadId %d{DEFAULT} ${hostName} %logger{-10}:%line %message%n%exception
+        </Property>
+    </Properties>
+
+    <Appenders>
+        <File name="asyncLoggingFileAppender" fileName="logs/app.log">
+            <PatternLayout>
+                <LevelPatternSelector defaultPattern="${ERROR_LOG_PATTERN}">
+                    <PatternMatch key="WARN" pattern="${WARN_LOG_PATTERN}"/>
+                    <PatternMatch key="INFO" pattern="${INFO_LOG_PATTERN}"/>
+                    <PatternMatch key="DEBUG" pattern="${DIAG_LOG_PATTERN}"/>
+                    <PatternMatch key="TRACE" pattern="${DIAG_LOG_PATTERN}"/>
+                </LevelPatternSelector>
+            </PatternLayout>
+        </File>
+        <Console name="asyncLoggingConsoleAppender" target="SYSTEM_OUT">
+            <PatternLayout>
+                <LevelPatternSelector defaultPattern="${ERROR_LOG_PATTERN}">
+                    <PatternMatch key="WARN" pattern="${WARN_LOG_PATTERN}"/>
+                    <PatternMatch key="INFO" pattern="${INFO_LOG_PATTERN}"/>
+                    <PatternMatch key="DEBUG" pattern="${DIAG_LOG_PATTERN}"/>
+                    <PatternMatch key="TRACE" pattern="${DIAG_LOG_PATTERN}"/>
+                </LevelPatternSelector>
+            </PatternLayout>
+        </Console>
+        
+        <Async name="asyncAppender" bufferSize="262144">
+            <AppenderRef ref="asyncLoggingFileAppender"/>
+            <AppenderRef ref="asyncLoggingConsoleAppender"/>
+        </Async>
+
+    </Appenders>
+    
+    <Loggers>
+        <!--
+        Standard Level  intLevel
+        FATAL	        100
+        ERROR	        200
+        WARN	        300
+        INFO	        400
+        DEBUG	        500
+        TRACE	        600
+        -->
+        <AsyncLogger name="org.trustdeck.ace" level="INFO" additivity="false">
+            <AppenderRef ref="asyncAppender"/>
+        </AsyncLogger>
+
+        <Root level="WARN">
+            <AppenderRef ref="asyncAppender"/>
+        </Root>
+    </Loggers>
+</Configuration>
+
+<!-- Do not forget to add -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector 
+to the VM options -->

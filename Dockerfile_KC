@@ -1,0 +1,32 @@
+# Add curl to keycloak enable easy health checks; add certificates
+# Use image that includes a package manager
+FROM registry.access.redhat.com/ubi9 AS ubi-micro-build
+
+# Switch to root user
+USER root
+
+# Create folder and install curl in it
+RUN mkdir -p /mnt/rootfs
+RUN dnf install --installroot /mnt/rootfs curl --releasever 9 --setopt install_weak_deps=false --nodocs -y && \
+    dnf --installroot /mnt/rootfs clean all && \
+    rpm --root /mnt/rootfs -e --nodeps setup
+
+# Start creating standard keycloak and copy the curl installation into the standard image
+FROM quay.io/keycloak/keycloak:latest
+COPY --from=ubi-micro-build /mnt/rootfs /
+
+# Copying certificates into the container
+# CHANGE THIS SECTION
+# EXAMPLES
+COPY path/to/certificates/organization_CA2.pem /etc/pki/ca-trust/source/anchors/organization_CA2.pem
+COPY path/to/certificates/chain.pem /etc/pki/ca-trust/source/anchors/chain.pem
+COPY path/to/certificates/geant_rsa.crt /etc/pki/ca-trust/source/anchors/geant_rsa.crt
+COPY path/to/certificates/geant_ecc.crt /etc/pki/ca-trust/source/anchors/geant_ecc.crt
+
+# Making the chain accessible
+USER root
+RUN chmod 644 /etc/pki/ca-trust/source/anchors/chain.pem
+RUN keytool -trustcacerts -import -alias PKIChain -file /etc/pki/ca-trust/source/anchors/chain.pem -keystore /etc/pki/java/cacerts -storepass changeit -noprompt
+RUN keytool -trustcacerts -import -alias GeantRsaChain -file /etc/pki/ca-trust/source/anchors/geant_rsa.crt -keystore /etc/pki/java/cacerts -storepass changeit -noprompt
+RUN keytool -trustcacerts -import -alias GeantEccChain -file /etc/pki/ca-trust/source/anchors/geant_ecc.crt -keystore /etc/pki/java/cacerts -storepass changeit -noprompt
+RUN keytool -import -file /etc/pki/ca-trust/source/anchors/organization_CA2.pem -alias OrgWindowsRootCA -storepass changeit -noprompt -keystore /etc/pki/java/cacerts

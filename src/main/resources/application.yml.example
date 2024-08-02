@@ -1,0 +1,70 @@
+server:
+  port: 8060  # Server port
+  # Disable generic error pages
+  error:
+    whitelabel:
+      enabled: false
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+  max-http-request-header-size: 6KB
+
+logging:
+  level:
+    root: ERROR
+
+spring:
+  jpa:
+    open-in-view: false
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  main:
+    allow-circular-references: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Custom section starts
+          # Server-uri without /auth since keycloak 17
+          principal-attribute: preferred_username
+          # url must end without /
+          server-uri: https://my-keycloak-service.de
+          truststore: classpath:pki_chain.truststore
+          truststore-password: l129VwykBVwp5FlfdPe7qQ9GOaq2rckC
+          client-id: sandbox-client
+          # Client-secret is only used in the tests
+          client-secret: secret
+          realm: sandbox
+          admin-username: admin-test
+          admin-password: admin-test
+          # Custom section ends
+          domain-role-group-claim-name: groups
+          domain-role-group-context-name: Domain
+          jws-algorithm: RSA256
+          issuer-uri: ${spring.security.oauth2.resourceserver.jwt.server-uri}/realms/${spring.security.oauth2.resourceserver.jwt.realm}
+          jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
+
+audittrail:
+  oidc-group-mapper:
+    token-claim-name: groups
+    group-names:
+      # These group names are mandatory in keycloak to work
+      isHuman: Human
+      isTechnical: Technical
+      isNoAuditing: Unaudited
+      isAuditEverything: AuditEverything
+
+# Config for the database connection
+app:
+  datasource:
+    ace:
+      # Changes can be made below
+      url: jdbc:postgresql://localhost:5432/ace
+      username: ace-manager
+      password: ps3udoNym1zation!
+      configuration:
+        maximum-pool-size: 20 # Maximum number of DB connections that are managed by the Hikari data source
