@@ -11,13 +11,14 @@
         <blake3.version>0.2.2</blake3.version>
         <lz4.version>1.8.0</lz4.version>
         <jooq.version>3.18.9</jooq.version> <!-- This has to be the same version that the spring-boot-starter-jooq uses. -->
+        <springdoc.version>2.6.0</springdoc.version>
         <jar.finalName>ace</jar.finalName>
         <jooq.skip>false</jooq.skip>
     </properties>
 
     <groupId>org.trustdeck</groupId>
     <artifactId>ace</artifactId>
-    <version>v0.53.0-BETA</version>
+    <version>v0.54.0-BETA</version>
     <packaging>jar</packaging>
     <name>ace</name>
 
@@ -133,7 +134,6 @@
 			<!-- License: Apache 2.0 -->
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast-spring</artifactId>
-            <version>${hazelcast.version}</version>
         </dependency>
         <dependency>
 			<!-- Needed for user information retrieval. -->
@@ -142,6 +142,13 @@
             <artifactId>keycloak-admin-client</artifactId>
             <version>${keycloak.version}</version>
         </dependency>
+        <dependency>
+        	<!-- Needed for Swagger. -->
+        	<!-- License: Apache 2.0 -->
+	        <groupId>org.springdoc</groupId>
+	        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+	        <version>${springdoc.version}</version>
+	    </dependency>
 
         <!-- Dependencies for tests -->
         <dependency>
@@ -281,8 +288,6 @@
                     </argLine>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
-
 </project>

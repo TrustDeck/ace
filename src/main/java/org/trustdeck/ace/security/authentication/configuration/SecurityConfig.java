@@ -87,7 +87,13 @@ public class SecurityConfig {
     	http.addFilterAfter(new AudittrailRequestFilter(), BasicAuthenticationFilter.class)
 		      .csrf(csrf -> csrf.disable()) // CSRF will be disabled since this API will mainly be used by services not browsers or individual users
 		      .authorizeHttpRequests(auth -> auth
-		      		.requestMatchers("/domains/*", "/domain/*")
+		    		// Permit all requests to Swagger UI and API documentation
+		    		.requestMatchers(
+		                      "/v3/api-docs/**",
+		                      "/swagger-ui.html",
+		                      "/swagger-ui/**"
+		                  ).permitAll()
+		    		.requestMatchers("/domains/*", "/domain/*")
 		      		.authenticated().anyRequest().permitAll())
 		      .sessionManagement(session -> session
 		              .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
