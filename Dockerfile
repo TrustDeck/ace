@@ -25,7 +25,7 @@ WORKDIR /home/spring
 COPY ./src/main/resources/scripts/prepare.sh prepare.sh
 COPY ./src/main/resources/scripts/entrypoint.sh entrypoint.sh
 COPY ./src/main/resources/application.yml.template .
-ADD ./target/ace.jar .
+ADD ./target/ace*.jar ace.jar
 
 USER root
 # permissions

@@ -37,8 +37,8 @@ spring:
           # Client-secret is only used in the tests
           client-secret: SPRING_KEYCLOAK_CLIENT_SECRET
           realm: SPRING_KEYCLOAK_REALM
-          admin-username: admin-test
-          admin-password: admin-test
+          admin-username: SPRING_KEYCLOAK_ADMIN_USERNAME
+          admin-password: SPRING_KEYCLOAK_ADMIN_PASSWORD
           # Custom section ends
           jws-algorithm: RSA256
           domain-role-group-claim-name: SPRING_GROUP_MAPPER_NAME
