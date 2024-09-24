@@ -1060,7 +1060,7 @@ public class DomainRESTController {
         }
         
         // Ensure a valid desired success probability, if the selected algorithm is of the RANDOM-family
-        if (algorithm.toUpperCase().startsWith("RANDOM") && randomAlgorithmDesiredSuccessProbability != null) {
+        if (algorithm != null && algorithm.toUpperCase().startsWith("RANDOM") && randomAlgorithmDesiredSuccessProbability != null) {
         	
         	if (randomAlgorithmDesiredSuccessProbability > 1.0d) {
         		// The success probability was probably provided as a number between 0 and 100, so we transform it into [0,1] 
