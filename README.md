@@ -1,6 +1,6 @@
 # ACE - Advanced Confidentiality Engine
 
-[![Version](https://img.shields.io/badge/version-v0.54.0--BETA-green)](https://github.com/TrustDeck/ace/releases/tag/v0.54.0-BETA)
+[![Version](https://img.shields.io/badge/version-v0.54.1--BETA-green)](https://github.com/TrustDeck/ace/releases/tag/v0.54.1-BETA)
 [![License](https://img.shields.io/badge/License-Apache_2.0-green)](https://github.com/TrustDeck/ace/blob/main/LICENSE)
 
 This service provides a robust solution for pseudonymization and features high scalability and an integrated audit trail. Its architecture enables the creation of domain hierarchies with inheritable properties that provide both configuration and customization capabilities. Complemented by a modern REST interface and state-of-the-art web technologies, ACE is well suited for the use by trusted third party personnel as well as integration into data processing pipelines. It is built with Java and SpringBoot, the service integrates with Keycloak for authentication, HikariCP for efficient database connection pooling, jOOQ for type-safe SQL query construction, and PostgreSQL as the backend database.
