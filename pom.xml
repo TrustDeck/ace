@@ -18,7 +18,7 @@
 
     <groupId>org.trustdeck</groupId>
     <artifactId>ace</artifactId>
-    <version>v0.54.1-BETA</version>
+    <version>v0.54.2-BETA</version>
     <packaging>jar</packaging>
     <name>ace</name>
 
