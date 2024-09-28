@@ -28,11 +28,11 @@ services:
       TZ: Europe/Berlin
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://ace-postgresql:5432/keycloak?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Berlin
-      KC_DB_USERNAME: #CHANGE ME, e.g. ace-manager
-      KC_DB_PASSWORD: #CHANGE ME, e.g. ace-manager-password
+      KC_DB_USERNAME: ace-manager
+      KC_DB_PASSWORD: ps3udoNym1zation!
       KC_DB_SCHEMA: public
-      KEYCLOAK_ADMIN: #CHANGE ME, e.g. keycloak-admin
-      KEYCLOAK_ADMIN_PASSWORD: #CHANGE ME, e.g. keycloak-admin-password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: true
       KC_METRICS_ENABLED: true
       KC_FEATURES: docker,token-exchange,preview
@@ -54,12 +54,12 @@ services:
       - "5432:5432"
     environment:
       - TZ=Europe/Berlin
-      - POSTGRES_USER= #CHANGE ME, e.g. ace-manager
-      - POSTGRES_PASSWORD= #CHANGE ME, e.g. ace-manager-password
+      - POSTGRES_USER=ace-manager
+      - POSTGRES_PASSWORD=ps3udoNym1zation!
       - POSTGRES_DB=ace
     volumes:
-      - ./src/main/resources/ace-schema.sql:/docker-entrypoint-initdb.d/ace-schema.sql
-      - ./src/main/resources/keycloak-example.sql:/docker-entrypoint-initdb.d/keycloak-example.sql
+      - ./src/main/resources/db/ace-schema.sql:/docker-entrypoint-initdb.d/ace-schema.sql
+      - ./src/main/resources/db/keycloak-example.sql:/docker-entrypoint-initdb.d/keycloak-example.sql
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ace_postgresql_data:/var/lib/postgresql/data

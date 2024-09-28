@@ -17,9 +17,15 @@
 
 package org.trustdeck.ace.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -915,6 +921,53 @@ public class DomainRESTController {
      * 			<li>a <b>404-NOT_FOUND</b> when no domain was found for
      * 				the given name</li>
      */
+    @Operation(
+            summary = "Get Domain by Name",
+            description = "Retrieves a domain by its name. This operation is restricted to users with the 'domain-read' role. It returns either a full view or a reduced standard view of the domain depending on the user's permissions.",
+            parameters = {
+                    @Parameter(
+                            name = "name",
+                            description = "Name of the domain to retrieve",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "example-domain")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Domain successfully retrieved",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = DomainDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Domain not found",
+                            content = @Content(schema = @Schema())
+                    ),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = "Forbidden – User does not have the necessary domain-read role"
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "Internal server error"
+                    )
+            },
+            security = {
+                    @SecurityRequirement(name = "oauth2_security_scheme")
+            },
+            tags = { "Domain" }
+    )
     @GetMapping("/domain")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read a domain.")
