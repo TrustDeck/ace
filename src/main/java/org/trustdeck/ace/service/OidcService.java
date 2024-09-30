@@ -17,9 +17,9 @@
 
 package org.trustdeck.ace.service;
 
+import jakarta.ws.rs.core.Response;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -30,11 +30,13 @@ import org.keycloak.representations.idm.GroupRepresentation;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.trustdeck.ace.configuration.RoleConfig;
 import org.trustdeck.ace.exception.UnexpectedResultSizeException;
 import org.trustdeck.ace.security.authentication.configuration.JwtProperties;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class encapsulates functionalities to work with OIDC information.
@@ -47,6 +49,9 @@ public class OidcService implements InitializingBean {
 
     @Autowired
     protected JwtProperties jwtProperties;
+
+    @Autowired
+    protected RoleConfig roleConfig;
 
     @Getter
     private Keycloak keycloak;
@@ -131,4 +136,62 @@ public class OidcService implements InitializingBean {
         
         return groupRepresentations;
     }
+
+    public String getGroupId(String groupName){
+        //used to fetch domain group;
+        return "";
+    }
+
+    public String createRole(){
+        return "";
+    }
+
+    public void getRealmRoles(){
+
+    }
+
+    public List<GroupRepresentation> getRealmGroups(){
+        return this.getKeycloakRealm().groups().groups();
+    }
+
+    protected Map.Entry<String, String> getMatchByPath(Map<String, String> flatGroups, String expectedPath) {
+        for (Map.Entry<String, String> entry : flatGroups.entrySet()) {
+            if (entry.getValue().equals(expectedPath)) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    public GroupRepresentation createSubGroup(String parentGroupId, String groupName){
+        GroupRepresentation newGroupRepresentation = new GroupRepresentation();
+        newGroupRepresentation.setName(groupName);
+        try {
+            Response response = this.getKeycloakRealm().groups().group(parentGroupId).subGroup(newGroupRepresentation);
+
+            GroupRepresentation returnedGroupReprensentation = null;
+            if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
+                returnedGroupReprensentation = response.readEntity(GroupRepresentation.class);
+            }
+            response.close();
+            return returnedGroupReprensentation;
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return null;
+        }
+    }
+
+    public Boolean joinGroup(String groupId, String userId){
+        try {
+            this.getKeycloakRealm().users().get(userId).joinGroup(groupId);
+            return true;
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return false;
+        }
+    }
+
+
+    //TODO create list of roles
+
 }

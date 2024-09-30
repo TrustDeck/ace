@@ -82,43 +82,15 @@ public class AuthorizationService {
     }
 
     /**
-     * Returns the group paths from the OIDC token as a list of strings
-     * when no authentication object is provided by the user.
+     * Retrieves the list of group paths assigned to the current user from the cache.
      *
-     * @param claim data about the authenticated user sent from the identity provider to the relying party
-     * @return the group paths as a list of strings
-     */
-    public static List<String> getGroupPathsFromAuthentication(String claim) {
-        Authentication authentication = getAuthentication();
-
-        return (authentication == null) ? new ArrayList<>() : getGroupPathsFromAuthentication(authentication, claim);
-    }
-
-    /**
-     * Returns the group paths from the OIDC token as a list of strings.
+     * <p>This method obtains the authentication context, extracts the JWT token, and
+     * uses the subject (typically the user's ID) to retrieve cached group paths
+     * from the caching service.</p>
      *
-     * @param authentication the Authentication object
-     * @param claim data about the authenticated user sent from the identity provider to the relying party
-     * @return the group paths as a list of strings
+     * @return a list of group paths associated with the current user, or an empty list if
+     *         the authentication is not available or the user is not authenticated.
      */
-    public static List<String> getGroupPathsFromAuthentication(Authentication authentication, String claim) {
-        try {
-            Jwt jwt = (Jwt) authentication.getPrincipal();
-            List<String> groupPaths = jwt.getClaimAsStringList(claim);
-            
-            if (groupPaths != null && !groupPaths.isEmpty()) {
-                List<String> gp = new ArrayList<>();
-                gp.addAll(groupPaths);
-                
-                return gp;
-            } else {
-                return new ArrayList<>();
-            }
-        } catch (IllegalArgumentException | NullPointerException | ClassCastException e) {
-            return new ArrayList<>();
-        }
-    }
-
     public List<String> getGroupPathsCachedFromContext(){
         Authentication authentication = getAuthentication();
         
@@ -175,7 +147,6 @@ public class AuthorizationService {
      * @return {@code true} only if the given role and domain have a relationship, {@code false} if not
      */
     public boolean hasDomainRoleRelationship(MethodSecurityExpressionOperations root, String domain, String role) {
-        Set<String> roles = getRolesFromAuthentication(root.getAuthentication());
         List<String> groupPaths = null;
         Authentication authentication = root.getAuthentication();
         
@@ -195,7 +166,7 @@ public class AuthorizationService {
         	return false;
         }
 
-        return roleGroupPathContainedInAuthentication(roles, groupPaths, domain, role);
+        return hasAssignedGroupPaths(groupPaths, domain, role);
     }
 
     /**
@@ -208,7 +179,6 @@ public class AuthorizationService {
      * @return {@code true} only if given role and domain have a relationship, {@code false} if not
      */
     public boolean hasDomainRoleRelationship(String domain, String role) {
-        Set<String> roles = getRolesFromAuthentication();
         List<String> groupPaths = this.getGroupPathsCachedFromContext();
 
         if (!Assertion.isNotNullOrEmpty(domain) || !Assertion.isNotNullOrEmpty(role) || groupPaths == null || groupPaths.isEmpty()) {
@@ -216,20 +186,19 @@ public class AuthorizationService {
             return false;
         }
         
-        return roleGroupPathContainedInAuthentication(roles, groupPaths, domain, role);
+        return hasAssignedGroupPaths(groupPaths, domain, role);
     }
 
     /**
      * Helper method to have the check in one place.
      *
-     * @param roles the roles as a set
      * @param groupPaths the domains as a list
      * @param domain the given domain's name as a string
      * @param role the given role as a string
      * @return {@code true} only if the given role and domain have a relationship and are set as role, {@code false} if not
      */
-    private boolean roleGroupPathContainedInAuthentication(Set<String> roles, List<String> groupPaths, String domain, String role) {
-        return groupPaths.contains("/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role + "/" + domain) 
-        		&& roles.contains("ROLE_" + domain) && roles.contains("ROLE_" + role);
+    private Boolean hasAssignedGroupPaths(List<String> groupPaths, String domain, String role){
+        String path = "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role + "/" + domain;
+        return groupPaths.contains(path);
     }
 }
