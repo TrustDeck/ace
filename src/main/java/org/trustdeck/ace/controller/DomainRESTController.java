@@ -143,7 +143,7 @@ public class DomainRESTController {
      * 				length is not an even number</li>
      */
     @PostMapping("/domain/complete")
-    @PreAuthorize("hasRole('domain-create-complete')")
+    @PreAuthorize("@auth.currentRequestHasRole('domain-create-complete')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
     public ResponseEntity<?> createDomainComplete(@RequestBody DomainDto domainDto,
                                                   @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -484,7 +484,7 @@ public class DomainRESTController {
      * 				of the domain failed</li>
      */
     @PostMapping("/domain")
-    @PreAuthorize("hasRole('domain-create')")
+    @PreAuthorize("@auth.currentRequestHasRole('domain-create')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
     public ResponseEntity<?> createDomain(@RequestBody DomainDto domainDto,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
