@@ -19,19 +19,22 @@ package org.trustdeck.ace.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+import org.trustdeck.ace.configuration.RoleConfig;
 import org.trustdeck.ace.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.ace.model.dto.DomainDto;
 import org.trustdeck.ace.security.audittrail.annotation.Audit;
 import org.trustdeck.ace.security.audittrail.event.AuditEventType;
 import org.trustdeck.ace.security.audittrail.usertype.AuditUserType;
+import org.trustdeck.ace.security.authentication.configuration.JwtProperties;
 import org.trustdeck.ace.service.AuthorizationService;
 import org.trustdeck.ace.service.DomainDBAccessService;
+import org.trustdeck.ace.service.OidcService;
 import org.trustdeck.ace.service.ResponseService;
 import org.trustdeck.ace.utils.Assertion;
 import org.trustdeck.ace.utils.Utility;
@@ -123,6 +126,24 @@ public class DomainRESTController {
     private AuthorizationService authorizationService;
 
     /**
+     * Injected OIDC service for managing OpenID Connect operations such as token retrieval and validation.
+     */
+    @Autowired
+    private OidcService oidcService;
+
+    /**
+     * Injected properties for JWT configuration, handling token attributes like expiration and signing.
+     */
+    @Autowired
+    protected JwtProperties jwtProperties;
+
+    /**
+     * Injected role configuration to manage role-based access control and authorization in the domain.
+     */
+    @Autowired
+    protected RoleConfig roleConfig;
+
+    /**
      * Method to create a new domain. Creates the record inside the
      * domain table.
      *
@@ -143,11 +164,18 @@ public class DomainRESTController {
      * 				length is not an even number</li>
      */
     @PostMapping("/domain/complete")
-    @PreAuthorize("@auth.currentRequestHasRole('domain-create-complete')")
+    //@PreAuthorize("@auth.currentRequestHasRole('domain-create-complete')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
     public ResponseEntity<?> createDomainComplete(@RequestBody DomainDto domainDto,
                                                   @RequestHeader(name = "accept", required = false) String responseContentType,
                                                   HttpServletRequest request) {
+
+        JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+
+        if (token == null || token.getToken() == null) {
+            return responseService.badRequest(responseContentType);
+        }
+
         String domainName = domainDto.getName();
         String domainPrefix = domainDto.getPrefix();
         Timestamp validFrom = domainDto.getValidFrom() != null ? Timestamp.valueOf(domainDto.getValidFrom()) : null;
@@ -484,14 +512,16 @@ public class DomainRESTController {
      * 				of the domain failed</li>
      */
     @PostMapping("/domain")
-    @PreAuthorize("@auth.currentRequestHasRole('domain-create')")
+    //@PreAuthorize("@auth.currentRequestHasRole('domain-create')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
     public ResponseEntity<?> createDomain(@RequestBody DomainDto domainDto,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
                                           HttpServletRequest request) {
 
-        if (!domainDto.validate() || !domainDto.isValidStandardView()) {
-            return responseService.unprocessableEntity(responseContentType);
+        JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+
+        if (!domainDto.validate() || !domainDto.isValidStandardView() || token == null || token.getToken() == null) {
+            return responseService.badRequest(responseContentType);
         }
 
         String domainName = domainDto.getName();
@@ -1194,7 +1224,7 @@ public class DomainRESTController {
             log.info("Since the domain \"" + newName != null ? newName : old.getName() + "\" isn't empty, updates of the prefix, the algorithm, "
                     + "the consecutive value, the pseudonym-length, or the padding character can't be processed and are ignored.");
         }
-        
+
         // All other domain attributes are null and are therefore correctly left as they are
 
         // Execute update
@@ -1378,4 +1408,6 @@ public class DomainRESTController {
         
         return true;
     }
+
+
 }

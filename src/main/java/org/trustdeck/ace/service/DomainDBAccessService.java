@@ -17,18 +17,19 @@
 
 package org.trustdeck.ace.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-
+import org.jooq.Record;
+import org.jooq.impl.DSL;
 import org.jooq.CommonTableExpression;
 import org.jooq.DSLContext;
 import org.jooq.DeleteConditionStep;
 import org.jooq.JoinType;
-import org.jooq.Record;
 import org.jooq.SelectQuery;
-import org.jooq.impl.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.util.Pair;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.trustdeck.ace.algorithms.PathFinder;
 import org.trustdeck.ace.exception.*;
@@ -41,15 +42,14 @@ import org.trustdeck.ace.jooq.generated.tables.records.PseudonymRecord;
 import org.trustdeck.ace.security.audittrail.event.AuditEventBuilder;
 import org.trustdeck.ace.utils.Assertion;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.DSL.select;
+import static org.jooq.impl.DSL.field;
 import static org.trustdeck.ace.jooq.generated.Tables.DOMAIN;
 import static org.trustdeck.ace.jooq.generated.Tables.PSEUDONYM;
-import static org.jooq.impl.DSL.field;
 
 /**
  * This class is used to encapsulate all methods needed to access the database for handling domains.
@@ -80,6 +80,11 @@ public class DomainDBAccessService {
     /** Enables the access to the domain specific database access methods. */
     @Autowired
     private PseudonymDBAccessService pseudonymDBAccessService;
+
+
+    /** Injects the DomainOidcService class to handle domains in the oidc service*/
+    @Autowired
+    private DomainOidcService domainOidcService;
 
     /** Represents the duplication status of a requested insertion of a domain into the database. */
     public static final String INSERTION_DUPLICATE = "duplicate";
@@ -606,6 +611,19 @@ public class DomainDBAccessService {
                 // Success; continue with the deletion process
                 log.debug("Successfully deleted all records in the domain \"" + domainName + "\".");
 
+                //try to delete the group in oidc service
+                if(request != null){
+                    JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+                    if(token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()){
+                        try{
+                            domainOidcService.removeDomainGroups(domain.getName(), token.getToken().getSubject());
+                        }catch (Exception e){
+                            log.error("Removing domain groups failed " + e);
+                            throw new NullPointerException();
+                        }
+                    }
+                }
+
                 // Now delete the domain itself
                 int deletedDomains = DSL.using(configuration).deleteFrom(DOMAIN)
                         .where(DOMAIN.ID.equal(domain.getId()))
@@ -672,6 +690,17 @@ public class DomainDBAccessService {
                     throw new DuplicateDomainException(domain.getName());
                 }
 
+                if(request == null) {
+                    throw new NullPointerException();
+                }
+
+                JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+                if(token == null || token.getToken() == null || token.getToken().getSubject().isBlank()){
+                    throw new NullPointerException();
+                }
+
+                domainOidcService.createDomainGroups(domain.getName(), token.getToken().getSubject());
+
                 // Insert the domain object into database
                 int insertedRecords = DSL.using(configuration)
                         .insertInto(DOMAIN, DOMAIN.NAME, DOMAIN.PREFIX, DOMAIN.VALIDFROM, DOMAIN.VALIDFROMINHERITED,
@@ -708,14 +737,12 @@ public class DomainDBAccessService {
                     log.error("Couldn't insert the domain into the database.");
                     throw new UnexpectedResultSizeException(1, insertedRecords);
                 }
-                
+
                 // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
+                Auditevent auditEvent = auditEventBuilder.build(request);
+                if (auditEvent != null) {
+                    // Write audit information into database
+                    this.getAuditeventDao().insert(auditEvent);
                 }
 
                 // Implicit transaction commit here
@@ -834,6 +861,25 @@ public class DomainDBAccessService {
                 if (!new DomainDao(configuration).exists(oldDomain)) {
                     // Domain is not in the DB. Use exception to break the transaction.
                     throw new DomainNotFoundException(oldDomain.getName());
+                }
+
+                if(oldDomain != null &&
+                        oldDomain.getName() != null &&
+                        newDomain != null &&
+                        newDomain.getName() != null &&
+                        !oldDomain.getName().equals(newDomain.getName()) &&
+                        domainOidcService.canUseAsDomainGroup(newDomain.getName()) &&
+                        request != null
+                ){
+                    JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+                    if(token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()){
+                        try{
+                            domainOidcService.updateDomainGroups(oldDomain.getName(), newDomain.getName(), token.getToken().getSubject());
+                        }catch (Exception e){
+                            log.error("Updating domain groups failed " + e);
+                            throw new NullPointerException();
+                        }
+                    }
                 }
 
                 // Create and execute the update query

@@ -156,9 +156,12 @@ public class AuthorizationService {
         
         try {
 	        Jwt jwt = (Jwt) authentication.getPrincipal();
+            if(jwt == null){
+                return false;
+            }
 	        groupPaths = cachingService.getGroupPaths(jwt.getSubject());
         } catch (ClassCastException e) {
-        	return false;
+         	return false;
         }
 
         if (!Assertion.isNotNullOrEmpty(domain) || !Assertion.isNotNullOrEmpty(role) || groupPaths == null || groupPaths.isEmpty()) {
