@@ -9,7 +9,7 @@ networks:
 services:
   ace-keycloak:
     container_name: ace-keycloak
-    image: quay.io/keycloak/keycloak:latest
+    image: quay.io/keycloak/keycloak:nightly
     depends_on:
       - ace-postgresql
     networks:
@@ -24,7 +24,7 @@ services:
       KC_HTTP_ENABLED: false
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_BACKCHANNEL: false
-      KC_LOG_LEVEL: DEBUG
+      KC_LOG_LEVEL: WARN
       TZ: Europe/Berlin
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://ace-postgresql:5432/keycloak?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Berlin

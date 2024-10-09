@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.4
--- Dumped by pg_dump version 14.4
+-- Dumped from database version 14.7
+-- Dumped by pg_dump version 14.7
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -15,32 +15,32 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
-SET default_tablespace = '';
-SET default_table_access_method = heap;
---
--- PostgreSQL database dump
---
 
-ALTER TABLE ONLY public.pseudonym DROP CONSTRAINT pseudonym_domainid_fkey;
-ALTER TABLE ONLY public.domain DROP CONSTRAINT domain_superdomainid_fkey;
-DROP INDEX public.metadataidx;
-DROP INDEX public.idpsnidx;
-DROP INDEX public.ididtypeidx;
-DROP INDEX public.auditusernameidx;
-ALTER TABLE ONLY public.pseudonym DROP CONSTRAINT pseudonym_pkey;
-ALTER TABLE ONLY public.pseudonym DROP CONSTRAINT pseudonym_identifier_idtype_domainid_pseudonym_key;
-ALTER TABLE ONLY public.domain DROP CONSTRAINT domain_pkey;
-ALTER TABLE ONLY public.domain DROP CONSTRAINT domain_name_key;
-ALTER TABLE ONLY public.auditevent DROP CONSTRAINT auditevent_pkey;
-ALTER TABLE public.pseudonym ALTER COLUMN id DROP DEFAULT;
-ALTER TABLE public.domain ALTER COLUMN id DROP DEFAULT;
-ALTER TABLE public.auditevent ALTER COLUMN id DROP DEFAULT;
-DROP SEQUENCE public.pseudonym_id_seq;
-DROP TABLE public.pseudonym;
-DROP SEQUENCE public.domain_id_seq;
-DROP TABLE public.domain;
-DROP SEQUENCE public.auditevent_id_seq;
-DROP TABLE public.auditevent;
+-- DROP DATABASE ace;
+--
+-- Name: ace; Type: DATABASE; Schema: -; Owner: ace-manager
+--
+-- CREATE DATABASE ace WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'en_US.utf8';
+
+
+ALTER DATABASE ace OWNER TO "ace-manager";
+
+\connect ace
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
 
 --
 -- Name: auditevent; Type: TABLE; Schema: public; Owner: ace-manager
@@ -110,16 +110,15 @@ CREATE TABLE public.domain (
     pseudonymlengthinherited boolean NOT NULL,
     paddingcharacter character(1) NOT NULL,
     paddingcharacterinherited boolean NOT NULL,
-    addcheckdigit boolean NOT NULL,
-    addcheckdigitinherited boolean NOT NULL,
-    lengthincludescheckdigit boolean NOT NULL,
-    lengthincludescheckdigitinherited boolean NOT NULL,
+	addcheckdigit boolean NOT NULL,
+	addcheckdigitinherited boolean NOT NULL,
+	lengthincludescheckdigit boolean NOT NULL,
+	lengthincludescheckdigitinherited boolean NOT NULL,
     salt text NOT NULL,
     saltlength integer NOT NULL,
     description text,
     superdomainid integer
 );
-
 
 ALTER TABLE public.domain OWNER TO "ace-manager";
 
@@ -207,40 +206,12 @@ ALTER TABLE ONLY public.pseudonym ALTER COLUMN id SET DEFAULT nextval('public.ps
 
 
 --
--- Data for Name: domain; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-INSERT INTO public.domain
-(id, name, prefix, validfrom, validfrominherited, validto, validtoinherited, enforcestartdatevalidity, enforcestartdatevalidityinherited, enforceenddatevalidity, enforceenddatevalidityinherited, algorithm, algorithminherited, alphabet, alphabetinherited, randomalgorithmdesiredsize, randomalgorithmdesiredsizeinherited, randomalgorithmdesiredsuccessprobability, randomalgorithmdesiredsuccessprobabilityinherited, multiplepsnallowed, multiplepsnallowedinherited, consecutivevaluecounter, pseudonymlength, pseudonymlengthinherited, paddingcharacter, paddingcharacterinherited, salt, saltlength, description, superdomainid, addcheckdigit, addcheckdigitinherited, lengthincludescheckdigit, lengthincludescheckdigitinherited) VALUES
-(1, 'TestStudie', 'TS-', '2022-02-26 19:15:20.885853', false, '2052-02-19 19:15:20.885853', false, true, false, true, false, 'MD5', false, 'ABCDEF0123456789', false, 100000000, false, 0.99999998, false, true, false, 1, 32, false, '0', false, 'azMPTIQXJsept_4nDj5B1BXN83Bj_8VJ', 32, NULL, NULL, true, false, false, false);
-
-
---
--- Data for Name: pseudonym; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-INSERT INTO public.pseudonym (id, identifier, idtype, pseudonym, validfrom, validfrominherited, validto, validtoinherited, domainid) VALUES (1, '10000008912', 'ANY-ID', 'TS-9EEEE39F0D5C03507CB9388609E925F9', '2022-02-26 19:15:20.885853', true, '2052-02-19 19:15:20.885853', true, 1);
-
-
---
--- Name: domain_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ace-manager
---
-
-SELECT pg_catalog.setval('public.domain_id_seq', 1, true);
-
-
---
--- Name: pseudonym_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ace-manager
---
-
-SELECT pg_catalog.setval('public.pseudonym_id_seq', 1, true);
-
---
 -- Name: auditevent auditevent_pkey; Type: CONSTRAINT; Schema: public; Owner: ace-manager
 --
 
 ALTER TABLE ONLY public.auditevent
     ADD CONSTRAINT auditevent_pkey PRIMARY KEY (id);
+
 
 --
 -- Name: domain domain_name_key; Type: CONSTRAINT; Schema: public; Owner: ace-manager
@@ -275,6 +246,21 @@ ALTER TABLE ONLY public.pseudonym
 
 
 --
+-- Name: pseudonym pseudonym_psn_domainid_key; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+--
+
+ALTER TABLE public.pseudonym
+    ADD CONSTRAINT pseudonym_psn_domainid_key UNIQUE (domainid, pseudonym);
+
+
+--
+-- Name: auditusernameidx; Type: INDEX; Schema: public; Owner: ace-manager
+--
+
+CREATE INDEX auditusernameidx ON public.auditevent USING btree (username);
+
+
+--
 -- Name: ididtypeidx; Type: INDEX; Schema: public; Owner: ace-manager
 --
 
@@ -286,13 +272,6 @@ CREATE INDEX ididtypeidx ON public.pseudonym USING btree (identifier, idtype);
 --
 
 CREATE UNIQUE INDEX idpsnidx ON public.pseudonym USING btree (identifier, pseudonym);
-
-
---
--- Name: auditusernameidx; Type: INDEX; Schema: public; Owner: ace-manager
---
-
-CREATE INDEX auditusernameidx ON public.auditevent USING btree (username);
 
 
 --
@@ -317,7 +296,23 @@ ALTER TABLE ONLY public.domain
 ALTER TABLE ONLY public.pseudonym
     ADD CONSTRAINT pseudonym_domainid_fkey FOREIGN KEY (domainid) REFERENCES public.domain(id);
 
+
 --
 -- PostgreSQL database dump complete
 --
+
+--
+-- Data for Name: domain; Type: TABLE DATA; Schema: public; Owner: ace-manager
+--
+
+INSERT INTO public.domain
+(name, prefix, validfrom, validfrominherited, validto, validtoinherited, enforcestartdatevalidity, enforcestartdatevalidityinherited, enforceenddatevalidity, enforceenddatevalidityinherited, algorithm, algorithminherited, alphabet, alphabetinherited, randomalgorithmdesiredsize, randomalgorithmdesiredsizeinherited, randomalgorithmdesiredsuccessprobability, randomalgorithmdesiredsuccessprobabilityinherited, multiplepsnallowed, multiplepsnallowedinherited, consecutivevaluecounter, pseudonymlength, pseudonymlengthinherited, paddingcharacter, paddingcharacterinherited, salt, saltlength, description, superdomainid, addcheckdigit, addcheckdigitinherited, lengthincludescheckdigit, lengthincludescheckdigitinherited) VALUES
+('TestStudie', 'TS-', '2022-02-26 19:15:20.885853', false, '2052-02-19 19:15:20.885853', false, true, false, true, false, 'MD5', false, 'ABCDEF0123456789', false, 100000000, false, 0.99999998, false, false, false, 1, 32, false, '0', false, 'azMPTIQXJsept_4nDj5B1BXN83Bj_8VJ', 32, NULL, NULL, true, false, false, false);
+
+
+--
+-- Data for Name: pseudonym; Type: TABLE DATA; Schema: public; Owner: ace-manager
+--
+
+INSERT INTO public.pseudonym (identifier, idtype, pseudonym, validfrom, validfrominherited, validto, validtoinherited, domainid) VALUES ('10000008912', 'ANY-ID', 'TS-9EEEE39F0D5C03507CB9388609E925F9', '2022-02-26 19:15:20.885853', true, '2052-02-19 19:15:20.885853', true, 1);
 

@@ -44,8 +44,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
@@ -59,8 +58,10 @@ import org.trustdeck.ace.model.dto.DomainDto;
 import org.trustdeck.ace.model.dto.RecordDto;
 
 import javax.net.ssl.SSLContext;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -85,7 +86,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Slf4j
-@Sql(scripts = "classpath:sql/ace-schema-test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD, config = @SqlConfig(dataSource = "pseudonymizationDataSource", transactionManager = ""))
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class AssertWebRequestService {
 
     /** Mocks a Model-View-Controller application. */
@@ -108,6 +109,9 @@ public class AssertWebRequestService {
     @BeforeEach
     public void setUp(WebApplicationContext webApplicationContext,
                       RestDocumentationContextProvider restDocumentation) throws Exception {
+
+        runCommand("make restore-test");
+
         this.mockMvc = MockMvcBuilders
                 .webAppContextSetup(webApplicationContext)
                 .apply(documentationConfiguration(restDocumentation))
@@ -119,6 +123,47 @@ public class AssertWebRequestService {
 
         log.debug("Ready to test.");
     }
+
+
+    /**
+     * Executes a shell command using the specified command string.
+     *
+     * <p>This method runs the command using a Bash shell, captures both the output and error streams,
+     * and prints any error messages to the standard error output.
+     * If the command fails (exit code is not zero), it throws a RuntimeException with the failure details.
+     *
+     * @param command the command to be executed
+     * @throws Exception if an error occurs during command execution
+     */
+    private void runCommand(String command) throws Exception {
+        // Execute the command
+        ProcessBuilder processBuilder = new ProcessBuilder("/bin/bash", "-c", command);
+        Process process = processBuilder.start();
+
+        // Capture the output and error stream
+        try (
+                BufferedReader ignored = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+            String line;
+
+            // Uncomment below lines to print command output (stdout)
+            // while ((line = reader.readLine()) != null) {
+            //     System.out.println(line);
+            // }
+
+            // Print command error output (stderr)
+            while ((line = errorReader.readLine()) != null) {
+                System.err.println(line);
+            }
+        }
+
+        // Wait for the command to complete
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new RuntimeException("Command failed with exit code: " + exitCode);
+        }
+    }
+
 
     /**
      * Returns the mock MVC object.
@@ -746,7 +791,7 @@ public class AssertWebRequestService {
             put("name", domainName);
         }};
 
-        this.assertNotFoundRequest("getDomainNotFoundAfterDelete", get("/api/pseudonymization/domain"), getParameter, null, this.getAccessToken());
+        this.assertForbiddenRequest("getDomainNotFoundAfterDelete", get("/api/pseudonymization/domain"), getParameter, null, this.getAccessToken());
     }
 
     /**
