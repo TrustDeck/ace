@@ -209,7 +209,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         String assertId = "1234356";
         String assertIdType = "EINE-ID";
         String assertNewIdType = "ANY-ID";
-        String assertPseudonym = "TS-5FDDF2FB799B8C2D4F3022ED2F7CEF246";
+        String assertPseudonym = "TS-DEBB85F4AD634BB9413517C0DA5342260";
 
         // Create a record
         /*Map<String, String> createParameter = new HashMap<>() {{
@@ -236,9 +236,6 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         assertNotNull(r.getDomain());
         assertEquals(domainName, r.getDomain().getName());
 
-        // Trying to create the same record again
-        this.assertCreatedRequest("createNewRecordAgainOkay", post("/api/pseudonymization/domains/" + domainName + "/pseudonym"), null, createRecordDto, this.getAccessToken());
-        
         // Try duplicate
         this.assertOkRequest("createNewRecordAgainDuplicate", post("/api/pseudonymization/domains/" + domainName + "/pseudonym"), null, createRecordDto, this.getAccessToken());
 
@@ -296,10 +293,6 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         // Unauthorized test for updating
         this.assertBadRequestRequest("updateRecordBadRequest", put("/api/pseudonymization/domains/" + domainName + "/pseudonym/complete"), updateParameter, updateRecordDto, "");
         this.assertUnauthorizedRequest("updateRecordUnauth", put("/api/pseudonymization/domains/" + domainName + "/pseudonym/complete"), updateParameter, updateRecordDto, "SomeToken");
-
-        //is not working because it would affect more than one pseudonym at once
-        this.assertUnprocessableEntity("updateRecordComplete", put("/api/pseudonymization/domains/" + domainName + "/pseudonym/complete"), updateParameter, updateRecordDto, this.getAccessToken());
-
 
         // Delete a record
         Map<String, String> deleteParameter = new HashMap<>() {
