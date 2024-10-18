@@ -68,3 +68,24 @@ app:
       password: ps3udoNym1zation!
       configuration:
         maximum-pool-size: 20 # Maximum number of DB connections that are managed by the Hikari data source
+  operations:
+    - domain-create
+    - domain-create-complete
+    - domain-delete
+    - domain-list-all
+    - domain-read
+    - domain-read-salt
+    - domain-update
+    - domain-update-complete
+    - domain-update-salt
+    - record-create
+    - record-create-batch
+    - record-delete
+    - record-delete-batch
+    - record-read
+    - record-read-batch
+    - record-update
+    - record-update-complete
+    - record-update-batch
+    - complete-view
+    - link-pseudonyms
