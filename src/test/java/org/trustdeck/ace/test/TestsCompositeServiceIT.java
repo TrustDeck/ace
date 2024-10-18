@@ -123,7 +123,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         String childTwoName = "TestStudie-Paper";
         String childTwoPrefix = "TS-P-";
 
-        String childThreeName = "TestStudie-Labor";
+        String childThreeName = "TestStudie-Labor-Cool";
         String childThreePrefix = "TS-L-";
 
         //this.createDomainHelper(rootDomainName, rootDomainPrefix, null);
@@ -131,6 +131,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         this.createDomainHelper(childTwoName, childTwoPrefix, rootDomainName);
         this.createDomainHelper(childThreeName, childThreePrefix, childOneName);
 
+        //this.obtainNewAccessToken("test", "test");
         // Create pseudonyms inside the network
 
         // Regular creation without issues
@@ -179,12 +180,12 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
     @DisplayName("domainNetRecursionTest")
     public void domainNetRecursionTest() throws Exception {
         String parentDomainName = "TestStudie";
-        String child = "TestStudie-Labor";
+        String child = "TestStudie-Labor-Cool";
         String childOfChild = "TestStudie-Paper";
 
         this.assertEqualsListDomainHierarchyLength(1);
 
-        // Create domain network for "TestStudie", "TestStudie-Labor" and "TestStudie-Paper"
+        // Create domain network for "TestStudie", "TestStudie-Labor-Cool" and "TestStudie-Paper"
         this.createNet(parentDomainName, child, childOfChild);
 
         // Recursive deletion of "child" must also lead to the deletion of "childOfChild"
@@ -197,6 +198,9 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
             }
         };
 
+        this.obtainNewAccessToken("test", "test");
+
+        //remove recursive must also delete domain groups in oidc service
         this.assertNoContent("deleteDomain", delete("/api/pseudonymization/domain"), deleteParameter, null, this.getAccessToken());
 
         // Check that recursive deleting worked. Length must be 1.
@@ -217,7 +221,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
                     assertNull(domain.getSuperDomainID());
                     break;
                 case 4:
-                    assertEquals("TestStudie-Labor", domain.getName());
+                    assertEquals("TestStudie-Labor-Cool", domain.getName());
                     assertEquals(1, domain.getSuperDomainID());
                     break;
                 case 5:
@@ -306,9 +310,9 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
 
         // Check if recursive deleting worked. Length must be 1.
         this.assertEqualsListDomainHierarchyLength(1);
-        this.assertNotFoundRequest("readRecord", get("/api/pseudonymization/domains/" + child + "/pseudonym"), getParameter, null, this.getAccessToken());
-        this.assertNotFoundRequest("readRecord", get("/api/pseudonymization/domains/" + childOfChild + "/pseudonym"), getParameter, null, this.getAccessToken());
-        this.assertNotFoundRequest("readRecord", get("/api/pseudonymization/domains/" + childOfChild + "/pseudonym"), anotherGetParameter, null, this.getAccessToken());
+        this.assertForbiddenRequest("readRecord", get("/api/pseudonymization/domains/" + child + "/pseudonym"), getParameter, null, this.getAccessToken());
+        this.assertForbiddenRequest("readRecord", get("/api/pseudonymization/domains/" + childOfChild + "/pseudonym"), getParameter, null, this.getAccessToken());
+        this.assertForbiddenRequest("readRecord", get("/api/pseudonymization/domains/" + childOfChild + "/pseudonym"), anotherGetParameter, null, this.getAccessToken());
 
         // Create the domain-net again
         this.createNet(parentDomainName, child, childOfChild);
@@ -386,7 +390,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
     public void userFriendlyValidityTimeTest() throws Exception {
         // Prepare
         String parentDomainName = "TestStudie";
-        String child = "TestStudie-Labor";
+        String child = "TestStudie-Labor-Cool";
         String childOfChild = "TestStudie-Paper";
 
         // Create domain network for "TestStudie", "TestStudie-Labor" and "TestStudie-Paper"
