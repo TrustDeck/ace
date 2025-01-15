@@ -1320,7 +1320,7 @@ public class DomainRESTController {
             return responseService.notFound(responseContentType);
         }
 
-        String domainName = (newDomainName != null && !newDomainName.trim().equals("")) ? newDomainName : old.getName();
+        String domainName = (newDomainName != null && !newDomainName.isBlank()) ? newDomainName.trim() : old.getName();
 
         // Check if the (new) name is valid in an URI. If not, tell the user and abort
         try {
@@ -1332,7 +1332,7 @@ public class DomainRESTController {
         }
         
         // Ensure a valid desired success probability, if the selected algorithm is of the RANDOM-family
-        if (algorithm.toUpperCase().startsWith("RANDOM") && randomAlgorithmDesiredSuccessProbability != null) {
+        if (algorithm != null && algorithm.toUpperCase().startsWith("RANDOM") && randomAlgorithmDesiredSuccessProbability != null) {
         	
         	if (randomAlgorithmDesiredSuccessProbability > 1.0d) {
         		// The success probability was probably provided as a number between 0 and 100, so we transform it into [0,1] 
@@ -1462,7 +1462,7 @@ public class DomainRESTController {
         // Get old domain object
         Domain old = domainDBAccessService.getDomainByName(oldDomainName, null);
 
-        String newName = domainDto.getName().trim();
+        String newName = domainDto.getName();
         String prefix = domainDto.getPrefix();
         Timestamp validFrom = domainDto.getValidFrom() != null ? Timestamp.valueOf(domainDto.getValidFrom()) : null;
         Timestamp validTo = domainDto.getValidTo() != null ? Timestamp.valueOf(domainDto.getValidTo()) : null;
@@ -1485,7 +1485,7 @@ public class DomainRESTController {
 
         // Create the updated domain object
         Domain updated = new Domain();
-        updated.setName(newName);
+        updated.setName((newName != null && !newName.isBlank()) ? newName.trim() : null);
         updated.setValidfrom((validFrom != null) ? validFrom.toLocalDateTime() : null);
         updated.setValidfrominherited((validFrom != null) ? false : null);
         updated.setValidto((validTo != null) ? validTo.toLocalDateTime() : null);
