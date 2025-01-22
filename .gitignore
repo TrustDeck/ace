@@ -22,3 +22,4 @@ examples/certs/*
 /.apt_generated_tests/
 /bin/
 .classpath
+Makefile
