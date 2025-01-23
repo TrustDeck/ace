@@ -1,6 +1,6 @@
 /*
  * ACE - Advanced Confidentiality Engine
- * Copyright 2024 Armin Müller & Eric Wündisch
+ * Copyright 2024-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,16 +23,14 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
-
 /**
  * Configuration class that holds the operational roles for the application.
- * <p>
+ *
  * This class is used to map configuration properties defined under the `app` prefix in the application’s
  * configuration file (e.g., `application.yml` or `application.properties`). It contains a list of role names
  * that define the operations required by the application.
- * </p>
  *
- * <p>For example, a configuration in `application.yml` might look like:</p>
+ * For example, a configuration in `application.yml` might look like:
  * <pre>
  * app:
  *   operations:
@@ -41,11 +39,7 @@ import java.util.List;
  *     - domain-delete
  * </pre>
  *
- * <p>The above configuration would populate the {@link RoleConfig#operations} field with a list of these operations.</p>
- *
- * <p>The {@code @Configuration} and {@code @ConfigurationProperties} annotations make this class a Spring-managed
- * configuration bean that will be automatically populated based on the properties defined in the external configuration file.</p>
- * <p>The {@code @Data} annotation from Lombok is used to automatically generate boilerplate code, such as getters and setters.</p>
+ * @author Eric Wündisch & Armin Müller
  */
 @Data
 @Configuration
@@ -53,12 +47,9 @@ import java.util.List;
 public class RoleConfig {
 
     /**
-     * List of operations defined for the application.
-     * <p>
-     * This field is populated based on the `app.operations` configuration in the external configuration file.
-     * It typically represents the names of various operations (e.g., create, read, update, delete) that the application
+     * List of operations defined for the application under `app.operations` in the yml-file.
+     * It represents the names of various rights and roles (e.g., create, read, update, delete) that the application
      * will use to define roles and permissions in the Keycloak server.
-     * </p>
      */
     private List<String> operations;
 }
