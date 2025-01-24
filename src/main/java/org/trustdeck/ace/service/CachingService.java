@@ -1,6 +1,6 @@
 /*
  * ACE - Advanced Confidentiality Engine
- * Copyright 2024 Armin Müller & Eric Wündisch
+ * Copyright 2024-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,35 +30,34 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * CachingService is a service class responsible for managing caching operations related to group paths.
+ * CachingService is a service class responsible for caching group paths for faster authentication.
  * It uses Hazelcast as the underlying caching mechanism.
  *
- * <p>This service includes methods to retrieve group paths for a user, cache the group paths if not present,
+ * This service includes methods to retrieve group paths for a user, cache the group paths if not present,
  * flush and re-cache groups when a domain match is found, and handle concurrent access using write locks.
  *
- * <p>The service is annotated with @Service to indicate that it is a Spring-managed component, and @Slf4j to
- * provide logging capabilities.
+ * @author Eric Wündisch & Armin Müller
  */
 @Service
 @Slf4j
 public class CachingService {
 
-    /** Injected Hazelcast instance used for caching data */
+    /** Hazelcast instance used for caching data. */
     @Autowired
     private HazelcastInstance hazelcastInstance;
 
-    /** Injected OIDC service used for retrieving group information related to users */
+    /** OIDC service used for retrieving (group) information related to users. */
     @Autowired
     private OidcService oidcService;
 
-    /** Name of the lock used to control write operations on the cache */
+    /** Name of the lock used to control write operations on the cache. */
     private static final String WRITE_LOCK_NAME = "write-lock";
 
-    /** Name of the cache used in Hazelcast */
+    /** Name of the cache used in Hazelcast. */
     private static final String CACHE_NAME = "hazelcast-instance";
 
-    /** Maximum time to wait for the lock to be released, in seconds */
-    private static final long MAX_WAIT_TIME_SECONDS = 10;
+    /** Maximum time to wait for the lock to be released, in seconds. */
+    private static final long MAX_WAIT_TIME_SECONDS = 3;
 
     /**
      * Retrieves the group paths for the given user ID from the cache.
@@ -80,7 +79,7 @@ public class CachingService {
             while (System.currentTimeMillis() - startTime < MAX_WAIT_TIME_SECONDS * 1000) {
 
                 // If the lock is released, retrieve data from the cache
-                if (resourceCache.isLocked(WRITE_LOCK_NAME)) {
+                if (!resourceCache.isLocked(WRITE_LOCK_NAME)) {
                     List<String> resource = resourceCache.get(userId);
                     if (resource != null) {
                         return resource;
@@ -109,10 +108,18 @@ public class CachingService {
         this.flushAndReCacheMatchingGroups(userId, domain, false);
     }
 
+    /**
+     * Flushes and re-caches group paths for a user if the given domain occurs in the cached groups.
+     *
+     * @param userId the ID of the user
+     * @param domain the domain to check for
+     * @param force force deletion of groups from cache
+     */
     public void flushAndReCacheMatchingGroups(String userId, String domain, boolean force) {
         this.flushGroupIfDomainOccurs(userId, domain, force);
         this.getGroupPaths(userId);
     }
+
     /**
      * Retrieves group paths for the given user ID from the OIDC service, caches them,
      * and returns the group paths.
@@ -123,24 +130,51 @@ public class CachingService {
     protected List<String> cacheGroups(String userId) {
         IMap<String, List<String>> resourceCache = hazelcastInstance.getMap(CACHE_NAME);
         List<String> groups = null;
+
         try {
+            // Check if the cache can be write-locked. If not, wait.
+            if (resourceCache.isLocked(WRITE_LOCK_NAME)) {
+                Long start = System.currentTimeMillis();
+                while (resourceCache.isLocked(WRITE_LOCK_NAME)) {
+                    // Still locked. Do we wait, or not?
+                    if (System.currentTimeMillis() - start <= MAX_WAIT_TIME_SECONDS * 1000) {
+                        // We wait. Check again.
+                        if (!resourceCache.isLocked(WRITE_LOCK_NAME)) {
+                            // Now it's available. Lock it and store data.
+                            resourceCache.lock(WRITE_LOCK_NAME);
 
-            //TODO check if locked and wait for unlock
-            //resourceCache
-            // Lock the cache to ensure only one thread can write at a time
-            resourceCache.lock(WRITE_LOCK_NAME);
+                            // Retrieve groups from OIDC service and convert to a flat list of group paths
+                            groups = Utility.simpleFlatGroupPaths(oidcService.getGroupsByUserId(userId), true);
 
-            // Retrieve groups from OIDC service and convert to a flat list of group paths
-            groups = Utility.simpleFlatGroupPaths(oidcService.getGroupsByUserId(userId), true);
-            // Store the group paths in the cache with a 10-minute expiration time
-            resourceCache.put(userId, groups, 10, TimeUnit.MINUTES);
-            log.trace("Insert into cache: USER-ID: " + userId + ", GROUPS: " + groups);
+                            // Store the group paths in the cache with a 10-minute expiration time
+                            resourceCache.put(userId, groups, 10, TimeUnit.MINUTES);
+                            log.debug("Insert into cache: USER-ID: " + userId + ", GROUPS: " + groups);
+                        }
+                    }
+                }
+            } else {
+                // The lock is available. Lock it and store data.
+                resourceCache.lock(WRITE_LOCK_NAME);
+
+                // Retrieve groups from OIDC service and convert to a flat list of group paths
+                groups = Utility.simpleFlatGroupPaths(oidcService.getGroupsByUserId(userId), true);
+
+                // Store the group paths in the cache with a 10-minute expiration time
+                resourceCache.put(userId, groups, 10, TimeUnit.MINUTES);
+                log.debug("Insert into cache: USER-ID: " + userId + ", GROUPS: " + groups);
+            }
         } catch (NullPointerException | UnsupportedOperationException e) {
             // Handle cases where the group retrieval or caching fails
             groups = new ArrayList<>();
         } finally {
             // Unlock the cache after write operation is complete
             resourceCache.unlock(WRITE_LOCK_NAME);
+        }
+
+        if (groups == null) {
+            // If the groups are still null, the cache was locked longer than the waiting time
+            groups = new ArrayList<>();
+            log.debug("Cache was busy longer than the maximum waiting time. No groups added to it.");
         }
 
         return groups;
@@ -150,35 +184,40 @@ public class CachingService {
      * Flushes the group paths from the cache if the specified domain is found in any of the group paths.
      *
      * @param domain the domain to check for in group paths
+     * @param userId the ID of the user
+     * @param force force deletion of groups from cache
      */
     public void flushGroupIfDomainOccurs(String userId, String domain, boolean force) {
         IMap<String, List<String>> resourceCache = hazelcastInstance.getMap(CACHE_NAME);
+
         try {
             // Lock the cache to ensure exclusive access during flush operation
             resourceCache.lock(WRITE_LOCK_NAME);
+
+            // Iterate over the users (key: userID, value: the user's group paths)
             for (Map.Entry<String, List<String>> entry : resourceCache.entrySet()) {
-                if(force){
-                    if(entry.getKey().equals(userId)){
+                if (force) {
+                    // Lazy flushing: delete all group paths for the specified user
+                    if (entry.getKey().equals(userId)) {
                         resourceCache.delete(entry.getKey());
                     }
-                }else{
-                    List<String> strings = entry.getValue();
+                } else {
+                    // Check if the domain is actually part of the user's group paths
+                    List<String> groupPaths = entry.getValue();
+
                     // Check if any group path ends with the specified domain
-                    boolean anyEndsWith = strings.stream().anyMatch(s -> s.endsWith("/" + domain));
-                    if (anyEndsWith) {
-                        // Remove the entry from the cache if the domain is found
+                    if (groupPaths.stream().anyMatch(s -> s.endsWith("/" + domain))) {
+                        // Remove all group paths from the cache if the domain is found
                         resourceCache.delete(entry.getKey());
                     }
                 }
-
             }
         } catch (Exception e) {
             // Log any errors that occur during the flush operation
-            log.error(e.getMessage());
+            log.debug("Couldn't flush cache: " + e.getMessage());
         } finally {
             // Unlock the cache after flush operation is complete
             resourceCache.unlock(WRITE_LOCK_NAME);
         }
     }
 }
-
