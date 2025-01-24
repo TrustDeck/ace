@@ -17,6 +17,7 @@
 
 package org.trustdeck.ace.utils;
 
+import org.jooq.Null;
 import org.springframework.stereotype.Component;
 
 /**
@@ -34,13 +35,18 @@ public class Assertion {
      * @return {@code true} only if none of the passed objects are null, {@code false} otherwise.
      */
     public static Boolean assertNotNullAll(Object... assertObjects) {
-        for (int i = 0; i < assertObjects.length; i++) {
-            if (assertObjects[i] == null) {
-                return false;
-            } else if (assertObjects[i] instanceof String && ((String) assertObjects[i]).isBlank()) {
-            	return false;
+        try {
+            for (int i = 0; i < assertObjects.length; i++) {
+                if (assertObjects[i] == null) {
+                    return false;
+                } else if (assertObjects[i] instanceof String && ((String) assertObjects[i]).isBlank()) {
+                    return false;
+                }
             }
+        } catch (NullPointerException e) {
+            return false;
         }
+
         return true;
     }
 

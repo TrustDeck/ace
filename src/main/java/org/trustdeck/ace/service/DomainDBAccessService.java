@@ -1,6 +1,6 @@
 /*
  * ACE - Advanced Confidentiality Engine
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ package org.trustdeck.ace.service;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
 import org.jooq.CommonTableExpression;
 import org.jooq.DSLContext;
 import org.jooq.DeleteConditionStep;
+import org.jooq.impl.DSL;
 import org.jooq.JoinType;
+import org.jooq.Record;
 import org.jooq.SelectQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -32,7 +32,14 @@ import org.springframework.data.util.Pair;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.trustdeck.ace.algorithms.PathFinder;
-import org.trustdeck.ace.exception.*;
+import org.trustdeck.ace.exception.DomainOIDCException;
+import org.trustdeck.ace.exception.DomainNotFoundException;
+import org.trustdeck.ace.exception.DuplicateDomainException;
+import org.trustdeck.ace.exception.FailedChildDomainDeletionException;
+import org.trustdeck.ace.exception.FailedChildDomainUpdateException;
+import org.trustdeck.ace.exception.FailedPseudonymDeletionException;
+import org.trustdeck.ace.exception.FailedPseudonymUpdateException;
+import org.trustdeck.ace.exception.UnexpectedResultSizeException;
 import org.trustdeck.ace.jooq.generated.tables.daos.AuditeventDao;
 import org.trustdeck.ace.jooq.generated.tables.daos.DomainDao;
 import org.trustdeck.ace.jooq.generated.tables.pojos.Auditevent;
@@ -45,9 +52,9 @@ import org.trustdeck.ace.utils.Assertion;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.DSL.select;
-import static org.jooq.impl.DSL.field;
 import static org.trustdeck.ace.jooq.generated.Tables.DOMAIN;
 import static org.trustdeck.ace.jooq.generated.Tables.PSEUDONYM;
 
@@ -81,8 +88,7 @@ public class DomainDBAccessService {
     @Autowired
     private PseudonymDBAccessService pseudonymDBAccessService;
 
-
-    /** Injects the DomainOidcService class to handle domains in the oidc service*/
+    /** Handles rights and roles for domains. */
     @Autowired
     private DomainOidcService domainOidcService;
 
@@ -150,7 +156,7 @@ public class DomainDBAccessService {
             });
 
             // At this point the retrieval was successful
-            log.debug("Sucessfully queried the database for the domain using the name.");
+            log.debug("Successfully queried the database for the domain using the name.");
             return domain;
         } catch (Exception e) {
             log.error("Couldn't retrieve the domain " + domainName + " from the database: " + e.getMessage() + "\n");
@@ -187,7 +193,7 @@ public class DomainDBAccessService {
             });
 
             // At this point the retrieval was successful
-            log.debug("Sucessfully queried the database for the domain using the ID.");
+            log.debug("Successfully queried the database for the domain using the ID.");
             return domain;
         } catch (Exception e) {
             log.error("Couldn't retrieve the domain with ID " + domainID + " from the database: " + e.getMessage() + "\n");
@@ -296,14 +302,16 @@ public class DomainDBAccessService {
 		// Check if the given information is sufficient to start the linking-process
         if (sourceDomain == null) {
         	log.debug("The domain to start the search from (\"" + sourceDomainName + "\") was not found.");
+            return null;
         } else if (targetDomain == null) {
         	log.debug("The domain to find the target in (\"" + targetDomainName + "\") was not found.");
-        } else if (sourceRecordList == null || sourceRecordList.size() == 0) {
+            return null;
+        } else if (sourceRecordList == null || sourceRecordList.isEmpty()) {
         	log.debug("The record to start the search from was not found.");
             return null;
         }
         
-        Pseudonym sourceRecord = sourceRecordList.get(0);
+        Pseudonym sourceRecord = sourceRecordList.getFirst();
         
         // Generate the tree starting from the given source-domain and generate the path to the destination domain
         PathFinder pathFinder = new PathFinder(getDomainTreeStructure(sourceDomain));
@@ -422,7 +430,7 @@ public class DomainDBAccessService {
 			});
 			
 			// At this point the retrieval was successful
-            log.debug("Sucessfully retrieved all pseudonym-values from the domain.");
+            log.debug("Successfully retrieved all pseudonym-values from the domain.");
             return pseudonyms;
         } catch (Exception e) {
             log.error("Couldn't retrieve the pseudonym-values of domain " + domainName + " from the database: " + e.getMessage() + "\n");
@@ -465,7 +473,7 @@ public class DomainDBAccessService {
             });
 
             // At this point the retrieval was successful
-            log.debug("Sucessfully retrieved all records from the domain.");
+            log.debug("Successfully retrieved all records from the domain.");
             return pseudonyms;
         } catch (Exception e) {
             log.error("Couldn't retrieve the records of domain " + domainName + " from the database: " + e.getMessage() + "\n");
@@ -514,7 +522,7 @@ public class DomainDBAccessService {
             });
 
             // At this point the retrieval was successful
-            log.debug("Sucessfully retrieved the number of records in the domain.");
+            log.debug("Successfully retrieved the number of records in the domain.");
             return count;
         } catch (DomainNotFoundException e) {
         	log.error("Domain \"" + domainName + "\" wasn't found in the database.");
@@ -561,7 +569,7 @@ public class DomainDBAccessService {
 
                         // Recursive call of the delete method -> DFS
                         if (deleteDomain(childName, recursiveDeletion, request)) {
-                            /** (deletions on the connections opened in this DFS are committed only if
+                            /* (deletions on the connections opened in this DFS are committed only if
                              * the deletion is successful from bottom to top, otherwise the deletion fails
                              * and the error is transferred bottom-up.)
                              */
@@ -574,7 +582,7 @@ public class DomainDBAccessService {
                     }
                 }
 
-                /** NOTE: This point is reached the first time, when the DFS found the last sub-domain in
+                /* NOTE: This point is reached the first time, when the DFS found the last sub-domain in
                  * the "domain-tree". From here the bottom-up deletion starts. First delete the records in
                  * the domain, then delete the domain itself and return one recursion level upward.
                  */
@@ -611,15 +619,15 @@ public class DomainDBAccessService {
                 // Success; continue with the deletion process
                 log.debug("Successfully deleted all records in the domain \"" + domainName + "\".");
 
-                //try to delete the group in oidc service
-                if(request != null){
+                // Try to delete the associated group in the OIDC service
+                if (request != null) {
                     JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
-                    if(token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()){
-                        try{
+                    if (token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()) {
+                        try {
                             domainOidcService.removeDomainGroups(domain.getName(), token.getToken().getSubject());
-                        }catch (Exception e){
-                            log.error("Removing domain groups failed " + e);
-                            throw new NullPointerException();
+                        } catch (Exception e) {
+                            log.error("Removing domain groups failed " + e.getMessage());
+                            throw new DomainOIDCException(domainName);
                         }
                     }
                 }
@@ -665,8 +673,11 @@ public class DomainDBAccessService {
             log.error("The deletion would have affected an unexpected number of database entries. It should only affect 1, "
                     + "but affected " + h.getActualSize() + " database entries.");
             return false;
-        } catch (Exception i) {
-            log.error("Couldn't delete the record from the database: " + i.getMessage() + "\n");
+        } catch (DomainOIDCException i) {
+            log.error("Couldn't delete OIDC rights and roles of domain \"" + i.getDomainName() + "\".");
+            return false;
+        } catch (Exception j) {
+            log.error("Couldn't delete the record from the database: " + j.getMessage() + "\n");
             return false;
         }
     }
@@ -689,17 +700,6 @@ public class DomainDBAccessService {
                     // Record is already in the DB. Use exception to break the transaction.
                     throw new DuplicateDomainException(domain.getName());
                 }
-
-                if(request == null) {
-                    throw new NullPointerException();
-                }
-
-                JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
-                if(token == null || token.getToken() == null || token.getToken().getSubject().isBlank()){
-                    throw new NullPointerException();
-                }
-
-                domainOidcService.createDomainGroups(domain.getName(), token.getToken().getSubject());
 
                 // Insert the domain object into database
                 int insertedRecords = DSL.using(configuration)
@@ -739,17 +739,28 @@ public class DomainDBAccessService {
                 }
 
                 // Create audit event object
-                Auditevent auditEvent = auditEventBuilder.build(request);
-                if (auditEvent != null) {
-                    // Write audit information into database
-                    this.getAuditeventDao().insert(auditEvent);
+                if (request != null) {
+                    Auditevent auditEvent = auditEventBuilder.build(request);
+                    if (auditEvent != null) {
+                        // Write audit information into database
+                        this.getAuditeventDao().insert(auditEvent);
+                    }
+
+                    // Check if the information needed for OIDC management are in the token
+                    JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+                    if (token == null || token.getToken() == null || token.getToken().getSubject().isBlank()) {
+                        throw new DomainOIDCException(domain.getName());
+                    }
+
+                    // Create domain group paths for the rights and roles management
+                    domainOidcService.createDomainGroups(domain.getName(), token.getToken().getSubject());
                 }
 
                 // Implicit transaction commit here
             });
 
             // At this point the insertion was successful
-            log.debug("Sucessfully added the new domain into the database.");
+            log.debug("Successfully added the new domain into the database.");
             return INSERTION_SUCCESS;
         } catch (DuplicateDomainException e) {
             log.debug("The domain that should be inserted (\"" + e.getDomainName() + "\") was already in the database. No insertion performed.");
@@ -761,8 +772,11 @@ public class DomainDBAccessService {
             log.error("The insertion would have affected an unexpected number of domains. It should only affect 1 domain, "
                     + "but affected " + g.getActualSize() + " domains.");
             return INSERTION_ERROR;
-        } catch (Exception h) {
-            log.error("Couldn't insert the domain into the database: " + h.getMessage() + "\n");
+        } catch (DomainOIDCException h) {
+            log.error("Creating OIDC rights and roles for the domain \"" + h.getDomainName() + "\" failed. No insertion performed.");
+            return INSERTION_ERROR;
+        } catch (Exception i) {
+            log.error("Couldn't insert the domain into the database: " + i.getMessage() + "\n");
             return INSERTION_ERROR;
         }
     }
@@ -861,25 +875,6 @@ public class DomainDBAccessService {
                 if (!new DomainDao(configuration).exists(oldDomain)) {
                     // Domain is not in the DB. Use exception to break the transaction.
                     throw new DomainNotFoundException(oldDomain.getName());
-                }
-
-                if(oldDomain != null &&
-                        oldDomain.getName() != null &&
-                        newDomain != null &&
-                        newDomain.getName() != null &&
-                        !oldDomain.getName().equals(newDomain.getName()) &&
-                        domainOidcService.canUseAsDomainGroup(newDomain.getName()) &&
-                        request != null
-                ){
-                    JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
-                    if(token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()){
-                        try{
-                            domainOidcService.updateDomainGroups(oldDomain.getName(), newDomain.getName(), token.getToken().getSubject());
-                        }catch (Exception e){
-                            log.error("Updating domain groups failed " + e);
-                            throw new NullPointerException();
-                        }
-                    }
                 }
 
                 // Create and execute the update query
@@ -1002,6 +997,21 @@ public class DomainDBAccessService {
 	                	// Write audit information into database
 	                	this.getAuditeventDao().insert(auditEvent);
 	                }
+
+                    // Check if the OIDC rights and roles need to be adapted
+                    if (newDomain.getName() != null && !oldDomain.getName().equals(newDomain.getName())
+                            && domainOidcService.canUseAsDomainGroup(newDomain.getName())) {
+                        // The domain name has changed, so we need to update the OIDC rights and roles
+                        JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+                        if (token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()) {
+                            try {
+                                domainOidcService.updateDomainGroups(oldDomain.getName(), newDomain.getName(), token.getToken().getSubject());
+                            } catch (Exception e) {
+                                log.error("Updating OIDC rights and roles failed: " + e.getMessage());
+                                throw new DomainOIDCException("oldName: " + oldDomain.getName() + ", newName: " + newDomain.getName());
+                            }
+                        }
+                    }
                 }
 
                 // Implicit transaction commit here
@@ -1023,8 +1033,11 @@ public class DomainDBAccessService {
         } catch (FailedChildDomainUpdateException h) {
             log.error("Updating the child-domain \"" + h.getChildName() + "\" was unsuccessful and was therefore rolled back.");
             return false;
-        } catch (Exception i) {
-            log.error("Couldn't update the domain: " + i.getMessage() + "\n");
+        } catch (DomainOIDCException i) {
+            log.error("Updating the OIDC rights and roles failed for the domain (" + i.getDomainName() + "). The update was therefore rolled back.");
+            return false;
+        } catch (Exception j) {
+            log.error("Couldn't update the domain: " + j.getMessage() + "\n");
             return false;
         }
     }
