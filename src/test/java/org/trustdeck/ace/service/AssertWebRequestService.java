@@ -1,6 +1,6 @@
 /*
  * ACE - Advanced Confidentiality Engine
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.HealthState;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.core.DockerClientBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -35,11 +40,15 @@ import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.TestInstantiationException;
 import org.keycloak.representations.AccessTokenResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
@@ -56,24 +65,35 @@ import org.springframework.util.ResourceUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.trustdeck.ace.model.dto.DomainDto;
 import org.trustdeck.ace.model.dto.RecordDto;
+import org.trustdeck.ace.utils.Assertion;
 
 import javax.net.ssl.SSLContext;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -100,17 +120,20 @@ public class AssertWebRequestService {
     private Environment env;
 
     /**
-     * Sets up the mocking objects.
+     * Resets the test environment and sets up the mock objects.
      *
      * @param webApplicationContext the web application context
-     * @param restDocumentation     the context of the REST documentation
+     * @param restDocumentation the context of the REST documentation
      * @throws Exception forwards any internally thrown exceptions
      */
     @BeforeEach
     public void setUp(WebApplicationContext webApplicationContext,
                       RestDocumentationContextProvider restDocumentation) throws Exception {
 
-        runCommand("make restore-test");
+        if (!resetTestEnvironment()) {
+            log.error("Resetting the test environment failed.");
+            throw new TestInstantiationException("Resetting the test environment failed.");
+        }
 
         this.mockMvc = MockMvcBuilders
                 .webAppContextSetup(webApplicationContext)
@@ -124,46 +147,119 @@ public class AssertWebRequestService {
         log.debug("Ready to test.");
     }
 
-
     /**
-     * Executes a shell command using the specified command string.
-     *
-     * <p>This method runs the command using a Bash shell, captures both the output and error streams,
-     * and prints any error messages to the standard error output.
-     * If the command fails (exit code is not zero), it throws a RuntimeException with the failure details.
-     *
-     * @param command the command to be executed
-     * @throws Exception if an error occurs during command execution
+     * Helper method to reset the test data in ACE#s database as well as in Keycloak
+     * @return {@code true} when resetting the databases was successful, {@code false} otherwise
      */
-    private void runCommand(String command) throws Exception {
-        // Execute the command
-        ProcessBuilder processBuilder = new ProcessBuilder("/bin/bash", "-c", command);
-        Process process = processBuilder.start();
-
-        // Capture the output and error stream
-        try (
-                BufferedReader ignored = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            String line;
-
-            // Uncomment below lines to print command output (stdout)
-            // while ((line = reader.readLine()) != null) {
-            //     System.out.println(line);
-            // }
-
-            // Print command error output (stderr)
-            while ((line = errorReader.readLine()) != null) {
-                System.err.println(line);
+    private boolean resetTestEnvironment() {
+        try {
+            // Connect to Postgres and drop the keycloak database
+            try (Connection conn = getPostgresConnection()) {
+                conn.createStatement().execute("DROP DATABASE IF EXISTS keycloak WITH (FORCE);");
             }
-        }
 
-        // Wait for the command to complete
-        int exitCode = process.waitFor();
-        if (exitCode != 0) {
-            throw new RuntimeException("Command failed with exit code: " + exitCode);
+            // Recreate the Keycloak database
+            try (Connection conn = getPostgresConnection()) {
+                ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/keycloak-example.sql"));
+            }
+
+            // Restart the keycloak docker container
+            DockerClient dockerClient = DockerClientBuilder.getInstance().build();
+            List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+            String containerID = "";
+            for (Container container : containers) {
+                // Docker prepends a "/" to container names
+                if (Arrays.asList(container.getNames()).contains("/ace-keycloak")) {
+                    containerID = container.getId();
+                    dockerClient.restartContainerCmd(containerID).exec();
+                }
+            }
+
+            // Wait for the container to come back up
+            long start = System.currentTimeMillis();
+            InspectContainerResponse containerInfo;
+            while (true) {
+                // Get the container's current health info
+                containerInfo = dockerClient.inspectContainerCmd(containerID).exec();
+                HealthState health = containerInfo.getState().getHealth();
+                if (health != null && health.getStatus().equals("healthy")) {
+                    // The container is back online
+                    break;
+                } else if (health != null && health.getStatus().equals("starting")) {
+                    // Not yet back online
+                    if (System.currentTimeMillis() - start >= 10000) {
+                        // Waiting too long for the container to come back online
+                        return false;
+                    } else {
+                        Thread.sleep(1000);
+                    }
+                } else if (health != null && health.getStatus().equals("unhealthy")) {
+                    // Restart failed
+                    return false;
+                }
+            }
+
+            // Remove and recreate ACE's database:
+            try (Connection conn = getPostgresConnection()) {
+                conn.createStatement().execute("DROP DATABASE IF EXISTS ace WITH (FORCE);");
+                conn.createStatement().execute("CREATE DATABASE ace;");
+                conn.createStatement().execute("ALTER DATABASE ace OWNER TO \"ace-manager\";");
+            }
+
+            // Refill the database with data for testing
+            try (Connection aceConn = getAceConnection()) {
+                ScriptUtils.executeSqlScript(aceConn, new FileSystemResource("src/test/resources/sql/ace-schema-test.sql"));
+            }
+
+            return true;
+        } catch (Exception e) {
+            log.error("Error while resetting the test environment: ", e);
+            return false;
         }
     }
 
+    /**
+     * Helper method to obtain a connection to the postgres database.
+     *
+     * @return a connection to the administrative postgres database
+     * @throws IllegalStateException when the database URL, username, or password are missing in the application.yml
+     * @throws SQLException if establishing the connection fails
+     */
+    private Connection getPostgresConnection() throws IllegalStateException, SQLException {
+        // Read the ACE URL from application.yml
+        String aceURL = env.getProperty("app.datasource.ace.url");
+        String username = env.getProperty("app.datasource.ace.username");
+        String password = env.getProperty("app.datasource.ace.password");
+
+        if (!Assertion.assertNotNullAll(aceURL, username, password)) {
+            throw new IllegalStateException("app.datasource.ace.url, app.datasource.ace.username, or app.datasource.ace.password is not configured.");
+        }
+
+        // Replace the database name with "postgres"
+        String adminUrl = aceURL.replace("/ace", "/postgres");
+
+        return DriverManager.getConnection(adminUrl, username, password);
+    }
+
+    /**
+     * Helper method to obtain a connection to ACE's database.
+     *
+     * @return a connection to ACE's database
+     * @throws IllegalStateException when the database URL, username, or password are missing in the application.yml
+     * @throws SQLException if establishing the connection fails
+     */
+    private Connection getAceConnection() throws IllegalStateException, SQLException {
+        // Read the ACE URL from application.yml
+        String aceURL = env.getProperty("app.datasource.ace.url");
+        String username = env.getProperty("app.datasource.ace.username");
+        String password = env.getProperty("app.datasource.ace.password");
+
+        if (!Assertion.assertNotNullAll(aceURL, username, password)) {
+            throw new IllegalStateException("app.datasource.ace.url is not configured.");
+        }
+
+        return DriverManager.getConnection(aceURL, username, password);
+    }
 
     /**
      * Returns the mock MVC object.
@@ -544,7 +640,7 @@ public class AssertWebRequestService {
                 .loadTrustMaterial(trustore, Objects.requireNonNull(this.env.getProperty("spring.security.oauth2.resourceserver.jwt.truststore-password")).toCharArray())
                 .build();
 
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("client_id", this.env.getProperty("spring.security.oauth2.resourceserver.jwt.client-id")));
         params.add(new BasicNameValuePair("username", username));
         params.add(new BasicNameValuePair("password", password));
