@@ -90,7 +90,7 @@ public class DomainDBAccessService {
 
     /** Handles rights and roles for domains. */
     @Autowired
-    private DomainOidcService domainOidcService;
+    private DomainOIDCService domainOidcService;
 
     /** Represents the duplication status of a requested insertion of a domain into the database. */
     public static final String INSERTION_DUPLICATE = "duplicate";
@@ -624,7 +624,7 @@ public class DomainDBAccessService {
                     JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
                     if (token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()) {
                         try {
-                            domainOidcService.removeDomainGroups(domain.getName(), token.getToken().getSubject());
+                            domainOidcService.deleteDomainGroups(domain.getName(), token.getToken().getSubject());
                         } catch (Exception e) {
                             log.error("Removing domain groups failed " + e.getMessage());
                             throw new DomainOIDCException(domainName);
@@ -1000,7 +1000,7 @@ public class DomainDBAccessService {
 
                     // Check if the OIDC rights and roles need to be adapted
                     if (newDomain.getName() != null && !oldDomain.getName().equals(newDomain.getName())
-                            && domainOidcService.canUseAsDomainGroup(newDomain.getName())) {
+                            && domainOidcService.canBeUsedAsDomainGroup(newDomain.getName())) {
                         // The domain name has changed, so we need to update the OIDC rights and roles
                         JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
                         if (token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()) {
