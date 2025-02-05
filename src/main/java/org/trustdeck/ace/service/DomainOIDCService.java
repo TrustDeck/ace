@@ -67,7 +67,7 @@ public class DomainOIDCService {
      */
     public Boolean canBeUsedAsDomainGroup(String domainName) {
         // Retrieve a flat map of group paths for all groups in the realm
-        Map<String, String> flatGroupPaths = Utility.flatGroups(oidcService.getRealmGroups(), true);
+        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(oidcService.getRealmGroups(), true);
 
         // Iterate over each operation-role defined in the configuration
         for (String role : roleConfig.getOperations()) {
@@ -133,7 +133,7 @@ public class DomainOIDCService {
      */
     public void deleteDomainGroups(String domainName, String userId) {
         // Retrieve a flat map of group paths for all groups in the realm
-        Map<String, String> flatGroupPaths = Utility.flatGroups(oidcService.getRealmGroups(), true);
+        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(oidcService.getRealmGroups(), true);
 
         // Iterate over each operation-role defined in the configuration
         for (String operation : roleConfig.getOperations()) {
@@ -172,7 +172,7 @@ public class DomainOIDCService {
         }
 
         // Retrieve a flat map of group paths for all groups in the realm
-        Map<String, String> flatGroupPaths = Utility.flatGroups(oidcService.getRealmGroups(), true);
+        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(oidcService.getRealmGroups(), true);
 
         // Remove the old role from the system
         if (!oidcService.removeClientRole(oldRole)) {

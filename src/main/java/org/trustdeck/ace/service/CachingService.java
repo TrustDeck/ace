@@ -144,7 +144,7 @@ public class CachingService {
                             resourceCache.lock(WRITE_LOCK_NAME);
 
                             // Retrieve groups from OIDC service and convert to a flat list of group paths
-                            groups = Utility.simpleFlatGroupPaths(oidcService.getGroupsByUserId(userId), true);
+                            groups = Utility.extractGroupPaths(oidcService.getGroupsByUserId(userId), true);
 
                             // Store the group paths in the cache with a 10-minute expiration time
                             resourceCache.put(userId, groups, 10, TimeUnit.MINUTES);
@@ -157,7 +157,7 @@ public class CachingService {
                 resourceCache.lock(WRITE_LOCK_NAME);
 
                 // Retrieve groups from OIDC service and convert to a flat list of group paths
-                groups = Utility.simpleFlatGroupPaths(oidcService.getGroupsByUserId(userId), true);
+                groups = Utility.extractGroupPaths(oidcService.getGroupsByUserId(userId), true);
 
                 // Store the group paths in the cache with a 10-minute expiration time
                 resourceCache.put(userId, groups, 10, TimeUnit.MINUTES);

@@ -196,7 +196,7 @@ public class OidcService implements InitializingBean {
         }
 
         // Retrieve a flat map of all existing groups in the realm
-        Map<String, String> flatGroupPaths = Utility.flatGroups(this.getRealmGroups(), true);
+        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(this.getRealmGroups(), true);
 
         // List to store group names that need to be created
         List<String> newGroups = new ArrayList<>();
@@ -244,7 +244,7 @@ public class OidcService implements InitializingBean {
         }
 
         // Re-fetch the list of all groups after creation to ensure consistency
-        Map<String, String> finalGroupPaths = Utility.flatGroups(this.getRealmGroups(), true);
+        Map<String, String> finalGroupPaths = Utility.flattenGroupIDToPathMapping(this.getRealmGroups(), true);
 
         // List to store the group IDs for each role
         List<String> groupIds = new ArrayList<>();
