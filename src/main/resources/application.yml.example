@@ -1,5 +1,5 @@
 server:
-  port: 8060  # Server port
+  port: 8080  # Server port
   # Disable generic error pages
   error:
     whitelabel:
@@ -12,6 +12,7 @@ server:
 
 logging:
   level:
+    org.trustdeck.ace: INFO
     root: ERROR
 
 spring:
@@ -40,7 +41,7 @@ spring:
           client-secret: secret
           realm: sandbox
           admin-username: admin-test
-          admin-password: admin-test
+          admin-password: admin-test-password
           # Custom section ends
           domain-role-group-claim-name: groups
           domain-role-group-context-name: Domain
@@ -58,17 +59,20 @@ audittrail:
       isNoAuditing: Unaudited
       isAuditEverything: AuditEverything
 
-# Config for the database connection
 app:
+  response:
+    # Possible entries: application/json or text/plain
+    preferred-media-type: application/json
   datasource:
     ace:
       # Changes can be made below
       url: jdbc:postgresql://localhost:5432/ace
       username: ace-manager
-      password: ps3udoNym1zation!
+      password: ace-manager-password
       configuration:
-        maximum-pool-size: 20 # Maximum number of DB connections that are managed by the Hikari data source
+        maximum-pool-size: 20 # Maximum number of database connections that are managed by the Hikari data source
   operations:
+    # Name of all possible rights -- used for rights and roles management
     - domain-create
     - domain-create-complete
     - domain-delete
