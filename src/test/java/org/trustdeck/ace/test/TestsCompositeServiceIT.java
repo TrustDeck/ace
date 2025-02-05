@@ -1,6 +1,6 @@
 /*
  * ACE - Advanced Confidentiality Engine
- * Copyright 2021-2024 Armin Müller & Eric Wündisch
+ * Copyright 2021-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 
 /**
  * This class offers tests that only work in a combination of updating or deleting different objects first.
@@ -123,7 +129,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         String childTwoName = "TestStudie-Paper";
         String childTwoPrefix = "TS-P-";
 
-        String childThreeName = "TestStudie-Labor-Cool";
+        String childThreeName = "TestStudie-Labor-Analyse";
         String childThreePrefix = "TS-L-";
 
         //this.createDomainHelper(rootDomainName, rootDomainPrefix, null);
@@ -131,7 +137,6 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         this.createDomainHelper(childTwoName, childTwoPrefix, rootDomainName);
         this.createDomainHelper(childThreeName, childThreePrefix, childOneName);
 
-        //this.obtainNewAccessToken("test", "test");
         // Create pseudonyms inside the network
 
         // Regular creation without issues
@@ -180,12 +185,12 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
     @DisplayName("domainNetRecursionTest")
     public void domainNetRecursionTest() throws Exception {
         String parentDomainName = "TestStudie";
-        String child = "TestStudie-Labor-Cool";
+        String child = "TestStudie-Labor-Analyse";
         String childOfChild = "TestStudie-Paper";
 
         this.assertEqualsListDomainHierarchyLength(1);
 
-        // Create domain network for "TestStudie", "TestStudie-Labor-Cool" and "TestStudie-Paper"
+        // Create domain network for "TestStudie", "TestStudie-Labor-Analyse" and "TestStudie-Paper"
         this.createNet(parentDomainName, child, childOfChild);
 
         // Recursive deletion of "child" must also lead to the deletion of "childOfChild"
@@ -200,7 +205,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
 
         this.obtainNewAccessToken("test", "test");
 
-        //remove recursive must also delete domain groups in oidc service
+        // Note: Recursive deletion of "child" must also lead to the deletion of the respective domain groups in the OIDC service
         this.assertNoContent("deleteDomain", delete("/api/pseudonymization/domain"), deleteParameter, null, this.getAccessToken());
 
         // Check that recursive deleting worked. Length must be 1.
@@ -221,7 +226,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
                     assertNull(domain.getSuperDomainID());
                     break;
                 case 4:
-                    assertEquals("TestStudie-Labor-Cool", domain.getName());
+                    assertEquals("TestStudie-Labor-Analyse", domain.getName());
                     assertEquals(1, domain.getSuperDomainID());
                     break;
                 case 5:
@@ -229,7 +234,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
                     assertEquals(4, domain.getSuperDomainID());
                     break;
                 default:
-                    throw new AssertionFailedError("Domain ID " + String.valueOf(domain.getId()) + " not found");
+                    throw new AssertionFailedError("Domain ID " + domain.getId() + " not found");
             }
         }
 
@@ -390,7 +395,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
     public void userFriendlyValidityTimeTest() throws Exception {
         // Prepare
         String parentDomainName = "TestStudie";
-        String child = "TestStudie-Labor-Cool";
+        String child = "TestStudie-Labor-Analyse";
         String childOfChild = "TestStudie-Paper";
 
         // Create domain network for "TestStudie", "TestStudie-Labor" and "TestStudie-Paper"

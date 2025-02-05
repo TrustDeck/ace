@@ -1,6 +1,6 @@
 /*
  * ACE - Advanced Confidentiality Engine
- * Copyright 2021-2024 Armin Müller & Eric Wündisch
+ * Copyright 2021-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 
 /**
  * This class offers tests to test only the domain endpoints.
@@ -76,8 +83,8 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         assertTrue(content.contains("201"));
 
         // These commands must fail because we don't have the correct permission to do anything on the newly created domain
+        // TODO: create a domain in sql to test this
         /*
-        ///TODO create an domain in sql to test this
         Map<String, String> getParameterForbidden = new HashMap<>() {
         	private static final long serialVersionUID = -6132269345886096019L;
 		{
@@ -96,7 +103,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         Map<String, String> getParameterUpdateSaltForbidden = getParameterForbidden;
         getParameterUpdateSaltForbidden.put("salt", "something");
         this.assertForbiddenRequest("commonUpdateSaltForbidden", put("/api/pseudonymization/domains/" + domainName + "/salt"), getParameterUpdateSaltForbidden, null, this.getAccessToken());
-*/
+        */
     }
 
     /**
@@ -350,7 +357,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
 
         // Add domains as children
         DomainDto firstDomainDto = new DomainDto();
-        firstDomainDto.setName("TestStudie-Labor-Cool");
+        firstDomainDto.setName("TestStudie-Labor-Analyse");
         firstDomainDto.setPrefix("TS-L");
         firstDomainDto.setSuperDomainName(parentDomainName);
 
@@ -383,7 +390,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         DomainDto thirdDomainDto = new DomainDto();
         thirdDomainDto.setName("No-Permission-Domain");
         thirdDomainDto.setPrefix("NoPe");
-        thirdDomainDto.setSuperDomainName("TestStudie-Labor-Cool");
+        thirdDomainDto.setSuperDomainName("TestStudie-Labor-Analyse");
 
         // Should NOT have the permission on the domain
         this.assertCreatedRequest("addThirdDomainForListHierarchy", post("/api/pseudonymization/domain"), null, thirdDomainDto, this.getAccessToken());
@@ -400,7 +407,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
                     assertNull(domain.getSuperDomainID());
                     break;
                 case 2:
-                    assertEquals("TestStudie-Labor-Cool", domain.getName());
+                    assertEquals("TestStudie-Labor-Analyse", domain.getName());
                     assertEquals(1, domain.getSuperDomainID());
                     break;
                 case 3:
