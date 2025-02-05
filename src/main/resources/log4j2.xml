@@ -15,10 +15,18 @@
         <Property name="DIAG_LOG_PATTERN">
             [%level] %thread %threadId %d{DEFAULT} ${hostName} %logger{-10}:%line %message%n%exception
         </Property>
+
+        <!-- This allows setting the log level in the application.yml -->
+        <Property name="ROOT_LOG_LEVEL">
+            ${logging.level.root:WARN}
+        </Property>
+        <Property name="TRUSTDECK_ACE_LOG_LEVEL">
+            ${logging.level.org.trustdeck.ace:INFO}
+        </Property>
     </Properties>
 
     <Appenders>
-        <File name="asyncLoggingFileAppender" fileName="logs/app.log">
+        <RollingFile name="asyncLoggingFileAppender" fileName="logs/ace.log" filePattern="logs/ace-%d{yyyy-MM-dd}_%i.log.gz">
             <PatternLayout>
                 <LevelPatternSelector defaultPattern="${ERROR_LOG_PATTERN}">
                     <PatternMatch key="WARN" pattern="${WARN_LOG_PATTERN}"/>
@@ -27,7 +35,13 @@
                     <PatternMatch key="TRACE" pattern="${DIAG_LOG_PATTERN}"/>
                 </LevelPatternSelector>
             </PatternLayout>
-        </File>
+            <Policies>
+                <!-- Roll over at 10 MB or at midnight, whichever comes first -->
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
         <Console name="asyncLoggingConsoleAppender" target="SYSTEM_OUT">
             <PatternLayout>
                 <LevelPatternSelector defaultPattern="${ERROR_LOG_PATTERN}">
@@ -56,11 +70,11 @@
         DEBUG	        500
         TRACE	        600
         -->
-        <AsyncLogger name="org.trustdeck.ace" level="INFO" additivity="false">
+        <AsyncLogger name="org.trustdeck.ace" level="${TRUSTDECK_ACE_LOG_LEVEL}" additivity="false">
             <AppenderRef ref="asyncAppender"/>
         </AsyncLogger>
 
-        <Root level="WARN">
+        <Root level="${ROOT_LOG_LEVEL}">
             <AppenderRef ref="asyncAppender"/>
         </Root>
     </Loggers>
