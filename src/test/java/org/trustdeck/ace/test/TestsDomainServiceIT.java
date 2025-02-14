@@ -20,9 +20,13 @@ package org.trustdeck.ace.test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.trustdeck.ace.model.dto.DomainDto;
 import org.trustdeck.ace.service.AssertWebRequestService;
+import org.trustdeck.ace.service.DomainOIDCService;
+
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,8 +47,13 @@ import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuild
  *
  * @author Armin Müller & Eric Wündisch
  */
+@Slf4j
 public class TestsDomainServiceIT extends AssertWebRequestService {
 
+	/** OIDC service for managing OpenID Connect operations such as token retrieval and validation. */
+    @Autowired
+    private DomainOIDCService domainOidcService;
+    
     /**
      * Test that tries to create a new domain with different given inputs
      *
@@ -122,6 +131,8 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
 		{
             put("name", domainName);
         }};
+        
+        domainOidcService.createDomainGroupsAndRolesAndJoin(domainName, "3dfb6717-3def-493b-a237-b7345fc42718");
         this.assertNotFoundRequest("getDomainNotFoundDomainName", get("/api/pseudonymization/domain"), getParameter, null, this.getAccessToken());
 
         // Get salt without creating a domain first
@@ -216,7 +227,6 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         this.domainUpdateHelperReduced(d, domainName, d);
 
         // All fields must be filled with something (at least an empty string) and available
-        assertEquals(1, d.getId());
         assertEquals("TestStudie", d.getName());
         assertEquals("TS-", d.getPrefix());
         assertEquals("2022-02-26T19:15:20.885853", d.getValidFrom().toString());
@@ -367,14 +377,6 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         // Check the length again
         this.assertEqualsListDomainHierarchyLength(2);
 
-        /*Map<String, String> secondCreateParameter = new HashMap<>() {
-        	private static final long serialVersionUID = -8767726104865426640L;
-		{
-            put("name", "TestStudie-Paper");
-            put("prefix", "TS-P");
-            put("parentName", parentDomainName);
-
-        }};*/
         DomainDto secondDomainDto = new DomainDto();
         secondDomainDto.setName("TestStudie-Paper");
         secondDomainDto.setPrefix("TS-P");

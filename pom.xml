@@ -18,7 +18,7 @@
 
     <groupId>org.trustdeck</groupId>
     <artifactId>ace</artifactId>
-    <version>v0.54.2-BETA</version>
+    <version>v0.55.0-BETA</version>
     <packaging>jar</packaging>
     <name>ace</name>
 
@@ -164,33 +164,6 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <!-- Needed for programmatic docker container handling. -->
-            <!-- License: Apache 2.0 -->
-            <groupId>com.github.docker-java</groupId>
-            <artifactId>docker-java-core</artifactId>
-            <version>3.4.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <!-- Transport dependency (using Apache) -->
-            <groupId>com.github.docker-java</groupId>
-            <artifactId>docker-java-transport-httpclient5</artifactId>
-            <version>3.4.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <!-- API -->
-            <groupId>com.github.docker-java</groupId>
-            <artifactId>docker-java-api</artifactId>
-            <version>3.4.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -19,12 +19,14 @@ package org.trustdeck.ace.test;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.trustdeck.ace.algorithms.XxHashPseudonymizer;
 import org.trustdeck.ace.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.ace.model.dto.DomainDto;
 import org.trustdeck.ace.model.dto.RecordDto;
 import org.trustdeck.ace.service.AssertWebRequestService;
+import org.trustdeck.ace.service.DomainOIDCService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -46,7 +48,11 @@ import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuild
  * @author Armin Müller & Eric Wündisch
  */
 public class TestsRecordServiceIT extends AssertWebRequestService {
-
+	
+	/** OIDC service for managing OpenID Connect operations such as token retrieval and validation. */
+    @Autowired
+    private DomainOIDCService domainOidcService;
+	
     /**
      * Update record by identifier.
      *
@@ -148,6 +154,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         String assertId = "10000008912";
         String assertIdType = "ANY-ID";
         String assertNewIdType = "OTHER-ID";
+        
         // Update a record
         Map<String, String> updateParameter = new HashMap<>() {
             private static final long serialVersionUID = -8328746806921168250L;
@@ -330,7 +337,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         // Trigger forbidden e.g. no permission on all single object endpoints
         String failDomainName = "No-Permission";
         String goodDomain = "TestStudie";
-        String gooDomainButNotFound = "TestStudie-Labor";
+        String goodDomainButNotFound = "TestStudie-Labor";
         String assertId = "1234356";
         String assertIdType = "EINE-ID";
         String assertNewIdType = "ANY-ID";
@@ -387,9 +394,10 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         this.assertBadRequestRequest("deleteRecordBadRequest", delete("/api/pseudonymization/domains/" + goodDomain + "/pseudonym"), null, null, this.getAccessToken());
 
         // Trigger a "not found" if permission for a domain is given but the domain is not yet created
-        this.assertNotFoundRequest("createRecordNotFound", post("/api/pseudonymization/domains/" + gooDomainButNotFound + "/pseudonym"), null, createRecordDto, this.getAccessToken());
-        this.assertNotFoundRequest("readRecordNotFound", get("/api/pseudonymization/domains/" + gooDomainButNotFound + "/pseudonym"), getParameter, null, this.getAccessToken());
-        this.assertNotFoundRequest("updateRecordNotFound", put("/api/pseudonymization/domains/" + gooDomainButNotFound + "/pseudonym/complete"), updateParameter, updateRecordDto, this.getAccessToken());
+        domainOidcService.createDomainGroupsAndRolesAndJoin(goodDomainButNotFound, "3dfb6717-3def-493b-a237-b7345fc42718");
+        this.assertNotFoundRequest("createRecordNotFound", post("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonym"), null, createRecordDto, this.getAccessToken());
+        this.assertNotFoundRequest("readRecordNotFound", get("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonym"), getParameter, null, this.getAccessToken());
+        this.assertNotFoundRequest("updateRecordNotFound", put("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonym/complete"), updateParameter, updateRecordDto, this.getAccessToken());
 
         Map<String, String> deleteParameterNotFound = new HashMap<>() {
             private static final long serialVersionUID = 7777773605144609107L;
@@ -410,7 +418,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
                 put("psn", "SomeValue");
             }
         };
-        this.assertUnprocessableEntity("deleteRecordNotFound", delete("/api/pseudonymization/domains/" + gooDomainButNotFound + "/pseudonym"), deleteParameterInternalError, null, this.getAccessToken());
+        this.assertUnprocessableEntity("deleteRecordNotFound", delete("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonym"), deleteParameterInternalError, null, this.getAccessToken());
 
         Map<String, String> deleteParameterNotFound2 = new HashMap<>() {
             private static final long serialVersionUID = 3603630754239551087L;
@@ -419,7 +427,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
                 put("psn", "SomeValue");
             }
         };
-        this.assertNotFoundRequest("deleteRecordNotFound", delete("/api/pseudonymization/domains/" + gooDomainButNotFound + "/pseudonym"), deleteParameterNotFound2, null, this.getAccessToken());
+        this.assertNotFoundRequest("deleteRecordNotFound", delete("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonym"), deleteParameterNotFound2, null, this.getAccessToken());
 
     }
 
@@ -464,6 +472,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         this.assertCreatedRequest("createNewRecordBatch", post("/api/pseudonymization/domains/" + goodDomain + "/pseudonyms"), null, recordDtoList, this.getAccessToken());
 
         // Domain wrong
+        domainOidcService.createDomainGroupsAndRolesAndJoin(goodDomainButNotFound, "3dfb6717-3def-493b-a237-b7345fc42718");
         this.assertNotFoundRequest("createNewRecordBatchDomainNotFound", post("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonyms"), null, recordDtoList, this.getAccessToken());
 
         // Trigger too many records
