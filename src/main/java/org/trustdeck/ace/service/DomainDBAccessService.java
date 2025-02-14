@@ -619,19 +619,6 @@ public class DomainDBAccessService {
                 // Success; continue with the deletion process
                 log.debug("Successfully deleted all records in the domain \"" + domainName + "\".");
 
-                // Try to delete the associated group in the OIDC service
-                if (request != null) {
-                    JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
-                    if (token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()) {
-                        try {
-                            domainOidcService.deleteDomainGroups(domain.getName(), token.getToken().getSubject());
-                        } catch (Exception e) {
-                            log.error("Removing domain groups failed " + e.getMessage());
-                            throw new DomainOIDCException(domainName);
-                        }
-                    }
-                }
-
                 // Now delete the domain itself
                 int deletedDomains = DSL.using(configuration).deleteFrom(DOMAIN)
                         .where(DOMAIN.ID.equal(domain.getId()))
@@ -652,6 +639,16 @@ public class DomainDBAccessService {
 	                	// Write audit information into database
 	                	this.getAuditeventDao().insert(auditEvent);
 	                }
+	                
+	                
+	                // Check if the information needed for OIDC management are in the token
+                    JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+                    if (token == null || token.getToken() == null || token.getToken().getSubject().isBlank()) {
+                        throw new DomainOIDCException(domain.getName());
+                    }
+
+                    // Remove the associated groups and roles for this domain from Keycloak
+                    domainOidcService.leaveAndDeleteDomainGroupsAndRoles(domainName);
                 }
 
                 // Implicit transaction commit here
@@ -752,8 +749,8 @@ public class DomainDBAccessService {
                         throw new DomainOIDCException(domain.getName());
                     }
 
-                    // Create domain group paths for the rights and roles management
-                    domainOidcService.createDomainGroups(domain.getName(), token.getToken().getSubject());
+                    // Create domain groups and roles and add the user that made this request to the new groups and roles
+                    domainOidcService.createDomainGroupsAndRolesAndJoin(domain.getName(), token.getToken().getSubject());
                 }
 
                 // Implicit transaction commit here
@@ -776,7 +773,7 @@ public class DomainDBAccessService {
             log.error("Creating OIDC rights and roles for the domain \"" + h.getDomainName() + "\" failed. No insertion performed.");
             return INSERTION_ERROR;
         } catch (Exception i) {
-            log.error("Couldn't insert the domain into the database: " + i.getMessage() + "\n");
+            log.error("Couldn't insert the domain into the database: " + i.getMessage());
             return INSERTION_ERROR;
         }
     }
@@ -1003,6 +1000,7 @@ public class DomainDBAccessService {
                             && domainOidcService.canBeUsedAsDomainGroup(newDomain.getName())) {
                         // The domain name has changed, so we need to update the OIDC rights and roles
                         JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+                        
                         if (token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()) {
                             try {
                                 domainOidcService.updateDomainGroups(oldDomain.getName(), newDomain.getName(), token.getToken().getSubject());

@@ -24,9 +24,8 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.ClientResource;
-import org.keycloak.admin.client.resource.GroupResource;
+import org.keycloak.admin.client.resource.ClientsResource;
 import org.keycloak.admin.client.resource.RealmResource;
-import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
@@ -175,8 +174,6 @@ public class OidcService implements InitializingBean {
 
         // Loop through each operation role defined in the configuration.
         for (String role : roleConfig.getOperations()) {
-            boolean needsToBeAdded = true;
-
             // Check if the role is already present in the client. If not, add it.
             if (!clientRoles.contains(role)) {
 
@@ -276,10 +273,10 @@ public class OidcService implements InitializingBean {
      * @return {@link RoleRepresentation} the representation of the newly created role, or {@code null} if the role could not be created
      */
     public RoleRepresentation createClientRole(String roleName) {
-        try {
-            // Create a new RoleRepresentation object to define the role attributes
-            RoleRepresentation roleRepresentation = new RoleRepresentation();
-
+    	// Create a new RoleRepresentation object to define the role attributes
+        RoleRepresentation roleRepresentation = new RoleRepresentation();
+    	
+    	try {
             roleRepresentation.setName(roleName);
             roleRepresentation.setClientRole(true); // Mark the role as a client role (specific to a client in contrast to global realm roles)
 
@@ -289,17 +286,22 @@ public class OidcService implements InitializingBean {
             // Retrieve and return the created role by its name to confirm its creation
             return this.getClientRoleByName(roleName);
         } catch (Exception e) {
-            // Log the exception message and return null if an error occurs
-            log.error("Could not create client role: " + e.getMessage());
+            if (e.getMessage().contains("HTTP 409 Conflict")) {
+            	// Role already exists
+            	return roleRepresentation;
+            }
+            
+        	// Log the exception message and return null if an error occurs
+            log.error("Could not create client role: " + e.getMessage() + ". Does the Keycloak admin-account have all the necessary rights (realm-management: manage-users, manage-clients)?");
             return null;
         }
     }
 
     /**
      * Retrieves a list of all client role names for the currently configured Keycloak client.
-     * This method interacts with the Keycloak Admin API to fetch all roles defined for the client specified
-     * in the {@link JwtProperties}. It returns a list of the names of these roles. Each role is represented
-     * using the {@link RoleRepresentation} class, and only the role names are extracted and returned.
+     * This method interacts with the Keycloak Admin API to fetch all roles defined for the client.
+     * It returns a list of the names of these roles. Each role is represented using the 
+     * {@link RoleRepresentation} class, and only the role names are extracted and returned.
      *
      * @return {@link List} of {@link String} containing the names of all roles associated with the configured client,
      * or {@code null} if the role is not found or an error occurs.
@@ -331,7 +333,7 @@ public class OidcService implements InitializingBean {
             return this.getClientResource().roles().get(roleName).toRepresentation();
         } catch (Exception e) {
             // Log the exception message if an error occurs
-            log.error("Could not retrieve client role by its name: " + e.getMessage());
+            log.error("Could not retrieve client role \"" + roleName + "\" by its name: " + e.getMessage());
             return null;
         }
     }
@@ -339,48 +341,30 @@ public class OidcService implements InitializingBean {
     /**
      * Deletes a specified client role from the Keycloak server.
      *
-     * @param roleRepresentations the {@link RoleRepresentation} object representing the role to be deleted
+     * @param roleName the name of the role to be deleted
      * @return {@code true} if the role is successfully deleted, or {@code false} if an error occurs.
      */
-    public Boolean removeClientRole(RoleRepresentation roleRepresentations) {
+    public boolean removeClientRole(String roleName) {
         try {
-            // Retrieve the roles resource object and delete the role
-            RolesResource rolesResource = this.getClientResource().roles();
-            rolesResource.deleteRole(roleRepresentations.getName());
-
-            return true;
+            // Remove the role from Keycloak
+            this.getClientResource().roles().deleteRole(roleName);
         } catch (Exception e) {
             // Log the exception message if an error occurs
-            log.error("Could not delete client role: " + e.getMessage());
+            log.error("Could not delete client role \"" + roleName + "\": " + e.getMessage());
             return false;
         }
+
+        return true;
     }
 
     /**
-     * Updates the name of an existing group in the Keycloak server.
+     * Deletes a specified client role from the Keycloak server.
      *
-     * @param groupId the ID of the group that needs to be updated
-     * @param newName the new name to be assigned to the group
-     * @return {@code true} if the group name is successfully updated, or {@code false} if an error occurs.
+     * @param roleRepresentation the {@link RoleRepresentation} object representing the role to be deleted
+     * @return {@code true} if the role is successfully deleted, or {@code false} if an error occurs.
      */
-    public Boolean updateGroupName(String groupId, String newName) {
-        try {
-            // Retrieve the group representation by its ID from the realm
-            GroupRepresentation groupRepresentation = this.getKeycloakRealm().groups().group(groupId).toRepresentation();
-
-            // Set the new name for the group
-            groupRepresentation.setName(newName);
-
-            // Retrieve the group resource again by ID and update the group with the new name.
-            GroupResource groupResource = this.getKeycloakRealm().groups().group(groupRepresentation.getId());
-            groupResource.update(groupRepresentation);
-
-            return true;
-        } catch (Exception e) {
-            // Log any exception that occurs during the update process
-            log.error("Could not update group name: " + e.getMessage());
-            return false;
-        }
+    public boolean removeClientRole(RoleRepresentation roleRepresentation) {
+        return removeClientRole(roleRepresentation.getName());
     }
 
     /**
@@ -532,6 +516,116 @@ public class OidcService implements InitializingBean {
                 return false;
             }
         }
+        
         return true;
+    }
+
+    /**
+     * Removes a user from a specified group in the Keycloak server.
+     *
+     * @param groupId the unique identifier of the group that the user will leave
+     * @param userId  the unique identifier of the user to be removed from to the group
+     * @return {@code true} if the user is successfully removed from the group, or {@code false} if an error occurs.
+     */
+    public Boolean removeUserFromGroup(String groupId, String userId) {
+        try {
+            this.getKeycloakRealm().users().get(userId).leaveGroup(groupId);
+            return true;
+        } catch (Exception e) {
+            log.error("Removing the user (id: " + userId + ") from the group (id: " + groupId + ") failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Removes a user from multiple groups in the Keycloak server.
+     *
+     * @param groupIds a list of group IDs representing the groups from which the user will be removed
+     * @param userId the unique identifier of the user to be removed from the groups
+     * @return {@code true} if the user is successfully removed from all groups, or {@code false} if any operation fails.
+     */
+    public Boolean leaveGroups(List<String> groupIds, String userId) {
+        for (String groupId : groupIds) {
+            // Remove the user from each group in the list
+            if (!this.removeUserFromGroup(groupId, userId)) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Removes the specified roles from a user.
+     * 
+     * @param roleNames a list of roles that should be deleted
+     * @param userId the id of the user
+     * @return {@code true} if removal was successful, {@code false} otherwise
+     */
+    public boolean removeRolesFromUser(List<String> roleNames, String userId) {
+    	try {
+    		// Gather the roles to remove into the right representation
+	    	List<RoleRepresentation> rolesToRemove = new ArrayList<RoleRepresentation>();
+	    	for (String roleName : roleNames) {
+	    		rolesToRemove.add(getClientRoleByName(roleName));
+	    		log.debug("Marked role \"" + roleName + "\" for removal.");
+	    	}
+	    	
+	    	// Remove roles
+	    	this.getKeycloakRealm().users().get(userId).roles().clientLevel(clientUUID).remove(rolesToRemove);
+    	} catch (Exception e) {
+    		log.error("Removing roles from user \"" + userId + "\" was unsuccessful: " + e.getMessage());
+    		return false;
+    	}
+    	
+    	return true;
+    }
+    
+    /**
+     * Removes a single role from a user.
+     * 
+     * @param roleName the role that should be deleted
+     * @param userId the id of the user
+     * @return {@code true} if removal was successful, {@code false} otherwise
+     */
+    public boolean removeRoleFromUser(String roleName, String userId) {
+    	return removeRolesFromUser(List.of(roleName), userId);
+    }
+    
+    /**
+     * Adds the specified roles to a user.
+     * 
+     * @param roleNames a list of roles that should be added
+     * @param userId the id of the user
+     * @return {@code true} if addition was successful, {@code false} otherwise
+     */
+    public boolean addRolesToUser(List<String> roleNames, String userId) {
+    	try {
+    		// Gather the roles to remove into the right representation
+	    	List<RoleRepresentation> rolesToAdd = new ArrayList<RoleRepresentation>();
+	    	for (String roleName : roleNames) {
+	    		rolesToAdd.add(getClientRoleByName(roleName));
+	    		log.debug("Marked role \"" + roleName + "\" for addition.");
+	    	}
+	    	
+	    	// Add roles
+	    	this.getKeycloakRealm().users().get(userId).roles().clientLevel(clientUUID).add(rolesToAdd);
+    	} catch (Exception e) {
+    		log.error("Adding roles to user \"" + userId + "\" was unsuccessful: " + e.getMessage());
+    		return false;
+    	}
+    	
+    	return true;
+    }
+    
+    /**
+     * Adds a single role to a user.
+     * 
+     * @param roleName the role that should be added
+     * @param userId the id of the user
+     * @return {@code true} if addition was successful, {@code false} otherwise
+     */
+    public boolean addRoleToUser(String roleName, String userId) {
+    	return addRolesToUser(List.of(roleName), userId);
     }
 }
