@@ -4,16 +4,16 @@
     <Properties>
         <!--https://logging.apache.org/log4j/2.x/manual/layouts.html#PatternLayout-->
         <Property name="ERROR_LOG_PATTERN">
-            [%style{%level}{red}] %thread %threadId %d{DEFAULT} ${hostName} %logger{-10}:%line %message%n%exception
+            [%style{%level}{red}]\t%d{DEFAULT} %logger{-10}:%line %message%n%exception
         </Property>
         <Property name="WARN_LOG_PATTERN">
-            [%style{%level}{yellow}] %thread %threadId %d{DEFAULT} ${hostName} %logger{-10}:%line %message%n%exception
+            [%style{%level}{yellow}]\t%d{DEFAULT} %logger{-10}:%line %message%n%exception
         </Property>
         <Property name="INFO_LOG_PATTERN">
-            [%style{%level}{blue}] %thread %threadId %d{DEFAULT} ${hostName} %logger{-10}:%line %message%n%exception
+            [%style{%level}{blue}]\t%d{DEFAULT} %logger{-10}:%line %message%n%exception
         </Property>
         <Property name="DIAG_LOG_PATTERN">
-            [%level] %thread %threadId %d{DEFAULT} ${hostName} %logger{-10}:%line %message%n%exception
+            [%level]\t%d{DEFAULT} %logger{-10}:%line %message%n%exception
         </Property>
 
         <!-- This allows setting the log level in the application.yml -->
