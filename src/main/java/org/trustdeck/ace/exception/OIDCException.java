@@ -32,6 +32,6 @@ public class OIDCException extends RuntimeException {
      * @param message an additional message for this exception (e.g. for further information)
      */
     public OIDCException(String message) {
-        super("There was an error while handling OIDC rights and roles.\n\r" + message);
+        super("There was an error while handling OIDC rights and roles:\n" + message);
     }
 }

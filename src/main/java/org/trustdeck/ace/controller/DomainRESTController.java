@@ -500,7 +500,8 @@ public class DomainRESTController {
                                           HttpServletRequest request) {
 
         if (!domainDto.validate() || !domainDto.isValidStandardView()) {
-            return responseService.unprocessableEntity(responseContentType);
+        	log.warn("422, because: " + (!domainDto.validate() ? "invalid - missing mandatory fields" : !domainDto.isValidStandardView() ? "non-standard view" : "IDK"));
+        	return responseService.unprocessableEntity(responseContentType);
         }
 
         String domainName = domainDto.getName();
@@ -537,7 +538,7 @@ public class DomainRESTController {
 
             // Parent domain name was provided but not found, return a 404-NOT_FOUND 
             if (parent == null) {
-                log.debug("Parent domain name was provided but nothing was not found.");
+                log.debug("Parent domain name was provided but nothing was found.");
                 return responseService.notFound(responseContentType);
             }
         }

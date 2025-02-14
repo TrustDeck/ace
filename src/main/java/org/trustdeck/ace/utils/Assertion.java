@@ -17,7 +17,6 @@
 
 package org.trustdeck.ace.utils;
 
-import org.jooq.Null;
 import org.springframework.stereotype.Component;
 
 /**

@@ -67,7 +67,6 @@ public class CachingService {
      * @param userId the ID of the user
      * @return a list of group paths for the user
      */
-    @SuppressWarnings("unchecked")
     public List<String> getGroupPaths(String userId) {
         IMap<String, List<String>> resourceCache = hazelcastInstance.getMap(CACHE_NAME);
 
@@ -82,6 +81,7 @@ public class CachingService {
                 if (!resourceCache.isLocked(WRITE_LOCK_NAME)) {
                     List<String> resource = resourceCache.get(userId);
                     if (resource != null) {
+                        log.trace("Cache hit for user \"" + userId + "\".");
                         return resource;
                     }
                 }
@@ -91,7 +91,8 @@ public class CachingService {
         // Retrieve data from the cache
         List<String> resource = resourceCache.get(userId);
         if (resource != null && !resource.isEmpty()) {
-            return resource;
+            log.trace("Cache hit for user \"" + userId + "\".");
+        	return resource;
         }
 
         // Cache miss - retrieve data from OIDC service and store in the cache
@@ -148,7 +149,7 @@ public class CachingService {
 
                             // Store the group paths in the cache with a 10-minute expiration time
                             resourceCache.put(userId, groups, 10, TimeUnit.MINUTES);
-                            log.debug("Insert into cache: USER-ID: " + userId + ", GROUPS: " + groups);
+                            log.trace("Insert into cache: USER-ID: " + userId + ", GROUPS: " + groups);
                         }
                     }
                 }
@@ -161,7 +162,7 @@ public class CachingService {
 
                 // Store the group paths in the cache with a 10-minute expiration time
                 resourceCache.put(userId, groups, 10, TimeUnit.MINUTES);
-                log.debug("Insert into cache: USER-ID: " + userId + ", GROUPS: " + groups);
+                log.trace("Insert into cache: USER-ID: " + userId + ", GROUPS: " + groups);
             }
         } catch (NullPointerException | UnsupportedOperationException e) {
             // Handle cases where the group retrieval or caching fails
