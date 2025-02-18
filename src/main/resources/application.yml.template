@@ -90,3 +90,6 @@ app:
     - record-update-batch
     - complete-view
     - link-pseudonyms
+    - delete-table
+    - read-table-storage
+    - delete-roles

@@ -17,6 +17,8 @@
 
 package org.trustdeck.ace.controller;
 
+import jakarta.ws.rs.NotFoundException;
+
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.Result;
@@ -35,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.ace.security.audittrail.annotation.Audit;
 import org.trustdeck.ace.security.audittrail.event.AuditEventType;
 import org.trustdeck.ace.security.audittrail.usertype.AuditUserType;
+import org.trustdeck.ace.service.DomainOIDCService;
 import org.trustdeck.ace.service.ResponseService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +60,10 @@ public class DatabaseMaintenanceRESTController {
     /** Enables services for better working with responses. */
     @Autowired
     private ResponseService responseService;
+
+    /** Handles rights and roles for domains. */
+    @Autowired
+    private DomainOIDCService domainOidcService;
     
     /**
      * Endpoint to retrieve the size of a database table
@@ -87,8 +94,8 @@ public class DatabaseMaintenanceRESTController {
      * Performs an additional "VACUUM FULL" after deletion.
      * Access to this method should be highly restricted.
      * 
-     * @param tableName (required) the name of the table from which the user wants to read the table size
-     * @return<li>a <b>200-OK</b> status and the table size on success</li>
+     * @param tableName (required) the name of the table the user wants to delete
+     * @return <li>a <b>200-OK</b> status</li>
      */
     @DeleteMapping("/table/{table}")
     @PreAuthorize("@auth.currentRequestHasRole('delete-table')")
@@ -106,6 +113,31 @@ public class DatabaseMaintenanceRESTController {
 		}
     	
     	return responseService.ok(MediaType.TEXT_PLAIN_VALUE);
+    }
+        
+    /**
+     * Endpoint to delete the roles associated with a domain from the database.
+     * Access to this method should be highly restricted.
+     * 
+     * @param domainName (required) the name of the domain for which the user wants to remove the roles
+     * @return <li>a <b>200-OK</b> status</li>
+     */
+    @DeleteMapping("/roles/{domain}")
+    @PreAuthorize("@auth.currentRequestHasRole('delete-roles')")
+    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL, message = "Delete all roles from database.")
+    public ResponseEntity<?> deleteDomainRightsAndRoles(@PathVariable("domain") String domainName) {
+	try {
+	    // Remove all roles from table
+            domainOidcService.leaveAndDeleteDomainGroupsAndRoles(domainName);
+	} catch (NotFoundException e) {
+	    // Domain does not exist. Nothing to do.
+	} catch (Exception f) {
+	    log.error("Deleting the roles for domain " + domainName + " from the database was unsuccessfull.\n\t" + f);
+	    return responseService.internalServerError(MediaType.TEXT_PLAIN_VALUE);
+	}
+
+        log.debug("Removed roles for domain \"" + domainName + "\".");
+	return responseService.ok(MediaType.TEXT_PLAIN_VALUE);
     }
 
     /**
