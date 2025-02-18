@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * CachingService is a service class responsible for caching group paths for faster authentication.
@@ -57,7 +58,7 @@ public class CachingService {
     private static final String CACHE_NAME = "hazelcast-instance";
 
     /** Maximum time to wait for the lock to be released, in seconds. */
-    private static final long MAX_WAIT_TIME_SECONDS = 3;
+    private static final long MAX_WAIT_TIME_SECONDS = 5;
 
     /**
      * Retrieves the group paths for the given user ID from the cache.
@@ -131,6 +132,7 @@ public class CachingService {
     protected List<String> cacheGroups(String userId) {
         IMap<String, List<String>> resourceCache = hazelcastInstance.getMap(CACHE_NAME);
         List<String> groups = null;
+	AtomicBoolean lockAcquired = new AtomicBoolean(false);
 
         try {
             // Check if the cache can be write-locked. If not, wait.
@@ -138,24 +140,21 @@ public class CachingService {
                 Long start = System.currentTimeMillis();
                 while (resourceCache.isLocked(WRITE_LOCK_NAME)) {
                     // Still locked. Do we wait, or not?
-                    if (System.currentTimeMillis() - start <= MAX_WAIT_TIME_SECONDS * 1000) {
-                        // We wait. Check again.
-                        if (!resourceCache.isLocked(WRITE_LOCK_NAME)) {
-                            // Now it's available. Lock it and store data.
-                            resourceCache.lock(WRITE_LOCK_NAME);
-
-                            // Retrieve groups from OIDC service and convert to a flat list of group paths
-                            groups = Utility.extractGroupPaths(oidcService.getGroupsByUserId(userId), true);
-
-                            // Store the group paths in the cache with a 10-minute expiration time
-                            resourceCache.put(userId, groups, 10, TimeUnit.MINUTES);
-                            log.trace("Insert into cache: USER-ID: " + userId + ", GROUPS: " + groups);
-                        }
+                    if (System.currentTimeMillis() - start > MAX_WAIT_TIME_SECONDS * 1000) {
+                    	// Timeout reached, break without caching
+                    	break;
                     }
+
+                    // Sleep for a short duration to avoid busy waiting
+                    Thread.sleep(50);
                 }
-            } else {
-                // The lock is available. Lock it and store data.
+            }
+
+            // Check lock again
+            if (!resourceCache.isLocked(WRITE_LOCK_NAME)) {
+                // Now it's available. Lock it and store data.
                 resourceCache.lock(WRITE_LOCK_NAME);
+                lockAcquired.set(true);
 
                 // Retrieve groups from OIDC service and convert to a flat list of group paths
                 groups = Utility.extractGroupPaths(oidcService.getGroupsByUserId(userId), true);
@@ -164,12 +163,14 @@ public class CachingService {
                 resourceCache.put(userId, groups, 10, TimeUnit.MINUTES);
                 log.trace("Insert into cache: USER-ID: " + userId + ", GROUPS: " + groups);
             }
-        } catch (NullPointerException | UnsupportedOperationException e) {
+        } catch (NullPointerException | UnsupportedOperationException | InterruptedException e) {
             // Handle cases where the group retrieval or caching fails
             groups = new ArrayList<>();
         } finally {
-            // Unlock the cache after write operation is complete
-            resourceCache.unlock(WRITE_LOCK_NAME);
+            // Unlock the cache when we successfully wrote to the cache and after the operation is complete
+        	if (lockAcquired.get()) {
+        		resourceCache.unlock(WRITE_LOCK_NAME);
+        	}
         }
 
         if (groups == null) {
