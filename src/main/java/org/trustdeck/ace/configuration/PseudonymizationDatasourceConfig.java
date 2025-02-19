@@ -23,10 +23,8 @@ import org.jooq.SQLDialect;
 import org.jooq.impl.DataSourceConnectionProvider;
 import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.DefaultDSLContext;
-import org.jooq.impl.DefaultExecuteListenerProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
-import org.springframework.boot.autoconfigure.jooq.JooqExceptionTranslator;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -99,7 +97,6 @@ public class PseudonymizationDatasourceConfig {
         DefaultConfiguration config = new DefaultConfiguration();
         config.set(pseudonymizationConnectionProvider(dataSource));
         config.set(SQLDialect.POSTGRES);
-        config.set(new DefaultExecuteListenerProvider(new JooqExceptionTranslator()));
         return config;
     }
 }

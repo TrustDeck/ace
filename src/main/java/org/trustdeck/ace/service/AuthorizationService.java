@@ -1,6 +1,6 @@
 /*
  * ACE - Advanced Confidentiality Engine
- * Copyright 2024 Armin Müller & Eric Wündisch
+ * Copyright 2024-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 package org.trustdeck.ace.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations;
 import org.springframework.security.core.Authentication;
@@ -38,6 +39,7 @@ import java.util.stream.Stream;
  *
  * @author Eric Wündisch & Armin Müller
  */
+@Slf4j
 @Component("auth")
 public class AuthorizationService {
 
@@ -45,13 +47,14 @@ public class AuthorizationService {
     @Autowired
     JwtProperties jwtProperties;
 
+    /** Caching service for group paths. */
     @Autowired
     CachingService cachingService;
 
     /**
-     * Returns the authentication object from the SecurityContextHolder as a shortcut.
+     * Returns the authentication object from the SecurityContextHolder.
      *
-     * @return the Authentication Object
+     * @return the Authentication object
      */
     private static Authentication getAuthentication() {
         return SecurityContextHolder.getContext().getAuthentication();
@@ -82,53 +85,21 @@ public class AuthorizationService {
     }
 
     /**
-     * Returns the group paths from the OIDC token as a list of strings
-     * when no authentication object is provided by the user.
+     * Retrieves the list of group paths assigned to the current user from the cache.
      *
-     * @param claim data about the authenticated user sent from the identity provider to the relying party
-     * @return the group paths as a list of strings
+     * @return a list of group paths associated with the current user, or an empty list if
+     *         the authentication is not available or the user is not authenticated.
      */
-    public static List<String> getGroupPathsFromAuthentication(String claim) {
+    public List<String> getCachedGroupPaths() {
+        // Retrieve the authentication object
         Authentication authentication = getAuthentication();
 
-        return (authentication == null) ? new ArrayList<>() : getGroupPathsFromAuthentication(authentication, claim);
-    }
-
-    /**
-     * Returns the group paths from the OIDC token as a list of strings.
-     *
-     * @param authentication the Authentication object
-     * @param claim data about the authenticated user sent from the identity provider to the relying party
-     * @return the group paths as a list of strings
-     */
-    public static List<String> getGroupPathsFromAuthentication(Authentication authentication, String claim) {
-        try {
-            Jwt jwt = (Jwt) authentication.getPrincipal();
-            List<String> groupPaths = jwt.getClaimAsStringList(claim);
-            
-            if (groupPaths != null && !groupPaths.isEmpty()) {
-                List<String> gp = new ArrayList<>();
-                gp.addAll(groupPaths);
-                
-                return gp;
-            } else {
-                return new ArrayList<>();
-            }
-        } catch (IllegalArgumentException | NullPointerException | ClassCastException e) {
-            return new ArrayList<>();
-        }
-    }
-
-    public List<String> getGroupPathsCachedFromContext(){
-        Authentication authentication = getAuthentication();
-        
         if (authentication == null) {
         	return new ArrayList<>();
         }
 
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-
-        return cachingService.getGroupPaths(jwt.getSubject());
+        // Retrieve the group paths from the cache
+        return cachingService.getGroupPaths(((Jwt) authentication.getPrincipal()).getSubject());
     }
 
     /**
@@ -146,6 +117,7 @@ public class AuthorizationService {
         for (String role : roles) {
             if (!grantedRoles.contains("ROLE_" + role)) {
                 // A role is missing
+                log.debug("Role \"" + role + "\" is missing.");
                 return false;
             }
         }
@@ -175,7 +147,6 @@ public class AuthorizationService {
      * @return {@code true} only if the given role and domain have a relationship, {@code false} if not
      */
     public boolean hasDomainRoleRelationship(MethodSecurityExpressionOperations root, String domain, String role) {
-        Set<String> roles = getRolesFromAuthentication(root.getAuthentication());
         List<String> groupPaths = null;
         Authentication authentication = root.getAuthentication();
         
@@ -185,9 +156,13 @@ public class AuthorizationService {
         
         try {
 	        Jwt jwt = (Jwt) authentication.getPrincipal();
+            if (jwt == null) {
+                return false;
+            }
+
 	        groupPaths = cachingService.getGroupPaths(jwt.getSubject());
         } catch (ClassCastException e) {
-        	return false;
+         	return false;
         }
 
         if (!Assertion.isNotNullOrEmpty(domain) || !Assertion.isNotNullOrEmpty(role) || groupPaths == null || groupPaths.isEmpty()) {
@@ -195,7 +170,7 @@ public class AuthorizationService {
         	return false;
         }
 
-        return roleGroupPathContainedInAuthentication(roles, groupPaths, domain, role);
+        return hasAssignedGroupPaths(groupPaths, domain, role);
     }
 
     /**
@@ -208,28 +183,26 @@ public class AuthorizationService {
      * @return {@code true} only if given role and domain have a relationship, {@code false} if not
      */
     public boolean hasDomainRoleRelationship(String domain, String role) {
-        Set<String> roles = getRolesFromAuthentication();
-        List<String> groupPaths = this.getGroupPathsCachedFromContext();
+        List<String> groupPaths = this.getCachedGroupPaths();
 
         if (!Assertion.isNotNullOrEmpty(domain) || !Assertion.isNotNullOrEmpty(role) || groupPaths == null || groupPaths.isEmpty()) {
             // Domain name or role were not provided
             return false;
         }
         
-        return roleGroupPathContainedInAuthentication(roles, groupPaths, domain, role);
+        return hasAssignedGroupPaths(groupPaths, domain, role);
     }
 
     /**
-     * Helper method to have the check in one place.
+     * Helper method to have the group paths check in one place.
      *
-     * @param roles the roles as a set
      * @param groupPaths the domains as a list
      * @param domain the given domain's name as a string
      * @param role the given role as a string
      * @return {@code true} only if the given role and domain have a relationship and are set as role, {@code false} if not
      */
-    private boolean roleGroupPathContainedInAuthentication(Set<String> roles, List<String> groupPaths, String domain, String role) {
-        return groupPaths.contains("/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role + "/" + domain) 
-        		&& roles.contains("ROLE_" + domain) && roles.contains("ROLE_" + role);
+    private Boolean hasAssignedGroupPaths(List<String> groupPaths, String domain, String role) {
+        String path = "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role + "/" + domain;
+        return groupPaths.contains(path);
     }
 }

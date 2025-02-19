@@ -45,7 +45,11 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
      */
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) {
         log.debug("The access token could be parsed and is valid but it doesn't meet the required permissions.");
-        
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            log.trace("Token: " + authHeader.substring("Bearer ".length()));
+        }
+
         if (!response.isCommitted()) {
         	// Set a 403-FORBIDDEN status
             response.setStatus(HttpStatus.FORBIDDEN.value());

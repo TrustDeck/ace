@@ -551,9 +551,9 @@ public class PseudonymRESTController {
             log.error("Retrieving the records for the deletion in the domain \"" + domainName + "\" failed.");
             return responseService.unprocessableEntity(responseContentType);
         } else if (records.size() == 0) {
-            // Nothing was found. Return a 200-OK status.
+            // Nothing was found. Return a 204-NO_CONTENT status.
             log.debug("No records were found. Nothing to delete");
-            return responseService.ok(responseContentType);
+            return responseService.noContent(responseContentType);
         }
 
         // Perform deletion

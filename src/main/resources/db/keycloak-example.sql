@@ -16,7 +16,7 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
--- DROP DATABASE keycloak;
+DROP DATABASE IF EXISTS keycloak WITH (FORCE);
 --
 -- Name: keycloak; Type: DATABASE; Schema: -; Owner: ace-manager
 --
@@ -59,7 +59,8 @@ CREATE TABLE public.admin_event_entity (
     resource_path character varying(2550),
     representation text,
     error character varying(255),
-    resource_type character varying(64)
+    resource_type character varying(64),
+    details_json text
 );
 
 
@@ -302,89 +303,6 @@ CREATE TABLE public.client_scope_role_mapping (
 ALTER TABLE public.client_scope_role_mapping OWNER TO "ace-manager";
 
 --
--- Name: client_session; Type: TABLE; Schema: public; Owner: ace-manager
---
-
-CREATE TABLE public.client_session (
-    id character varying(36) NOT NULL,
-    client_id character varying(36),
-    redirect_uri character varying(255),
-    state character varying(255),
-    "timestamp" integer,
-    session_id character varying(36),
-    auth_method character varying(255),
-    realm_id character varying(255),
-    auth_user_id character varying(36),
-    current_action character varying(36)
-);
-
-
-ALTER TABLE public.client_session OWNER TO "ace-manager";
-
---
--- Name: client_session_auth_status; Type: TABLE; Schema: public; Owner: ace-manager
---
-
-CREATE TABLE public.client_session_auth_status (
-    authenticator character varying(36) NOT NULL,
-    status integer,
-    client_session character varying(36) NOT NULL
-);
-
-
-ALTER TABLE public.client_session_auth_status OWNER TO "ace-manager";
-
---
--- Name: client_session_note; Type: TABLE; Schema: public; Owner: ace-manager
---
-
-CREATE TABLE public.client_session_note (
-    name character varying(255) NOT NULL,
-    value character varying(255),
-    client_session character varying(36) NOT NULL
-);
-
-
-ALTER TABLE public.client_session_note OWNER TO "ace-manager";
-
---
--- Name: client_session_prot_mapper; Type: TABLE; Schema: public; Owner: ace-manager
---
-
-CREATE TABLE public.client_session_prot_mapper (
-    protocol_mapper_id character varying(36) NOT NULL,
-    client_session character varying(36) NOT NULL
-);
-
-
-ALTER TABLE public.client_session_prot_mapper OWNER TO "ace-manager";
-
---
--- Name: client_session_role; Type: TABLE; Schema: public; Owner: ace-manager
---
-
-CREATE TABLE public.client_session_role (
-    role_id character varying(255) NOT NULL,
-    client_session character varying(36) NOT NULL
-);
-
-
-ALTER TABLE public.client_session_role OWNER TO "ace-manager";
-
---
--- Name: client_user_session_note; Type: TABLE; Schema: public; Owner: ace-manager
---
-
-CREATE TABLE public.client_user_session_note (
-    name character varying(255) NOT NULL,
-    value character varying(2048),
-    client_session character varying(36) NOT NULL
-);
-
-
-ALTER TABLE public.client_user_session_note OWNER TO "ace-manager";
-
---
 -- Name: component; Type: TABLE; Schema: public; Owner: ace-manager
 --
 
@@ -409,7 +327,7 @@ CREATE TABLE public.component_config (
     id character varying(36) NOT NULL,
     component_id character varying(36) NOT NULL,
     name character varying(255) NOT NULL,
-    value character varying(4000)
+    value text
 );
 
 
@@ -511,7 +429,8 @@ CREATE TABLE public.event_entity (
     session_id character varying(255),
     event_time bigint,
     type character varying(255),
-    user_id character varying(255)
+    user_id character varying(255),
+    details_json_long_value text
 );
 
 
@@ -527,7 +446,10 @@ CREATE TABLE public.fed_user_attribute (
     user_id character varying(255) NOT NULL,
     realm_id character varying(36) NOT NULL,
     storage_provider_id character varying(36),
-    value character varying(2024)
+    value character varying(2024),
+    long_value_hash bytea,
+    long_value_hash_lower_case bytea,
+    long_value text
 );
 
 
@@ -699,7 +621,9 @@ CREATE TABLE public.identity_provider (
     first_broker_login_flow_id character varying(36),
     post_broker_login_flow_id character varying(36),
     provider_display_name character varying(255),
-    link_only boolean DEFAULT false NOT NULL
+    link_only boolean DEFAULT false NOT NULL,
+    organization_id character varying(255),
+    hide_on_login boolean DEFAULT false
 );
 
 
@@ -754,7 +678,8 @@ CREATE TABLE public.keycloak_group (
     id character varying(36) NOT NULL,
     name character varying(255),
     parent_group character varying(36) NOT NULL,
-    realm_id character varying(36)
+    realm_id character varying(36),
+    type integer DEFAULT 0 NOT NULL
 );
 
 
@@ -802,7 +727,8 @@ CREATE TABLE public.offline_client_session (
     "timestamp" integer,
     data text,
     client_storage_provider character varying(36) DEFAULT 'local'::character varying NOT NULL,
-    external_client_id character varying(255) DEFAULT 'local'::character varying NOT NULL
+    external_client_id character varying(255) DEFAULT 'local'::character varying NOT NULL,
+    version integer DEFAULT 0
 );
 
 
@@ -819,11 +745,45 @@ CREATE TABLE public.offline_user_session (
     created_on integer NOT NULL,
     offline_flag character varying(4) NOT NULL,
     data text,
-    last_session_refresh integer DEFAULT 0 NOT NULL
+    last_session_refresh integer DEFAULT 0 NOT NULL,
+    broker_session_id character varying(1024),
+    version integer DEFAULT 0
 );
 
 
 ALTER TABLE public.offline_user_session OWNER TO "ace-manager";
+
+--
+-- Name: org; Type: TABLE; Schema: public; Owner: ace-manager
+--
+
+CREATE TABLE public.org (
+    id character varying(255) NOT NULL,
+    enabled boolean NOT NULL,
+    realm_id character varying(255) NOT NULL,
+    group_id character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    description character varying(4000),
+    alias character varying(255) NOT NULL,
+    redirect_url character varying(2048)
+);
+
+
+ALTER TABLE public.org OWNER TO "ace-manager";
+
+--
+-- Name: org_domain; Type: TABLE; Schema: public; Owner: ace-manager
+--
+
+CREATE TABLE public.org_domain (
+    id character varying(36) NOT NULL,
+    name character varying(255) NOT NULL,
+    verified boolean NOT NULL,
+    org_id character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.org_domain OWNER TO "ace-manager";
 
 --
 -- Name: policy_config; Type: TABLE; Schema: public; Owner: ace-manager
@@ -1210,6 +1170,18 @@ CREATE TABLE public.resource_uris (
 ALTER TABLE public.resource_uris OWNER TO "ace-manager";
 
 --
+-- Name: revoked_token; Type: TABLE; Schema: public; Owner: ace-manager
+--
+
+CREATE TABLE public.revoked_token (
+    id character varying(255) NOT NULL,
+    expire bigint NOT NULL
+);
+
+
+ALTER TABLE public.revoked_token OWNER TO "ace-manager";
+
+--
 -- Name: role_attribute; Type: TABLE; Schema: public; Owner: ace-manager
 --
 
@@ -1255,7 +1227,10 @@ CREATE TABLE public.user_attribute (
     name character varying(255) NOT NULL,
     value character varying(255),
     user_id character varying(36) NOT NULL,
-    id character varying(36) DEFAULT 'sybase-needs-something-here'::character varying NOT NULL
+    id character varying(36) DEFAULT 'sybase-needs-something-here'::character varying NOT NULL,
+    long_value_hash bytea,
+    long_value_hash_lower_case bytea,
+    long_value text
 );
 
 
@@ -1378,7 +1353,8 @@ ALTER TABLE public.user_federation_provider OWNER TO "ace-manager";
 
 CREATE TABLE public.user_group_membership (
     group_id character varying(36) NOT NULL,
-    user_id character varying(36) NOT NULL
+    user_id character varying(36) NOT NULL,
+    membership_type character varying(255) NOT NULL
 );
 
 
@@ -1407,41 +1383,6 @@ CREATE TABLE public.user_role_mapping (
 
 
 ALTER TABLE public.user_role_mapping OWNER TO "ace-manager";
-
---
--- Name: user_session; Type: TABLE; Schema: public; Owner: ace-manager
---
-
-CREATE TABLE public.user_session (
-    id character varying(36) NOT NULL,
-    auth_method character varying(255),
-    ip_address character varying(255),
-    last_session_refresh integer,
-    login_username character varying(255),
-    realm_id character varying(255),
-    remember_me boolean DEFAULT false NOT NULL,
-    started integer,
-    user_id character varying(255),
-    user_session_state integer,
-    broker_session_id character varying(255),
-    broker_user_id character varying(255)
-);
-
-
-ALTER TABLE public.user_session OWNER TO "ace-manager";
-
---
--- Name: user_session_note; Type: TABLE; Schema: public; Owner: ace-manager
---
-
-CREATE TABLE public.user_session_note (
-    user_session character varying(36) NOT NULL,
-    name character varying(255) NOT NULL,
-    value character varying(2048)
-);
-
-
-ALTER TABLE public.user_session_note OWNER TO "ace-manager";
 
 --
 -- Name: username_login_failure; Type: TABLE; Schema: public; Owner: ace-manager
@@ -1502,7 +1443,6 @@ INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id,
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('29eee9bd-51a9-4086-9421-ec00fb67d0b5', NULL, 'direct-grant-validate-otp', 'master', '37fa5397-4669-46f9-b6ee-5392237b328e', 0, 20, false, NULL, NULL);
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('659bb227-d1da-42b6-a3b4-425e6f1df009', NULL, 'registration-page-form', 'master', 'a0b128f9-cca8-4ff2-a2d1-50d3e92e87c5', 0, 10, true, 'ad4ec3e3-f3eb-4aa9-81ea-f371ae11c01a', NULL);
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('19d8887d-0207-4d32-beb4-67220dec8139', NULL, 'registration-user-creation', 'master', 'ad4ec3e3-f3eb-4aa9-81ea-f371ae11c01a', 0, 20, false, NULL, NULL);
-INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('3e1d12d5-6493-463f-8c87-1215d01a2a82', NULL, 'registration-profile-action', 'master', 'ad4ec3e3-f3eb-4aa9-81ea-f371ae11c01a', 0, 40, false, NULL, NULL);
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('ea2ab2b6-a1d8-45d9-975d-96640c1d559c', NULL, 'registration-password-action', 'master', 'ad4ec3e3-f3eb-4aa9-81ea-f371ae11c01a', 0, 50, false, NULL, NULL);
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('09392b04-2f62-46ec-b24e-c59c2e6ea37e', NULL, 'registration-recaptcha-action', 'master', 'ad4ec3e3-f3eb-4aa9-81ea-f371ae11c01a', 3, 60, false, NULL, NULL);
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('dda563fb-db41-4aef-8b1a-7e70a3e9b3b9', NULL, 'reset-credentials-choose-user', 'master', 'abb4c92e-d6d3-4618-bab7-8a458f5c9b16', 0, 10, false, NULL, NULL);
@@ -1544,7 +1484,6 @@ INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id,
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('ff99c574-8574-4fc8-a2df-97bfab3a939f', NULL, 'direct-grant-validate-otp', 'development', '27073d10-e393-4e9e-8462-ed6c6944ae5d', 0, 20, false, NULL, NULL);
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('a5a33d91-6045-4640-b298-97ab9d95dcee', NULL, 'registration-page-form', 'development', 'c5976461-e400-4fe5-8253-18d4fc358c1a', 0, 10, true, '2afd4555-d4c8-4b37-986e-1aa20e6c331a', NULL);
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('d3f1bf5b-c9d7-4673-a350-bb8adc910809', NULL, 'registration-user-creation', 'development', '2afd4555-d4c8-4b37-986e-1aa20e6c331a', 0, 20, false, NULL, NULL);
-INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('325bdaa7-a308-49f6-8626-6303b435eac5', NULL, 'registration-profile-action', 'development', '2afd4555-d4c8-4b37-986e-1aa20e6c331a', 0, 40, false, NULL, NULL);
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('5fab369e-be96-4d11-bcb0-6b7a99210c78', NULL, 'registration-password-action', 'development', '2afd4555-d4c8-4b37-986e-1aa20e6c331a', 0, 50, false, NULL, NULL);
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('cabb6cf3-d7d5-41f6-bd2f-057d45e56c67', NULL, 'registration-recaptcha-action', 'development', '2afd4555-d4c8-4b37-986e-1aa20e6c331a', 3, 60, false, NULL, NULL);
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('792054ad-046e-473b-8746-0e717aa52139', NULL, 'reset-credentials-choose-user', 'development', 'd2393001-e20d-45f2-ac91-0904d5c59539', 0, 10, false, NULL, NULL);
@@ -1649,16 +1588,16 @@ INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_befor
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('c8afb027-0c8c-4bdc-bf0f-be4a2c172439', true, false, 'account', 0, true, NULL, '/realms/master/account/', false, NULL, false, 'master', 'openid-connect', 0, false, false, '${client_account}', false, 'client-secret', '${authBaseUrl}', NULL, NULL, true, false, false, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('34c90cb1-59ee-4c3d-b280-035eb751690a', true, false, 'account-console', 0, true, NULL, '/realms/master/account/', false, NULL, false, 'master', 'openid-connect', 0, false, false, '${client_account-console}', false, 'client-secret', '${authBaseUrl}', NULL, NULL, true, false, false, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('082d9499-a226-4009-af33-5c10e7a18333', true, false, 'broker', 0, false, NULL, NULL, true, NULL, false, 'master', 'openid-connect', 0, false, false, '${client_broker}', false, 'client-secret', NULL, NULL, NULL, true, false, false, false);
-INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('19f8a8d4-4eee-413b-8430-1779b7cd1bec', true, false, 'security-admin-console', 0, true, NULL, '/admin/master/console/', false, NULL, false, 'master', 'openid-connect', 0, false, false, '${client_security-admin-console}', false, 'client-secret', '${authAdminUrl}', NULL, NULL, true, false, false, false);
-INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('a49877bc-ff43-4dcd-8a21-c423e5fb895f', true, false, 'admin-cli', 0, true, NULL, NULL, false, NULL, false, 'master', 'openid-connect', 0, false, false, '${client_admin-cli}', false, 'client-secret', NULL, NULL, NULL, false, false, true, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('297eff51-12d4-43da-9069-f632024daf18', true, false, 'development-realm', 0, false, NULL, NULL, true, NULL, false, 'master', NULL, 0, false, false, 'development Realm', false, 'client-secret', NULL, NULL, NULL, true, false, false, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('2090c53c-83d2-4087-b22a-88d4c12730e4', true, false, 'realm-management', 0, false, NULL, NULL, true, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_realm-management}', false, 'client-secret', NULL, NULL, NULL, true, false, false, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('15b080ba-7783-49c9-b155-86ac5e1855b1', true, false, 'account', 0, true, NULL, '/realms/development/account/', false, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_account}', false, 'client-secret', '${authBaseUrl}', NULL, NULL, true, false, false, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('2c539eab-1781-4d43-94da-033984eea7f6', true, false, 'account-console', 0, true, NULL, '/realms/development/account/', false, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_account-console}', false, 'client-secret', '${authBaseUrl}', NULL, NULL, true, false, false, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('51bba6d9-f73d-4f45-8b06-392303051f3c', true, false, 'broker', 0, false, NULL, NULL, true, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_broker}', false, 'client-secret', NULL, NULL, NULL, true, false, false, false);
-INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('723bc5a7-52cb-4063-b8f4-b45327f5db02', true, false, 'security-admin-console', 0, true, NULL, '/admin/development/console/', false, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_security-admin-console}', false, 'client-secret', '${authAdminUrl}', NULL, NULL, true, false, false, false);
-INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('5c7b1c4b-aff8-47d7-b732-4aba58db74b2', true, false, 'admin-cli', 0, true, NULL, NULL, false, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_admin-cli}', false, 'client-secret', NULL, NULL, NULL, false, false, true, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', true, true, 'ace', 0, false, '1h6T3Dnx45hrd4pgv7YdcIfP9GRarbpN', NULL, false, '', false, 'development', 'openid-connect', -1, false, false, NULL, false, 'client-secret', '', NULL, NULL, true, false, true, false);
+INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('19f8a8d4-4eee-413b-8430-1779b7cd1bec', true, true, 'security-admin-console', 0, true, NULL, '/admin/master/console/', false, NULL, false, 'master', 'openid-connect', 0, false, false, '${client_security-admin-console}', false, 'client-secret', '${authAdminUrl}', NULL, NULL, true, false, false, false);
+INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('a49877bc-ff43-4dcd-8a21-c423e5fb895f', true, true, 'admin-cli', 0, true, NULL, NULL, false, NULL, false, 'master', 'openid-connect', 0, false, false, '${client_admin-cli}', false, 'client-secret', NULL, NULL, NULL, false, false, true, false);
+INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('723bc5a7-52cb-4063-b8f4-b45327f5db02', true, true, 'security-admin-console', 0, true, NULL, '/admin/development/console/', false, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_security-admin-console}', false, 'client-secret', '${authAdminUrl}', NULL, NULL, true, false, false, false);
+INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('5c7b1c4b-aff8-47d7-b732-4aba58db74b2', true, true, 'admin-cli', 0, true, NULL, NULL, false, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_admin-cli}', false, 'client-secret', NULL, NULL, NULL, false, false, true, false);
 
 
 --
@@ -1698,6 +1637,10 @@ INSERT INTO public.client_attributes (client_id, name, value) VALUES ('c8afb027-
 INSERT INTO public.client_attributes (client_id, name, value) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', 'post.logout.redirect.uris', '+');
 INSERT INTO public.client_attributes (client_id, name, value) VALUES ('2c539eab-1781-4d43-94da-033984eea7f6', 'post.logout.redirect.uris', '+');
 INSERT INTO public.client_attributes (client_id, name, value) VALUES ('15b080ba-7783-49c9-b155-86ac5e1855b1', 'post.logout.redirect.uris', '+');
+INSERT INTO public.client_attributes (client_id, name, value) VALUES ('19f8a8d4-4eee-413b-8430-1779b7cd1bec', 'client.use.lightweight.access.token.enabled', 'true');
+INSERT INTO public.client_attributes (client_id, name, value) VALUES ('a49877bc-ff43-4dcd-8a21-c423e5fb895f', 'client.use.lightweight.access.token.enabled', 'true');
+INSERT INTO public.client_attributes (client_id, name, value) VALUES ('723bc5a7-52cb-4063-b8f4-b45327f5db02', 'client.use.lightweight.access.token.enabled', 'true');
+INSERT INTO public.client_attributes (client_id, name, value) VALUES ('5c7b1c4b-aff8-47d7-b732-4aba58db74b2', 'client.use.lightweight.access.token.enabled', 'true');
 
 
 --
@@ -1742,6 +1685,8 @@ INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALU
 INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALUES ('80982e4f-2393-44de-8207-6ce9526f3fb3', 'microprofile-jwt', 'development', 'Microprofile - JWT built-in scope', 'openid-connect');
 INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALUES ('3515bf6a-cb15-45db-b55c-6ec21ac99990', 'acr', 'master', 'OpenID Connect scope for add acr (authentication context class reference) to the token', 'openid-connect');
 INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALUES ('e22d2191-0ebe-40c6-9d8c-a3c6cc44aaf3', 'acr', 'development', 'OpenID Connect scope for add acr (authentication context class reference) to the token', 'openid-connect');
+INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALUES ('7ef392a1-6728-40ac-9bf6-381f1fbc3b20', 'basic', 'master', 'OpenID Connect scope for add all basic claims to the token', 'openid-connect');
+INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALUES ('25df115c-d573-4b3e-bf3b-db291bfbceff', 'basic', 'development', 'OpenID Connect scope for add all basic claims to the token', 'openid-connect');
 
 
 --
@@ -1800,6 +1745,10 @@ INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('3515
 INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('3515bf6a-cb15-45db-b55c-6ec21ac99990', 'false', 'include.in.token.scope');
 INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('e22d2191-0ebe-40c6-9d8c-a3c6cc44aaf3', 'false', 'display.on.consent.screen');
 INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('e22d2191-0ebe-40c6-9d8c-a3c6cc44aaf3', 'false', 'include.in.token.scope');
+INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('7ef392a1-6728-40ac-9bf6-381f1fbc3b20', 'false', 'display.on.consent.screen');
+INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('7ef392a1-6728-40ac-9bf6-381f1fbc3b20', 'false', 'include.in.token.scope');
+INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('25df115c-d573-4b3e-bf3b-db291bfbceff', 'false', 'display.on.consent.screen');
+INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('25df115c-d573-4b3e-bf3b-db291bfbceff', 'false', 'include.in.token.scope');
 
 
 --
@@ -1910,6 +1859,15 @@ INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALU
 INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', '053548c2-191c-44b2-82a5-1aa9f2804735', false);
 INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', '80982e4f-2393-44de-8207-6ce9526f3fb3', false);
 INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', '2a598f0a-e595-46b6-9641-7e305f447623', false);
+INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('c8afb027-0c8c-4bdc-bf0f-be4a2c172439', '7ef392a1-6728-40ac-9bf6-381f1fbc3b20', true);
+INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('34c90cb1-59ee-4c3d-b280-035eb751690a', '7ef392a1-6728-40ac-9bf6-381f1fbc3b20', true);
+INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('19f8a8d4-4eee-413b-8430-1779b7cd1bec', '7ef392a1-6728-40ac-9bf6-381f1fbc3b20', true);
+INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('a49877bc-ff43-4dcd-8a21-c423e5fb895f', '7ef392a1-6728-40ac-9bf6-381f1fbc3b20', true);
+INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('15b080ba-7783-49c9-b155-86ac5e1855b1', '25df115c-d573-4b3e-bf3b-db291bfbceff', true);
+INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('2c539eab-1781-4d43-94da-033984eea7f6', '25df115c-d573-4b3e-bf3b-db291bfbceff', true);
+INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('723bc5a7-52cb-4063-b8f4-b45327f5db02', '25df115c-d573-4b3e-bf3b-db291bfbceff', true);
+INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('5c7b1c4b-aff8-47d7-b732-4aba58db74b2', '25df115c-d573-4b3e-bf3b-db291bfbceff', true);
+INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', '25df115c-d573-4b3e-bf3b-db291bfbceff', true);
 
 
 --
@@ -1918,42 +1876,6 @@ INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALU
 
 INSERT INTO public.client_scope_role_mapping (scope_id, role_id) VALUES ('9999bbc8-5f73-4a21-aa56-797628fa5b5f', 'f10a139c-29b3-4236-86d1-98baedb83512');
 INSERT INTO public.client_scope_role_mapping (scope_id, role_id) VALUES ('b3b6dccf-46b0-4199-9d2e-a1908cb98623', 'd611163f-3327-43ee-a7ea-790110d80df3');
-
-
---
--- Data for Name: client_session; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-
-
---
--- Data for Name: client_session_auth_status; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-
-
---
--- Data for Name: client_session_note; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-
-
---
--- Data for Name: client_session_prot_mapper; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-
-
---
--- Data for Name: client_session_role; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-
-
---
--- Data for Name: client_user_session_note; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
 
 
 --
@@ -1984,6 +1906,10 @@ INSERT INTO public.component (id, name, parent_id, provider_id, provider_type, r
 INSERT INTO public.component (id, name, parent_id, provider_id, provider_type, realm_id, sub_type) VALUES ('e960b9d9-6f6e-4030-a460-3ba2102b56b1', 'Allowed Client Scopes', 'development', 'allowed-client-templates', 'org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy', 'development', 'anonymous');
 INSERT INTO public.component (id, name, parent_id, provider_id, provider_type, realm_id, sub_type) VALUES ('1878d1d1-a2ff-4dde-8de6-15274670e90e', 'Allowed Protocol Mapper Types', 'development', 'allowed-protocol-mappers', 'org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy', 'development', 'authenticated');
 INSERT INTO public.component (id, name, parent_id, provider_id, provider_type, realm_id, sub_type) VALUES ('00293f25-13f8-48fd-b1fb-3c706e94db05', 'Allowed Client Scopes', 'development', 'allowed-client-templates', 'org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy', 'development', 'authenticated');
+INSERT INTO public.component (id, name, parent_id, provider_id, provider_type, realm_id, sub_type) VALUES ('a9536731-9ec0-45bf-bc51-509650ff3a48', NULL, 'master', 'declarative-user-profile', 'org.keycloak.userprofile.UserProfileProvider', 'master', NULL);
+INSERT INTO public.component (id, name, parent_id, provider_id, provider_type, realm_id, sub_type) VALUES ('8d502e71-fb01-4431-9c89-594a08043ebc', 'hmac-generated-hs512', 'master', 'hmac-generated', 'org.keycloak.keys.KeyProvider', 'master', NULL);
+INSERT INTO public.component (id, name, parent_id, provider_id, provider_type, realm_id, sub_type) VALUES ('946f6bb1-ddd6-4033-8454-47754e7bc026', NULL, 'development', 'declarative-user-profile', 'org.keycloak.userprofile.UserProfileProvider', 'development', NULL);
+INSERT INTO public.component (id, name, parent_id, provider_id, provider_type, realm_id, sub_type) VALUES ('35b8caa2-f491-4589-b36c-0a510aee7c14', 'hmac-generated-hs512', 'development', 'hmac-generated', 'org.keycloak.keys.KeyProvider', 'development', NULL);
 
 
 --
@@ -1995,6 +1921,10 @@ INSERT INTO public.component_config (id, component_id, name, value) VALUES ('a3c
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('fd7aa267-41cc-40a8-8a76-5b6569c8391e', 'a7130712-f8b2-4ee7-ade6-a43f7aab8e7b', 'allowed-protocol-mapper-types', 'oidc-address-mapper');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('7d75807d-806d-4728-8878-5f4dac09effb', 'a7130712-f8b2-4ee7-ade6-a43f7aab8e7b', 'allowed-protocol-mapper-types', 'saml-user-attribute-mapper');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('32fd5c39-4f70-460f-8712-26eb6fe82215', 'a7130712-f8b2-4ee7-ade6-a43f7aab8e7b', 'allowed-protocol-mapper-types', 'saml-user-property-mapper');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('efda198d-e0ce-45b0-b550-d146a66d6c6d', 'c62919b8-1ab7-4cf8-a887-1ef460ead6e2', 'allowed-protocol-mapper-types', 'saml-role-list-mapper');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('05219a2c-bd3c-4099-8e0a-92885726b851', 'c62919b8-1ab7-4cf8-a887-1ef460ead6e2', 'allowed-protocol-mapper-types', 'saml-user-attribute-mapper');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('99095c5f-6be5-4aef-90c2-0ed6ecaf94ba', 'c62919b8-1ab7-4cf8-a887-1ef460ead6e2', 'allowed-protocol-mapper-types', 'oidc-usermodel-attribute-mapper');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('ee0d7b02-acf2-4b4f-b78b-7b159d4e5222', '74e8f05e-6c92-44f8-a262-c6155d867b84', 'priority', '100');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('c8fada7b-2b09-443c-bbce-385740f5c3f7', 'a7130712-f8b2-4ee7-ade6-a43f7aab8e7b', 'allowed-protocol-mapper-types', 'oidc-full-name-mapper');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('af0358e7-037d-4acb-ba70-2b7fb1b18717', 'a7130712-f8b2-4ee7-ade6-a43f7aab8e7b', 'allowed-protocol-mapper-types', 'oidc-sha256-pairwise-sub-mapper');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('73973e32-0937-428a-abff-ad14762d677b', 'a7130712-f8b2-4ee7-ade6-a43f7aab8e7b', 'allowed-protocol-mapper-types', 'oidc-usermodel-property-mapper');
@@ -2007,9 +1937,7 @@ INSERT INTO public.component_config (id, component_id, name, value) VALUES ('110
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('eb8aae52-af6c-4ab0-9838-78734c366087', 'c62919b8-1ab7-4cf8-a887-1ef460ead6e2', 'allowed-protocol-mapper-types', 'oidc-sha256-pairwise-sub-mapper');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('1c2d2ca7-fad3-4b5f-aa67-071eab7c4914', 'c62919b8-1ab7-4cf8-a887-1ef460ead6e2', 'allowed-protocol-mapper-types', 'saml-user-property-mapper');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('af36d33f-9b6d-421e-a74a-b1dfe9db76c7', 'c62919b8-1ab7-4cf8-a887-1ef460ead6e2', 'allowed-protocol-mapper-types', 'oidc-usermodel-property-mapper');
-INSERT INTO public.component_config (id, component_id, name, value) VALUES ('efda198d-e0ce-45b0-b550-d146a66d6c6d', 'c62919b8-1ab7-4cf8-a887-1ef460ead6e2', 'allowed-protocol-mapper-types', 'saml-role-list-mapper');
-INSERT INTO public.component_config (id, component_id, name, value) VALUES ('05219a2c-bd3c-4099-8e0a-92885726b851', 'c62919b8-1ab7-4cf8-a887-1ef460ead6e2', 'allowed-protocol-mapper-types', 'saml-user-attribute-mapper');
-INSERT INTO public.component_config (id, component_id, name, value) VALUES ('99095c5f-6be5-4aef-90c2-0ed6ecaf94ba', 'c62919b8-1ab7-4cf8-a887-1ef460ead6e2', 'allowed-protocol-mapper-types', 'oidc-usermodel-attribute-mapper');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('3be8d71c-a8d3-4808-8bd7-d98899fe9176', '08a41e5e-3a93-460b-aa41-98eb01a8d5ed', 'priority', '100');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('e7f125d4-5325-4dd8-b69f-cec116e0eea3', 'c62919b8-1ab7-4cf8-a887-1ef460ead6e2', 'allowed-protocol-mapper-types', 'oidc-address-mapper');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('fb27611b-43f7-40a8-b727-6173f726935c', 'a94d14fd-01ac-4224-b43b-c4115688295a', 'certificate', 'MIICmzCCAYMCBgF/Pzd0+jANBgkqhkiG9w0BAQsFADARMQ8wDQYDVQQDDAZtYXN0ZXIwHhcNMjIwMjI4MDcyMjUzWhcNMzIwMjI4MDcyNDMzWjARMQ8wDQYDVQQDDAZtYXN0ZXIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC8hDy654pWsDIZO7MVQrDRU5n8wxNYjbTKnSUw+EwPemN3GU2nmD/oEZISvilsXWR4SAtV67M25qoie1HINKHJdD7QBS8y6CkBe1SkC3hwuiSVqGw2BL4P3SKZzuwCWpkGaOERmmODUGlEAbKUZvoFZ8cbaWSu4uenWYsA1Ee4PB7yZMQXnXUkTQjFgyZu6jgQyMP9G86nWiDn38HTp4n2+Snbn0FevdNgf3um63KPST8pBidCcX0196Fy5jzeenhMeGZP0nY6+dB3xdPuIGs/wc2Ky8pBijyzDyINhzdBm1luE6aLQL3KHArv/psd8MdvahcqDGHKe+tBink4XpN3AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAA2PSbomy0LrWCkbvxgYYsCNLtWcN/kDXiNC/f7fnJyE3fJPoe0VOJ9g0xkZxl7BVXQAZZiNSbBYPyXRnWZkxnO62UIzI1xwQTO13PX1iUFefwdjxv11MbCyiTcwVaGohU5YcQxeDTX2hUap6A0L19JePsrOcxBT4OVFw5P2SV4FoVhSlAWOlSnDz5vE+1oYKjaV8gP3EpGYA2UhzgbN1wFfn3RFTrNio7CL7fQJl6SRsthCL8kaZtKSpP9+5mEtn3xD14OtQSKAYXzsNR7w6ZnFiwkheTllpeXma7NAwg5FePRgXacQaJJJp+di+Y46aQUGoFPsy9BImdRxq75vYCk=');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('4c20c582-3b70-4fb9-ac2e-68092fd9179b', 'a94d14fd-01ac-4224-b43b-c4115688295a', 'privateKey', 'MIIEpAIBAAKCAQEAvIQ8uueKVrAyGTuzFUKw0VOZ/MMTWI20yp0lMPhMD3pjdxlNp5g/6BGSEr4pbF1keEgLVeuzNuaqIntRyDShyXQ+0AUvMugpAXtUpAt4cLoklahsNgS+D90imc7sAlqZBmjhEZpjg1BpRAGylGb6BWfHG2lkruLnp1mLANRHuDwe8mTEF511JE0IxYMmbuo4EMjD/RvOp1og59/B06eJ9vkp259BXr3TYH97putyj0k/KQYnQnF9NfehcuY83np4THhmT9J2OvnQd8XT7iBrP8HNisvKQYo8sw8iDYc3QZtZbhOmi0C9yhwK7/6bHfDHb2oXKgxhynvrQYp5OF6TdwIDAQABAoIBADJxL87TJbEMdFtMHh8SOT3JoOqBSCvpvvZ4FfuEdNWvae30V1MA6hiumudo+qyEUN3eaSoUZ1/JWLzhQoDPlHrTH/uJZ5e3h0FePsemShPfuupQpqPNoQ2dniSJuZznoQqWBaMwLHB2k7QewCn1Y/EOU7iB+u7QyCt/SjJumsIw3kQCPq4OkTXoouV2uQ3kls1sBaxfUi94WrdqEEDtPq4nh4XDxd/pG3wNv+c+U3fJH8DuSdFxoswAppYZYfe3fkxvthVSuiB8bRqF61xQRfj/1THeHRPIIarr6Stz99GTt0JUSMkRdVP0Ftu4FrB1XEC9uWBorTsCv2zU25jjbAECgYEA6shsD7S3MaC9fVVswagr5zykFD5VgvpTbkZwJzlZrklI8VcMgtKxq4zXJHawYRfuLNFzyyzy5Si4J/2Y448LpS8ohURtQZ2RLQWgDSV1l2Pjoen/9EHCpM4x+qSG1GDk7rhVyYHLmcTAwubpWF75zSF/KEnoYP8rILAK44w5XW0CgYEAzY13uyfYQoOmikw1tu2NMjNmvlaGyKgzZVHzOq0G20dKiDT+BQiPBpVkMfoRGgTz9EwnsRwZ3EplCuC/czijSqX7wTRgTvZOR4x/YlA0mrsVFlkKN194VNAcZLu6u45TQFgkeZJq4wHy8shlzzv8ZeTlacOdQ4sVE68Zn0gwWfMCgYASCLcUNcNkkn47pFYoQeytZGEOFQOofeXusIZo3OTgmEx8DT2uxtRS4wybhmph6t6mnqgQUTGPHKOYnsghopk4ZPjt06W4xouiM65plBkGOewAQeMhNfPniNcZ841PvumW1J3yTn//HbfYwLfny9PQR+RmidbJrI/5gMw1Uk4NuQKBgQCAsbns651yx4pVvDFFPqXQcG47bWEl8Gl9Xjmy2vIYCCKZ9NO1ww4JSS9aOv7KE5/JrISNVtK6IbnxfZVgRm22JwXgiTJjPcL0+PooS58j4U3qmATVdmiYcVPVndPj6dAl0QnFM+7IAkhhySY1AZGdGhqohVjJGSMxF8gq+b+MEQKBgQCWf7vR88m7R0yqRH3bmybMJueQNmtKO+0zRmyLJ6n1HeQurRc7V27YhNdqtttoijZnnj71FtLGfQEo7g4BvwDaQG+RAcI92MdasTVXwyugd1YRVlUKOEq2ZKi2gidGzCUGIMjanZyUzcPSliZeXjvFhu4AjxgdH/Fvqi/RT5ibow==');
@@ -2022,9 +1950,16 @@ INSERT INTO public.component_config (id, component_id, name, value) VALUES ('3c4
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('8e060851-47ec-4393-9f95-faf7bafe45b3', 'a4adc65f-f9ea-450a-8324-a1af957e66f1', 'secret', 'F3r-97hgWonvzIvXehJgTA');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('c7190c6f-fdd1-433b-8b28-18949e38e34c', 'a4adc65f-f9ea-450a-8324-a1af957e66f1', 'kid', '3a957f2d-65f0-4cca-b250-d46418412cdb');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('f0de0cca-bcf1-42d7-b6bf-d4eec88d1f49', 'a4adc65f-f9ea-450a-8324-a1af957e66f1', 'priority', '100');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('593750fb-c9fe-4ae5-9858-d9b2d07a7b14', '8d502e71-fb01-4431-9c89-594a08043ebc', 'secret', 'F550gyrjwhYhQr3V30brTgUp-S-IEDC1QUgu2N1TdP8QA_1TdAwT63ArmE3z-1mQ1ClC38Kg9jbIhY5BX4qylLOIVNN54ryQaCb9_bxu3V2BKDjQJ82A2evO8uYH-fOv_dj1Jp3fwkjT3c7tGSHMxbXNdsN5YTPVO04XS5QjmhU');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('ad2f59b4-d76f-491a-a46b-a24e76d9e704', '8d502e71-fb01-4431-9c89-594a08043ebc', 'algorithm', 'HS512');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('27645848-10a4-4acc-b69f-766ff9cc1ea2', '35b8caa2-f491-4589-b36c-0a510aee7c14', 'kid', 'c6d2a9dc-d03e-4ab7-bbb5-6ef63a09578a');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('b5b30b00-c87c-4424-8feb-bd4fa1ac645a', '35b8caa2-f491-4589-b36c-0a510aee7c14', 'priority', '100');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('e8f05d25-e839-45b1-acbe-0ae5a6a3279d', '74e8f05e-6c92-44f8-a262-c6155d867b84', 'privateKey', 'MIIEpAIBAAKCAQEAp7kOFljIFGSxMQJULK2gN3leVP+2JWTOp2eGp3a3MziixqTJUefh8mTYs89EIadlLA2khnTn5m431MTbEtAPXcKr8s2GMuMOiqRDO+9hpv4VLnsJGfm7UGrsagTYmB/WAlktdSjrrjazQuDjQlsfDUdeit5++k5XI4Ejp9oCOvA43maF9ThcoDXYNB1cGfeci4Xz97xYm7cKO2U6GEwpLTyiBRZoyz6h2vops4QJKTo/YYs5uqH5SItQdyuv/opP1R/8pGzon4cXi13VXgvStzZZS8DX+d62npFsBpZDVF9ItBo/SrZpxFW+bUjtVu7iShrnjuQBU4wUD28SWxUCQQIDAQABAoIBABT8So7xPNeQYbtIF1AfyVQnk23/MMMtAc5gXbDGYdW+2F8Sbz4YTWUOyS52WIf9ceM5McTBC+MBF2s/1klcTw/kM6+Fl6z2S/N86gytvwIt+GiAbHsbjBxbxIjfYlpmYViZ394w6Iw7u+I6UTUUQaZfr6ygejLHao++sL9nv6+v+xJmJn9IcABHmEkL/f0LSRyX74sKfsAbDF/1PSZsak1Qzoqag6ciRXZuPv5sSNBY5h+0euTt/yU8Q67JYejXQ9uceWCIuemRGKvYyPCr1d/p5Q8NnBkBH6UAjoyHY+hh6++BFvKMsmf6bkJrAZrkWQnlGeX/elaVrgGoyNn7hiECgYEA0UJmYeqtPDTZ6/YOuEYVmwKCIzq9m6/utsGrIUl+9ld9PHAyyJJxo+NNboe5Yz+95t1/hOlMm1DBQxVufy1DI1kh62BhtZsyruem1OykuwNSRPWJuFGzcV3PquouFZiywyNMgPzf/6l2MgeTBCcuRqd+N0HTwP0ULPcCoLGFMIcCgYEAzS+ReInzy/q7T+AD7jj+iSgTq65yEcHEcJplBTZmxqLzOcSPQ0LbFawh8nidN2AQ/5VyhlGuJyuh0Bim8M9+OSHR9GMylZlXFhDQE+DlA9rcLogVTudxrnVy+GXmSrY/Plcz8SQDtyI3BKDc/zsOKM1g4OgeeheHfnfeQR+PUPcCgYEAvGPT+oklBtPp8RWncNyfrNrYQFEszFHaTiwTHbemFq7zL4svHQVCS7JiToTgMOr80zBMEmNatWVBaFyOCu67x8IB2H7/2Fhti6s/teeJ8lduJGkNYKQlMYWsZQnJDWZYYXeQ83s1SlzM7QOGprGDZtZ5udOIiPEOzeBfPD41U1cCgYA4gvtr2YLeEUZ5r1cly2i/WdxhEoC0R0vVP5DHKL6Rwtt+c5aJjeZNR8VpxLJ4R+smmYCbYe+3Nhsw9zkzZdJ75cavqoqKDVug5iyI7Q3mS+cMocpMmw4CYLKzm00cEqnEf7v8lFC5paDFk5CKczdpIXenOgb61XQp7tW11f1g7QKBgQCta4KhaKF3ge1ZZlFexfjZXAMWbxbcPRIGu/ohYks7+nYMLIZGu5yJjZEm0h8lKa3nINCPwXk+fR7+WOvV0i7bSegRSR5I38E33nK042Ltb/cka0g6ZBNzS0zsbZ6WaIdoqxSuoBHcc3GFPEJ4MUqRJ/N8t+nRbWl+uNEzKLG+KA==');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('6d1b2047-72e2-4da8-8281-43bc2e1a4ee0', '3d270a11-d3a5-4eca-a752-a884dc3a34f8', 'host-sending-registration-request-must-match', 'true');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('f7355ea0-6796-4008-be9d-606ac19806a6', '00293f25-13f8-48fd-b1fb-3c706e94db05', 'allow-default-scopes', 'true');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('61c17c3f-42fb-4992-9357-0c7a30191a5e', '8d502e71-fb01-4431-9c89-594a08043ebc', 'kid', '0824a445-cec6-494c-a959-87087e69b3eb');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('4dbc119b-ac47-42a3-8816-eed2c9b86ab1', '8d502e71-fb01-4431-9c89-594a08043ebc', 'priority', '100');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('eb0516d6-f07f-4b16-8906-9a09004ecf6f', '74e8f05e-6c92-44f8-a262-c6155d867b84', 'certificate', 'MIICmzCCAYMCBgF/Pzd12TANBgkqhkiG9w0BAQsFADARMQ8wDQYDVQQDDAZtYXN0ZXIwHhcNMjIwMjI4MDcyMjUzWhcNMzIwMjI4MDcyNDMzWjARMQ8wDQYDVQQDDAZtYXN0ZXIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCnuQ4WWMgUZLExAlQsraA3eV5U/7YlZM6nZ4andrczOKLGpMlR5+HyZNizz0Qhp2UsDaSGdOfmbjfUxNsS0A9dwqvyzYYy4w6KpEM772Gm/hUuewkZ+btQauxqBNiYH9YCWS11KOuuNrNC4ONCWx8NR16K3n76TlcjgSOn2gI68DjeZoX1OFygNdg0HVwZ95yLhfP3vFibtwo7ZToYTCktPKIFFmjLPqHa+imzhAkpOj9hizm6oflIi1B3K6/+ik/VH/ykbOifhxeLXdVeC9K3NllLwNf53raekWwGlkNUX0i0Gj9KtmnEVb5tSO1W7uJKGueO5AFTjBQPbxJbFQJBAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAGgaXhVQnOo/zaX/eKFVP3DKEMbig8I1/vYXbv55Q2gt7G4SEhjWuuJHddaEw84igMdgS8goYj6Lg8jkIHnGCjRM5fujpkOniZH2R/p/j+eGtdlLsJEM4PHxoMQjbKRd1bxc3JVQEte7wEt2s1xxxJWvc+OWsIjyf9EWsr77e9Jt6Hl3VFOyrVf3OxmNdQZdGLCp3dlRnBX3e0G2s/V3ZgWMdoR7rfDhQfnWfMeTT17+oAM5+A11oX39LMDJNz0gkJ8nU633qw1lyGzowWSF/c3q8CenEGbywZ2Be7cUSUPv+22DoK9jQCUaLZSI1jn8hW1NPcjFI15RZOAoCFECwfM=');
-INSERT INTO public.component_config (id, component_id, name, value) VALUES ('ee0d7b02-acf2-4b4f-b78b-7b159d4e5222', '74e8f05e-6c92-44f8-a262-c6155d867b84', 'priority', '100');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('cfb21859-633c-412f-8a96-a3b7f79d68bf', '74e8f05e-6c92-44f8-a262-c6155d867b84', 'algorithm', 'RSA-OAEP');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('6b9011b6-3e77-464a-a004-e0bdd7167d60', '74e8f05e-6c92-44f8-a262-c6155d867b84', 'keyUse', 'ENC');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('a2cb8dda-337c-4af2-afe8-1b92190076ce', '1a2d6b81-7138-44c1-af8e-b3d53f60adc2', 'privateKey', 'MIIEpAIBAAKCAQEAiByyFbTPQ7k6Kq6lx/jiDPZ7N+80/TEWceBSnR3TVhYjsdaz6tDrH2hbg4y1d6jhN9S9zz3Dd2v9MHNpmCpi1SEhHPkOXjFuZH1tmRrBuPOLoGHGJRQ0L1NrmhEy4pBwDyxSZUhcf2USf1kc696oMKYSSnmL156ZCxTN8qi84jPqsE57kPce/MRh3v0e94Ly0wXmE+1oFDN/hy1qpcy/LctzGuYwXnkP4ABZYgFFlkJ2njgaT8L+UpUQc6TH507SvgJKx0dqRzWkSdXuR65laOa833C6le3+ZpVtLo1DzKNZRW4dnUG5uCH95EKnicgXCcA3TS5CgVXG7h8r9QgRkwIDAQABAoIBAHrlng5nUXWOu2xqgRmMKV8W9q7Md4XdWqy7pRxkH7vtBZG/kHgG5yVWrrqaxAclHyWwGyoSVHlxsgybSM6yBsb1wNZOMqDt9QUbE2hYdm4uyPWpEqXMFkpdAhz8Rnu3etbYaBU3Pv1wH0GJDsoSIr66VG2WTaQEeZ89y668mL+MVvU243hjHIxlaqKJj0f3lgRsE0nAOzaV7GGqKM2gqvERB6WaBKuUU6uP61FIrqw5WRSZoJ1/pgZTFQ+8J9YUrfr2EEmJxrE9WARavPx3NtTH4BP5ibITYWiW34YMa+J34LbxGl7SeS6PQtuykUyR/bUthD+Og1ULxDK32tolJ1ECgYEA3TzW+qmySudYGlUIti2ut9Hvbg0GHgyyBVD0SunCiiDyRtyN0nuHuGVjdxSN8Ks/DpojPrfYNaBt8t5Rki0uwBSMz6Np+vBiCR7crGY8d5M/tdvvZmc4ZfIO5SFjd10fr38F/QMGN717TB9zjK+T91SHq+EipEliX69Rf+4coCcCgYEAnX+6Xd9tXqnWrJUW7vJYPa+8rwOXd1ayXArhdJBmMpXcJ6NAYYfqJ59sECWLoMLvYP/Aj3SmCtXZFyanqxRF3dTnFQ9rQZbaw9GBCwcObc3ny8DzxH4vo/r5haImaDgWdtNrutC9PhZoAos887rOk9g7ZwQ9GPkGgtyh6xyuOrUCgYEAhRAHmOGhu41jHwtP3wqg0CxzHjS1HjOyiqIDHF92Q0/HiDk1D4h+u7g3V7LEICFPHsA0PI+kebSRDIcMdqe4O4zgmC4IGwajYCrwvLwM2Dp3EjFCzst8T0yECunHAk6/NPVoK6G7BqFvW/x6qf4cN6DerNEO3dLJWRWAJjqXevcCgYEAlLBUEnFvQHJYv9+UograsYnqONPMOBb6FZkUFcaJJPKDwEwH6Mu2jKeeDnRTqHbAJTPt58D5TLts0sVkf0eJWg64BhLjcC1p5HoyOGX2AkXksmA8AmIaudWjobxeQ//HfXDFgL22GxpuIRCwf2z5v2vhULUYtS3MLtj6aAtQlQ0CgYBE+Kc6gwNBFtM+aUpBsOl2fgVG1zJmdCWNZM93ycD5IBkpb0YB4MYRSVC2mcO18jSoIicVTb5rWr/c2Gv2vFLcIBMbP7GzXWJMhAWGBIQrHwHX9mjc+ktFpg3TKPyDTlobFUtuqElp+A3kJ67qWwoGv2AeYyrwnzuysYBeqzmLog==');
@@ -2034,9 +1969,9 @@ INSERT INTO public.component_config (id, component_id, name, value) VALUES ('ff2
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('628c1d40-530d-44d6-af95-b6d9ad1c82b2', '1a2d6b81-7138-44c1-af8e-b3d53f60adc2', 'certificate', 'MIICpTCCAY0CBgF/P0ZyrTANBgkqhkiG9w0BAQsFADAWMRQwEgYDVQQDDAtkZXZlbG9wbWVudDAeFw0yMjAyMjgwNzM5MTVaFw0zMjAyMjgwNzQwNTVaMBYxFDASBgNVBAMMC2RldmVsb3BtZW50MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiByyFbTPQ7k6Kq6lx/jiDPZ7N+80/TEWceBSnR3TVhYjsdaz6tDrH2hbg4y1d6jhN9S9zz3Dd2v9MHNpmCpi1SEhHPkOXjFuZH1tmRrBuPOLoGHGJRQ0L1NrmhEy4pBwDyxSZUhcf2USf1kc696oMKYSSnmL156ZCxTN8qi84jPqsE57kPce/MRh3v0e94Ly0wXmE+1oFDN/hy1qpcy/LctzGuYwXnkP4ABZYgFFlkJ2njgaT8L+UpUQc6TH507SvgJKx0dqRzWkSdXuR65laOa833C6le3+ZpVtLo1DzKNZRW4dnUG5uCH95EKnicgXCcA3TS5CgVXG7h8r9QgRkwIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQACHjp9lipLQvrRMLSLJmFY8TUL1JSh2pKSjEbXLCeN09P++ZpAVo0ujV/pcVLaW84K3l5UOUcPNa6rUjZJsG3AGMSlINMFl9dTLomXE9R+v3wtXRxdgluEIMyiAITX9fEgFDOdyCMeFztdmqrWefSf22mvdj8OBZlsNo9GzdfSzLG8OKhWiapsJjw9zfYkgiD5jBq0tGK2bNVr3gAlXUIwCrou0jhoTpUNt62dUfoFQRD/OwdtGB3P8JLM4QWlVLXuCP9yklbleimXOYkWi6MASYMoC0tBREOfQPlzEJ1PCP/qL/QuxjJnIcg02vcyr4MjWBKrQUJJxchxOuV2zkRe');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('9fa68088-034a-452e-8438-6bdf686af3d3', '21d0d3ff-9b05-439c-b91b-d7784f06a529', 'priority', '100');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('e86512b1-4190-4792-89b2-bce359c9a096', '21d0d3ff-9b05-439c-b91b-d7784f06a529', 'keyUse', 'SIG');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('7bc6be69-6ead-4f8b-a395-3f2fa866ff6f', 'a9536731-9ec0-45bf-bc51-509650ff3a48', 'kc.user.profile.config', '{"attributes":[{"name":"username","displayName":"${username}","validations":{"length":{"min":3,"max":255},"username-prohibited-characters":{},"up-username-not-idn-homograph":{}},"permissions":{"view":["admin","user"],"edit":["admin","user"]},"multivalued":false},{"name":"email","displayName":"${email}","validations":{"email":{},"length":{"max":255}},"required":{"roles":["user"]},"permissions":{"view":["admin","user"],"edit":["admin","user"]},"multivalued":false},{"name":"firstName","displayName":"${firstName}","validations":{"length":{"max":255},"person-name-prohibited-characters":{}},"required":{"roles":["user"]},"permissions":{"view":["admin","user"],"edit":["admin","user"]},"multivalued":false},{"name":"lastName","displayName":"${lastName}","validations":{"length":{"max":255},"person-name-prohibited-characters":{}},"required":{"roles":["user"]},"permissions":{"view":["admin","user"],"edit":["admin","user"]},"multivalued":false}],"groups":[{"name":"user-metadata","displayHeader":"User metadata","displayDescription":"Attributes, which refer to user metadata"}],"unmanagedAttributePolicy":"ENABLED"}');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('6e7bd710-04ef-4690-84df-15c1597010ee', '21d0d3ff-9b05-439c-b91b-d7784f06a529', 'certificate', 'MIICpTCCAY0CBgF/P0ZxwTANBgkqhkiG9w0BAQsFADAWMRQwEgYDVQQDDAtkZXZlbG9wbWVudDAeFw0yMjAyMjgwNzM5MTVaFw0zMjAyMjgwNzQwNTVaMBYxFDASBgNVBAMMC2RldmVsb3BtZW50MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoFms0zrz+TnA7ikWhjCn1o9XC2hpamlxRMkhIHYDjmZKqh3+KshrB1YfNVoszkw0cGL2wH85+mrNQZg6UO9ElEHfKZY1cPB1JaKJAGF7x471bvGtkTRt7uS+6yax9f0wu6U4AjSDkZhqmGubaJKF1BPCj/EulzdvJEjdbkHdGwVejTWfEcZJwEm/Ryl95HxaCTuvq5FT9cnevAV/259dwVcizZ9b/z/yut4G9SGwU/Cs3OmncW+5JXg9mRfOuyeQbJW3tEODT7HgN4WawirFJQWDWn5a+xjewtMyytW5v3y8hKP8UaI3W72VK9mr3jjLZgVZjROQVidMX0D7macf6QIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQBvIzQGCOS4Auv1cmGUd49yUqmypXErpAsuhuGZaYO2H4d26osgMKOOvd6fSPB1aJsSwlhsPhy8e6P/uEuV5FoIcSqxocc7AWb58a8Cr0FImSMk4OwhhvPY2IU4/7U8alOAhl/1b/Z6Gf2oBIQWFcBQ9zaetsddSRA6KdOLNfXijTTSZzPcnOpk5OQXewk5gYIrZYPcryrQaGOdi1+bLPjs7J89sDUi0B5XurLTMJciyWnXXp5eWfyDbyUJAWY3rg8b09Om8nD/NRCQbevrE8Tt/WdJ3KYoLg0pK3MbEzjQyJbZaW1FikLBsiyVqdCxw1mr9hR1ZejJe5QeUK07L5NA');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('60336002-d5d3-4d50-a4b3-e87a01b40371', '21d0d3ff-9b05-439c-b91b-d7784f06a529', 'privateKey', 'MIIEowIBAAKCAQEAoFms0zrz+TnA7ikWhjCn1o9XC2hpamlxRMkhIHYDjmZKqh3+KshrB1YfNVoszkw0cGL2wH85+mrNQZg6UO9ElEHfKZY1cPB1JaKJAGF7x471bvGtkTRt7uS+6yax9f0wu6U4AjSDkZhqmGubaJKF1BPCj/EulzdvJEjdbkHdGwVejTWfEcZJwEm/Ryl95HxaCTuvq5FT9cnevAV/259dwVcizZ9b/z/yut4G9SGwU/Cs3OmncW+5JXg9mRfOuyeQbJW3tEODT7HgN4WawirFJQWDWn5a+xjewtMyytW5v3y8hKP8UaI3W72VK9mr3jjLZgVZjROQVidMX0D7macf6QIDAQABAoIBABzOHzLO61cBHfxqmyY+BViQ5WUiO5WnHXbq3q2TJa5mB9Gpk6gh2sA1o2OVMGla3Sy3SnZoJIUsvHSlIQy6/snXT3yMBEumlpTNLulHmdHOh56HgdOM5Ja+tuFNUTjMY/3Bf18+CciU5ck9w2w0rh/b8N6kx+bYSXnuMQEGie65bmV0Ga9KEUJAUPkn8i00iYcf/fyeVVGRr4WutMLmixb9YdNto0L6wID0sSyCMb8YJnptfJuPhxnLi8yjr6+W7ZsyLgMI0VgRsKpNRVPJGweapglQgqlPm6zY7X2QQcu+Fjc2ibqUu+fWda4/WEeeUpKshqNSsTA+/tlDDHkRbQECgYEAzm/hsGSMJErogfb9Yw+mRFu3Tx8zfMLf/+h5WL1wUEezkvE7UHYHTedHDw9pA2NN97EnXtKIFdwYrPx/XlC2Su/fgEns+lWsxTPXoK3sBxHdSMStoItZckJ4eazXxgxLw6yQFb7GcsLqzT2QoSuF/rZhnlGw3wGwsxL89Z5wD8kCgYEAxtkw5g6rnq2ZW4y7oldEW5KQa9eeLzkymrbLyjCSuvxsP13C8g9BTzlfTJamVti3+7hGE81IhIhagdfRQDk+H6ukNRWECdaIKpsAjKifDbtb8gu5jImTFjVovbdiZ446WEvwTlCdOD6TNcT92+eAzez1F9iG7hBrknx501BN3yECgYEApObscpou9EK+LisdR4dVup9E87gpycxlYKfUXxWcZRSRlpyKVACkXw+TTK1zplgqDOT/XRhxynxxXaWpHK7+nyez8mebHHFZvIFoCptDwnX7vMgXJfqKbeI5GIEAL9zcnKb4xdYJ8dxP8bjvEj+RHuGTYwNAdTOFcdaGKLHyNDkCgYAKkvAbu7n6lSarjJ9JsbRL3k5ZvbyGrFb5jTDnDpAu609iSz0bnB4P9XAQ5Y3w3lNiSllHoknx6kJN10kkTib0ji8MN5mu4D6bbWSpFipnE4h/JYp3Y7Vzn+Fy/TZ5ZUHLAjbEI1tI62LuoAwTzoq16Jzb6MK8FBl0T7Q2vXV2oQKBgB9olSU1iRY3/CGDTjl1Rt4wmmVRFWOWqMjsSm802iEfVqTr/nsQdzDuV/G6hhRGkb42RT7mzQrACSFMEEkFECnzoSZWvC7ffS5SSn5PV7qUAYGp8rryXML62CjTBCRvYNDmytBrfLXhK4wuVdKexT4DNDQM0XI+MN2Q0T2fBBEx');
-INSERT INTO public.component_config (id, component_id, name, value) VALUES ('3be8d71c-a8d3-4808-8bd7-d98899fe9176', '08a41e5e-3a93-460b-aa41-98eb01a8d5ed', 'priority', '100');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('f54eafeb-bc38-4aa2-b93d-536f8043ef60', '08a41e5e-3a93-460b-aa41-98eb01a8d5ed', 'kid', '0d6fcba2-2da3-4bac-b5b6-62a65010e15b');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('88f50a5b-aa33-46fe-9e5b-122566e88b9a', '08a41e5e-3a93-460b-aa41-98eb01a8d5ed', 'secret', 'k4OXepRGU3GvAzBdhRTfDQ');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('7c3bf77a-872f-49ee-a160-f00b68a306a0', '83589cbd-0149-4039-aa3c-2966bea0c0e2', 'kid', '3c769bbe-6eec-496f-8c19-0a94580ba110');
@@ -2062,8 +1997,9 @@ INSERT INTO public.component_config (id, component_id, name, value) VALUES ('933
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('f5113353-ffe6-4c11-b268-d30d54c3259c', '1878d1d1-a2ff-4dde-8de6-15274670e90e', 'allowed-protocol-mapper-types', 'saml-user-attribute-mapper');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('b01f09ae-6141-4e35-9f25-08fb49a71675', '1878d1d1-a2ff-4dde-8de6-15274670e90e', 'allowed-protocol-mapper-types', 'oidc-address-mapper');
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('4d8cdb6d-7e1e-45b9-9280-4acbe41bf5b0', '3d270a11-d3a5-4eca-a752-a884dc3a34f8', 'client-uris-must-match', 'true');
-INSERT INTO public.component_config (id, component_id, name, value) VALUES ('6d1b2047-72e2-4da8-8281-43bc2e1a4ee0', '3d270a11-d3a5-4eca-a752-a884dc3a34f8', 'host-sending-registration-request-must-match', 'true');
-INSERT INTO public.component_config (id, component_id, name, value) VALUES ('f7355ea0-6796-4008-be9d-606ac19806a6', '00293f25-13f8-48fd-b1fb-3c706e94db05', 'allow-default-scopes', 'true');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('f42b2737-2878-49b6-bb01-f8af6e4eec93', '946f6bb1-ddd6-4033-8454-47754e7bc026', 'kc.user.profile.config', '{"attributes":[{"name":"username","displayName":"${username}","validations":{"length":{"min":3,"max":255},"username-prohibited-characters":{},"up-username-not-idn-homograph":{}},"permissions":{"view":["admin","user"],"edit":["admin","user"]},"multivalued":false},{"name":"email","displayName":"${email}","validations":{"email":{},"length":{"max":255}},"required":{"roles":["user"]},"permissions":{"view":["admin","user"],"edit":["admin","user"]},"multivalued":false},{"name":"firstName","displayName":"${firstName}","validations":{"length":{"max":255},"person-name-prohibited-characters":{}},"required":{"roles":["user"]},"permissions":{"view":["admin","user"],"edit":["admin","user"]},"multivalued":false},{"name":"lastName","displayName":"${lastName}","validations":{"length":{"max":255},"person-name-prohibited-characters":{}},"required":{"roles":["user"]},"permissions":{"view":["admin","user"],"edit":["admin","user"]},"multivalued":false}],"groups":[{"name":"user-metadata","displayHeader":"User metadata","displayDescription":"Attributes, which refer to user metadata"}],"unmanagedAttributePolicy":"ENABLED"}');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('1768b224-bb8e-4c8e-aafd-1ecac60e1494', '35b8caa2-f491-4589-b36c-0a510aee7c14', 'secret', 'I_5YBWpzfOL6r57h2AnJyU-jp0zItXNnAuyDZ68keUGkjuwQzx5ZlaPzUACyrsIWDLex4W8XcDc92qh02mXlP91exGgNQgNxVRMgDIqLYmRy-krU2NsjQ7P1CF0iUcCWiU6VcIpZNel8_qYj3wRQbh2B-onJhioF7pg1Bp9Eh4A');
+INSERT INTO public.component_config (id, component_id, name, value) VALUES ('fc745c81-4ade-4270-8e1f-cea38d3c853f', '35b8caa2-f491-4589-b36c-0a510aee7c14', 'algorithm', 'HS512');
 
 
 --
@@ -2164,9 +2100,9 @@ INSERT INTO public.composite_role (composite, child_role) VALUES ('e5fe4cf4-6fd3
 -- Data for Name: credential; Type: TABLE DATA; Schema: public; Owner: ace-manager
 --
 
-INSERT INTO public.credential (id, salt, type, user_id, created_date, user_label, secret_data, credential_data, priority) VALUES ('8707bee4-8c52-4349-8762-d524ea60ef63', NULL, 'password', '6d478587-a790-46aa-ac3a-133226549795', 1646033074246, NULL, '{"value":"XlZoZbEyw/m0b5s8RutxyMK3CU4Y9GZ2PT0JEs+VXrs=","salt":"t8ciXS2wTu4lVWfCzmwOBg==","additionalParameters":{}}', '{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}', 10);
 INSERT INTO public.credential (id, salt, type, user_id, created_date, user_label, secret_data, credential_data, priority) VALUES ('6be8d32b-928f-42e2-8fe6-38757e8285a3', NULL, 'password', '3dfb6717-3def-493b-a237-b7345fc42718', 1646034188771, NULL, '{"value":"JEHQTojind25A3PegUoR4QxWX8JRVNDdOj/p+umkle8=","salt":"qVFLMBirUr7PowR9clEMrA==","additionalParameters":{}}', '{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}', 10);
 INSERT INTO public.credential (id, salt, type, user_id, created_date, user_label, secret_data, credential_data, priority) VALUES ('be3a4c12-4d23-493e-bad8-3add67ebe85c', NULL, 'password', '0ae62682-68a5-4e85-8d99-66f31fa59e59', 1721815318912, 'My password', '{"value":"uGMUwKqzMS5SG4VPSxPyVeb+gsSzAlVxGOFvBxgUQ3w=","salt":"iCcePbXaVo3sF5oizF4Lvg==","additionalParameters":{}}', '{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}', 10);
+INSERT INTO public.credential (id, salt, type, user_id, created_date, user_label, secret_data, credential_data, priority) VALUES ('8707bee4-8c52-4349-8762-d524ea60ef63', NULL, 'password', '6d478587-a790-46aa-ac3a-133226549795', 1646033074246, NULL, '{"value":"e51NsWWEp6odSt9cv7S/kfkck2YqiQz2kvptJZDRyL0=","salt":"cDGnXDAyoBjeShlBSKuUAQ==","additionalParameters":{}}', '{"hashIterations":5,"algorithm":"argon2","additionalParameters":{"hashLength":["32"],"memory":["7168"],"type":["id"],"version":["1.3"],"parallelism":["1"]}}', 10);
 
 
 --
@@ -2289,6 +2225,36 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('21.1.0-19404-2', 'keycloak', 'META-INF/jpa-changelog-21.1.0.xml', '2023-05-09 13:20:01.63486', 113, 'MARK_RAN', '9:627d032e3ef2c06c0e1f73d2ae25c26c', 'addColumn tableName=RESOURCE_SERVER_POLICY; update tableName=RESOURCE_SERVER_POLICY; dropColumn columnName=DECISION_STRATEGY, tableName=RESOURCE_SERVER_POLICY; renameColumn newColumnName=DECISION_STRATEGY, oldColumnName=DECISION_STRATEGY_NEW, tabl...', '', NULL, '4.16.1', NULL, NULL, '3631201171');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('22.0.0-17484-updated', 'keycloak', 'META-INF/jpa-changelog-22.0.0.xml', '2024-03-19 09:50:20.729109', 115, 'MARK_RAN', '9:90af0bfd30cafc17b9f4d6eccd92b8b3', 'customChange', '', NULL, '4.23.2', NULL, NULL, '0838220490');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('22.0.5-24031', 'keycloak', 'META-INF/jpa-changelog-22.0.0.xml', '2024-03-19 09:50:20.73591', 116, 'EXECUTED', '9:a60d2d7b315ec2d3eba9e2f145f9df28', 'customChange', '', NULL, '4.23.2', NULL, NULL, '0838220490');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('18.0.15-30992-index-consent', 'keycloak', 'META-INF/jpa-changelog-18.0.15.xml', '2025-02-19 11:59:20.681361', 117, 'EXECUTED', '9:80071ede7a05604b1f4906f3bf3b00f0', 'createIndex indexName=IDX_USCONSENT_SCOPE_ID, tableName=USER_CONSENT_CLIENT_SCOPE', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('23.0.0-12062', 'keycloak', 'META-INF/jpa-changelog-23.0.0.xml', '2025-02-19 11:59:20.713171', 118, 'EXECUTED', '9:2168fbe728fec46ae9baf15bf80927b8', 'addColumn tableName=COMPONENT_CONFIG; update tableName=COMPONENT_CONFIG; dropColumn columnName=VALUE, tableName=COMPONENT_CONFIG; renameColumn newColumnName=VALUE, oldColumnName=VALUE_NEW, tableName=COMPONENT_CONFIG', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('23.0.0-17258', 'keycloak', 'META-INF/jpa-changelog-23.0.0.xml', '2025-02-19 11:59:20.723885', 119, 'EXECUTED', '9:36506d679a83bbfda85a27ea1864dca8', 'addColumn tableName=EVENT_ENTITY', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('24.0.0-9758', 'keycloak', 'META-INF/jpa-changelog-24.0.0.xml', '2025-02-19 11:59:20.982702', 120, 'EXECUTED', '9:502c557a5189f600f0f445a9b49ebbce', 'addColumn tableName=USER_ATTRIBUTE; addColumn tableName=FED_USER_ATTRIBUTE; createIndex indexName=USER_ATTR_LONG_VALUES, tableName=USER_ATTRIBUTE; createIndex indexName=FED_USER_ATTR_LONG_VALUES, tableName=FED_USER_ATTRIBUTE; createIndex indexName...', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('24.0.0-9758-2', 'keycloak', 'META-INF/jpa-changelog-24.0.0.xml', '2025-02-19 11:59:20.991883', 121, 'EXECUTED', '9:bf0fdee10afdf597a987adbf291db7b2', 'customChange', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('24.0.0-26618-drop-index-if-present', 'keycloak', 'META-INF/jpa-changelog-24.0.0.xml', '2025-02-19 11:59:21.001902', 122, 'MARK_RAN', '9:04baaf56c116ed19951cbc2cca584022', 'dropIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('24.0.0-26618-reindex', 'keycloak', 'META-INF/jpa-changelog-24.0.0.xml', '2025-02-19 11:59:21.068108', 123, 'EXECUTED', '9:08707c0f0db1cef6b352db03a60edc7f', 'createIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('24.0.2-27228', 'keycloak', 'META-INF/jpa-changelog-24.0.2.xml', '2025-02-19 11:59:21.079161', 124, 'EXECUTED', '9:eaee11f6b8aa25d2cc6a84fb86fc6238', 'customChange', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('24.0.2-27967-drop-index-if-present', 'keycloak', 'META-INF/jpa-changelog-24.0.2.xml', '2025-02-19 11:59:21.083191', 125, 'MARK_RAN', '9:04baaf56c116ed19951cbc2cca584022', 'dropIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('24.0.2-27967-reindex', 'keycloak', 'META-INF/jpa-changelog-24.0.2.xml', '2025-02-19 11:59:21.088927', 126, 'MARK_RAN', '9:d3d977031d431db16e2c181ce49d73e9', 'createIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('25.0.0-28265-tables', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-19 11:59:21.103001', 127, 'EXECUTED', '9:deda2df035df23388af95bbd36c17cef', 'addColumn tableName=OFFLINE_USER_SESSION; addColumn tableName=OFFLINE_CLIENT_SESSION', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('25.0.0-28265-index-creation', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-19 11:59:21.161305', 128, 'EXECUTED', '9:3e96709818458ae49f3c679ae58d263a', 'createIndex indexName=IDX_OFFLINE_USS_BY_LAST_SESSION_REFRESH, tableName=OFFLINE_USER_SESSION', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('25.0.0-28265-index-cleanup', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-19 11:59:21.175361', 129, 'EXECUTED', '9:8c0cfa341a0474385b324f5c4b2dfcc1', 'dropIndex indexName=IDX_OFFLINE_USS_CREATEDON, tableName=OFFLINE_USER_SESSION; dropIndex indexName=IDX_OFFLINE_USS_PRELOAD, tableName=OFFLINE_USER_SESSION; dropIndex indexName=IDX_OFFLINE_USS_BY_USERSESS, tableName=OFFLINE_USER_SESSION; dropIndex ...', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('25.0.0-28265-index-2-mysql', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-19 11:59:21.179819', 130, 'MARK_RAN', '9:b7ef76036d3126bb83c2423bf4d449d6', 'createIndex indexName=IDX_OFFLINE_USS_BY_BROKER_SESSION_ID, tableName=OFFLINE_USER_SESSION', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('25.0.0-28265-index-2-not-mysql', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-19 11:59:21.243308', 131, 'EXECUTED', '9:23396cf51ab8bc1ae6f0cac7f9f6fcf7', 'createIndex indexName=IDX_OFFLINE_USS_BY_BROKER_SESSION_ID, tableName=OFFLINE_USER_SESSION', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('25.0.0-org', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-19 11:59:21.301301', 132, 'EXECUTED', '9:5c859965c2c9b9c72136c360649af157', 'createTable tableName=ORG; addUniqueConstraint constraintName=UK_ORG_NAME, tableName=ORG; addUniqueConstraint constraintName=UK_ORG_GROUP, tableName=ORG; createTable tableName=ORG_DOMAIN', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('unique-consentuser', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-19 11:59:21.32858', 133, 'EXECUTED', '9:5857626a2ea8767e9a6c66bf3a2cb32f', 'customChange; dropUniqueConstraint constraintName=UK_JKUWUVD56ONTGSUHOGM8UEWRT, tableName=USER_CONSENT; addUniqueConstraint constraintName=UK_LOCAL_CONSENT, tableName=USER_CONSENT; addUniqueConstraint constraintName=UK_EXTERNAL_CONSENT, tableName=...', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('unique-consentuser-mysql', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-19 11:59:21.338173', 134, 'MARK_RAN', '9:b79478aad5adaa1bc428e31563f55e8e', 'customChange; dropUniqueConstraint constraintName=UK_JKUWUVD56ONTGSUHOGM8UEWRT, tableName=USER_CONSENT; addUniqueConstraint constraintName=UK_LOCAL_CONSENT, tableName=USER_CONSENT; addUniqueConstraint constraintName=UK_EXTERNAL_CONSENT, tableName=...', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('25.0.0-28861-index-creation', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-19 11:59:21.446551', 135, 'EXECUTED', '9:b9acb58ac958d9ada0fe12a5d4794ab1', 'createIndex indexName=IDX_PERM_TICKET_REQUESTER, tableName=RESOURCE_SERVER_PERM_TICKET; createIndex indexName=IDX_PERM_TICKET_OWNER, tableName=RESOURCE_SERVER_PERM_TICKET', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.0.0-org-alias', 'keycloak', 'META-INF/jpa-changelog-26.0.0.xml', '2025-02-19 11:59:21.470632', 136, 'EXECUTED', '9:6ef7d63e4412b3c2d66ed179159886a4', 'addColumn tableName=ORG; update tableName=ORG; addNotNullConstraint columnName=ALIAS, tableName=ORG; addUniqueConstraint constraintName=UK_ORG_ALIAS, tableName=ORG', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.0.0-org-group', 'keycloak', 'META-INF/jpa-changelog-26.0.0.xml', '2025-02-19 11:59:21.49296', 137, 'EXECUTED', '9:da8e8087d80ef2ace4f89d8c5b9ca223', 'addColumn tableName=KEYCLOAK_GROUP; update tableName=KEYCLOAK_GROUP; addNotNullConstraint columnName=TYPE, tableName=KEYCLOAK_GROUP; customChange', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.0.0-org-indexes', 'keycloak', 'META-INF/jpa-changelog-26.0.0.xml', '2025-02-19 11:59:21.55551', 138, 'EXECUTED', '9:79b05dcd610a8c7f25ec05135eec0857', 'createIndex indexName=IDX_ORG_DOMAIN_ORG_ID, tableName=ORG_DOMAIN', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.0.0-org-group-membership', 'keycloak', 'META-INF/jpa-changelog-26.0.0.xml', '2025-02-19 11:59:21.567385', 139, 'EXECUTED', '9:a6ace2ce583a421d89b01ba2a28dc2d4', 'addColumn tableName=USER_GROUP_MEMBERSHIP; update tableName=USER_GROUP_MEMBERSHIP; addNotNullConstraint columnName=MEMBERSHIP_TYPE, tableName=USER_GROUP_MEMBERSHIP', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('31296-persist-revoked-access-tokens', 'keycloak', 'META-INF/jpa-changelog-26.0.0.xml', '2025-02-19 11:59:21.58486', 140, 'EXECUTED', '9:64ef94489d42a358e8304b0e245f0ed4', 'createTable tableName=REVOKED_TOKEN; addPrimaryKey constraintName=CONSTRAINT_RT, tableName=REVOKED_TOKEN', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('31725-index-persist-revoked-access-tokens', 'keycloak', 'META-INF/jpa-changelog-26.0.0.xml', '2025-02-19 11:59:21.640872', 141, 'EXECUTED', '9:b994246ec2bf7c94da881e1d28782c7b', 'createIndex indexName=IDX_REV_TOKEN_ON_EXPIRE, tableName=REVOKED_TOKEN', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.0.0-idps-for-login', 'keycloak', 'META-INF/jpa-changelog-26.0.0.xml', '2025-02-19 11:59:21.758184', 142, 'EXECUTED', '9:51f5fffadf986983d4bd59582c6c1604', 'addColumn tableName=IDENTITY_PROVIDER; createIndex indexName=IDX_IDP_REALM_ORG, tableName=IDENTITY_PROVIDER; createIndex indexName=IDX_IDP_FOR_LOGIN, tableName=IDENTITY_PROVIDER; customChange', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.0.0-32583-drop-redundant-index-on-client-session', 'keycloak', 'META-INF/jpa-changelog-26.0.0.xml', '2025-02-19 11:59:21.815143', 143, 'EXECUTED', '9:24972d83bf27317a055d234187bb4af9', 'dropIndex indexName=IDX_US_SESS_ID_ON_CL_SESS, tableName=OFFLINE_CLIENT_SESSION', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.0.0.32582-remove-tables-user-session-user-session-note-and-client-session', 'keycloak', 'META-INF/jpa-changelog-26.0.0.xml', '2025-02-19 11:59:21.848173', 144, 'EXECUTED', '9:febdc0f47f2ed241c59e60f58c3ceea5', 'dropTable tableName=CLIENT_SESSION_ROLE; dropTable tableName=CLIENT_SESSION_NOTE; dropTable tableName=CLIENT_SESSION_PROT_MAPPER; dropTable tableName=CLIENT_SESSION_AUTH_STATUS; dropTable tableName=CLIENT_USER_SESSION_NOTE; dropTable tableName=CLI...', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.0.0-33201-org-redirect-url', 'keycloak', 'META-INF/jpa-changelog-26.0.0.xml', '2025-02-19 11:59:21.856562', 145, 'EXECUTED', '9:4d0e22b0ac68ebe9794fa9cb752ea660', 'addColumn tableName=ORG', '', NULL, '4.29.1', NULL, NULL, '9962760527');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.0.6-34013', 'keycloak', 'META-INF/jpa-changelog-26.0.6.xml', '2025-02-19 11:59:21.864575', 146, 'EXECUTED', '9:e6b686a15759aef99a6d758a5c4c6a26', 'addColumn tableName=ADMIN_EVENT_ENTITY', '', NULL, '4.29.1', NULL, NULL, '9962760527');
 
 
 --
@@ -2324,6 +2290,8 @@ INSERT INTO public.default_client_scope (realm_id, scope_id, default_scope) VALU
 INSERT INTO public.default_client_scope (realm_id, scope_id, default_scope) VALUES ('development', '80982e4f-2393-44de-8207-6ce9526f3fb3', false);
 INSERT INTO public.default_client_scope (realm_id, scope_id, default_scope) VALUES ('master', '3515bf6a-cb15-45db-b55c-6ec21ac99990', true);
 INSERT INTO public.default_client_scope (realm_id, scope_id, default_scope) VALUES ('development', 'e22d2191-0ebe-40c6-9d8c-a3c6cc44aaf3', true);
+INSERT INTO public.default_client_scope (realm_id, scope_id, default_scope) VALUES ('master', '7ef392a1-6728-40ac-9bf6-381f1fbc3b20', true);
+INSERT INTO public.default_client_scope (realm_id, scope_id, default_scope) VALUES ('development', '25df115c-d573-4b3e-bf3b-db291bfbceff', true);
 
 
 --
@@ -2397,75 +2365,19 @@ INSERT INTO public.default_client_scope (realm_id, scope_id, default_scope) VALU
 --
 
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('01c50900-5415-483a-87c3-534241f653ce', 'e517eec7-7758-4119-8f23-23633eca253b');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', 'ed21366a-b0e1-4f9c-b65b-08af6895501c');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '6d3b220f-b3b9-4d92-9b28-8118356d4872');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '25b950ee-441b-4c8a-890e-cae7f3cce849');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', 'f9845cd6-0fde-441d-ab3b-dda475dd2602');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('622751d6-7eba-4466-8acc-03d1083f3915', '12733e22-f745-49c2-9276-b78440b46982');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '215e6d62-8d24-4080-956f-9258d795a0bc');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '73306c44-b59b-42bb-97e2-236b45f114c5');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '2a1f060e-1103-4c57-8908-66ed49de2d14');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '8f4c46e1-d888-49a3-baeb-13ebf09aa5ef');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('5155817c-9926-450b-b648-30ca52fef547', '07501fb5-502b-45d6-86ca-e57bc40f52ae');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', 'b9339926-aa23-476a-8853-b15e4b54fdb7');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', 'd664074f-2bc1-44a1-939e-4b48491cd818');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', 'b851e4ba-480d-45a3-863c-c28c5479d666');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '92ab07d4-701f-465e-b670-e6a9e88200a5');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('00a4dc29-20f8-447a-8a76-74bf55bac602', 'b2593ee0-fa85-4066-8bdb-676b17caab72');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '3858346f-38d6-4fcc-8d1b-c7236db27651');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '8c34db32-74d9-476f-b275-799b59f09fb1');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '5846b750-d709-4e16-953b-fe1dbfd1620e');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '1e66965c-b5af-4dab-9a95-dbe904aa518d');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('64a68e78-5dab-43ba-b136-9424dfbafd3c', 'b06b996b-4f54-40c1-89a5-665c31cc46c7');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '03fb4576-1b65-4cf1-853b-32c0f3c88d23');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '55fc563c-993a-4c67-b807-0b1a22118929');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '0328edef-d164-433e-ab73-4010a5625d98');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', 'af16a600-74b2-44d6-9a80-781c433704e6');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('0258cd18-b120-4207-8d49-47fc737d386e', '5453c96b-6f10-4468-83e5-f28aa7459db1');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', 'af09ba82-4fe8-46b6-b6d3-3c5f57beafee');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '00c8c4d8-6e91-432b-9e1b-7c6ccf73d0c3');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '3aab4567-1e72-4f31-903b-16e137116bba');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '8efaf349-d656-46d0-941f-2a6948327ca0');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3c5cc3e1-d8aa-4770-abed-ff9a72371b66', '729ce7b1-9490-47ae-bc96-bac4960bb581');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '68eb4665-9b95-44e0-97d2-e79b92ee0223');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '6ad6b5f8-5e5c-4b12-a20c-c774101a126b');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '6fdb0f62-9ee6-47b8-a64d-09a34adc4d77');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '4ef73bff-487c-463b-b66f-cb0dce54bd52');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('7055caa6-86f2-469a-a858-628a327285a3', 'ee436dc5-5f0c-48e1-8ba6-6064b9c0a3f4');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '9a86fa41-0f93-4f3e-989f-7654d821c1ac');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', 'a48d1e12-0587-44e0-a9c8-143eadbeed63');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', 'b6e6b4c7-fdd8-41b2-97ce-7386b24d7190');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '955dae43-6581-496a-8e0e-2c01ee79fb51');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('21b8ea9e-de35-4834-bbe6-93453b581b5b', '7a52e787-c097-4e3f-b58e-51d10b9afef4');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '2c4844b8-8150-4b75-b4e6-f38abc369119');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '63a5d669-8c5c-4d85-b18a-e765691a6cea');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', 'c7cb4a7f-5f63-4917-a045-09b45b284066');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '582715a6-39ec-4a6c-8f61-d93332ce7450');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1cc25fc5-1b43-4b8d-9fd0-a324f27b1405', 'c874aa00-5f8c-4131-a98b-a636f48bfc11');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '4b8cb579-4e75-4c23-8b02-589eb0b99c12');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '2d996b65-8d80-410e-ad91-d3c9fb4b6819');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', 'a376f06a-9800-47b6-8b6b-e2e6510a0d03');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '147ab192-4305-4dd4-9645-5637ef65e459');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('d97e3b14-16d1-4cc3-9c52-101407722ee6', '840959d5-adf3-4ea0-96a0-6af24c0629dc');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '577e5f5e-f095-4f54-9fbd-b96609daf159');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '90c4e16b-4317-4a13-b359-71dadd7b8783');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '36c689ed-5cb0-4fcf-9a12-0c95d5107248');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', 'bb2b1ce3-2e7e-45df-8558-cd97a317ad14');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('4e055a12-c22f-4788-82dd-84726bfd04d3', '46b2df3c-b1eb-41ce-9089-877d11f13975');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '05c875bf-35bb-4dff-bb4f-c533a53b1e93');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', 'bb723cee-bf26-482b-aaa8-1fd780092657');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '984174ae-65b3-4d79-a392-ed15917dc16d');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '2c3a5d4c-ba27-4d41-8048-0573a9f22e13');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('be6e6004-49a6-4d3d-a578-07981c601631', '3d5e8aa3-bcbe-4421-b2a2-77c321ba46fa');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '230e1469-ad9b-4f00-b1a2-d6f8969446b9');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '11ea17f4-e8a9-4e7a-92f8-1f47ffd31908');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '60f827b4-2a6a-4967-87a9-7b9f9b3aa83c');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '32aaddee-e80d-40e5-94c7-3c11e3c230f7');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('33480fb8-f2c9-4f8c-858b-0e9dc54c250a', '6cd2a27d-be50-499e-88ad-a0790d9d4954');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '3a14c16e-13c1-4662-96d8-0f8ef4cf29bb');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', 'a7e1e640-935e-4f3f-b319-644d40547266');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', 'bf33934f-c2e5-471d-81e5-5ad2615f33e2');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '46b04f8d-2620-4953-836c-a64a8d6d4dab');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('2c36457e-b9f7-4cbb-b92c-614747fa8686', '4678c3af-dec7-41c8-9a53-7203211beed7');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('19a09c60-eca8-4d18-8c74-5dd2fd8ae8d2', 'eeffc09c-10e8-4530-b196-6958dc25a16e');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('a0dfa1f7-585e-4427-9e4d-65ec8dbef5c4', '0d574f57-3d4b-414c-a8f9-b62fdc6a5c57');
@@ -2475,42 +2387,6 @@ INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3a955033-0651
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('e8f20372-0a20-45d0-ae78-8c614315a52b', '6eb9e376-9a40-47d2-af8a-fcc0010879b9');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('e5fe4cf4-6fd3-4142-b9e0-4bce340aae83', '146489d4-6846-45cb-939b-09fbaeccad66');
 INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('7a9b3db3-1233-4ea8-ba47-05bb9b86ddd7', '5cb64447-63c7-41fe-9e34-0861ff04ed22');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '755056a0-aedf-4193-a770-1c8e6327d140');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '13be450c-73ce-46d2-b457-eaf811165555');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '53740689-4071-44b1-83e2-ec36c2c3d655');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '21178e05-1094-47ca-9aa3-f1936c70bc28');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '6e6793af-25a0-4b0a-99f4-257fe96d904a');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', 'de0f5c76-7696-4fec-93d4-22fbaefc10e6');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', 'fbce12cd-26c1-42d7-9413-a163e4392dbe');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '247b6a95-1263-436f-adc5-daad91a60466');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', 'f0b99db0-02ab-454d-8edc-eded234dd1a7');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '29185633-e41a-41bc-bd6c-52d819f898a1');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', 'b90d39ac-b52a-41bc-b7da-fac3defaacb0');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', 'c5d5fe44-f7a8-46cb-bac0-f8393e889669');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '4b24ed48-0372-4fdb-879c-d2c99e5f7e5d');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '290b0a9e-c856-4861-b25a-5f5cb7a05013');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '3ef0ef68-4d6d-4cc9-b369-f765352f63a3');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', 'dd5ffd19-7ea7-43b3-817f-95deffaef0a4');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', 'fc8f04de-3066-47bd-a9d3-17fbd1c84c24');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', 'b76f2154-d495-44aa-9b3b-44631a951bb8');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', 'fee0e47b-fef3-4022-bbff-93647cd5ddec');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', 'f31d7c8c-579a-446e-911f-3fbf7af21739');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', 'ef73cb83-c48f-4e75-90dc-4c6d68f91a89');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '8e048ff2-38e4-4615-a26c-66e970c3c8a7');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '4d8911f0-9b8b-456d-8e98-02c6bf931053');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '7bfa7312-6d2c-4276-942c-f689426fdab9');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '38070f98-7084-4ca3-9268-b5fd10102520');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', 'aca6869d-1e03-4597-b8b0-a026ffba239d');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '8502cfb9-52bc-48bb-8020-a2355b2f526d');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', 'a66cbc52-f5c1-4fb3-8806-c709f14bea88');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '4554b9a5-5e51-4cdc-bec9-b8f3871c8801');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', 'e874aacb-199d-422e-9461-ebabd1648ed0');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', 'efefa080-11da-4691-b64c-61cf82c52099');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '724778db-a5fe-4445-b47f-95cf1fa8a0b3');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '2fcbde14-ea39-4049-8ea3-d63015d45dad');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '7f970af3-cae3-4972-89a8-9ecbe4a8f5ab');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '69521b41-dbd2-4a25-98ad-84692c202af5');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', 'd9fd1121-7843-4536-b1af-fcab338e2fe7');
 
 
 --
@@ -2541,126 +2417,34 @@ INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1f555e1e-fd24
 -- Data for Name: keycloak_group; Type: TABLE DATA; Schema: public; Owner: ace-manager
 --
 
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('321da70e-bc39-4c6c-8cf6-579dc6e95bab', 'Human', ' ', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('71463f7d-68b9-4a2e-80aa-d1835bbb1736', 'Technical', ' ', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('6db1981a-209e-4687-a8fb-3be35974111e', 'Unaudited', ' ', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('34ba8933-03d7-43a0-8e36-eddd0d6b7537', 'AuditEverything', ' ', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('a35382ee-92e4-41ec-b96e-95dd2feab402', 'Domain', ' ', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('12733e22-f745-49c2-9276-b78440b46982', 'domain-create', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('e517eec7-7758-4119-8f23-23633eca253b', 'complete-view', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('5cb64447-63c7-41fe-9e34-0861ff04ed22', 'domain-create-complete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('146489d4-6846-45cb-939b-09fbaeccad66', 'domain-crud', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('6eb9e376-9a40-47d2-af8a-fcc0010879b9', 'domain-delete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('ee648feb-e08b-40ba-beb7-c641c6d2879e', 'domain-list-all', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('3448592e-73f5-4a84-b68f-3e446ef963cf', 'domain-read', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('358ee15c-f335-43e5-8491-2684e26f60ef', 'domain-read-salt', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('0d574f57-3d4b-414c-a8f9-b62fdc6a5c57', 'domain-update', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('eeffc09c-10e8-4530-b196-6958dc25a16e', 'domain-update-complete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('4678c3af-dec7-41c8-9a53-7203211beed7', 'domain-update-salt', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('6cd2a27d-be50-499e-88ad-a0790d9d4954', 'link-pseudonyms', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('3d5e8aa3-bcbe-4421-b2a2-77c321ba46fa', 'record-create', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('46b2df3c-b1eb-41ce-9089-877d11f13975', 'record-create-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('840959d5-adf3-4ea0-96a0-6af24c0629dc', 'record-crud', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('c874aa00-5f8c-4131-a98b-a636f48bfc11', 'record-crud-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('7a52e787-c097-4e3f-b58e-51d10b9afef4', 'record-delete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('ee436dc5-5f0c-48e1-8ba6-6064b9c0a3f4', 'record-delete-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('729ce7b1-9490-47ae-bc96-bac4960bb581', 'record-read', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('5453c96b-6f10-4468-83e5-f28aa7459db1', 'record-read-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('b06b996b-4f54-40c1-89a5-665c31cc46c7', 'record-update', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('b2593ee0-fa85-4066-8bdb-676b17caab72', 'record-update-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('07501fb5-502b-45d6-86ca-e57bc40f52ae', 'record-update-complete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('ed21366a-b0e1-4f9c-b65b-08af6895501c', 'TestStudie', 'e517eec7-7758-4119-8f23-23633eca253b', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('6d3b220f-b3b9-4d92-9b28-8118356d4872', 'TestStudie-Labor', 'e517eec7-7758-4119-8f23-23633eca253b', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('25b950ee-441b-4c8a-890e-cae7f3cce849', 'TestStudie-MRT', 'e517eec7-7758-4119-8f23-23633eca253b', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('f9845cd6-0fde-441d-ab3b-dda475dd2602', 'TestStudie-Paper', 'e517eec7-7758-4119-8f23-23633eca253b', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('b9339926-aa23-476a-8853-b15e4b54fdb7', 'TestStudie', '07501fb5-502b-45d6-86ca-e57bc40f52ae', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('92ab07d4-701f-465e-b670-e6a9e88200a5', 'TestStudie-Labor', '07501fb5-502b-45d6-86ca-e57bc40f52ae', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('b851e4ba-480d-45a3-863c-c28c5479d666', 'TestStudie-MRT', '07501fb5-502b-45d6-86ca-e57bc40f52ae', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('d664074f-2bc1-44a1-939e-4b48491cd818', 'TestStudie-Paper', '07501fb5-502b-45d6-86ca-e57bc40f52ae', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('1e66965c-b5af-4dab-9a95-dbe904aa518d', 'TestStudie', 'b2593ee0-fa85-4066-8bdb-676b17caab72', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('af16a600-74b2-44d6-9a80-781c433704e6', 'TestStudie', 'b06b996b-4f54-40c1-89a5-665c31cc46c7', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('af09ba82-4fe8-46b6-b6d3-3c5f57beafee', 'TestStudie', '5453c96b-6f10-4468-83e5-f28aa7459db1', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('4ef73bff-487c-463b-b66f-cb0dce54bd52', 'TestStudie', '729ce7b1-9490-47ae-bc96-bac4960bb581', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('9a86fa41-0f93-4f3e-989f-7654d821c1ac', 'TestStudie', 'ee436dc5-5f0c-48e1-8ba6-6064b9c0a3f4', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('582715a6-39ec-4a6c-8f61-d93332ce7450', 'TestStudie', '7a52e787-c097-4e3f-b58e-51d10b9afef4', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('147ab192-4305-4dd4-9645-5637ef65e459', 'TestStudie', 'c874aa00-5f8c-4131-a98b-a636f48bfc11', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('577e5f5e-f095-4f54-9fbd-b96609daf159', 'TestStudie', '840959d5-adf3-4ea0-96a0-6af24c0629dc', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('2c3a5d4c-ba27-4d41-8048-0573a9f22e13', 'TestStudie', '46b2df3c-b1eb-41ce-9089-877d11f13975', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('32aaddee-e80d-40e5-94c7-3c11e3c230f7', 'TestStudie', '3d5e8aa3-bcbe-4421-b2a2-77c321ba46fa', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('46b04f8d-2620-4953-836c-a64a8d6d4dab', 'TestStudie', '6cd2a27d-be50-499e-88ad-a0790d9d4954', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('b90d39ac-b52a-41bc-b7da-fac3defaacb0', 'TestStudie', '4678c3af-dec7-41c8-9a53-7203211beed7', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('fbce12cd-26c1-42d7-9413-a163e4392dbe', 'TestStudie', 'eeffc09c-10e8-4530-b196-6958dc25a16e', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('53740689-4071-44b1-83e2-ec36c2c3d655', 'TestStudie', '0d574f57-3d4b-414c-a8f9-b62fdc6a5c57', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('dd5ffd19-7ea7-43b3-817f-95deffaef0a4', 'TestStudie', '358ee15c-f335-43e5-8491-2684e26f60ef', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('f31d7c8c-579a-446e-911f-3fbf7af21739', 'TestStudie', '3448592e-73f5-4a84-b68f-3e446ef963cf', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('7bfa7312-6d2c-4276-942c-f689426fdab9', 'TestStudie', 'ee648feb-e08b-40ba-beb7-c641c6d2879e', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('a66cbc52-f5c1-4fb3-8806-c709f14bea88', 'TestStudie', '6eb9e376-9a40-47d2-af8a-fcc0010879b9', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('724778db-a5fe-4445-b47f-95cf1fa8a0b3', 'TestStudie', '146489d4-6846-45cb-939b-09fbaeccad66', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('d9fd1121-7843-4536-b1af-fcab338e2fe7', 'TestStudie', '5cb64447-63c7-41fe-9e34-0861ff04ed22', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('215e6d62-8d24-4080-956f-9258d795a0bc', 'TestStudie', '12733e22-f745-49c2-9276-b78440b46982', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('5846b750-d709-4e16-953b-fe1dbfd1620e', 'TestStudie-Labor', 'b2593ee0-fa85-4066-8bdb-676b17caab72', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('0328edef-d164-433e-ab73-4010a5625d98', 'TestStudie-Labor', 'b06b996b-4f54-40c1-89a5-665c31cc46c7', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('00c8c4d8-6e91-432b-9e1b-7c6ccf73d0c3', 'TestStudie-Labor', '5453c96b-6f10-4468-83e5-f28aa7459db1', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('6fdb0f62-9ee6-47b8-a64d-09a34adc4d77', 'TestStudie-Labor', '729ce7b1-9490-47ae-bc96-bac4960bb581', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('a48d1e12-0587-44e0-a9c8-143eadbeed63', 'TestStudie-Labor', 'ee436dc5-5f0c-48e1-8ba6-6064b9c0a3f4', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('c7cb4a7f-5f63-4917-a045-09b45b284066', 'TestStudie-Labor', '7a52e787-c097-4e3f-b58e-51d10b9afef4', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('a376f06a-9800-47b6-8b6b-e2e6510a0d03', 'TestStudie-Labor', 'c874aa00-5f8c-4131-a98b-a636f48bfc11', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('90c4e16b-4317-4a13-b359-71dadd7b8783', 'TestStudie-Labor', '840959d5-adf3-4ea0-96a0-6af24c0629dc', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('984174ae-65b3-4d79-a392-ed15917dc16d', 'TestStudie-Labor', '46b2df3c-b1eb-41ce-9089-877d11f13975', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('bf33934f-c2e5-471d-81e5-5ad2615f33e2', 'TestStudie-Labor', '6cd2a27d-be50-499e-88ad-a0790d9d4954', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('3ef0ef68-4d6d-4cc9-b369-f765352f63a3', 'TestStudie-Labor', '358ee15c-f335-43e5-8491-2684e26f60ef', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('4d8911f0-9b8b-456d-8e98-02c6bf931053', 'TestStudie-Labor', 'ee648feb-e08b-40ba-beb7-c641c6d2879e', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('efefa080-11da-4691-b64c-61cf82c52099', 'TestStudie-Labor', '146489d4-6846-45cb-939b-09fbaeccad66', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('73306c44-b59b-42bb-97e2-236b45f114c5', 'TestStudie-Labor', '12733e22-f745-49c2-9276-b78440b46982', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('2a1f060e-1103-4c57-8908-66ed49de2d14', 'TestStudie-MRT', '12733e22-f745-49c2-9276-b78440b46982', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('b76f2154-d495-44aa-9b3b-44631a951bb8', 'TestStudie-MRT', '3448592e-73f5-4a84-b68f-3e446ef963cf', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('f0b99db0-02ab-454d-8edc-eded234dd1a7', 'TestStudie-MRT', 'eeffc09c-10e8-4530-b196-6958dc25a16e', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('a7e1e640-935e-4f3f-b319-644d40547266', 'TestStudie-MRT', '6cd2a27d-be50-499e-88ad-a0790d9d4954', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('11ea17f4-e8a9-4e7a-92f8-1f47ffd31908', 'TestStudie-MRT', '3d5e8aa3-bcbe-4421-b2a2-77c321ba46fa', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('bb723cee-bf26-482b-aaa8-1fd780092657', 'TestStudie-MRT', '46b2df3c-b1eb-41ce-9089-877d11f13975', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('36c689ed-5cb0-4fcf-9a12-0c95d5107248', 'TestStudie-MRT', '840959d5-adf3-4ea0-96a0-6af24c0629dc', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('63a5d669-8c5c-4d85-b18a-e765691a6cea', 'TestStudie-MRT', '7a52e787-c097-4e3f-b58e-51d10b9afef4', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('55fc563c-993a-4c67-b807-0b1a22118929', 'TestStudie-MRT', 'b06b996b-4f54-40c1-89a5-665c31cc46c7', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('8c34db32-74d9-476f-b275-799b59f09fb1', 'TestStudie-MRT', 'b2593ee0-fa85-4066-8bdb-676b17caab72', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('03fb4576-1b65-4cf1-853b-32c0f3c88d23', 'TestStudie-Paper', 'b06b996b-4f54-40c1-89a5-665c31cc46c7', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('955dae43-6581-496a-8e0e-2c01ee79fb51', 'TestStudie-Paper', 'ee436dc5-5f0c-48e1-8ba6-6064b9c0a3f4', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('bb2b1ce3-2e7e-45df-8558-cd97a317ad14', 'TestStudie-Paper', '840959d5-adf3-4ea0-96a0-6af24c0629dc', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('230e1469-ad9b-4f00-b1a2-d6f8969446b9', 'TestStudie-Paper', '3d5e8aa3-bcbe-4421-b2a2-77c321ba46fa', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('755056a0-aedf-4193-a770-1c8e6327d140', 'TestStudie-Paper', '4678c3af-dec7-41c8-9a53-7203211beed7', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('4b24ed48-0372-4fdb-879c-d2c99e5f7e5d', 'TestStudie-Paper', '358ee15c-f335-43e5-8491-2684e26f60ef', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('ef73cb83-c48f-4e75-90dc-4c6d68f91a89', 'TestStudie-Paper', 'ee648feb-e08b-40ba-beb7-c641c6d2879e', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('38070f98-7084-4ca3-9268-b5fd10102520', 'TestStudie-Paper', '6eb9e376-9a40-47d2-af8a-fcc0010879b9', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('4554b9a5-5e51-4cdc-bec9-b8f3871c8801', 'TestStudie-Paper', '146489d4-6846-45cb-939b-09fbaeccad66', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('8f4c46e1-d888-49a3-baeb-13ebf09aa5ef', 'TestStudie-Paper', '12733e22-f745-49c2-9276-b78440b46982', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('60f827b4-2a6a-4967-87a9-7b9f9b3aa83c', 'TestStudie-Labor', '3d5e8aa3-bcbe-4421-b2a2-77c321ba46fa', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('c5d5fe44-f7a8-46cb-bac0-f8393e889669', 'TestStudie-Labor', '4678c3af-dec7-41c8-9a53-7203211beed7', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('247b6a95-1263-436f-adc5-daad91a60466', 'TestStudie-Labor', 'eeffc09c-10e8-4530-b196-6958dc25a16e', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('21178e05-1094-47ca-9aa3-f1936c70bc28', 'TestStudie-Labor', '0d574f57-3d4b-414c-a8f9-b62fdc6a5c57', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('fee0e47b-fef3-4022-bbff-93647cd5ddec', 'TestStudie-Labor', '3448592e-73f5-4a84-b68f-3e446ef963cf', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('8502cfb9-52bc-48bb-8020-a2355b2f526d', 'TestStudie-Labor', '6eb9e376-9a40-47d2-af8a-fcc0010879b9', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('69521b41-dbd2-4a25-98ad-84692c202af5', 'TestStudie-Labor', '5cb64447-63c7-41fe-9e34-0861ff04ed22', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('7f970af3-cae3-4972-89a8-9ecbe4a8f5ab', 'TestStudie-MRT', '5cb64447-63c7-41fe-9e34-0861ff04ed22', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('e874aacb-199d-422e-9461-ebabd1648ed0', 'TestStudie-MRT', '146489d4-6846-45cb-939b-09fbaeccad66', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('aca6869d-1e03-4597-b8b0-a026ffba239d', 'TestStudie-MRT', '6eb9e376-9a40-47d2-af8a-fcc0010879b9', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('8e048ff2-38e4-4615-a26c-66e970c3c8a7', 'TestStudie-MRT', 'ee648feb-e08b-40ba-beb7-c641c6d2879e', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('290b0a9e-c856-4861-b25a-5f5cb7a05013', 'TestStudie-MRT', '358ee15c-f335-43e5-8491-2684e26f60ef', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('6e6793af-25a0-4b0a-99f4-257fe96d904a', 'TestStudie-MRT', '0d574f57-3d4b-414c-a8f9-b62fdc6a5c57', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('13be450c-73ce-46d2-b457-eaf811165555', 'TestStudie-MRT', '4678c3af-dec7-41c8-9a53-7203211beed7', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('2d996b65-8d80-410e-ad91-d3c9fb4b6819', 'TestStudie-MRT', 'c874aa00-5f8c-4131-a98b-a636f48bfc11', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('b6e6b4c7-fdd8-41b2-97ce-7386b24d7190', 'TestStudie-MRT', 'ee436dc5-5f0c-48e1-8ba6-6064b9c0a3f4', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('6ad6b5f8-5e5c-4b12-a20c-c774101a126b', 'TestStudie-MRT', '729ce7b1-9490-47ae-bc96-bac4960bb581', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('3aab4567-1e72-4f31-903b-16e137116bba', 'TestStudie-MRT', '5453c96b-6f10-4468-83e5-f28aa7459db1', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('de0f5c76-7696-4fec-93d4-22fbaefc10e6', 'TestStudie-Paper', '0d574f57-3d4b-414c-a8f9-b62fdc6a5c57', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('3858346f-38d6-4fcc-8d1b-c7236db27651', 'TestStudie-Paper', 'b2593ee0-fa85-4066-8bdb-676b17caab72', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('8efaf349-d656-46d0-941f-2a6948327ca0', 'TestStudie-Paper', '5453c96b-6f10-4468-83e5-f28aa7459db1', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('68eb4665-9b95-44e0-97d2-e79b92ee0223', 'TestStudie-Paper', '729ce7b1-9490-47ae-bc96-bac4960bb581', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('2c4844b8-8150-4b75-b4e6-f38abc369119', 'TestStudie-Paper', '7a52e787-c097-4e3f-b58e-51d10b9afef4', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('4b8cb579-4e75-4c23-8b02-589eb0b99c12', 'TestStudie-Paper', 'c874aa00-5f8c-4131-a98b-a636f48bfc11', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('05c875bf-35bb-4dff-bb4f-c533a53b1e93', 'TestStudie-Paper', '46b2df3c-b1eb-41ce-9089-877d11f13975', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('3a14c16e-13c1-4662-96d8-0f8ef4cf29bb', 'TestStudie-Paper', '6cd2a27d-be50-499e-88ad-a0790d9d4954', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('29185633-e41a-41bc-bd6c-52d819f898a1', 'TestStudie-Paper', 'eeffc09c-10e8-4530-b196-6958dc25a16e', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('fc8f04de-3066-47bd-a9d3-17fbd1c84c24', 'TestStudie-Paper', '3448592e-73f5-4a84-b68f-3e446ef963cf', 'development');
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id) VALUES ('2fcbde14-ea39-4049-8ea3-d63015d45dad', 'TestStudie-Paper', '5cb64447-63c7-41fe-9e34-0861ff04ed22', 'development');
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('321da70e-bc39-4c6c-8cf6-579dc6e95bab', 'Human', ' ', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('71463f7d-68b9-4a2e-80aa-d1835bbb1736', 'Technical', ' ', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('6db1981a-209e-4687-a8fb-3be35974111e', 'Unaudited', ' ', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('34ba8933-03d7-43a0-8e36-eddd0d6b7537', 'AuditEverything', ' ', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('a35382ee-92e4-41ec-b96e-95dd2feab402', 'Domain', ' ', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('12733e22-f745-49c2-9276-b78440b46982', 'domain-create', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('e517eec7-7758-4119-8f23-23633eca253b', 'complete-view', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('5cb64447-63c7-41fe-9e34-0861ff04ed22', 'domain-create-complete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('146489d4-6846-45cb-939b-09fbaeccad66', 'domain-crud', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('6eb9e376-9a40-47d2-af8a-fcc0010879b9', 'domain-delete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('ee648feb-e08b-40ba-beb7-c641c6d2879e', 'domain-list-all', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('3448592e-73f5-4a84-b68f-3e446ef963cf', 'domain-read', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('358ee15c-f335-43e5-8491-2684e26f60ef', 'domain-read-salt', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('0d574f57-3d4b-414c-a8f9-b62fdc6a5c57', 'domain-update', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('eeffc09c-10e8-4530-b196-6958dc25a16e', 'domain-update-complete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('4678c3af-dec7-41c8-9a53-7203211beed7', 'domain-update-salt', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('6cd2a27d-be50-499e-88ad-a0790d9d4954', 'link-pseudonyms', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('3d5e8aa3-bcbe-4421-b2a2-77c321ba46fa', 'record-create', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('46b2df3c-b1eb-41ce-9089-877d11f13975', 'record-create-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('840959d5-adf3-4ea0-96a0-6af24c0629dc', 'record-crud', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('c874aa00-5f8c-4131-a98b-a636f48bfc11', 'record-crud-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('7a52e787-c097-4e3f-b58e-51d10b9afef4', 'record-delete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('ee436dc5-5f0c-48e1-8ba6-6064b9c0a3f4', 'record-delete-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('729ce7b1-9490-47ae-bc96-bac4960bb581', 'record-read', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('5453c96b-6f10-4468-83e5-f28aa7459db1', 'record-read-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('b06b996b-4f54-40c1-89a5-665c31cc46c7', 'record-update', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('b2593ee0-fa85-4066-8bdb-676b17caab72', 'record-update-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('07501fb5-502b-45d6-86ca-e57bc40f52ae', 'record-update-complete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
 
 
 --
@@ -2746,7 +2530,6 @@ INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, desc
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('947dd62a-190e-4b63-b787-b3d65c14e0b9', '51bba6d9-f73d-4f45-8b06-392303051f3c', true, '${role_read-token}', 'read-token', 'development', '51bba6d9-f73d-4f45-8b06-392303051f3c', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('d611163f-3327-43ee-a7ea-790110d80df3', 'development', false, '${role_offline-access}', 'offline_access', 'development', NULL, NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('666ed87a-22da-43e8-8cf0-08cffd1e0b8a', 'development', false, '${role_uma_authorization}', 'uma_authorization', 'development', NULL, NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('1f555e1e-fd24-4f36-8576-0b988f577be1', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'TestStudie', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('3c5cc3e1-d8aa-4770-abed-ff9a72371b66', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-read', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('d4caf2a0-4b50-41c9-9cb4-86ceef63c3b9', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-read', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('be6e6004-49a6-4d3d-a578-07981c601631', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-create', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
@@ -2763,8 +2546,6 @@ INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, desc
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('e8f20372-0a20-45d0-ae78-8c614315a52b', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-delete', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('e5fe4cf4-6fd3-4142-b9e0-4bce340aae83', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-crud', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('3a955033-0651-4928-82a8-f95da2ac0604', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-list-all', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('3fc64661-a295-450c-b06b-52828f1c2f09', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'TestStudie-Labor', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('b570d2e6-e92a-4a27-99c8-093dcdb83d2a', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'TestStudie-Paper', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('7a9b3db3-1233-4ea8-ba47-05bb9b86ddd7', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-create-complete', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('19a09c60-eca8-4d18-8c74-5dd2fd8ae8d2', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-update-complete', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('e70260d8-9a30-48f8-a173-faabe44b71eb', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-read-salt', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
@@ -2773,7 +2554,6 @@ INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, desc
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('5155817c-9926-450b-b648-30ca52fef547', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-update-complete', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('124eaa2c-407d-457e-b011-43de0447c790', 'c8afb027-0c8c-4bdc-bf0f-be4a2c172439', true, '${role_view-groups}', 'view-groups', 'master', 'c8afb027-0c8c-4bdc-bf0f-be4a2c172439', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('4acedae6-e297-4029-a9a0-4c87ff235666', '15b080ba-7783-49c9-b155-86ac5e1855b1', true, '${role_view-groups}', 'view-groups', 'development', '15b080ba-7783-49c9-b155-86ac5e1855b1', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('32f58edb-fe02-46d6-8a49-0e19dedd8b42', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, '', 'TestStudie-MRT', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('33480fb8-f2c9-4f8c-858b-0e9dc54c250a', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, '', 'link-pseudonyms', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 
 
@@ -2786,16 +2566,31 @@ INSERT INTO public.migration_model (id, version, update_time) VALUES ('vpkin', '
 INSERT INTO public.migration_model (id, version, update_time) VALUES ('avej5', '21.1.2', 1691059042);
 INSERT INTO public.migration_model (id, version, update_time) VALUES ('pojcj', '22.0.1', 1691154929);
 INSERT INTO public.migration_model (id, version, update_time) VALUES ('m28j7', '22.0.5', 1710838220);
+INSERT INTO public.migration_model (id, version, update_time) VALUES ('vgqdp', '26.0.6', 1739962763);
 
 
 --
 -- Data for Name: offline_client_session; Type: TABLE DATA; Schema: public; Owner: ace-manager
 --
 
+INSERT INTO public.offline_client_session (user_session_id, client_id, offline_flag, "timestamp", data, client_storage_provider, external_client_id, version) VALUES ('ee32ad9f-29e7-4906-81cb-aebdd5da9bf8', '19f8a8d4-4eee-413b-8430-1779b7cd1bec', '0', 1739964004, '{"authMethod":"openid-connect","redirectUri":"http://localhost:8081/admin/master/console/#/development/users","notes":{"clientId":"19f8a8d4-4eee-413b-8430-1779b7cd1bec","iss":"http://localhost:8081/realms/master","startedAt":"1739962807","response_type":"code","level-of-authentication":"-1","code_challenge_method":"S256","nonce":"9ff0f8ca-5802-4b8e-a795-db91b851c76e","response_mode":"query","scope":"openid","userSessionStartedAt":"1739962807","redirect_uri":"http://localhost:8081/admin/master/console/#/development/users","state":"8cb2dc38-992e-40c9-a652-81baabdddd1c","code_challenge":"XSZIsDlR3o0Iaq_wwuMMhrz1Uy5VkHbWSgOgo2wNfeY","prompt":"none","SSO_AUTH":"true"}}', 'local', 'local', 15);
 
 
 --
 -- Data for Name: offline_user_session; Type: TABLE DATA; Schema: public; Owner: ace-manager
+--
+
+INSERT INTO public.offline_user_session (user_session_id, user_id, realm_id, created_on, offline_flag, data, last_session_refresh, broker_session_id, version) VALUES ('ee32ad9f-29e7-4906-81cb-aebdd5da9bf8', '6d478587-a790-46aa-ac3a-133226549795', 'master', 1739962807, '0', '{"ipAddress":"172.18.0.1","authMethod":"openid-connect","rememberMe":false,"started":0,"notes":{"KC_DEVICE_NOTE":"eyJpcEFkZHJlc3MiOiIxNzIuMTguMC4xIiwib3MiOiJXaW5kb3dzIiwib3NWZXJzaW9uIjoiMTAiLCJicm93c2VyIjoiQ2hyb21lLzEzMy4wLjAiLCJkZXZpY2UiOiJPdGhlciIsImxhc3RBY2Nlc3MiOjAsIm1vYmlsZSI6ZmFsc2V9","AUTH_TIME":"1739962807","authenticators-completed":"{\"508bbb2e-afae-41ec-9224-1ddf99a846c3\":1739962807,\"7eed02d8-9a68-44ba-a5ee-6b2c6c4ac3c8\":1739964003}"},"state":"LOGGED_IN"}', 1739964004, NULL, 16);
+
+
+--
+-- Data for Name: org; Type: TABLE DATA; Schema: public; Owner: ace-manager
+--
+
+
+
+--
+-- Data for Name: org_domain; Type: TABLE DATA; Schema: public; Owner: ace-manager
 --
 
 
@@ -2871,6 +2666,10 @@ INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, cl
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'GroupMapper', 'openid-connect', 'oidc-group-membership-mapper', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('f2f1d931-0a0a-48b8-99ba-6342ca70dc51', 'acr loa level', 'openid-connect', 'oidc-acr-mapper', NULL, '3515bf6a-cb15-45db-b55c-6ec21ac99990');
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('4527bbbe-cf23-4c2a-9b34-9fa94bb680e0', 'acr loa level', 'openid-connect', 'oidc-acr-mapper', NULL, 'e22d2191-0ebe-40c6-9d8c-a3c6cc44aaf3');
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('d9119f30-a33e-4a14-a874-72452b269c56', 'auth_time', 'openid-connect', 'oidc-usersessionmodel-note-mapper', NULL, '7ef392a1-6728-40ac-9bf6-381f1fbc3b20');
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('0d9cea58-2032-4916-81b3-7bc4123d1a95', 'sub', 'openid-connect', 'oidc-sub-mapper', NULL, '7ef392a1-6728-40ac-9bf6-381f1fbc3b20');
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('08ba371e-e26f-4fec-ae61-af8652dd7461', 'auth_time', 'openid-connect', 'oidc-usersessionmodel-note-mapper', NULL, '25df115c-d573-4b3e-bf3b-db291bfbceff');
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('ca6d5979-186c-4b5f-885c-1e949f4f9cdf', 'sub', 'openid-connect', 'oidc-sub-mapper', NULL, '25df115c-d573-4b3e-bf3b-db291bfbceff');
 
 
 --
@@ -3187,6 +2986,22 @@ INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALU
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'false', 'access.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'false', 'userinfo.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'true', 'multivalued');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('0d9cea58-2032-4916-81b3-7bc4123d1a95', 'true', 'introspection.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('0d9cea58-2032-4916-81b3-7bc4123d1a95', 'true', 'access.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d9119f30-a33e-4a14-a874-72452b269c56', 'AUTH_TIME', 'user.session.note');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d9119f30-a33e-4a14-a874-72452b269c56', 'true', 'introspection.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d9119f30-a33e-4a14-a874-72452b269c56', 'true', 'id.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d9119f30-a33e-4a14-a874-72452b269c56', 'true', 'access.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d9119f30-a33e-4a14-a874-72452b269c56', 'auth_time', 'claim.name');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d9119f30-a33e-4a14-a874-72452b269c56', 'long', 'jsonType.label');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('08ba371e-e26f-4fec-ae61-af8652dd7461', 'AUTH_TIME', 'user.session.note');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('08ba371e-e26f-4fec-ae61-af8652dd7461', 'true', 'introspection.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('08ba371e-e26f-4fec-ae61-af8652dd7461', 'true', 'id.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('08ba371e-e26f-4fec-ae61-af8652dd7461', 'true', 'access.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('08ba371e-e26f-4fec-ae61-af8652dd7461', 'auth_time', 'claim.name');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('08ba371e-e26f-4fec-ae61-af8652dd7461', 'long', 'jsonType.label');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ca6d5979-186c-4b5f-885c-1e949f4f9cdf', 'true', 'introspection.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ca6d5979-186c-4b5f-885c-1e949f4f9cdf', 'true', 'access.token.claim');
 
 
 --
@@ -3228,7 +3043,6 @@ INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('cibaExpiresI
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('cibaInterval', 'development', '5');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('cibaAuthRequestedUserHint', 'development', 'login_hint');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('parRequestUriLifespan', 'development', '60');
-INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('userProfileEnabled', 'development', 'false');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('clientSessionIdleTimeout', 'development', '0');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('clientSessionMaxLifespan', 'development', '0');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('clientOfflineSessionIdleTimeout', 'development', '0');
@@ -3274,6 +3088,8 @@ INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('_browser_hea
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('_browser_header.contentSecurityPolicy', 'development', 'frame-src ''self''; frame-ancestors ''self''; object-src ''none'';');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('_browser_header.xXSSProtection', 'development', '1; mode=block');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('_browser_header.strictTransportSecurity', 'development', 'max-age=31536000; includeSubDomains');
+INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('firstBrokerLoginFlowId', 'master', '10feac09-fca5-4030-85ae-b0cc4c6ba38a');
+INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('firstBrokerLoginFlowId', 'development', '74132866-cda2-4a80-96f4-f2a6814bc4de');
 
 
 --
@@ -3361,6 +3177,8 @@ INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled,
 INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled, default_action, provider_id, priority) VALUES ('8cb11261-f224-47bb-960e-1fb5b6e6cda5', 'delete_account', 'Delete Account', 'development', false, false, 'delete_account', 60);
 INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled, default_action, provider_id, priority) VALUES ('ce1824db-6c92-401c-98bb-053b3302b213', 'TERMS_AND_CONDITIONS', 'Terms and Conditions', 'master', false, false, 'TERMS_AND_CONDITIONS', 20);
 INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled, default_action, provider_id, priority) VALUES ('e2340e0a-d968-4519-9d47-6a799b50366f', 'TERMS_AND_CONDITIONS', 'Terms and Conditions', 'development', false, false, 'TERMS_AND_CONDITIONS', 20);
+INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled, default_action, provider_id, priority) VALUES ('e803079e-d56b-4492-af29-356af1c45abd', 'delete_credential', 'Delete Credential', 'master', true, false, 'delete_credential', 100);
+INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled, default_action, provider_id, priority) VALUES ('9948a0e3-4e8f-4568-8288-288104ef4eec', 'delete_credential', 'Delete Credential', 'development', true, false, 'delete_credential', 100);
 
 
 --
@@ -3413,6 +3231,12 @@ INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled,
 
 --
 -- Data for Name: resource_uris; Type: TABLE DATA; Schema: public; Owner: ace-manager
+--
+
+
+
+--
+-- Data for Name: revoked_token; Type: TABLE DATA; Schema: public; Owner: ace-manager
 --
 
 
@@ -3494,101 +3318,7 @@ INSERT INTO public.user_entity (id, email, email_constraint, email_verified, ena
 -- Data for Name: user_group_membership; Type: TABLE DATA; Schema: public; Owner: ace-manager
 --
 
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('71463f7d-68b9-4a2e-80aa-d1835bbb1736', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('6d3b220f-b3b9-4d92-9b28-8118356d4872', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('25b950ee-441b-4c8a-890e-cae7f3cce849', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('f9845cd6-0fde-441d-ab3b-dda475dd2602', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('ed21366a-b0e1-4f9c-b65b-08af6895501c', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('8f4c46e1-d888-49a3-baeb-13ebf09aa5ef', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('73306c44-b59b-42bb-97e2-236b45f114c5', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('2a1f060e-1103-4c57-8908-66ed49de2d14', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('215e6d62-8d24-4080-956f-9258d795a0bc', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('69521b41-dbd2-4a25-98ad-84692c202af5', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('d9fd1121-7843-4536-b1af-fcab338e2fe7', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('7f970af3-cae3-4972-89a8-9ecbe4a8f5ab', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('2fcbde14-ea39-4049-8ea3-d63015d45dad', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('3858346f-38d6-4fcc-8d1b-c7236db27651', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('1e66965c-b5af-4dab-9a95-dbe904aa518d', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('55fc563c-993a-4c67-b807-0b1a22118929', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('8c34db32-74d9-476f-b275-799b59f09fb1', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('5846b750-d709-4e16-953b-fe1dbfd1620e', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('03fb4576-1b65-4cf1-853b-32c0f3c88d23', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('4ef73bff-487c-463b-b66f-cb0dce54bd52', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('0328edef-d164-433e-ab73-4010a5625d98', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('68eb4665-9b95-44e0-97d2-e79b92ee0223', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('6fdb0f62-9ee6-47b8-a64d-09a34adc4d77', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('af16a600-74b2-44d6-9a80-781c433704e6', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('6ad6b5f8-5e5c-4b12-a20c-c774101a126b', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('955dae43-6581-496a-8e0e-2c01ee79fb51', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('a48d1e12-0587-44e0-a9c8-143eadbeed63', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('63a5d669-8c5c-4d85-b18a-e765691a6cea', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('2c4844b8-8150-4b75-b4e6-f38abc369119', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('9a86fa41-0f93-4f3e-989f-7654d821c1ac', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('b6e6b4c7-fdd8-41b2-97ce-7386b24d7190', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('c7cb4a7f-5f63-4917-a045-09b45b284066', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('36c689ed-5cb0-4fcf-9a12-0c95d5107248', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('bb2b1ce3-2e7e-45df-8558-cd97a317ad14', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('90c4e16b-4317-4a13-b359-71dadd7b8783', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('582715a6-39ec-4a6c-8f61-d93332ce7450', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('577e5f5e-f095-4f54-9fbd-b96609daf159', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('05c875bf-35bb-4dff-bb4f-c533a53b1e93', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('bb723cee-bf26-482b-aaa8-1fd780092657', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('230e1469-ad9b-4f00-b1a2-d6f8969446b9', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('2c3a5d4c-ba27-4d41-8048-0573a9f22e13', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('984174ae-65b3-4d79-a392-ed15917dc16d', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('11ea17f4-e8a9-4e7a-92f8-1f47ffd31908', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('60f827b4-2a6a-4967-87a9-7b9f9b3aa83c', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('755056a0-aedf-4193-a770-1c8e6327d140', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('c5d5fe44-f7a8-46cb-bac0-f8393e889669', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('32aaddee-e80d-40e5-94c7-3c11e3c230f7', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('13be450c-73ce-46d2-b457-eaf811165555', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('247b6a95-1263-436f-adc5-daad91a60466', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('fbce12cd-26c1-42d7-9413-a163e4392dbe', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('29185633-e41a-41bc-bd6c-52d819f898a1', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('f0b99db0-02ab-454d-8edc-eded234dd1a7', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('b90d39ac-b52a-41bc-b7da-fac3defaacb0', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('6e6793af-25a0-4b0a-99f4-257fe96d904a', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('de0f5c76-7696-4fec-93d4-22fbaefc10e6', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('21178e05-1094-47ca-9aa3-f1936c70bc28', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('53740689-4071-44b1-83e2-ec36c2c3d655', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('4b24ed48-0372-4fdb-879c-d2c99e5f7e5d', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('290b0a9e-c856-4861-b25a-5f5cb7a05013', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('fc8f04de-3066-47bd-a9d3-17fbd1c84c24', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('3ef0ef68-4d6d-4cc9-b369-f765352f63a3', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('dd5ffd19-7ea7-43b3-817f-95deffaef0a4', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('b76f2154-d495-44aa-9b3b-44631a951bb8', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('fee0e47b-fef3-4022-bbff-93647cd5ddec', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('ef73cb83-c48f-4e75-90dc-4c6d68f91a89', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('f31d7c8c-579a-446e-911f-3fbf7af21739', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('4d8911f0-9b8b-456d-8e98-02c6bf931053', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('8e048ff2-38e4-4615-a26c-66e970c3c8a7', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('7bfa7312-6d2c-4276-942c-f689426fdab9', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('8502cfb9-52bc-48bb-8020-a2355b2f526d', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('38070f98-7084-4ca3-9268-b5fd10102520', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('4554b9a5-5e51-4cdc-bec9-b8f3871c8801', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('aca6869d-1e03-4597-b8b0-a026ffba239d', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('a66cbc52-f5c1-4fb3-8806-c709f14bea88', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('e874aacb-199d-422e-9461-ebabd1648ed0', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('efefa080-11da-4691-b64c-61cf82c52099', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('724778db-a5fe-4445-b47f-95cf1fa8a0b3', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('3a14c16e-13c1-4662-96d8-0f8ef4cf29bb', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('bf33934f-c2e5-471d-81e5-5ad2615f33e2', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('46b04f8d-2620-4953-836c-a64a8d6d4dab', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('a7e1e640-935e-4f3f-b319-644d40547266', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('4b8cb579-4e75-4c23-8b02-589eb0b99c12', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('2d996b65-8d80-410e-ad91-d3c9fb4b6819', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('a376f06a-9800-47b6-8b6b-e2e6510a0d03', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('3aab4567-1e72-4f31-903b-16e137116bba', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('8efaf349-d656-46d0-941f-2a6948327ca0', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('147ab192-4305-4dd4-9645-5637ef65e459', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('00c8c4d8-6e91-432b-9e1b-7c6ccf73d0c3', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('af09ba82-4fe8-46b6-b6d3-3c5f57beafee', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('92ab07d4-701f-465e-b670-e6a9e88200a5', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('d664074f-2bc1-44a1-939e-4b48491cd818', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('b851e4ba-480d-45a3-863c-c28c5479d666', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('b9339926-aa23-476a-8853-b15e4b54fdb7', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('3d5e8aa3-bcbe-4421-b2a2-77c321ba46fa', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_group_membership (group_id, user_id) VALUES ('729ce7b1-9490-47ae-bc96-bac4960bb581', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_group_membership (group_id, user_id, membership_type) VALUES ('71463f7d-68b9-4a2e-80aa-d1835bbb1736', '3dfb6717-3def-493b-a237-b7345fc42718', 'UNMANAGED');
 
 
 --
@@ -3628,18 +3358,31 @@ INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('b1e0272c-5f10-4
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('d380a439-4eb0-4f64-b365-184a87dbf1ae', '0ae62682-68a5-4e85-8d99-66f31fa59e59');
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('3e73b15e-331c-481d-b925-babec65d356b', '0ae62682-68a5-4e85-8d99-66f31fa59e59');
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('448e437a-b999-419d-81b9-462d3b9faa47', '0ae62682-68a5-4e85-8d99-66f31fa59e59');
-
-
---
--- Data for Name: user_session; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-
-
---
--- Data for Name: user_session_note; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('4fdcfef1-c38b-4ca0-8182-b1d664709520', '0ae62682-68a5-4e85-8d99-66f31fa59e59');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('4ba6f226-e44d-4601-8dfd-64c21b052b17', '0ae62682-68a5-4e85-8d99-66f31fa59e59');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('64a68e78-5dab-43ba-b136-9424dfbafd3c', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('00a4dc29-20f8-447a-8a76-74bf55bac602', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('7055caa6-86f2-469a-a858-628a327285a3', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('0258cd18-b120-4207-8d49-47fc737d386e', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('3c5cc3e1-d8aa-4770-abed-ff9a72371b66', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('5155817c-9926-450b-b648-30ca52fef547', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('1cc25fc5-1b43-4b8d-9fd0-a324f27b1405', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('21b8ea9e-de35-4834-bbe6-93453b581b5b', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('4e055a12-c22f-4788-82dd-84726bfd04d3', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('d97e3b14-16d1-4cc3-9c52-101407722ee6', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('be6e6004-49a6-4d3d-a578-07981c601631', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('33480fb8-f2c9-4f8c-858b-0e9dc54c250a', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('2c36457e-b9f7-4cbb-b92c-614747fa8686', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('19a09c60-eca8-4d18-8c74-5dd2fd8ae8d2', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('e70260d8-9a30-48f8-a173-faabe44b71eb', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('a0dfa1f7-585e-4427-9e4d-65ec8dbef5c4', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('d4caf2a0-4b50-41c9-9cb4-86ceef63c3b9', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('3a955033-0651-4928-82a8-f95da2ac0604', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('e8f20372-0a20-45d0-ae78-8c614315a52b', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('7a9b3db3-1233-4ea8-ba47-05bb9b86ddd7', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('01c50900-5415-483a-87c3-534241f653ce', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('622751d6-7eba-4466-8acc-03d1083f3915', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('e5fe4cf4-6fd3-4142-b9e0-4bce340aae83', '3dfb6717-3def-493b-a237-b7345fc42718');
 
 
 --
@@ -3663,6 +3406,22 @@ INSERT INTO public.web_origins (client_id, value) VALUES ('2be34fd2-d092-457d-b5
 
 ALTER TABLE ONLY public.username_login_failure
     ADD CONSTRAINT "CONSTRAINT_17-2" PRIMARY KEY (realm_id, username);
+
+
+--
+-- Name: org_domain ORG_DOMAIN_pkey; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+--
+
+ALTER TABLE ONLY public.org_domain
+    ADD CONSTRAINT "ORG_DOMAIN_pkey" PRIMARY KEY (id, name);
+
+
+--
+-- Name: org ORG_pkey; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+--
+
+ALTER TABLE ONLY public.org
+    ADD CONSTRAINT "ORG_pkey" PRIMARY KEY (id);
 
 
 --
@@ -3711,14 +3470,6 @@ ALTER TABLE ONLY public.realm_default_groups
 
 ALTER TABLE ONLY public.broker_link
     ADD CONSTRAINT constr_broker_link_pk PRIMARY KEY (identity_provider, user_id);
-
-
---
--- Name: client_user_session_note constr_cl_usr_ses_note; Type: CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.client_user_session_note
-    ADD CONSTRAINT constr_cl_usr_ses_note PRIMARY KEY (client_session, name);
 
 
 --
@@ -3866,22 +3617,6 @@ ALTER TABLE ONLY public.realm
 
 
 --
--- Name: client_session_role constraint_5; Type: CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.client_session_role
-    ADD CONSTRAINT constraint_5 PRIMARY KEY (client_session, role_id);
-
-
---
--- Name: user_session constraint_57; Type: CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.user_session
-    ADD CONSTRAINT constraint_57 PRIMARY KEY (id);
-
-
---
 -- Name: user_federation_provider constraint_5c; Type: CONSTRAINT; Schema: public; Owner: ace-manager
 --
 
@@ -3890,27 +3625,11 @@ ALTER TABLE ONLY public.user_federation_provider
 
 
 --
--- Name: client_session_note constraint_5e; Type: CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.client_session_note
-    ADD CONSTRAINT constraint_5e PRIMARY KEY (client_session, name);
-
-
---
 -- Name: client constraint_7; Type: CONSTRAINT; Schema: public; Owner: ace-manager
 --
 
 ALTER TABLE ONLY public.client
     ADD CONSTRAINT constraint_7 PRIMARY KEY (id);
-
-
---
--- Name: client_session constraint_8; Type: CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.client_session
-    ADD CONSTRAINT constraint_8 PRIMARY KEY (id);
 
 
 --
@@ -3994,14 +3713,6 @@ ALTER TABLE ONLY public.authenticator_config
 
 
 --
--- Name: client_session_auth_status constraint_auth_status_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.client_session_auth_status
-    ADD CONSTRAINT constraint_auth_status_pk PRIMARY KEY (client_session, authenticator);
-
-
---
 -- Name: user_role_mapping constraint_c; Type: CONSTRAINT; Schema: public; Owner: ace-manager
 --
 
@@ -4015,14 +3726,6 @@ ALTER TABLE ONLY public.user_role_mapping
 
 ALTER TABLE ONLY public.composite_role
     ADD CONSTRAINT constraint_composite_role PRIMARY KEY (composite, child_role);
-
-
---
--- Name: client_session_prot_mapper constraint_cs_pmp_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.client_session_prot_mapper
-    ADD CONSTRAINT constraint_cs_pmp_pk PRIMARY KEY (client_session, protocol_mapper_id);
 
 
 --
@@ -4306,6 +4009,14 @@ ALTER TABLE ONLY public.role_attribute
 
 
 --
+-- Name: revoked_token constraint_rt; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+--
+
+ALTER TABLE ONLY public.revoked_token
+    ADD CONSTRAINT constraint_rt PRIMARY KEY (id);
+
+
+--
 -- Name: user_attribute constraint_user_attribute_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
 --
 
@@ -4319,14 +4030,6 @@ ALTER TABLE ONLY public.user_attribute
 
 ALTER TABLE ONLY public.user_group_membership
     ADD CONSTRAINT constraint_user_group PRIMARY KEY (group_id, user_id);
-
-
---
--- Name: user_session_note constraint_usn_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.user_session_note
-    ADD CONSTRAINT constraint_usn_pk PRIMARY KEY (user_session, name);
 
 
 --
@@ -4442,6 +4145,14 @@ ALTER TABLE ONLY public.user_entity
 
 
 --
+-- Name: user_consent uk_external_consent; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+--
+
+ALTER TABLE ONLY public.user_consent
+    ADD CONSTRAINT uk_external_consent UNIQUE (client_storage_provider, external_client_id, user_id);
+
+
+--
 -- Name: resource_server_resource uk_frsr6t700s9v50bu18ws5ha6; Type: CONSTRAINT; Schema: public; Owner: ace-manager
 --
 
@@ -4474,11 +4185,35 @@ ALTER TABLE ONLY public.resource_server_scope
 
 
 --
--- Name: user_consent uk_jkuwuvd56ontgsuhogm8uewrt; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_consent uk_local_consent; Type: CONSTRAINT; Schema: public; Owner: ace-manager
 --
 
 ALTER TABLE ONLY public.user_consent
-    ADD CONSTRAINT uk_jkuwuvd56ontgsuhogm8uewrt UNIQUE (client_id, client_storage_provider, external_client_id, user_id);
+    ADD CONSTRAINT uk_local_consent UNIQUE (client_id, user_id);
+
+
+--
+-- Name: org uk_org_alias; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+--
+
+ALTER TABLE ONLY public.org
+    ADD CONSTRAINT uk_org_alias UNIQUE (realm_id, alias);
+
+
+--
+-- Name: org uk_org_group; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+--
+
+ALTER TABLE ONLY public.org
+    ADD CONSTRAINT uk_org_group UNIQUE (group_id);
+
+
+--
+-- Name: org uk_org_name; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+--
+
+ALTER TABLE ONLY public.org
+    ADD CONSTRAINT uk_org_name UNIQUE (realm_id, name);
 
 
 --
@@ -4495,6 +4230,20 @@ ALTER TABLE ONLY public.realm
 
 ALTER TABLE ONLY public.user_entity
     ADD CONSTRAINT uk_ru8tt6t700s9v50bu18ws5ha6 UNIQUE (realm_id, username);
+
+
+--
+-- Name: fed_user_attr_long_values; Type: INDEX; Schema: public; Owner: ace-manager
+--
+
+CREATE INDEX fed_user_attr_long_values ON public.fed_user_attribute USING btree (long_value_hash, name);
+
+
+--
+-- Name: fed_user_attr_long_values_lower_case; Type: INDEX; Schema: public; Owner: ace-manager
+--
+
+CREATE INDEX fed_user_attr_long_values_lower_case ON public.fed_user_attribute USING btree (long_value_hash_lower_case, name);
 
 
 --
@@ -4547,6 +4296,13 @@ CREATE INDEX idx_cl_clscope ON public.client_scope_client USING btree (scope_id)
 
 
 --
+-- Name: idx_client_att_by_name_value; Type: INDEX; Schema: public; Owner: ace-manager
+--
+
+CREATE INDEX idx_client_att_by_name_value ON public.client_attributes USING btree (name, substr(value, 1, 255));
+
+
+--
 -- Name: idx_client_id; Type: INDEX; Schema: public; Owner: ace-manager
 --
 
@@ -4558,13 +4314,6 @@ CREATE INDEX idx_client_id ON public.client USING btree (client_id);
 --
 
 CREATE INDEX idx_client_init_acc_realm ON public.client_initial_access USING btree (realm_id);
-
-
---
--- Name: idx_client_session_session; Type: INDEX; Schema: public; Owner: ace-manager
---
-
-CREATE INDEX idx_client_session_session ON public.client_session USING btree (session_id);
 
 
 --
@@ -4785,6 +4534,20 @@ CREATE INDEX idx_ident_prov_realm ON public.identity_provider USING btree (realm
 
 
 --
+-- Name: idx_idp_for_login; Type: INDEX; Schema: public; Owner: ace-manager
+--
+
+CREATE INDEX idx_idp_for_login ON public.identity_provider USING btree (realm_id, enabled, link_only, hide_on_login, organization_id);
+
+
+--
+-- Name: idx_idp_realm_org; Type: INDEX; Schema: public; Owner: ace-manager
+--
+
+CREATE INDEX idx_idp_realm_org ON public.identity_provider USING btree (realm_id, organization_id);
+
+
+--
 -- Name: idx_keycloak_role_client; Type: INDEX; Schema: public; Owner: ace-manager
 --
 
@@ -4799,10 +4562,17 @@ CREATE INDEX idx_keycloak_role_realm ON public.keycloak_role USING btree (realm)
 
 
 --
--- Name: idx_offline_css_preload; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_offline_uss_by_broker_session_id; Type: INDEX; Schema: public; Owner: ace-manager
 --
 
-CREATE INDEX idx_offline_css_preload ON public.offline_client_session USING btree (client_id, offline_flag);
+CREATE INDEX idx_offline_uss_by_broker_session_id ON public.offline_user_session USING btree (broker_session_id, realm_id);
+
+
+--
+-- Name: idx_offline_uss_by_last_session_refresh; Type: INDEX; Schema: public; Owner: ace-manager
+--
+
+CREATE INDEX idx_offline_uss_by_last_session_refresh ON public.offline_user_session USING btree (realm_id, offline_flag, last_session_refresh);
 
 
 --
@@ -4813,24 +4583,24 @@ CREATE INDEX idx_offline_uss_by_user ON public.offline_user_session USING btree 
 
 
 --
--- Name: idx_offline_uss_by_usersess; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_org_domain_org_id; Type: INDEX; Schema: public; Owner: ace-manager
 --
 
-CREATE INDEX idx_offline_uss_by_usersess ON public.offline_user_session USING btree (realm_id, offline_flag, user_session_id);
-
-
---
--- Name: idx_offline_uss_createdon; Type: INDEX; Schema: public; Owner: ace-manager
---
-
-CREATE INDEX idx_offline_uss_createdon ON public.offline_user_session USING btree (created_on);
+CREATE INDEX idx_org_domain_org_id ON public.org_domain USING btree (org_id);
 
 
 --
--- Name: idx_offline_uss_preload; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_perm_ticket_owner; Type: INDEX; Schema: public; Owner: ace-manager
 --
 
-CREATE INDEX idx_offline_uss_preload ON public.offline_user_session USING btree (offline_flag, created_on, user_session_id);
+CREATE INDEX idx_perm_ticket_owner ON public.resource_server_perm_ticket USING btree (owner);
+
+
+--
+-- Name: idx_perm_ticket_requester; Type: INDEX; Schema: public; Owner: ace-manager
+--
+
+CREATE INDEX idx_perm_ticket_requester ON public.resource_server_perm_ticket USING btree (requester);
 
 
 --
@@ -4939,6 +4709,13 @@ CREATE INDEX idx_res_srv_scope_res_srv ON public.resource_server_scope USING btr
 
 
 --
+-- Name: idx_rev_token_on_expire; Type: INDEX; Schema: public; Owner: ace-manager
+--
+
+CREATE INDEX idx_rev_token_on_expire ON public.revoked_token USING btree (expire);
+
+
+--
 -- Name: idx_role_attribute; Type: INDEX; Schema: public; Owner: ace-manager
 --
 
@@ -4974,17 +4751,17 @@ CREATE INDEX idx_update_time ON public.migration_model USING btree (update_time)
 
 
 --
--- Name: idx_us_sess_id_on_cl_sess; Type: INDEX; Schema: public; Owner: ace-manager
---
-
-CREATE INDEX idx_us_sess_id_on_cl_sess ON public.offline_client_session USING btree (user_session_id);
-
-
---
 -- Name: idx_usconsent_clscope; Type: INDEX; Schema: public; Owner: ace-manager
 --
 
 CREATE INDEX idx_usconsent_clscope ON public.user_consent_client_scope USING btree (user_consent_id);
+
+
+--
+-- Name: idx_usconsent_scope_id; Type: INDEX; Schema: public; Owner: ace-manager
+--
+
+CREATE INDEX idx_usconsent_scope_id ON public.user_consent_client_scope USING btree (scope_id);
 
 
 --
@@ -5079,11 +4856,17 @@ CREATE INDEX idx_web_orig_client ON public.web_origins USING btree (client_id);
 
 
 --
--- Name: client_session_auth_status auth_status_constraint; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_attr_long_values; Type: INDEX; Schema: public; Owner: ace-manager
 --
 
-ALTER TABLE ONLY public.client_session_auth_status
-    ADD CONSTRAINT auth_status_constraint FOREIGN KEY (client_session) REFERENCES public.client_session(id);
+CREATE INDEX user_attr_long_values ON public.user_attribute USING btree (long_value_hash, name);
+
+
+--
+-- Name: user_attr_long_values_lower_case; Type: INDEX; Schema: public; Owner: ace-manager
+--
+
+CREATE INDEX user_attr_long_values_lower_case ON public.user_attribute USING btree (long_value_hash_lower_case, name);
 
 
 --
@@ -5119,30 +4902,6 @@ ALTER TABLE ONLY public.client_node_registrations
 
 
 --
--- Name: client_session_note fk5edfb00ff51c2736; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.client_session_note
-    ADD CONSTRAINT fk5edfb00ff51c2736 FOREIGN KEY (client_session) REFERENCES public.client_session(id);
-
-
---
--- Name: user_session_note fk5edfb00ff51d3472; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.user_session_note
-    ADD CONSTRAINT fk5edfb00ff51d3472 FOREIGN KEY (user_session) REFERENCES public.user_session(id);
-
-
---
--- Name: client_session_role fk_11b7sgqw18i532811v7o2dv76; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.client_session_role
-    ADD CONSTRAINT fk_11b7sgqw18i532811v7o2dv76 FOREIGN KEY (client_session) REFERENCES public.client_session(id);
-
-
---
 -- Name: redirect_uris fk_1burs8pb4ouj97h5wuppahv9f; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
 --
 
@@ -5156,14 +4915,6 @@ ALTER TABLE ONLY public.redirect_uris
 
 ALTER TABLE ONLY public.user_federation_provider
     ADD CONSTRAINT fk_1fj32f6ptolw2qy60cd8n01e8 FOREIGN KEY (realm_id) REFERENCES public.realm(id);
-
-
---
--- Name: client_session_prot_mapper fk_33a8sgqw18i532811v7o2dk89; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.client_session_prot_mapper
-    ADD CONSTRAINT fk_33a8sgqw18i532811v7o2dk89 FOREIGN KEY (client_session) REFERENCES public.client_session(id);
 
 
 --
@@ -5263,14 +5014,6 @@ ALTER TABLE ONLY public.authenticator_config
 
 
 --
--- Name: client_session fk_b4ao2vcvat6ukau74wbwtfqo1; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.client_session
-    ADD CONSTRAINT fk_b4ao2vcvat6ukau74wbwtfqo1 FOREIGN KEY (session_id) REFERENCES public.user_session(id);
-
-
---
 -- Name: user_role_mapping fk_c4fqv34p1mbylloxang7b1q3l; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
 --
 
@@ -5292,14 +5035,6 @@ ALTER TABLE ONLY public.client_scope_attributes
 
 ALTER TABLE ONLY public.client_scope_role_mapping
     ADD CONSTRAINT fk_cl_scope_rm_scope FOREIGN KEY (scope_id) REFERENCES public.client_scope(id);
-
-
---
--- Name: client_user_session_note fk_cl_usr_ses_note; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
---
-
-ALTER TABLE ONLY public.client_user_session_note
-    ADD CONSTRAINT fk_cl_usr_ses_note FOREIGN KEY (client_session) REFERENCES public.client_session(id);
 
 
 --

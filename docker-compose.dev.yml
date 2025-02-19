@@ -9,13 +9,16 @@ networks:
 services:
   ace-keycloak:
     container_name: ace-keycloak
-    image: quay.io/keycloak/keycloak:latest
+    build:
+      context: .
+      dockerfile: Dockerfile_KC_dev
+      no_cache: true
     depends_on:
       - ace-postgresql
     networks:
       - ace
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e \"GET /health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n\" >&3;grep \"HTTP/1.1 200 OK\" <&3"]
+      test: ["CMD-SHELL", "curl http://localhost:8080/health/ready"]
       interval: 5s
       timeout: 2s
       retries: 15
@@ -50,6 +53,11 @@ services:
     image: postgres:15.3-alpine
     networks:
       - ace
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ace-manager -d ace"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
     ports:
       - "5432:5432"
     environment:
@@ -58,8 +66,8 @@ services:
       - POSTGRES_PASSWORD= #CHANGE ME, e.g. ace-manager-password
       - POSTGRES_DB=ace
     volumes:
-      - ./src/main/resources/ace-schema.sql:/docker-entrypoint-initdb.d/ace-schema.sql
-      - ./src/main/resources/keycloak-example.sql:/docker-entrypoint-initdb.d/keycloak-example.sql
+      - ./src/main/resources/db/ace-schema.sql:/docker-entrypoint-initdb.d/ace-schema.sql
+      - ./src/main/resources/db/keycloak-example.sql:/docker-entrypoint-initdb.d/keycloak-example.sql
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ace_postgresql_data:/var/lib/postgresql/data

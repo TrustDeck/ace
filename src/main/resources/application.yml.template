@@ -1,4 +1,5 @@
 server:
+  port: 8080
   error:
     whitelabel:
       enabled: false
@@ -6,11 +7,12 @@ server:
     encoding:
       charset: UTF-8
       force: true
-  max-http-request-header-size: 80KB
+  max-http-request-header-size: 6KB
 
 logging:
   level:
-    root: SPRING_LOG_LEVEL
+    org.trustdeck.ace: LOG_LEVEL_ACE
+    root: LOG_LEVEL_ROOT
 
 spring:
   jpa:
@@ -66,3 +68,28 @@ app:
       password: SPRING_DATASOURCE_PASSWORD
       configuration:
         maximum-pool-size: SPRING_DATASOURCE_MAX_POOLSIZE
+  operations:
+    # Name of all possible rights -- used for rights and roles management
+    - domain-create
+    - domain-create-complete
+    - domain-delete
+    - domain-list-all
+    - domain-read
+    - domain-read-salt
+    - domain-update
+    - domain-update-complete
+    - domain-update-salt
+    - record-create
+    - record-create-batch
+    - record-delete
+    - record-delete-batch
+    - record-read
+    - record-read-batch
+    - record-update
+    - record-update-complete
+    - record-update-batch
+    - complete-view
+    - link-pseudonyms
+    - delete-table
+    - read-table-storage
+    - delete-roles
