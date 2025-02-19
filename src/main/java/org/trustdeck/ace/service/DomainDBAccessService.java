@@ -156,7 +156,7 @@ public class DomainDBAccessService {
             });
 
             // At this point the retrieval was successful
-            log.debug("Successfully queried the database for the domain using the name.");
+            log.trace("Successfully queried the database for the domain using the name (" + domainName + ").");
             return domain;
         } catch (Exception e) {
             log.error("Couldn't retrieve the domain " + domainName + " from the database: " + e.getMessage() + "\n");
@@ -193,7 +193,7 @@ public class DomainDBAccessService {
             });
 
             // At this point the retrieval was successful
-            log.debug("Successfully queried the database for the domain using the ID.");
+            log.trace("Successfully queried the database for the domain using the ID (ID " + domainID + " -> " + domain.getName() + ").");
             return domain;
         } catch (Exception e) {
             log.error("Couldn't retrieve the domain with ID " + domainID + " from the database: " + e.getMessage() + "\n");
