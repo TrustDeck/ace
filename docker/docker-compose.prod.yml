@@ -56,7 +56,7 @@ services:
 
   ace-postgresql:
     container_name: ace-postgresql
-    image: postgres:15.3-alpine
+    image: postgres:latest
     networks:
       - ace
     healthcheck:
