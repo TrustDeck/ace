@@ -18,7 +18,7 @@
 
     <groupId>org.trustdeck</groupId>
     <artifactId>ace</artifactId>
-    <version>v0.56.0-BETA</version>
+    <version>v0.57.0-BETA</version>
     <packaging>jar</packaging>
     <name>ace</name>
 
@@ -205,8 +205,8 @@
                     <jdbc>
                         <driver>org.postgresql.Driver</driver>
                         <url>jdbc:postgresql://localhost:5432/ace</url>
-                        <user><!-- CHANGE ME, e.g. ace-manager --></user>
-                        <password><!-- CHANGE ME, e.g. ace-manager-password --></password>
+                        <user>${env.DATABASE_ACE_USER}</user>
+                        <password>${env.DATABASE_ACE_PASSWORD}</password>
                     </jdbc>
                     <generator>
                         <strategy>

@@ -1,0 +1,37 @@
+# Execute this script with "source ./setEnvironmentVariables.sh" and not 
+# with "sh ./setEnvironmentVariables.sh". The latter will have no effect 
+# as the commands would be executed in a separate shell process.
+
+# Database users and passwords
+export DATABASE_ACE_USER= # Name of the PostgreSQL database user for ACE's database
+export DATABASE_ACE_PASSWORD= # Password of the PostgreSQL database user for ACE's database
+export DATABASE_KEYCLOAK_USER= # Name of the PostgreSQL database user for Keycloak's database
+export DATABASE_KEYCLOAK_PASSWORD= # Password of the PostgreSQL database user for Keycloak's database
+
+# Keycloak
+export KEYCLOAK_SERVER_URI= # The URI of the server where Keycloak runs on (without trailing slash)
+export KEYCLOAK_CLIENT_ID= # The client ID for ACE in Keycloak
+export KEYCLOAK_CLIENT_SECRET= # The client secret for the ACE client in Keycloak
+export KEYCLOAK_REALM_NAME= # The name of the Keycloak realm for ACE
+export KEYCLOAK_HOSTNAME= # The hostname of the server where Keycloak runs on
+export KEYCLOAK_RELATIVE_PATH= # The relative path thats appended to the hostname
+export KEYCLOAK_LOG_LEVEL= # Logging level for Keycloak
+
+# An admin user that is needed to manage the caching of rights and roles
+export KEYCLOAK_CACHE_ADMIN_USER= # Username of the admin user needed for caching
+export KEYCLOAK_CACHE_ADMIN_PASSWORD= # Password of the admin user needed for caching
+
+# Admin user for general interaction with Keycloak
+export KEYCLOAK_ADMIN_USER= # Username of the overall admin account
+export KEYCLOAK_ADMIN_PASSWORD= # Password of the overall admin account
+
+# Misc
+export ACE_LOG_LEVEL= # Logging level for ACE
+export TRUSTSTORE_PATH= # Path for a truststore
+export TRUSTSTORE_PASSWORD= # Password for the truststore
+
+# Certificates
+export CHAIN_PEM_PATH= # Path to the full chain pem-file for the server where ACE runs on
+export RSA_CRT_PATH= # Path to the RSA certificate file for the server where ACE runs on
+export ECC_CRT_PATH= # Path to the ECC certificate file for the server where ACE runs on
+export ORGANIZATION_CA_PEM_PATH= # Path to the organization CA pem-file file for the server where ACE runs on
