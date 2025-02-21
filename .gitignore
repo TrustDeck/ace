@@ -1,7 +1,6 @@
 /target/
 /documentation/
 /logs/
-src/main/resources/application.yml
 .idea/
 pseudonymization.iml
 ace.iml
@@ -23,4 +22,4 @@ examples/certs/*
 /bin/
 .classpath
 Makefile
-.env
+setEvironmentVariables.sh
