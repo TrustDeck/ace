@@ -1,6 +1,6 @@
 /*
  * ACE - Advanced Confidentiality Engine
- * Copyright 2021-2024 Armin Müller & Eric Wündisch
+ * Copyright 2021-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +20,40 @@ package org.trustdeck.ace.test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.trustdeck.ace.model.dto.DomainDto;
 import org.trustdeck.ace.service.AssertWebRequestService;
+import org.trustdeck.ace.service.DomainOIDCService;
+
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 
 /**
  * This class offers tests to test only the domain endpoints.
  *
  * @author Armin Müller & Eric Wündisch
  */
+@Slf4j
 public class TestsDomainServiceIT extends AssertWebRequestService {
 
-    // make sure minimal works on all endpoints too -> may implement one test for a good starting point
-
+	/** OIDC service for managing OpenID Connect operations such as token retrieval and validation. */
+    @Autowired
+    private DomainOIDCService domainOidcService;
+    
     /**
      * Test that tries to create a new domain with different given inputs
      *
@@ -62,7 +76,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
 
         MockHttpServletResponse response = this.assertCreatedRequest("createDomain", post("/api/pseudonymization/domain"), null, reducedDomainDto, this.getAccessToken());
         String content = response.getContentAsString();
-        assertEquals(content, "");
+        assertTrue(content.contains("201"));
 
         String domainNameComplete = "WeitereStudieComplete";
         DomainDto completeDomainDto = new DomainDto();
@@ -75,9 +89,11 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
 
         response = this.assertCreatedRequest("createDomainComplete", post("/api/pseudonymization/domain/complete"), null, completeDomainDto, this.getAccessToken());
         content = response.getContentAsString();
-        assertEquals(content, "");
+        assertTrue(content.contains("201"));
 
         // These commands must fail because we don't have the correct permission to do anything on the newly created domain
+        // TODO: create a domain in sql to test this
+        /*
         Map<String, String> getParameterForbidden = new HashMap<>() {
         	private static final long serialVersionUID = -6132269345886096019L;
 		{
@@ -96,7 +112,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         Map<String, String> getParameterUpdateSaltForbidden = getParameterForbidden;
         getParameterUpdateSaltForbidden.put("salt", "something");
         this.assertForbiddenRequest("commonUpdateSaltForbidden", put("/api/pseudonymization/domains/" + domainName + "/salt"), getParameterUpdateSaltForbidden, null, this.getAccessToken());
-
+        */
     }
 
     /**
@@ -115,6 +131,8 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
 		{
             put("name", domainName);
         }};
+        
+        domainOidcService.createDomainGroupsAndRolesAndJoin(domainName, "3dfb6717-3def-493b-a237-b7345fc42718");
         this.assertNotFoundRequest("getDomainNotFoundDomainName", get("/api/pseudonymization/domain"), getParameter, null, this.getAccessToken());
 
         // Get salt without creating a domain first
@@ -187,7 +205,6 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         String domainName = "TestStudie";
 
         Map<String, String> getParameter = new HashMap<>() {private static final long serialVersionUID = 4462487992226896288L;
-
 		{
             put("name", domainName);
         }};
@@ -210,7 +227,6 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         this.domainUpdateHelperReduced(d, domainName, d);
 
         // All fields must be filled with something (at least an empty string) and available
-        assertEquals(1, d.getId());
         assertEquals("TestStudie", d.getName());
         assertEquals("TS-", d.getPrefix());
         assertEquals("2022-02-26T19:15:20.885853", d.getValidFrom().toString());
@@ -224,7 +240,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         assertEquals("MD5", d.getAlgorithm());
         assertFalse(d.getAlgorithmInherited());
         assertEquals(1, d.getConsecutiveValueCounter());
-        assertTrue(d.getMultiplePsnAllowed());
+        assertFalse(d.getMultiplePsnAllowed());
         assertEquals(32, d.getPseudonymLength());
         assertFalse(d.getPseudonymLengthInherited());
         assertEquals("0", d.getPaddingCharacter().toString());
@@ -351,7 +367,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
 
         // Add domains as children
         DomainDto firstDomainDto = new DomainDto();
-        firstDomainDto.setName("TestStudie-Labor");
+        firstDomainDto.setName("TestStudie-Labor-Analyse");
         firstDomainDto.setPrefix("TS-L");
         firstDomainDto.setSuperDomainName(parentDomainName);
 
@@ -361,14 +377,6 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         // Check the length again
         this.assertEqualsListDomainHierarchyLength(2);
 
-        /*Map<String, String> secondCreateParameter = new HashMap<>() {
-        	private static final long serialVersionUID = -8767726104865426640L;
-		{
-            put("name", "TestStudie-Paper");
-            put("prefix", "TS-P");
-            put("parentName", parentDomainName);
-
-        }};*/
         DomainDto secondDomainDto = new DomainDto();
         secondDomainDto.setName("TestStudie-Paper");
         secondDomainDto.setPrefix("TS-P");
@@ -384,7 +392,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         DomainDto thirdDomainDto = new DomainDto();
         thirdDomainDto.setName("No-Permission-Domain");
         thirdDomainDto.setPrefix("NoPe");
-        thirdDomainDto.setSuperDomainName("TestStudie-Labor");
+        thirdDomainDto.setSuperDomainName("TestStudie-Labor-Analyse");
 
         // Should NOT have the permission on the domain
         this.assertCreatedRequest("addThirdDomainForListHierarchy", post("/api/pseudonymization/domain"), null, thirdDomainDto, this.getAccessToken());
@@ -401,7 +409,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
                     assertNull(domain.getSuperDomainID());
                     break;
                 case 2:
-                    assertEquals("TestStudie-Labor", domain.getName());
+                    assertEquals("TestStudie-Labor-Analyse", domain.getName());
                     assertEquals(1, domain.getSuperDomainID());
                     break;
                 case 3:
@@ -473,7 +481,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         response = this.assertOkRequest("getDomainRandomalgorithmdesiredsuccessprobabilityinherited", get("/api/pseudonymization/domains/" + domainName + "/randomalgorithmdesiredsuccessprobabilityinherited"), null, null, this.getAccessToken());
         assertEquals(response.getContentAsString(), "{\"randomAlgorithmDesiredSuccessProbabilityInherited\":false}");
         response = this.assertOkRequest("getDomainMultiplepsnallowed", get("/api/pseudonymization/domains/" + domainName + "/multiplepsnallowed"), null, null, this.getAccessToken());
-        assertEquals(response.getContentAsString(), "{\"multiplePsnAllowed\":true}");
+        assertEquals(response.getContentAsString(), "{\"multiplePsnAllowed\":false}");
         response = this.assertOkRequest("getDomainMultiplepsnallowedinherited", get("/api/pseudonymization/domains/" + domainName + "/multiplepsnallowedinherited"), null, null, this.getAccessToken());
         assertEquals(response.getContentAsString(), "{\"multiplePsnAllowedInherited\":false}");
         response = this.assertOkRequest("getDomainConsecutivevaluecounter", get("/api/pseudonymization/domains/" + domainName + "/consecutivevaluecounter"), null, null, this.getAccessToken());

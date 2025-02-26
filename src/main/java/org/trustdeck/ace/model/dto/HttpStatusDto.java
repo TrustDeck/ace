@@ -46,12 +46,14 @@ public class HttpStatusDto implements IRepresentation<HttpStatus, HttpStatusDto>
         this.setStatusCode(pojo.value());
         return this;
     }
-
+    
+    @JsonIgnore
     @Override
     public Boolean isValidStandardView() {
         return true;
     }
-
+    
+    @JsonIgnore
     @Override
     public HttpStatusDto toReducedStandardView() {
         // Is already reduced
@@ -64,6 +66,7 @@ public class HttpStatusDto implements IRepresentation<HttpStatus, HttpStatusDto>
         return this.getStatusCode() + " " + this.getStatusMessage();
     }
 
+    @JsonIgnore
     @Override
     public Boolean validate() {
         return true;

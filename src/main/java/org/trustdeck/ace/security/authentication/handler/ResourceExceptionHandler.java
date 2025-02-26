@@ -1,6 +1,6 @@
 /*
  * ACE - Advanced Confidentiality Engine
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class ResourceExceptionHandler {
      */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<String> accessDeniedException(AccessDeniedException e) throws AccessDeniedException {
-        log.info(e.toString());
+        log.debug(e.toString());
         throw e;
     }
 }

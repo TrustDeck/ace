@@ -1,6 +1,6 @@
 /*
  * ACE - Advanced Confidentiality Engine
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.TestInstantiationException;
 import org.keycloak.representations.AccessTokenResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -44,8 +45,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
@@ -57,22 +57,37 @@ import org.springframework.util.ResourceUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.trustdeck.ace.model.dto.DomainDto;
 import org.trustdeck.ace.model.dto.RecordDto;
+import org.trustdeck.ace.utils.Assertion;
 
 import javax.net.ssl.SSLContext;
+
 import java.io.File;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
-import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -85,7 +100,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Slf4j
-@Sql(scripts = "classpath:sql/ace-schema-test.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD, config = @SqlConfig(dataSource = "pseudonymizationDataSource", transactionManager = ""))
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class AssertWebRequestService {
 
     /** Mocks a Model-View-Controller application. */
@@ -98,26 +113,131 @@ public class AssertWebRequestService {
     @Autowired
     private Environment env;
 
+    /** Handles rights and roles for domains. */
+    @Autowired
+    private DomainOIDCService domainOidcService;
+    
+    /** The name of the database where ACE stores its data. **/
+    private static final String ACE = "ace";
+    
     /**
-     * Sets up the mocking objects.
+     * Resets the test environment and sets up the mock objects.
      *
      * @param webApplicationContext the web application context
-     * @param restDocumentation     the context of the REST documentation
+     * @param restDocumentation the context of the REST documentation
      * @throws Exception forwards any internally thrown exceptions
      */
     @BeforeEach
     public void setUp(WebApplicationContext webApplicationContext,
                       RestDocumentationContextProvider restDocumentation) throws Exception {
-        this.mockMvc = MockMvcBuilders
+
+    	this.mockMvc = MockMvcBuilders
                 .webAppContextSetup(webApplicationContext)
                 .apply(documentationConfiguration(restDocumentation))
                 .apply(springSecurity())
                 .build();
-
-        log.debug("Obtaining a token...");
+    	
+    	log.debug("Obtaining a token...");
         this.obtainNewAccessToken("test", "test");
 
+		if (!resetTestData()) {
+			log.error("Resetting the test data failed.");
+			throw new TestInstantiationException("Resetting the test data failed.");
+		}
+
         log.debug("Ready to test.");
+    }
+    
+    /**
+     * Helper method to reset the test data in ACE's database as well as in Keycloak
+     * @return {@code true} when resetting the databases was successful, {@code false} otherwise
+     */
+    private boolean resetTestData() {
+    	try {
+	        // Reset the database
+	        try (Connection conn = getDatabaseConnection(ACE)) {
+	        	// Remove all data from the database
+	        	log.debug("Truncating table domain.");
+	        	conn.createStatement().execute("TRUNCATE TABLE domain CASCADE;");
+	        	
+	        	// Reset the sequence counter
+	        	log.debug("Resetting the sequence counter in the database.");
+                conn.createStatement().execute("ALTER SEQUENCE domain_id_seq RESTART WITH 1;");
+            }
+	        
+	        // Remove all access rights and roles on domains (incl. orphaned ones, 
+	        // i.e. those roles that do not have a domain in the database anymore)
+	        domainOidcService.deleteAllDomainGroups();
+	        domainOidcService.deleteAllDomainRoles();
+	        
+	        // Create the test domain DTO
+	        DomainDto domainDto = new DomainDto();
+	        domainDto.setName("TestStudie");
+	        domainDto.setPrefix("TS-");
+	        domainDto.setValidFrom(LocalDateTime.of(2022, 2, 26, 19, 15, 20, 885853000));
+	        domainDto.setValidTo(LocalDateTime.of(2052, 2, 19, 19, 15, 20, 885853000));
+	        domainDto.setEnforceStartDateValidity(true);
+	        domainDto.setEnforceEndDateValidity(true);
+	        domainDto.setAlgorithm("MD5");
+	        domainDto.setAlphabet("ABCDEF0123456789");
+	        domainDto.setRandomAlgorithmDesiredSize(100000000L);
+	        domainDto.setRandomAlgorithmDesiredSuccessProbability(0.99999998d);
+	        domainDto.setMultiplePsnAllowed(false);
+	        domainDto.setConsecutiveValueCounter(1L);
+	        domainDto.setPseudonymLength(32);
+	        domainDto.setPaddingCharacter('0');
+	        domainDto.setAddCheckDigit(true);
+	        domainDto.setLengthIncludesCheckDigit(false);
+	        domainDto.setSalt("azMPTIQXJsept_4nDj5B1BXN83Bj_8VJ");
+	        domainDto.setSaltLength(32);
+	        domainDto.setAddCheckDigit(true);
+	        domainDto.setLengthIncludesCheckDigit(false);
+	    	
+	    	// Recreate the test domain
+	        log.debug("Recreating the test domain.");
+	        assertCreatedRequest("createTestDomain", post("/api/pseudonymization/domain/complete"), null, domainDto, this.getAccessToken());
+	        
+	        // Create test record DTO
+	        RecordDto recordDto = new RecordDto();
+	        recordDto.setId("10000008912");
+	        recordDto.setIdType("ANY-ID");
+	        recordDto.setPsn("TS-9EEEE39F0D5C03507CB9388609E925F9");
+	        recordDto.setValidFrom(LocalDateTime.of(2022, 2, 26, 19, 15, 20, 885853000));
+	        recordDto.setValidTo(LocalDateTime.of(2052, 2, 19, 19, 15, 20, 885853000));
+	        
+	        // Recreate the test record
+	        log.debug("Recreating the test record.");
+	        assertCreatedRequest("createTestRecord", post("/api/pseudonymization/domains/"+domainDto.getName()+"/pseudonym"), null, recordDto, this.getAccessToken());
+	        
+	        return true;
+        } catch (Exception e) {
+            log.error("Error while resetting the test data: ", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Helper method to obtain a connection to a database.
+     *
+     * @param databaseName the name of the database you want to connect to
+     * @return a connection to the database
+     * @throws IllegalStateException when the database URL, username, or password are missing in the application.yml
+     * @throws SQLException if establishing the connection fails
+     */
+    private Connection getDatabaseConnection(String databaseName) throws IllegalStateException, SQLException {
+        // Read the ACE URL from application.yml
+        String aceURL = env.getProperty("app.datasource.ace.url");
+        String username = env.getProperty("app.datasource.ace.username");
+        String password = env.getProperty("app.datasource.ace.password");
+
+        if (!Assertion.assertNotNullAll(aceURL, username, password)) {
+            throw new IllegalStateException("app.datasource.ace.url, app.datasource.ace.username, or app.datasource.ace.password is not configured.");
+        }
+
+        // Replace the database name with "postgres"
+        String adminUrl = aceURL.replace("/ace", "/" + databaseName);
+
+        return DriverManager.getConnection(adminUrl, username, password);
     }
 
     /**
@@ -499,7 +619,7 @@ public class AssertWebRequestService {
                 .loadTrustMaterial(trustore, Objects.requireNonNull(this.env.getProperty("spring.security.oauth2.resourceserver.jwt.truststore-password")).toCharArray())
                 .build();
 
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("client_id", this.env.getProperty("spring.security.oauth2.resourceserver.jwt.client-id")));
         params.add(new BasicNameValuePair("username", username));
         params.add(new BasicNameValuePair("password", password));
@@ -587,7 +707,7 @@ public class AssertWebRequestService {
      * domain hierarchy list equals the expected length.
      *
      * @param expectedLength the expected length
-     * @return the list of domains that was checked and returned by the service
+     * @return the list of domains that were checked and returned by the service
      * @throws Exception forwards any internally thrown exceptions
      */
     protected List<DomainDto> assertEqualsListDomainHierarchyLength(int expectedLength) throws Exception {
@@ -609,6 +729,15 @@ public class AssertWebRequestService {
         return domains;
     }
 
+    /**
+     * A small helper to assert that the number of records is as expected.
+     *
+     * @param expectedLength the expected length
+     * @param goodDomainButNotFound name of a domain that will return a 404 status
+     * @param goodDomain a domain where the batch retrieval will work
+     * @return the list of records that were checked and returned by the service
+     * @throws Exception forwards any internally thrown exceptions
+     */
     protected List<RecordDto> assertEqualsListRecordsLength(int expectedLength, String goodDomainButNotFound, String goodDomain) throws Exception {
         this.assertNotFoundRequest("getRecordBatchNotFound", get("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonyms"), null, null, this.getAccessToken());
         MockHttpServletResponse response = this.assertOkRequest("getRecordBatch", get("/api/pseudonymization/domains/" + goodDomain + "/pseudonyms"), null, null, this.getAccessToken());
@@ -746,7 +875,7 @@ public class AssertWebRequestService {
             put("name", domainName);
         }};
 
-        this.assertNotFoundRequest("getDomainNotFoundAfterDelete", get("/api/pseudonymization/domain"), getParameter, null, this.getAccessToken());
+        this.assertForbiddenRequest("getDomainNotFoundAfterDelete", get("/api/pseudonymization/domain"), getParameter, null, this.getAccessToken());
     }
 
     /**

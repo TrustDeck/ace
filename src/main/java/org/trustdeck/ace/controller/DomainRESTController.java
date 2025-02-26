@@ -1,6 +1,6 @@
 /*
  * ACE - Advanced Confidentiality Engine
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.ace.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.ace.model.dto.DomainDto;
@@ -196,6 +200,7 @@ public class DomainRESTController {
     public ResponseEntity<?> createDomainComplete(@RequestBody DomainDto domainDto,
                                                   @RequestHeader(name = "accept", required = false) String responseContentType,
                                                   HttpServletRequest request) {
+
         String domainName = domainDto.getName();
         String domainPrefix = domainDto.getPrefix();
         Timestamp validFrom = domainDto.getValidFrom() != null ? Timestamp.valueOf(domainDto.getValidFrom()) : null;
@@ -571,7 +576,8 @@ public class DomainRESTController {
                                           HttpServletRequest request) {
 
         if (!domainDto.validate() || !domainDto.isValidStandardView()) {
-            return responseService.unprocessableEntity(responseContentType);
+        	log.warn("422, because: " + (!domainDto.validate() ? "invalid - missing mandatory fields" : !domainDto.isValidStandardView() ? "non-standard view" : "IDK"));
+        	return responseService.unprocessableEntity(responseContentType);
         }
 
         String domainName = domainDto.getName();
@@ -608,7 +614,7 @@ public class DomainRESTController {
 
             // Parent domain name was provided but not found, return a 404-NOT_FOUND 
             if (parent == null) {
-                log.debug("Parent domain name was provided but nothing was not found.");
+                log.debug("Parent domain name was provided but nothing was found.");
                 return responseService.notFound(responseContentType);
             }
         }
@@ -1503,7 +1509,7 @@ public class DomainRESTController {
             log.info("Since the domain \"" + newName != null ? newName : old.getName() + "\" isn't empty, updates of the prefix, the algorithm, "
                     + "the consecutive value, the pseudonym-length, or the padding character can't be processed and are ignored.");
         }
-        
+
         // All other domain attributes are null and are therefore correctly left as they are
 
         // Execute update
@@ -1697,8 +1703,8 @@ public class DomainRESTController {
 	        }
 	        default: {
 	            // Unrecognized algorithm
-	            log.warn("The pseudonymization algorithm that was requested (" + algorithm + ") wasn't recognized.");
-	            return null;
+	            log.debug("The pseudonymization algorithm that was requested (" + algorithm + ") wasn't recognized.");
+	            return DEFAULT_PSEUDONYMIZATION_ALPHABET;
 	        }
 		}
 	}
@@ -1710,7 +1716,7 @@ public class DomainRESTController {
      * @param allowEmpty this flag indicates whether an empty salt value is okay
      * @return {@code true} if the input is a valid salt value, {@code false} if not.
      */
-    private boolean validateSalt(String salt, Boolean allowEmpty){
+    private boolean validateSalt(String salt, Boolean allowEmpty) {
         if (salt.isBlank() && !allowEmpty) {
             // The salt was empty when a non-empty salt was expected.
             log.debug("The new salt given by the user was empty.");
