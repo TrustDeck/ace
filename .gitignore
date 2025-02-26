@@ -22,4 +22,4 @@ examples/certs/*
 /bin/
 .classpath
 Makefile
-setEvironmentVariables.sh
+setEnvironmentVariables.sh
