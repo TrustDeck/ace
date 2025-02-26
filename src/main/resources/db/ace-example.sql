@@ -2,12 +2,13 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.7
--- Dumped by pg_dump version 14.7
+-- Dumped from database version 17.3 (Debian 17.3-3.pgdg120+1)
+-- Dumped by pg_dump version 17.3 (Debian 17.3-3.pgdg120+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -16,11 +17,14 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
--- DROP DATABASE ace;
+\connect postgres
+
+DROP DATABASE IF EXISTS ace WITH (FORCE);
 --
 -- Name: ace; Type: DATABASE; Schema: -; Owner: ace-manager
 --
--- CREATE DATABASE ace WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'en_US.utf8';
+
+CREATE DATABASE ace WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
 
 
 ALTER DATABASE ace OWNER TO "ace-manager";
@@ -30,6 +34,7 @@ ALTER DATABASE ace OWNER TO "ace-manager";
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -70,7 +75,7 @@ CREATE SEQUENCE public.auditevent_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.auditevent_id_seq OWNER TO "ace-manager";
+ALTER SEQUENCE public.auditevent_id_seq OWNER TO "ace-manager";
 
 --
 -- Name: auditevent_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ace-manager
@@ -97,28 +102,29 @@ CREATE TABLE public.domain (
     enforceenddatevalidityinherited boolean NOT NULL,
     algorithm text NOT NULL,
     algorithminherited boolean NOT NULL,
-	alphabet text NOT NULL,
-	alphabetinherited boolean NOT NULL,
-	randomalgorithmdesiredsize bigint NOT NULL,
-	randomalgorithmdesiredsizeinherited boolean NOT NULL,
-	randomalgorithmdesiredsuccessprobability double precision NOT NULL,
-	randomalgorithmdesiredsuccessprobabilityinherited boolean NOT NULL,
-	multiplepsnallowed boolean NOT NULL,
-	multiplepsnallowedinherited boolean NOT NULL,
+    alphabet text NOT NULL,
+    alphabetinherited boolean NOT NULL,
+    randomalgorithmdesiredsize bigint NOT NULL,
+    randomalgorithmdesiredsizeinherited boolean NOT NULL,
+    randomalgorithmdesiredsuccessprobability double precision NOT NULL,
+    randomalgorithmdesiredsuccessprobabilityinherited boolean NOT NULL,
+    multiplepsnallowed boolean NOT NULL,
+    multiplepsnallowedinherited boolean NOT NULL,
     consecutivevaluecounter bigint NOT NULL,
     pseudonymlength integer NOT NULL,
     pseudonymlengthinherited boolean NOT NULL,
     paddingcharacter character(1) NOT NULL,
     paddingcharacterinherited boolean NOT NULL,
-	addcheckdigit boolean NOT NULL,
-	addcheckdigitinherited boolean NOT NULL,
-	lengthincludescheckdigit boolean NOT NULL,
-	lengthincludescheckdigitinherited boolean NOT NULL,
+    addcheckdigit boolean NOT NULL,
+    addcheckdigitinherited boolean NOT NULL,
+    lengthincludescheckdigit boolean NOT NULL,
+    lengthincludescheckdigitinherited boolean NOT NULL,
     salt text NOT NULL,
     saltlength integer NOT NULL,
     description text,
     superdomainid integer
 );
+
 
 ALTER TABLE public.domain OWNER TO "ace-manager";
 
@@ -135,7 +141,7 @@ CREATE SEQUENCE public.domain_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.domain_id_seq OWNER TO "ace-manager";
+ALTER SEQUENCE public.domain_id_seq OWNER TO "ace-manager";
 
 --
 -- Name: domain_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ace-manager
@@ -175,7 +181,7 @@ CREATE SEQUENCE public.pseudonym_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.pseudonym_id_seq OWNER TO "ace-manager";
+ALTER SEQUENCE public.pseudonym_id_seq OWNER TO "ace-manager";
 
 --
 -- Name: pseudonym_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ace-manager
@@ -203,6 +209,45 @@ ALTER TABLE ONLY public.domain ALTER COLUMN id SET DEFAULT nextval('public.domai
 --
 
 ALTER TABLE ONLY public.pseudonym ALTER COLUMN id SET DEFAULT nextval('public.pseudonym_id_seq'::regclass);
+
+
+--
+-- Data for Name: auditevent; Type: TABLE DATA; Schema: public; Owner: ace-manager
+--
+
+
+
+--
+-- Data for Name: domain; Type: TABLE DATA; Schema: public; Owner: ace-manager
+--
+
+
+
+--
+-- Data for Name: pseudonym; Type: TABLE DATA; Schema: public; Owner: ace-manager
+--
+
+
+
+--
+-- Name: auditevent_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ace-manager
+--
+
+SELECT pg_catalog.setval('public.auditevent_id_seq', 1, false);
+
+
+--
+-- Name: domain_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ace-manager
+--
+
+SELECT pg_catalog.setval('public.domain_id_seq', 1, false);
+
+
+--
+-- Name: pseudonym_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ace-manager
+--
+
+SELECT pg_catalog.setval('public.pseudonym_id_seq', 1, false);
 
 
 --
@@ -249,7 +294,7 @@ ALTER TABLE ONLY public.pseudonym
 -- Name: pseudonym pseudonym_psn_domainid_key; Type: CONSTRAINT; Schema: public; Owner: ace-manager
 --
 
-ALTER TABLE public.pseudonym
+ALTER TABLE ONLY public.pseudonym
     ADD CONSTRAINT pseudonym_psn_domainid_key UNIQUE (domainid, pseudonym);
 
 

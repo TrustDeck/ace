@@ -1,0 +1,30 @@
+# Add curl to keycloak to enable health checks; add certificates
+# Use image that includes a package manager
+FROM registry.access.redhat.com/ubi9 AS ubi-micro-build
+
+# Switch to root user
+USER root
+
+# Create folder and install curl in it
+RUN mkdir -p /mnt/rootfs
+RUN dnf install --installroot /mnt/rootfs curl --releasever 9 --setopt install_weak_deps=false --nodocs -y && \
+    dnf --installroot /mnt/rootfs clean all && \
+    rpm --root /mnt/rootfs -e --nodeps setup
+
+# Start creating standard keycloak and copy the curl installation into the standard image
+FROM quay.io/keycloak/keycloak:latest
+COPY --from=ubi-micro-build /mnt/rootfs /
+
+# Copying certificates into the container
+COPY ${CHAIN_PEM_PATH} /etc/pki/ca-trust/source/anchors/chain.pem
+COPY ${RSA_CRT_PATH} /etc/pki/ca-trust/source/anchors/rsa.crt
+COPY ${ECC_CRT_PATH} /etc/pki/ca-trust/source/anchors/ecc.crt
+COPY ${ORGANIZATION_CA_PEM_PATH} /etc/pki/ca-trust/source/anchors/org_CA.pem
+
+# Making the chain accessible
+USER root
+RUN chmod 644 /etc/pki/ca-trust/source/anchors/chain.pem
+RUN keytool -import -alias OrgChain -file /etc/pki/ca-trust/source/anchors/chain.pem -keystore /etc/pki/java/cacerts -storepass changeit -noprompt -trustcacerts
+RUN keytool -import -alias RsaCert -file /etc/pki/ca-trust/source/anchors/rsa.crt -keystore /etc/pki/java/cacerts -storepass changeit -noprompt -trustcacerts
+RUN keytool -import -alias EccCert -file /etc/pki/ca-trust/source/anchors/ecc.crt -keystore /etc/pki/java/cacerts -storepass changeit -noprompt -trustcacerts
+RUN keytool -import -alias OrgRootCA -file /etc/pki/ca-trust/source/anchors/org_CA.pem -keystore /etc/pki/java/cacerts -storepass changeit -noprompt -trustcacerts

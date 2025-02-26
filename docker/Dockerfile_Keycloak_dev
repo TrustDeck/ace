@@ -1,5 +1,5 @@
-# Add curl to keycloak enable easy health checks; add certificates
-# Use image that includes a package manager
+# Add curl to keycloak to enable health checks
+# Use an image that includes a package manager
 FROM registry.access.redhat.com/ubi9 AS ubi-micro-build
 
 # Switch to root user
