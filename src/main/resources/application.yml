@@ -1,0 +1,96 @@
+server:
+  port: 8080
+  error:
+    whitelabel:
+      enabled: false
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+  max-http-request-header-size: 6KB
+
+logging:
+  level:
+    org.trustdeck.ace: ${ACE_LOG_LEVEL:INFO}
+    root: ERROR
+
+spring:
+  #application:
+  #  name: ACE
+  jpa:
+    open-in-view: false
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  main:
+    allow-circular-references: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Custom section starts
+          # Server-uri without /auth since keycloak 17
+          principal-attribute: preferred_username
+          server-uri: ${KEYCLOAK_SERVER_URI}
+          truststore: ${TRUSTSTORE_PATH}
+          truststore-password: ${TRUSTSTORE_PASSWORD}
+          client-id: ${KEYCLOAK_CLIENT_ID}
+          # Client-secret is only used in the tests
+          client-secret: ${KEYCLOAK_CLIENT_SECRET}
+          realm: ${KEYCLOAK_REALM_NAME}
+          admin-username: ${KEYCLOAK_CACHE_ADMIN_USER}
+          admin-password: ${KEYCLOAK_CACHE_ADMIN_PASSWORD}
+          domain-role-group-claim-name: groups
+          domain-role-group-context-name: Domain
+          # Custom section ends
+          jws-algorithm: RSA256
+          issuer-uri: ${spring.security.oauth2.resourceserver.jwt.server-uri}/realms/${spring.security.oauth2.resourceserver.jwt.realm}
+          jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
+
+audittrail:
+  oidc-group-mapper:
+    token-claim-name: ace_groups
+    group-names:
+      isHuman: Human
+      isTechnical: Technical
+      isNoAuditing: Unaudited
+      isAuditEverything: AuditEverything
+
+app:
+  response:
+    # Possible entries are application/json or text/plain
+    preferred-accept-mime-type: application/json
+  datasource:
+    ace:
+      url: jdbc:postgresql://localhost:5432/ace
+      username: ${DATABASE_ACE_USER}
+      password: ${DATABASE_ACE_PASSWORD}
+      configuration:
+        maximum-pool-size: 20
+  operations:
+    # Name of all possible rights -- used for rights and roles management
+    - domain-create
+    - domain-create-complete
+    - domain-delete
+    - domain-list-all
+    - domain-read
+    - domain-read-salt
+    - domain-update
+    - domain-update-complete
+    - domain-update-salt
+    - record-create
+    - record-create-batch
+    - record-delete
+    - record-delete-batch
+    - record-read
+    - record-read-batch
+    - record-update
+    - record-update-complete
+    - record-update-batch
+    - complete-view
+    - link-pseudonyms
+    - delete-table
+    - read-table-storage
+    - delete-roles

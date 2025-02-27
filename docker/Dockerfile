@@ -1,4 +1,4 @@
-# Eclipse temurin is available under the Apache-2.0-license; the OpenJDK under the GNU GPL v2 license with Classpath Exception
+# temurin is available under the Apache-2.0-license; the OpenJDK under the GNU GPL v2 license with Classpath Exception
 FROM eclipse-temurin:21-jre-jammy
 
 ENV PKI_CHAIN_DOWNLOAD_URL=https://pki.pca.dfn.de/dfn-ca-global-g2/pub/cacert/chain.txt
@@ -22,10 +22,10 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 USER spring
 WORKDIR /home/spring
 
-COPY ./src/main/resources/scripts/prepare.sh prepare.sh
-COPY ./src/main/resources/scripts/entrypoint.sh entrypoint.sh
-COPY ./src/main/resources/application.yml.template .
-ADD ./target/ace*.jar ace.jar
+COPY ../src/main/resources/scripts/prepare.sh prepare.sh
+COPY ../src/main/resources/scripts/entrypoint.sh entrypoint.sh
+COPY ../src/main/resources/application.yml.template .
+ADD ../target/ace*.jar ace.jar
 
 USER root
 # permissions
