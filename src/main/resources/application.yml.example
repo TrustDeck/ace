@@ -48,6 +48,16 @@ spring:
           jws-algorithm: RSA256
           issuer-uri: ${spring.security.oauth2.resourceserver.jwt.server-uri}/realms/${spring.security.oauth2.resourceserver.jwt.realm}
           jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
+      client:
+        provider:
+            keycloak:
+                issuer-uri: http://localhost:8080/auth/realms/{realm-name}
+        registration:
+            keycloak:
+                client-id: swagger-ui
+                client-secret: {client-secret} # Only if using confidential client
+                authorization-grant-type: authorization_code
+                redirect-uri: http://localhost:8080/swagger-ui/oauth2-redirect.html
 
 audittrail:
   oidc-group-mapper:

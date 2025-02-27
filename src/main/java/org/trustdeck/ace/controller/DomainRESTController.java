@@ -17,6 +17,15 @@
 
 package org.trustdeck.ace.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +37,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.ace.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.ace.model.dto.DomainDto;
@@ -150,6 +158,38 @@ public class DomainRESTController {
      * 				digit should be calculated and the provided alphabet 
      * 				length is not an even number</li>
      */
+    @Operation(
+            summary = "Create a Domain (Complete)",
+            description = "Creates a new domain with all its attributes. Provides full access to the domain table for authorized users.",
+            requestBody = @RequestBody(
+                    description = "Domain to be created",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = DomainDto.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Domain successfully created"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - conflicting or invalid parameters"),
+                    @ApiResponse(responseCode = "404", description = "Parent domain not found"),
+                    @ApiResponse(responseCode = "406", description = "Domain name violates URI-validity"),
+                    @ApiResponse(responseCode = "422", description = "Failed to create domain meta-information or check digit issues")
+            },
+            parameters = {
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"domain-create-complete"}),
+            },
+            tags = { "Domain" }
+    )
     @PostMapping("/domain/complete")
     @PreAuthorize("hasRole('domain-create-complete')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
@@ -492,6 +532,38 @@ public class DomainRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the addition
      * 				of the domain failed</li>
      */
+    @Operation(
+            summary = "Create a Domain",
+            description = "Creates a new domain with a reduced set of attributes. For authorized users only.",
+            requestBody = @RequestBody(
+                    description = "Reduced domain to be created",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = DomainDto.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Domain successfully created"),
+                    @ApiResponse(responseCode = "200", description = "Domain already exists"),
+                    @ApiResponse(responseCode = "404", description = "Parent domain not found"),
+                    @ApiResponse(responseCode = "406", description = "Domain name violates URI-validity"),
+                    @ApiResponse(responseCode = "422", description = "Failed to create domain")
+            },
+            parameters = {
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"domain-create"}),
+            },
+            tags = { "Domain" }
+    )
     @PostMapping("/domain")
     @PreAuthorize("hasRole('domain-create')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
@@ -731,6 +803,42 @@ public class DomainRESTController {
      * 			<li>a <b>500-INTERNAL_SERVER_ERROR</b> status when the domain
      * 				could not be deleted</li>
      */
+    @Operation(
+            summary = "Deletes a Domain",
+            description = "Deletes a domain by its name. Includes an option for recursive changes to sub-domains.",
+            parameters = {
+                    @Parameter(
+                            name = "name",
+                            in = ParameterIn.QUERY,
+                            description = "Name of the domain to delete",
+                            required = true,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "recursive",
+                            in = ParameterIn.QUERY,
+                            description = "Flag to recursive delete sub-domains",
+                            required = false,
+                            schema = @Schema(type = "boolean", example = "true")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Domain successfully deleted"),
+                    @ApiResponse(responseCode = "404", description = "Domain not found"),
+                    @ApiResponse(responseCode = "500", description = "Failed to delete domain")
+            },
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"domain-delete", "#domainName"}),
+            },
+            tags = { "Domain" }
+    )
     @DeleteMapping("/domain")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-delete')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL, message = "Wants to delete a domain.")
@@ -779,6 +887,48 @@ public class DomainRESTController {
      * 				the given name or the when given attribute name 
      * 				wasn't found</li>
      */
+    @Operation(
+            summary = "Get a Domain Attribute",
+            description = "Reads a specific attribute of a domain. Authorization required for protected attributes.",
+            parameters = {
+                    @Parameter(
+                            name = "domain",
+                            in = ParameterIn.PATH,
+                            description = "Name of the domain",
+                            required = true,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "attribute",
+                            in = ParameterIn.PATH,
+                            description = "Name of the attribute of the domain to retrieve",
+                            required = true,
+                            schema = @Schema(type = "string", example = "salt")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Attribute of domain successfully retrieved", content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    type = "object",
+                                    example = "{ \"salt\": \"my-salt-123456\"}"
+                            )
+                    )),
+                    @ApiResponse(responseCode = "403", description = "Forbidden - insufficient permissions"),
+                    @ApiResponse(responseCode = "404", description = "Domain or attribute not found")
+            },
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"domain-read", "#domainName"}),
+            },
+            tags = { "Domain" }
+    )
     @GetMapping("/domains/{domain}/{attribute}")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read a specific attribute from a domain.")
@@ -925,6 +1075,52 @@ public class DomainRESTController {
      * 			<li>a <b>404-NOT_FOUND</b> when no domain was found for
      * 				the given name</li>
      */
+    @Operation(
+            summary = "Get a Domain",
+            description = "Retrieves a domain by its name. This operation is restricted to users with the 'domain-read' role. It returns either a full view or a reduced standard view of the domain depending on the user's permissions.",
+            parameters = {
+                    @Parameter(
+                            name = "name",
+                            description = "Name of the domain to retrieve",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Domain successfully retrieved",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = DomainDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Domain not found"
+                    ),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = "Forbidden – User does not have the necessary domain-read role"
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "Internal server error"
+                    )
+            },
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"domain-read", "#domainName"}),
+            },
+            tags = { "Domain" }
+    )
     @GetMapping("/domain")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read a domain.")
@@ -961,6 +1157,29 @@ public class DomainRESTController {
      * @return 	<li>a <b>200-OK</b> status and the <b>list of minimal
      * 				domains</b> when the query was successful</li>
      */
+    @Operation(
+            summary = "List Domain Hierarchy (Experimental)",
+            description = "Returns all domains from the database in a reduced representation. Complete object if permission `complete-view` was granted. This endpoint is experimental.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Domains successfully retrieved", content = @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = DomainDto.class))
+                    ))
+            },
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"domain-list-all"}),
+            },
+            parameters = {
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            tags = { "Domain" }
+    )
     @GetMapping(value = "/experimental/domains/hierarchy")
     @PreAuthorize("hasRole('domain-list-all')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read all domains in a minimal representation.")
@@ -1002,6 +1221,51 @@ public class DomainRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when updating the domain
      * 				failed</li>
      */
+    @Operation(
+            summary = "Update a Domain (Complete)",
+            description = "Updates a domain with all its attributes, including cascading updates to sub-domains.",
+            parameters = {
+                    @Parameter(
+                            name = "name",
+                            in = ParameterIn.QUERY,
+                            description = "Name of the current domain to update",
+                            required = true,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "recursive",
+                            in = ParameterIn.QUERY,
+                            description = "Flag to recursive update sub-domains",
+                            required = true,
+                            schema = @Schema(type = "boolean", example = "true")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            requestBody = @RequestBody(
+                    description = "Complete domain object with updated attributes",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = DomainDto.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Domain successfully updated"),
+                    @ApiResponse(responseCode = "404", description = "Domain not found"),
+                    @ApiResponse(responseCode = "406", description = "Domain name violates URI-validity"),
+                    @ApiResponse(responseCode = "422", description = "Failed to update domain")
+            },
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"#domainName", "domain-update-complete"}),
+            },
+            tags = { "Domain" }
+    )
     @PutMapping("/domain/complete")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update-complete')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a complete domain.")
@@ -1153,6 +1417,43 @@ public class DomainRESTController {
      * 			<li> a <b>422-UNPROCESSABLE_ENTITY</b> when updating the domain
      * 				failed</li>
      */
+    @Operation(
+            summary = "Update a Domain",
+            description = "Updates a domain with a reduced set of attributes. Full updates are only allowed for empty domains.",
+            parameters = {
+                    @Parameter(
+                            name = "name",
+                            in = ParameterIn.QUERY,
+                            description = "Name of the domain to update",
+                            required = true,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            requestBody = @RequestBody(
+                    description = "Reduced domain object with updated attributes",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = DomainDto.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Domain successfully updated"),
+                    @ApiResponse(responseCode = "404", description = "Domain not found"),
+                    @ApiResponse(responseCode = "422", description = "Failed to update domain")
+            },
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"#domainName", "domain-update"}),
+            },
+            tags = { "Domain" }
+    )
     @PutMapping("/domain")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a domain.")
@@ -1235,6 +1536,50 @@ public class DomainRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when updating the salt
      * 				value failed</li>
      */
+    @Operation(
+            summary = "Updates a Domain Salt",
+            description = "Updates the salt value of a domain.",
+            parameters = {
+                    @Parameter(
+                            name = "domain",
+                            in = ParameterIn.PATH,
+                            description = "Name of the domain to update",
+                            required = true,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "salt",
+                            in = ParameterIn.QUERY,
+                            description = "The new salt value for the domain",
+                            required = true,
+                            schema = @Schema(type = "string", example = "exampleSalt1234")
+                    ),
+                    @Parameter(
+                            name = "allowEmpty",
+                            in = ParameterIn.QUERY,
+                            description = "The given salt is allowed to be empty",
+                            required = false,
+                            schema = @Schema(type = "boolean", example = "true", defaultValue = "false")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Salt successfully updated"),
+                    @ApiResponse(responseCode = "400", description = "Invalid salt value"),
+                    @ApiResponse(responseCode = "404", description = "Domain not found"),
+                    @ApiResponse(responseCode = "422", description = "Failed to update salt")
+            },
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"#domainName", "domain-update-salt"}),
+            },
+            tags = { "Domain" }
+    )
     @PutMapping("/domains/{domain}/salt")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-update-salt')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update the salt from a domain.")

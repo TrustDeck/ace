@@ -59,6 +59,7 @@ audittrail:
       isAuditEverything: AuditEverything
 
 app:
+  version: @project.version@
   response:
     # Possible entries are application/json or text/plain
     preferred-accept-mime-type: application/json

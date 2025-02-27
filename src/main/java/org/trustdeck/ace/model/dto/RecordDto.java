@@ -19,13 +19,12 @@ package org.trustdeck.ace.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.ace.jooq.generated.tables.interfaces.IPseudonym;
 import org.trustdeck.ace.service.DomainDBAccessService;
@@ -52,33 +51,43 @@ public class RecordDto implements IRepresentation<IPseudonym, RecordDto> {
     private DomainDBAccessService domainDBAccessService = SpringBeanLocator.getBean(DomainDBAccessService.class);
 
     /** Stores the identifier for that entry. */
+    @Schema(description = "Stores the identifier for that entry.", example = "10014342132")
     private String id;
 
     /** The type of the identifier. */
+    @Schema(description = "The type of the identifier.", example = "SYSTEM-ID-XYP")
     private String idType;
 
     /** The pseudonym belonging to the identifier. */
+    @Schema(description = "The pseudonym belonging to the identifier.", example = "TS-12345678")
     private String psn;
 
     /** The date (and time) when the validity period of the entry starts. */
+    @Schema(description = "The date (and time) when the validity period of the entry starts.", example = "2025-01-01T00:00:00", type = "string")
     private LocalDateTime validFrom;
 
     /** Determines if the validFrom value was inherited from the super domain. */
+    @Schema(description = "Indicates whether the validFrom value was inherited from the super domain.", example = "true", defaultValue = "false")
     private Boolean validFromInherited;
 
     /** The date (and time) when the validity period of the entry ends. */
+    @Schema(description = "The date (and time) when the validity period of the entry ends.", example = "2030-01-01T00:00:00", type = "string")
     private LocalDateTime validTo;
 
-    /** Determines if the validFrom value was inherited from the super domain. */
+    /** Determines if the validTo value was inherited from the super domain. */
+    @Schema(description = "Indicates whether the validTo value was inherited from the super domain.", example = "false", defaultValue = "false")
     private Boolean validToInherited;
-    
+
     /** An amount of time a record should be valid for. (Only needed for the creation.) */
+    @Schema(description = "An amount of time a record should be valid for. (Only needed for the creation.)", example = "10minutes")
     private String validityTime;
 
     /** The name of the domain this record belongs to. */
+    @Schema(description = "The name of the domain this record belongs to.", example = "TestProject")
     private String domainName;
 
     /** The domain object this entry belongs to. */
+    @Schema(description = "The domain object this entry belongs to.")
     private DomainDto domain;
 
     /**
