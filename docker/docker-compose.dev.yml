@@ -13,7 +13,7 @@ services:
       context: .
       dockerfile: Dockerfile_Keycloak_dev
       no_cache: true
-    #image: keycloak-with-curl:latest
+    image: keycloak-with-curl:latest
     depends_on:
       - ace-postgresql
     networks:
