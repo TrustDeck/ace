@@ -1,4 +1,10 @@
 # Add curl to keycloak to enable health checks; add certificates
+# Add environment variables
+ARG CHAIN_PEM_FILE_PATH
+ARG RSA_CRT_FILE_PATH
+ARG ECC_CRT_FILE_PATH
+ARG ORGANIZATION_CA_PEM_FILE_PATH
+
 # Use image that includes a package manager
 FROM registry.access.redhat.com/ubi9 AS ubi-micro-build
 
@@ -15,11 +21,23 @@ RUN dnf install --installroot /mnt/rootfs curl --releasever 9 --setopt install_w
 FROM quay.io/keycloak/keycloak:latest
 COPY --from=ubi-micro-build /mnt/rootfs /
 
+# Re-declare build arguments in this stage so they're available here
+ARG CHAIN_PEM_FILE_PATH
+ARG RSA_CRT_FILE_PATH
+ARG ECC_CRT_FILE_PATH
+ARG ORGANIZATION_CA_PEM_FILE_PATH
+
+# Set environment variables so they can be used in the COPY statements
+ENV CHAIN_PEM_FILE_PATH=${CHAIN_PEM_FILE_PATH}
+ENV RSA_CRT_FILE_PATH=${RSA_CRT_FILE_PATH}
+ENV ECC_CRT_FILE_PATH=${ECC_CRT_FILE_PATH}
+ENV ORGANIZATION_CA_PEM_FILE_PATH=${ORGANIZATION_CA_PEM_FILE_PATH}
+
 # Copying certificates into the container
-COPY ${CHAIN_PEM_PATH} /etc/pki/ca-trust/source/anchors/chain.pem
-COPY ${RSA_CRT_PATH} /etc/pki/ca-trust/source/anchors/rsa.crt
-COPY ${ECC_CRT_PATH} /etc/pki/ca-trust/source/anchors/ecc.crt
-COPY ${ORGANIZATION_CA_PEM_PATH} /etc/pki/ca-trust/source/anchors/org_CA.pem
+COPY ${CHAIN_PEM_FILE_PATH} /etc/pki/ca-trust/source/anchors/chain.pem
+COPY ${RSA_CRT_FILE_PATH} /etc/pki/ca-trust/source/anchors/rsa.crt
+COPY ${ECC_CRT_FILE_PATH} /etc/pki/ca-trust/source/anchors/ecc.crt
+COPY ${ORGANIZATION_CA_PEM_FILE_PATH} /etc/pki/ca-trust/source/anchors/org_CA.pem
 
 # Making the chain accessible
 USER root

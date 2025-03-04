@@ -13,6 +13,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile_Keycloak
+      args:
+        CHAIN_PEM_FILE_PATH: ${CHAIN_PEM_PATH}
+        RSA_CRT_FILE_PATH: ${RSA_CRT_PATH}
+        ECC_CRT_FILE_PATH: ${ECC_CRT_PATH}
+        ORGANIZATION_CA_PEM_FILE_PATH: ${ORGANIZATION_CA_PEM_PATH}
       no_cache: true
     image: keycloak-with-curl-and-certs:latest
     depends_on:
@@ -60,7 +65,7 @@ services:
     networks:
       - ace
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ace-manager -d ace"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_ACE_USER} -d ace"]
       interval: 10s
       timeout: 5s
       retries: 15
