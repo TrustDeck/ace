@@ -11,7 +11,7 @@ server:
 
 logging:
   level:
-    org.trustdeck.ace: ${ACE_LOG_LEVEL:INFO}
+    org.trustdeck: ${ACE_LOG_LEVEL:INFO}
     root: ERROR
 
 spring:

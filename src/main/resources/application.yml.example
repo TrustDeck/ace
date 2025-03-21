@@ -12,7 +12,7 @@ server:
 
 logging:
   level:
-    org.trustdeck.ace: INFO
+    org.trustdeck: INFO
     root: ERROR
 
 spring:

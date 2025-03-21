@@ -22,9 +22,9 @@ import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.trustdeck.ace.model.dto.DomainDto;
 import org.trustdeck.ace.service.AssertWebRequestService;
-import org.trustdeck.ace.service.DomainOIDCService;
+import org.trustdeck.model.dto.DomainDto;
+import org.trustdeck.service.DomainOIDCService;
 
 import lombok.extern.slf4j.Slf4j;
 

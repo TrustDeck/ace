@@ -21,12 +21,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.trustdeck.ace.algorithms.XxHashPseudonymizer;
-import org.trustdeck.ace.jooq.generated.tables.pojos.Pseudonym;
-import org.trustdeck.ace.model.dto.DomainDto;
-import org.trustdeck.ace.model.dto.RecordDto;
 import org.trustdeck.ace.service.AssertWebRequestService;
-import org.trustdeck.ace.service.DomainOIDCService;
+import org.trustdeck.algorithms.XxHashPseudonymizer;
+import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
+import org.trustdeck.model.dto.DomainDto;
+import org.trustdeck.model.dto.RecordDto;
+import org.trustdeck.service.DomainOIDCService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

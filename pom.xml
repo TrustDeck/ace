@@ -219,7 +219,7 @@
                             <inputSchema>public</inputSchema>
                         </database>
                         <target>
-                            <packageName>org.trustdeck.ace.jooq.generated</packageName>
+                            <packageName>org.trustdeck.jooq.generated</packageName>
                             <directory>src/main/java</directory>
                         </target>
                         <generate>
@@ -267,7 +267,7 @@
                         <configuration>
                             <finalName>ace-${project.version}</finalName>
                             <executable>true</executable>
-                            <mainClass>org.trustdeck.ace.Application</mainClass>
+                            <mainClass>org.trustdeck.Application</mainClass>
                         </configuration>
                     </execution>
                 </executions>
