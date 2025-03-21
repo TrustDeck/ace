@@ -20,8 +20,8 @@
         <Property name="ROOT_LOG_LEVEL">
             ${logging.level.root:WARN}
         </Property>
-        <Property name="TRUSTDECK_TRUSTDECK_LOG_LEVEL">
-            ${logging.level.org.trustdeck.trustdeck:INFO}
+        <Property name="TRUSTDECK_LOG_LEVEL">
+            ${logging.level.org.trustdeck:INFO}
         </Property>
     </Properties>
 
@@ -36,7 +36,7 @@
                 </LevelPatternSelector>
             </PatternLayout>
             <Policies>
-                <!-- Roll over at 10 MB or at midnight, whichever comes first -->
+                <!-- Roll over at 100 MB or at midnight, whichever comes first -->
                 <SizeBasedTriggeringPolicy size="100 MB"/>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
             </Policies>
@@ -70,7 +70,7 @@
         DEBUG	        500
         TRACE	        600
         -->
-        <AsyncLogger name="org.trustdeck" level="${TRUSTDECK_TRUSTDECK_LOG_LEVEL}" additivity="false">
+        <AsyncLogger name="org.trustdeck" level="${TRUSTDECK_LOG_LEVEL}" additivity="false">
             <AppenderRef ref="asyncAppender"/>
         </AsyncLogger>
 

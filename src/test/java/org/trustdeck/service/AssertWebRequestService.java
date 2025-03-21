@@ -57,7 +57,6 @@ import org.springframework.util.ResourceUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.trustdeck.model.dto.DomainDto;
 import org.trustdeck.model.dto.RecordDto;
-import org.trustdeck.service.DomainOIDCService;
 import org.trustdeck.utils.Assertion;
 
 import javax.net.ssl.SSLContext;

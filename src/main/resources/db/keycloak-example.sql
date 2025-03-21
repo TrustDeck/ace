@@ -2617,7 +2617,7 @@ INSERT INTO public.offline_user_session (user_session_id, user_id, realm_id, cre
 
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('40b33f72-e076-45a0-9e9a-78ba0b77743e', 'audience resolve', 'openid-connect', 'oidc-audience-resolve-mapper', '34c90cb1-59ee-4c3d-b280-035eb751690a', NULL);
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('537dc4a8-319a-45b3-8625-0b6f46376529', 'locale', 'openid-connect', 'oidc-usermodel-attribute-mapper', '19f8a8d4-4eee-413b-8430-1779b7cd1bec', NULL);
-INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('d48c53e0-d218-4trustdeck-a934-85ae05c88c75', 'role list', 'saml', 'saml-role-list-mapper', NULL, '22487cb4-ae45-40c0-bf42-6cc8a0522d49');
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('d48c53e0-d218-4ace-a934-85ae05c88c75', 'role list', 'saml', 'saml-role-list-mapper', NULL, '22487cb4-ae45-40c0-bf42-6cc8a0522d49');
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('f1f8bdb1-65fe-4ee1-930d-3a6672cda70b', 'full name', 'openid-connect', 'oidc-full-name-mapper', NULL, '7d3289fd-f5f7-4c73-a857-6506457c1e6c');
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('4949773e-f6ed-450e-bb1d-a736ecb0cb7a', 'family name', 'openid-connect', 'oidc-usermodel-property-mapper', NULL, '7d3289fd-f5f7-4c73-a857-6506457c1e6c');
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('1b17f5cb-4b85-4486-9c27-56f1922b46d9', 'given name', 'openid-connect', 'oidc-usermodel-property-mapper', NULL, '7d3289fd-f5f7-4c73-a857-6506457c1e6c');
@@ -2692,9 +2692,9 @@ INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALU
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('537dc4a8-319a-45b3-8625-0b6f46376529', 'true', 'access.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('537dc4a8-319a-45b3-8625-0b6f46376529', 'locale', 'claim.name');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('537dc4a8-319a-45b3-8625-0b6f46376529', 'String', 'jsonType.label');
-INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d48c53e0-d218-4trustdeck-a934-85ae05c88c75', 'false', 'single');
-INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d48c53e0-d218-4trustdeck-a934-85ae05c88c75', 'Basic', 'attribute.nameformat');
-INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d48c53e0-d218-4trustdeck-a934-85ae05c88c75', 'Role', 'attribute.name');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d48c53e0-d218-4ace-a934-85ae05c88c75', 'false', 'single');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d48c53e0-d218-4ace-a934-85ae05c88c75', 'Basic', 'attribute.nameformat');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('d48c53e0-d218-4ace-a934-85ae05c88c75', 'Role', 'attribute.name');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('f1f8bdb1-65fe-4ee1-930d-3a6672cda70b', 'true', 'userinfo.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('f1f8bdb1-65fe-4ee1-930d-3a6672cda70b', 'true', 'id.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('f1f8bdb1-65fe-4ee1-930d-3a6672cda70b', 'true', 'access.token.claim');
