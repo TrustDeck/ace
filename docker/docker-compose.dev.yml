@@ -1,23 +1,23 @@
 volumes:
-  ace_postgresql_data: {}
+  trustdeck_postgresql_data: {}
 
 networks:
-  ace:
-    name: ace
+  trustdeck:
+    name: trustdeck
     driver: bridge
 
 services:
-  ace-keycloak:
-    container_name: ace-keycloak
+  trustdeck-keycloak:
+    container_name: trustdeck-keycloak
     build:
       context: .
       dockerfile: Dockerfile_Keycloak_dev
       no_cache: true
     image: keycloak-with-curl:latest
     depends_on:
-      - ace-postgresql
+      - trustdeck-postgresql
     networks:
-      - ace
+      - trustdeck
     healthcheck:
       test: ["CMD-SHELL", "curl http://localhost:8080/health/ready"]
       interval: 5s
@@ -31,7 +31,7 @@ services:
       KC_LOG_LEVEL: ${KEYCLOAK_LOG_LEVEL:-INFO}
       TZ: Europe/Berlin
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://ace-postgresql:5432/keycloak?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Berlin
+      KC_DB_URL: jdbc:postgresql://trustdeck-postgresql:5432/keycloak?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=Europe/Berlin
       KC_DB_USERNAME: ${DATABASE_KEYCLOAK_USER}
       KC_DB_PASSWORD: ${DATABASE_KEYCLOAK_PASSWORD}
       KC_DB_SCHEMA: public
@@ -49,13 +49,13 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
-  ace-postgresql:
-    container_name: ace-postgresql
+  trustdeck-postgresql:
+    container_name: trustdeck-postgresql
     image: postgres:latest
     networks:
-      - ace
+      - trustdeck
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_ACE_USER} -d ace"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_TRUSTDECK_USER} -d trustdeck"]
       interval: 10s
       timeout: 5s
       retries: 15
@@ -63,12 +63,12 @@ services:
       - "5432:5432"
     environment:
       - TZ=Europe/Berlin
-      - POSTGRES_USER=${DATABASE_ACE_USER}
-      - POSTGRES_PASSWORD=${DATABASE_ACE_PASSWORD}
-      - POSTGRES_DB=ace
+      - POSTGRES_USER=${DATABASE_TRUSTDECK_USER}
+      - POSTGRES_PASSWORD=${DATABASE_TRUSTDECK_PASSWORD}
+      - POSTGRES_DB=trustdeck
     volumes:
-      - ../src/main/resources/db/ace-example.sql:/docker-entrypoint-initdb.d/ace-example.sql
+      - ../src/main/resources/db/trustdeck-example.sql:/docker-entrypoint-initdb.d/trustdeck-example.sql
       - ../src/main/resources/db/keycloak-example.sql:/docker-entrypoint-initdb.d/keycloak-example.sql
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ace_postgresql_data:/var/lib/postgresql/data
+      - trustdeck_postgresql_data:/var/lib/postgresql/data

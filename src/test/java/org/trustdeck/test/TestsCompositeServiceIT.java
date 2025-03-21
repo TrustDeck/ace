@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 
-package org.trustdeck.ace.test;
+package org.trustdeck.test;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.trustdeck.ace.service.AssertWebRequestService;
 import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.model.dto.DomainDto;
 import org.trustdeck.model.dto.RecordDto;
+import org.trustdeck.service.AssertWebRequestService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

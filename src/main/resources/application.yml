@@ -11,12 +11,12 @@ server:
 
 logging:
   level:
-    org.trustdeck: ${ACE_LOG_LEVEL:INFO}
+    org.trustdeck: ${TRUSTDECK_LOG_LEVEL:INFO}
     root: ERROR
 
 spring:
   #application:
-  #  name: ACE
+  #  name: TRUSTDECK
   jpa:
     open-in-view: false
   datasource:
@@ -51,7 +51,7 @@ spring:
 
 audittrail:
   oidc-group-mapper:
-    token-claim-name: ace_groups
+    token-claim-name: trustdeck_groups
     group-names:
       isHuman: Human
       isTechnical: Technical
@@ -63,10 +63,10 @@ app:
     # Possible entries are application/json or text/plain
     preferred-accept-mime-type: application/json
   datasource:
-    ace:
-      url: jdbc:postgresql://localhost:5432/ace
-      username: ${DATABASE_ACE_USER}
-      password: ${DATABASE_ACE_PASSWORD}
+    trustdeck:
+      url: jdbc:postgresql://localhost:5432/trustdeck
+      username: ${DATABASE_TRUSTDECK_USER}
+      password: ${DATABASE_TRUSTDECK_PASSWORD}
       configuration:
         maximum-pool-size: 20
   operations:

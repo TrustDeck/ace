@@ -24,7 +24,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * This class is the main entry point for the pseudonymization service ACE.
+ * This class is the main entry point for the pseudonymization service TRUSTDECK.
  * 
  * @author Armin Müller
  *

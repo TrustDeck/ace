@@ -39,8 +39,8 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
             .info(new Info()
-                .title("ACE Pseudonymization API")
+                .title("TRUSTDECK Pseudonymization API")
                 .version("v0.54.0-BETA")
-                .description("The pseudonymization API of the Advanced Confidentiality Engine (ACE)"));
+                .description("The pseudonymization API of the Advanced Confidentiality Engine (TRUSTDECK)"));
     }
 }

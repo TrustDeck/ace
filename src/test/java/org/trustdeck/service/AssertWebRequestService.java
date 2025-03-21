@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.ace.service;
+package org.trustdeck.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
@@ -118,8 +118,8 @@ public class AssertWebRequestService {
     @Autowired
     private DomainOIDCService domainOidcService;
     
-    /** The name of the database where ACE stores its data. **/
-    private static final String ACE = "ace";
+    /** The name of the database where TRUSTDECK stores its data. **/
+    private static final String TRUSTDECK = "trustdeck";
     
     /**
      * Resets the test environment and sets up the mock objects.
@@ -150,13 +150,13 @@ public class AssertWebRequestService {
     }
     
     /**
-     * Helper method to reset the test data in ACE's database as well as in Keycloak
+     * Helper method to reset the test data in TRUSTDECK's database as well as in Keycloak
      * @return {@code true} when resetting the databases was successful, {@code false} otherwise
      */
     private boolean resetTestData() {
     	try {
 	        // Reset the database
-	        try (Connection conn = getDatabaseConnection(ACE)) {
+	        try (Connection conn = getDatabaseConnection(TRUSTDECK)) {
 	        	// Remove all data from the database
 	        	log.debug("Truncating table domain.");
 	        	conn.createStatement().execute("TRUNCATE TABLE domain CASCADE;");
@@ -226,17 +226,17 @@ public class AssertWebRequestService {
      * @throws SQLException if establishing the connection fails
      */
     private Connection getDatabaseConnection(String databaseName) throws IllegalStateException, SQLException {
-        // Read the ACE URL from application.yml
-        String aceURL = env.getProperty("app.datasource.ace.url");
-        String username = env.getProperty("app.datasource.ace.username");
-        String password = env.getProperty("app.datasource.ace.password");
+        // Read the TRUSTDECK URL from application.yml
+        String trustdeckURL = env.getProperty("app.datasource.trustdeck.url");
+        String username = env.getProperty("app.datasource.trustdeck.username");
+        String password = env.getProperty("app.datasource.trustdeck.password");
 
-        if (!Assertion.assertNotNullAll(aceURL, username, password)) {
-            throw new IllegalStateException("app.datasource.ace.url, app.datasource.ace.username, or app.datasource.ace.password is not configured.");
+        if (!Assertion.assertNotNullAll(trustdeckURL, username, password)) {
+            throw new IllegalStateException("app.datasource.trustdeck.url, app.datasource.trustdeck.username, or app.datasource.trustdeck.password is not configured.");
         }
 
         // Replace the database name with "postgres"
-        String adminUrl = aceURL.replace("/ace", "/" + databaseName);
+        String adminUrl = trustdeckURL.replace("/trustdeck", "/" + databaseName);
 
         return DriverManager.getConnection(adminUrl, username, password);
     }

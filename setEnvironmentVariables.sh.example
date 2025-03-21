@@ -3,14 +3,14 @@
 # as the commands would be executed in a separate shell process.
 
 # Database users and passwords
-export DATABASE_ACE_USER=ace-manager
-export DATABASE_ACE_PASSWORD=3uMeDYiV291VPnZ8
-export DATABASE_KEYCLOAK_USER=ace-manager
+export DATABASE_TRUSTDECK_USER=trustdeck-manager
+export DATABASE_TRUSTDECK_PASSWORD=3uMeDYiV291VPnZ8
+export DATABASE_KEYCLOAK_USER=trustdeck-manager
 export DATABASE_KEYCLOAK_PASSWORD=3uMeDYiV291VPnZ8
 
 # Keycloak
 export KEYCLOAK_SERVER_URI=http://localhost:8081 # The URI of the server where Keycloak runs on (without trailing slash)
-export KEYCLOAK_CLIENT_ID=ace
+export KEYCLOAK_CLIENT_ID=trustdeck
 export KEYCLOAK_CLIENT_SECRET=1h6T3Dnx45hrd4pgv7YdcIfP9GRarbpN
 export KEYCLOAK_REALM_NAME=development
 export KEYCLOAK_HOSTNAME=http://localhost:8081
@@ -26,7 +26,7 @@ export KEYCLOAK_ADMIN_USER=admin
 export KEYCLOAK_ADMIN_PASSWORD=hMaUjej23Ep8f7U7
 
 # Misc
-export ACE_LOG_LEVEL=INFO
+export TRUSTDECK_LOG_LEVEL=INFO
 export TRUSTSTORE_PATH=classpath:pki_chain.truststore
 export TRUSTSTORE_PASSWORD=l129VwykBVwp5FlfdPe7qQ9GOaq2rckC
 

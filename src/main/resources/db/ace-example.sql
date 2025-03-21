@@ -19,17 +19,17 @@ SET row_security = off;
 
 \connect postgres
 
-DROP DATABASE IF EXISTS ace WITH (FORCE);
+DROP DATABASE IF EXISTS trustdeck WITH (FORCE);
 --
--- Name: ace; Type: DATABASE; Schema: -; Owner: ace-manager
+-- Name: trustdeck; Type: DATABASE; Schema: -; Owner: trustdeck-manager
 --
 
-CREATE DATABASE ace WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
+CREATE DATABASE trustdeck WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
 
 
-ALTER DATABASE ace OWNER TO "ace-manager";
+ALTER DATABASE trustdeck OWNER TO "trustdeck-manager";
 
-\connect ace
+\connect trustdeck
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -48,7 +48,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: auditevent; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: auditevent; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.auditevent (
@@ -61,10 +61,10 @@ CREATE TABLE public.auditevent (
 );
 
 
-ALTER TABLE public.auditevent OWNER TO "ace-manager";
+ALTER TABLE public.auditevent OWNER TO "trustdeck-manager";
 
 --
--- Name: auditevent_id_seq; Type: SEQUENCE; Schema: public; Owner: ace-manager
+-- Name: auditevent_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE SEQUENCE public.auditevent_id_seq
@@ -75,17 +75,17 @@ CREATE SEQUENCE public.auditevent_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.auditevent_id_seq OWNER TO "ace-manager";
+ALTER SEQUENCE public.auditevent_id_seq OWNER TO "trustdeck-manager";
 
 --
--- Name: auditevent_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ace-manager
+-- Name: auditevent_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER SEQUENCE public.auditevent_id_seq OWNED BY public.auditevent.id;
 
 
 --
--- Name: domain; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: domain; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.domain (
@@ -126,10 +126,10 @@ CREATE TABLE public.domain (
 );
 
 
-ALTER TABLE public.domain OWNER TO "ace-manager";
+ALTER TABLE public.domain OWNER TO "trustdeck-manager";
 
 --
--- Name: domain_id_seq; Type: SEQUENCE; Schema: public; Owner: ace-manager
+-- Name: domain_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE SEQUENCE public.domain_id_seq
@@ -141,17 +141,17 @@ CREATE SEQUENCE public.domain_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.domain_id_seq OWNER TO "ace-manager";
+ALTER SEQUENCE public.domain_id_seq OWNER TO "trustdeck-manager";
 
 --
--- Name: domain_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ace-manager
+-- Name: domain_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER SEQUENCE public.domain_id_seq OWNED BY public.domain.id;
 
 
 --
--- Name: pseudonym; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: pseudonym; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.pseudonym (
@@ -167,10 +167,10 @@ CREATE TABLE public.pseudonym (
 );
 
 
-ALTER TABLE public.pseudonym OWNER TO "ace-manager";
+ALTER TABLE public.pseudonym OWNER TO "trustdeck-manager";
 
 --
--- Name: pseudonym_id_seq; Type: SEQUENCE; Schema: public; Owner: ace-manager
+-- Name: pseudonym_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE SEQUENCE public.pseudonym_id_seq
@@ -181,77 +181,77 @@ CREATE SEQUENCE public.pseudonym_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.pseudonym_id_seq OWNER TO "ace-manager";
+ALTER SEQUENCE public.pseudonym_id_seq OWNER TO "trustdeck-manager";
 
 --
--- Name: pseudonym_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ace-manager
+-- Name: pseudonym_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER SEQUENCE public.pseudonym_id_seq OWNED BY public.pseudonym.id;
 
 
 --
--- Name: auditevent id; Type: DEFAULT; Schema: public; Owner: ace-manager
+-- Name: auditevent id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.auditevent ALTER COLUMN id SET DEFAULT nextval('public.auditevent_id_seq'::regclass);
 
 
 --
--- Name: domain id; Type: DEFAULT; Schema: public; Owner: ace-manager
+-- Name: domain id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.domain ALTER COLUMN id SET DEFAULT nextval('public.domain_id_seq'::regclass);
 
 
 --
--- Name: pseudonym id; Type: DEFAULT; Schema: public; Owner: ace-manager
+-- Name: pseudonym id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.pseudonym ALTER COLUMN id SET DEFAULT nextval('public.pseudonym_id_seq'::regclass);
 
 
 --
--- Data for Name: auditevent; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: auditevent; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: domain; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: domain; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: pseudonym; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: pseudonym; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Name: auditevent_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ace-manager
+-- Name: auditevent_id_seq; Type: SEQUENCE SET; Schema: public; Owner: trustdeck-manager
 --
 
 SELECT pg_catalog.setval('public.auditevent_id_seq', 1, false);
 
 
 --
--- Name: domain_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ace-manager
+-- Name: domain_id_seq; Type: SEQUENCE SET; Schema: public; Owner: trustdeck-manager
 --
 
 SELECT pg_catalog.setval('public.domain_id_seq', 1, false);
 
 
 --
--- Name: pseudonym_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ace-manager
+-- Name: pseudonym_id_seq; Type: SEQUENCE SET; Schema: public; Owner: trustdeck-manager
 --
 
 SELECT pg_catalog.setval('public.pseudonym_id_seq', 1, false);
 
 
 --
--- Name: auditevent auditevent_pkey; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: auditevent auditevent_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.auditevent
@@ -259,7 +259,7 @@ ALTER TABLE ONLY public.auditevent
 
 
 --
--- Name: domain domain_name_key; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: domain domain_name_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.domain
@@ -267,7 +267,7 @@ ALTER TABLE ONLY public.domain
 
 
 --
--- Name: domain domain_pkey; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: domain domain_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.domain
@@ -275,7 +275,7 @@ ALTER TABLE ONLY public.domain
 
 
 --
--- Name: pseudonym pseudonym_identifier_idtype_domainid_pseudonym_key; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: pseudonym pseudonym_identifier_idtype_domainid_pseudonym_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.pseudonym
@@ -283,7 +283,7 @@ ALTER TABLE ONLY public.pseudonym
 
 
 --
--- Name: pseudonym pseudonym_pkey; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: pseudonym pseudonym_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.pseudonym
@@ -291,7 +291,7 @@ ALTER TABLE ONLY public.pseudonym
 
 
 --
--- Name: pseudonym pseudonym_psn_domainid_key; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: pseudonym pseudonym_psn_domainid_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.pseudonym
@@ -299,35 +299,35 @@ ALTER TABLE ONLY public.pseudonym
 
 
 --
--- Name: auditusernameidx; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: auditusernameidx; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX auditusernameidx ON public.auditevent USING btree (username);
 
 
 --
--- Name: ididtypeidx; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: ididtypeidx; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX ididtypeidx ON public.pseudonym USING btree (identifier, idtype);
 
 
 --
--- Name: idpsnidx; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idpsnidx; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE UNIQUE INDEX idpsnidx ON public.pseudonym USING btree (identifier, pseudonym);
 
 
 --
--- Name: metadataidx; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: metadataidx; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE UNIQUE INDEX metadataidx ON public.domain USING btree (name);
 
 
 --
--- Name: domain domain_superdomainid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: domain domain_superdomainid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.domain
@@ -335,7 +335,7 @@ ALTER TABLE ONLY public.domain
 
 
 --
--- Name: pseudonym pseudonym_domainid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: pseudonym pseudonym_domainid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.pseudonym

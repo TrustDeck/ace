@@ -12,15 +12,15 @@
         <lz4.version>1.8.0</lz4.version>
         <jooq.version>3.18.9</jooq.version> <!-- This has to be the same version that the spring-boot-starter-jooq uses. -->
         <springdoc.version>2.6.0</springdoc.version>
-        <jar.finalName>ace</jar.finalName>
+        <jar.finalName>trustdeck</jar.finalName>
         <jooq.skip>false</jooq.skip>
     </properties>
 
     <groupId>org.trustdeck</groupId>
-    <artifactId>ace</artifactId>
+    <artifactId>trustdeck</artifactId>
     <version>v1.0.1</version>
     <packaging>jar</packaging>
-    <name>ace</name>
+    <name>trustdeck</name>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -204,9 +204,9 @@
                     <logging>WARN</logging>
                     <jdbc>
                         <driver>org.postgresql.Driver</driver>
-                        <url>jdbc:postgresql://localhost:5432/ace</url>
-                        <user>${env.DATABASE_ACE_USER}</user>
-                        <password>${env.DATABASE_ACE_PASSWORD}</password>
+                        <url>jdbc:postgresql://localhost:5432/trustdeck</url>
+                        <user>${env.DATABASE_TRUSTDECK_USER}</user>
+                        <password>${env.DATABASE_TRUSTDECK_PASSWORD}</password>
                     </jdbc>
                     <generator>
                         <strategy>
@@ -265,7 +265,7 @@
                             <goal>repackage</goal>
                         </goals>
                         <configuration>
-                            <finalName>ace-${project.version}</finalName>
+                            <finalName>trustdeck-${project.version}</finalName>
                             <executable>true</executable>
                             <mainClass>org.trustdeck.Application</mainClass>
                         </configuration>

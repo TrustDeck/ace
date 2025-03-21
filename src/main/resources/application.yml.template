@@ -11,7 +11,7 @@ server:
 
 logging:
   level:
-    org.trustdeck: LOG_LEVEL_ACE
+    org.trustdeck: LOG_LEVEL_TRUSTDECK
     root: LOG_LEVEL_ROOT
 
 spring:
@@ -62,7 +62,7 @@ app:
     # Possible entries: application/json or text/plain
     preferred-media-type: application/json
   datasource:
-    ace:
+    trustdeck:
       url: jdbc:postgresql://SPRING_DATASOURCE_HOST:SPRING_DATASOURCE_PORT/SPRING_DATASOURCE_NAME
       username: SPRING_DATASOURCE_USERNAME
       password: SPRING_DATASOURCE_PASSWORD

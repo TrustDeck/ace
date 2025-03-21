@@ -20,13 +20,13 @@
         <Property name="ROOT_LOG_LEVEL">
             ${logging.level.root:WARN}
         </Property>
-        <Property name="TRUSTDECK_ACE_LOG_LEVEL">
-            ${logging.level.org.trustdeck.ace:INFO}
+        <Property name="TRUSTDECK_TRUSTDECK_LOG_LEVEL">
+            ${logging.level.org.trustdeck.trustdeck:INFO}
         </Property>
     </Properties>
 
     <Appenders>
-        <RollingFile name="asyncLoggingFileAppender" fileName="logs/ace.log" filePattern="logs/ace-%d{yyyy-MM-dd}_%i.log.gz">
+        <RollingFile name="asyncLoggingFileAppender" fileName="logs/trustdeck.log" filePattern="logs/trustdeck-%d{yyyy-MM-dd}_%i.log.gz">
             <PatternLayout>
                 <LevelPatternSelector defaultPattern="${ERROR_LOG_PATTERN}">
                     <PatternMatch key="WARN" pattern="${WARN_LOG_PATTERN}"/>
@@ -70,7 +70,7 @@
         DEBUG	        500
         TRACE	        600
         -->
-        <AsyncLogger name="org.trustdeck" level="${TRUSTDECK_ACE_LOG_LEVEL}" additivity="false">
+        <AsyncLogger name="org.trustdeck" level="${TRUSTDECK_TRUSTDECK_LOG_LEVEL}" additivity="false">
             <AppenderRef ref="asyncAppender"/>
         </AsyncLogger>
 

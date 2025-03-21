@@ -64,11 +64,11 @@ app:
     # Possible entries: application/json or text/plain
     preferred-media-type: application/json
   datasource:
-    ace:
+    trustdeck:
       # Changes can be made below
-      url: jdbc:postgresql://localhost:5432/ace
-      username: ace-manager
-      password: ace-manager-password
+      url: jdbc:postgresql://localhost:5432/trustdeck
+      username: trustdeck-manager
+      password: trustdeck-manager-password
       configuration:
         maximum-pool-size: 20 # Maximum number of database connections that are managed by the Hikari data source
   operations:

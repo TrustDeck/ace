@@ -48,7 +48,7 @@ public class PseudonymizationDatasourceConfig {
      * @return the data source properties
      */
     @Bean(name = "pseudonymizationDataSourceProperties")
-    @ConfigurationProperties(prefix = "app.datasource.ace")
+    @ConfigurationProperties(prefix = "app.datasource.trustdeck")
     public DataSourceProperties pseudonymizationDataSourceProperties() {
         return new DataSourceProperties();
     }
@@ -60,7 +60,7 @@ public class PseudonymizationDatasourceConfig {
      * @return the Hikari data source
      */
     @Bean(name = "pseudonymizationDataSource")
-    @ConfigurationProperties(prefix = "app.datasource.ace.configuration")
+    @ConfigurationProperties(prefix = "app.datasource.trustdeck.configuration")
     public HikariDataSource pseudonymizationDataSource(@Qualifier("pseudonymizationDataSourceProperties") DataSourceProperties dataSourceProperties) {
         return dataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
