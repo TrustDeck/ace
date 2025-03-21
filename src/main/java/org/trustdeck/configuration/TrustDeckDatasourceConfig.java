@@ -33,35 +33,35 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
- * The data source configuration for the pseudonymization service.
+ * The data source configuration for trust deck.
  * 
  * @author Armin Müller & Eric Wündisch
  */
 @Configuration(proxyBeanMethods = false)
 @EnableTransactionManagement
 @Component
-public class PseudonymizationDatasourceConfig {
+public class TrustDeckDatasourceConfig {
 
     /**
-     * Create new pseudonymization data source properties.
+     * Create new data source properties.
      *
      * @return the data source properties
      */
-    @Bean(name = "pseudonymizationDataSourceProperties")
+    @Bean(name = "trustdeckDataSourceProperties")
     @ConfigurationProperties(prefix = "app.datasource.trustdeck")
-    public DataSourceProperties pseudonymizationDataSourceProperties() {
+    public DataSourceProperties trustdeckDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     /**
-     * Create a new Hikari data source for the pseudonymization service.
+     * Create a new Hikari data source for the trustdeck services.
      *
      * @param dataSourceProperties the properties for the data source
      * @return the Hikari data source
      */
-    @Bean(name = "pseudonymizationDataSource")
+    @Bean(name = "trustdeckDataSource")
     @ConfigurationProperties(prefix = "app.datasource.trustdeck.configuration")
-    public HikariDataSource pseudonymizationDataSource(@Qualifier("pseudonymizationDataSourceProperties") DataSourceProperties dataSourceProperties) {
+    public HikariDataSource trustdeckDataSource(@Qualifier("trustdeckDataSourceProperties") DataSourceProperties dataSourceProperties) {
         return dataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
@@ -72,7 +72,7 @@ public class PseudonymizationDatasourceConfig {
      * @return the data source connection provider
      */
     @Bean
-    public DataSourceConnectionProvider pseudonymizationConnectionProvider(@Qualifier("pseudonymizationDataSource") HikariDataSource dataSource) {
+    public DataSourceConnectionProvider trustdeckConnectionProvider(@Qualifier("trustdeckDataSource") HikariDataSource dataSource) {
         return new DataSourceConnectionProvider(new TransactionAwareDataSourceProxy(dataSource));
     }
 
@@ -82,20 +82,20 @@ public class PseudonymizationDatasourceConfig {
      * @param dataSource the data source
      * @return the dsl context
      */
-    @Bean(name = "pseudonymizationDsl")
-    public DSLContext pseudonymizationDsl(@Qualifier("pseudonymizationDataSource") HikariDataSource dataSource) {
-        return new DefaultDSLContext(pseudonymizationConfiguration(dataSource));
+    @Bean(name = "trustdeckDsl")
+    public DSLContext trustdeckDsl(@Qualifier("trustdeckDataSource") HikariDataSource dataSource) {
+        return new DefaultDSLContext(trustdeckConfiguration(dataSource));
     }
 
     /**
-     * Create a new default configuration for the pseudonymization service.
+     * Create a new default configuration for the trustdeck services.
      *
      * @param dataSource the data source
      * @return the default configuration
      */
-    public DefaultConfiguration pseudonymizationConfiguration(@Qualifier("pseudonymizationDataSource") HikariDataSource dataSource) {
+    public DefaultConfiguration trustdeckConfiguration(@Qualifier("trustdeckDataSource") HikariDataSource dataSource) {
         DefaultConfiguration config = new DefaultConfiguration();
-        config.set(pseudonymizationConnectionProvider(dataSource));
+        config.set(trustdeckConnectionProvider(dataSource));
         config.set(SQLDialect.POSTGRES);
         return config;
     }

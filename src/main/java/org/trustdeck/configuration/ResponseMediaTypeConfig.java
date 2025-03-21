@@ -23,7 +23,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Class for the configuration of the pseudonymization service's responses.
+ * Class for the configuration of the services' responses.
  * 
  * @author Armin Müller & Eric Wündisch
  */
@@ -32,11 +32,11 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties
 public class ResponseMediaTypeConfig {
 
-	/** The preferred media type for the responses of the pseudonymization service. */
+	/** The preferred media type for the responses of the services. */
     @Value("${app.response.preferred-media-type:application/json}")
     private String preferredMediaType;
 
-    /** The encoding used in the pseudonymization service. */
+    /** The encoding used in the services. */
     @Value("${server.servlet.encoding.charset:UTF-8}")
     private String encodingCharset;
 }

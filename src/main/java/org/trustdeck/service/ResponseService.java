@@ -44,11 +44,11 @@ import java.util.Set;
 @Slf4j
 public class ResponseService {
 
-    /** The configuration for the pseudonymization service's response media type. */
+    /** The configuration for the services' response media type. */
     @Autowired
     ResponseMediaTypeConfig responseMediaTypeConfig;
 
-    /** Defines a list of media types that the pseudonymization service is able to respond with. */
+    /** Defines a list of media types that the services is able to respond with. */
     public static final Set<String> supportedMediaTypes = Set.of(MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE);
 
     /**

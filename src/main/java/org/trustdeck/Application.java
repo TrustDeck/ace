@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2021-2024 Armin Müller & Eric Wündisch
+ * Copyright 2021-2025 Armin Müller & Eric Wündisch
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * This class is the main entry point for the pseudonymization service TRUSTDECK.
+ * This class is the main entry point for the Trust Deck services.
  * 
  * @author Armin Müller
  *
@@ -37,7 +37,7 @@ public class Application {
 	private static Logger logger = LoggerFactory.getLogger(Application.class);
 	
 	/**
-	 * The pseudonymization service's entry-point.
+	 * The service's entry-point.
 	 * Starts the database-controller and the controller for the REST-API.
 	 * 
 	 * @param args
