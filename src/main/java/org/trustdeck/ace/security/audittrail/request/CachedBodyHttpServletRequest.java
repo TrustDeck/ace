@@ -1,5 +1,5 @@
 /*
- * ACE - Advanced Confidentiality Engine
+ * Trust Deck Services
  * Copyright 2023 Armin Müller and contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
