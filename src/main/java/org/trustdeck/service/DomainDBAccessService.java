@@ -40,13 +40,10 @@ import org.trustdeck.exception.FailedChildDomainUpdateException;
 import org.trustdeck.exception.FailedPseudonymDeletionException;
 import org.trustdeck.exception.FailedPseudonymUpdateException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
-import org.trustdeck.jooq.generated.tables.daos.AuditeventDao;
 import org.trustdeck.jooq.generated.tables.daos.DomainDao;
-import org.trustdeck.jooq.generated.tables.pojos.Auditevent;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.jooq.generated.tables.records.PseudonymRecord;
-import org.trustdeck.security.audittrail.event.AuditEventBuilder;
 import org.trustdeck.utils.Assertion;
 
 import java.util.ArrayList;
@@ -66,13 +63,6 @@ import static org.trustdeck.jooq.generated.Tables.PSEUDONYM;
 @Service
 @Slf4j
 public class DomainDBAccessService {
-    
-    /** The data access object for the audit trail table. */
-    private AuditeventDao auditDao;
-    
-    /** Links the builder service that creates the audit event objects. */
-    @Autowired
-    private AuditEventBuilder auditEventBuilder;
 
 	/** Representation for a domain that is not found during counting the records in it. */
 	public static final Integer DOMAIN_NOT_FOUND = -1;
@@ -100,19 +90,6 @@ public class DomainDBAccessService {
 
     /** Represents a successful insertion of a domain into the database. */
     public static final String INSERTION_SUCCESS = "success";
-    
-    /**
-     * Method to retrieve the audit event data access object (or create it if it's {@code null}.)
-     *
-     * @return the audit event DAO
-     */
-    private AuditeventDao getAuditeventDao() {
-        if (this.auditDao == null) {
-            this.auditDao = new AuditeventDao(this.dslCtx.configuration());
-        }
-
-        return this.auditDao;
-    }
 
     /**
      * Method to retrieve the domain data access object (or create it if it's {@code null}.)
@@ -139,18 +116,7 @@ public class DomainDBAccessService {
     	try {
             Domain domain = this.dslCtx.transactionResult(configuration -> {
                 // Get domain
-                Domain d = this.getDomainDao().fetchOneByName(domainName);
-
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
-
-                return d;
+                return this.getDomainDao().fetchOneByName(domainName);
 
                 // Implicit transaction commit here
             });
@@ -176,18 +142,7 @@ public class DomainDBAccessService {
     	try {
             Domain domain = this.dslCtx.transactionResult(configuration -> {
                 // Get domain
-                Domain d = this.getDomainDao().fetchOneById(domainID);
-
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
-
-                return d;
+                return this.getDomainDao().fetchOneById(domainID);
 
                 // Implicit transaction commit here
             });
@@ -376,15 +331,6 @@ public class DomainDBAccessService {
                 	}
                 }
                 
-                // Create audit event object
-                if (request != null) {
-                    Auditevent auditEvent = auditEventBuilder.build(request);
-                    if (auditEvent != null) {
-                        // Write audit information into database
-                        this.getAuditeventDao().insert(auditEvent);
-                    }
-                }
-                
                 return pairList;
                 
                 // Implicit transaction commit here
@@ -409,22 +355,11 @@ public class DomainDBAccessService {
 		try {
 			List<String> pseudonyms = this.dslCtx.transactionResult(configuration -> {
 				// Retrieve all pseudonyms from the domain
-				List<String> p =  DSL.using(configuration)
+				return DSL.using(configuration)
 						.select(PSEUDONYM.PSEUDONYM_)
 						.from(PSEUDONYM)
 						.where(PSEUDONYM.DOMAINID.equal(this.getDomainByName(domainName, null).getId()))
 						.fetchInto(String.class);
-
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
-                
-				return p;
 				
 			    // Implicit transaction commit here
 			});
@@ -453,21 +388,10 @@ public class DomainDBAccessService {
                 Domain d = this.getDomainByName(domainName, null);
 
                 // Retrieve all records from a domain
-                List<Pseudonym> p = DSL.using(configuration)
+                return DSL.using(configuration)
                         .selectFrom(PSEUDONYM)
                         .where(PSEUDONYM.DOMAINID.equal(d.getId()))
                         .fetchInto(Pseudonym.class);
-
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
-                
-                return p;
 
                 // Implicit transaction commit here
             });
@@ -501,22 +425,11 @@ public class DomainDBAccessService {
                 }
 
                 // Retrieve all records from a domain
-                Integer c = DSL.using(configuration)
+                return DSL.using(configuration)
                         .selectCount()
                         .from(PSEUDONYM)
                         .where(PSEUDONYM.DOMAINID.equal(d.getId()))
                         .fetchOne(0, Integer.class);
-
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
-
-                return c;
                 
                 // Implicit transaction commit here
             });
@@ -632,15 +545,8 @@ public class DomainDBAccessService {
                     throw new UnexpectedResultSizeException(1, deletedDomains);
                 }
                 
-                // Create audit event object
+                // Handle rights and roles
                 if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-	                
-	                
 	                // Check if the information needed for OIDC management are in the token
                     JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
                     if (token == null || token.getToken() == null || token.getToken().getSubject().isBlank()) {
@@ -735,14 +641,8 @@ public class DomainDBAccessService {
                     throw new UnexpectedResultSizeException(1, insertedRecords);
                 }
 
-                // Create audit event object
+                // Handle rights and roles
                 if (request != null) {
-                    Auditevent auditEvent = auditEventBuilder.build(request);
-                    if (auditEvent != null) {
-                        // Write audit information into database
-                        this.getAuditeventDao().insert(auditEvent);
-                    }
-
                     // Check if the information needed for OIDC management are in the token
                     JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
                     if (token == null || token.getToken() == null || token.getToken().getSubject().isBlank()) {
@@ -789,20 +689,9 @@ public class DomainDBAccessService {
         try {
             List<Domain> domains = this.dslCtx.transactionResult(configuration -> {
                 // Retrieve a list of all domains in the database
-            	List<Domain> d = DSL.using(configuration)
+            	return DSL.using(configuration)
                         .selectFrom(DOMAIN)
                         .fetchInto(Domain.class);
-                
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
-                
-                return d;
 
                 // Implicit transaction commit here
             });
@@ -987,18 +876,13 @@ public class DomainDBAccessService {
                     }
                 } // End of recursive child-handling
                 
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-
-                    // Check if the OIDC rights and roles need to be adapted
-                    if (newDomain.getName() != null && !oldDomain.getName().equals(newDomain.getName())
+                // Check if the OIDC rights and roles need to be adapted
+                if (newDomain.getName() != null && !oldDomain.getName().equals(newDomain.getName())
                             && domainOidcService.canBeUsedAsDomainGroup(newDomain.getName())) {
-                        // The domain name has changed, so we need to update the OIDC rights and roles
+                	// The domain name has changed, so we need to update the OIDC rights and roles
+                	
+                	// Check if the required request object is available
+                	if (request != null) {
                         JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
                         
                         if (token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()) {

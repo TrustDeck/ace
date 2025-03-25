@@ -26,9 +26,10 @@ import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
 
 /**
- * Annotation that enables an audit trail for the annotated method.
+ * Annotation that enables an audit trail for the annotated method and collects some data for it.
+ * The actual storing of the audit information happens in the AuditAnnotationAspect.
  *
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

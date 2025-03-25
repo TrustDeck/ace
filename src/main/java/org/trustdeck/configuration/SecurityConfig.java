@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.security.authentication.configuration;
+package org.trustdeck.configuration;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +36,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.trustdeck.security.audittrail.AudittrailRequestFilter;
+import org.trustdeck.security.authentication.configuration.JwtAuthConverter;
 import org.trustdeck.security.authentication.handler.CustomAccessDeniedHandler;
 import org.trustdeck.security.authentication.handler.CustomAuthenticationEntryPointHandler;
 

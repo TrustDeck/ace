@@ -52,6 +52,7 @@ public enum AuditEventType {
      * Basic constructor.
      * 
      * @param label the label for the event type.
+     * @param id the id for the event type.
      */
     AuditEventType(String label, int id) {
         this.label = label;

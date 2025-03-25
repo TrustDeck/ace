@@ -25,29 +25,34 @@ package org.trustdeck.security.audittrail.usertype;
 public enum AuditUserType {
     
     /** Represents all user types. */
-    ALL("ALL"),
+    ALL("ALL", 1),
 
     /** Human user type. */
-    HUMAN("HUMAN"),
+    HUMAN("HUMAN", 2),
 	
     /** Represents no user type. */
-	NONE("NONE"),
+	NONE("NONE", 3),
     
     /** Technical user type. */
-    TECHNICAL("TECHNICAL"),
+    TECHNICAL("TECHNICAL", 4),
     
     /** Unknown user type. */
-    UNKNOWN("UNKNOWN");
+    UNKNOWN("UNKNOWN", 0);
 
     /** The user type label. */
     public final String label;
+    
+    /** The user type id. */
+    public final short id;
 
     /**
      * Basic constructor.
      * 
      * @param label the label of the user type.
+     * @param id the id of the user type.
      */
-    AuditUserType(String label) {
+    AuditUserType(String label, int id) {
         this.label = label;
+        this.id = (short) id;
     }
 }

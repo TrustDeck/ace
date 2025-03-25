@@ -25,10 +25,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.trustdeck.configuration.AuditUserTypeConfiguration;
 import org.trustdeck.jooq.generated.tables.pojos.Auditevent;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.annotation.AudittrailAnnotationInterceptor;
-import org.trustdeck.security.audittrail.usertype.AuditUserTypeConfiguration;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -87,7 +87,7 @@ public class AuditEventBuilder {
         auditEvent.setUsername((token != null) ? token.getName() : "UNKNOWN");
         auditEvent.setRequesterip(getRequesterIP(req));
         auditEvent.setRequesturl("[" + req.getMethod() + "] " + getRequestURL(req));
-        auditEvent.setRequestbody(body.isEmpty() ? null : body);
+        auditEvent.setRequestbody(body.isEmpty() ? null : body.replaceAll("\\s+", "")); // The regex removes unnecessary whitespaces
 
         return auditEvent;
     }
@@ -112,6 +112,7 @@ public class AuditEventBuilder {
 
         stream.mark(MAX_BODY_SIZE + 1);
         final byte[] entity = new byte[MAX_BODY_SIZE + 1];
+        
         int bytesRead = -1;
         try {
             bytesRead = stream.read(entity);
@@ -121,6 +122,7 @@ public class AuditEventBuilder {
 
         if (bytesRead != -1) {
             bodyStringBuilder.append(new String(entity, 0, Math.min(bytesRead, MAX_BODY_SIZE), charset));
+            
             if (bytesRead > MAX_BODY_SIZE) {
                 bodyStringBuilder.append("...");
             }

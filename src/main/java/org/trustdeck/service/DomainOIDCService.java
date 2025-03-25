@@ -23,9 +23,9 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.trustdeck.configuration.AuditUserTypeConfiguration;
 import org.trustdeck.configuration.RoleConfig;
 import org.trustdeck.exception.DomainOIDCException;
-import org.trustdeck.security.audittrail.usertype.AuditUserTypeConfiguration;
 import org.trustdeck.security.authentication.configuration.JwtProperties;
 import org.trustdeck.utils.Utility;
 

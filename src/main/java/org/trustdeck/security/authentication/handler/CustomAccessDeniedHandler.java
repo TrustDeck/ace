@@ -44,7 +44,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
      * @param accessDeniedException the AccessDeniedException as object
      */
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) {
-        log.debug("The access token could be parsed and is valid but it doesn't meet the required permissions.");
+    	log.debug("The access token could be parsed and is valid but it doesn't contain the required permissions.");
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             log.trace("Token: " + authHeader.substring("Bearer ".length()));
@@ -61,7 +61,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 	            writer.print(HttpStatus.FORBIDDEN.name().toUpperCase());
 			} catch (IOException e) {
 				// Not really critical since a HTTP status was successfully set already.
-				log.debug("Couldn't add a text to the 403-FORBIDDEN state: " + e.getMessage());
+				log.trace("Couldn't add a text to the 403-FORBIDDEN state: " + e.getMessage());
 			}
         }
     }

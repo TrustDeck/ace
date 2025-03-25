@@ -44,7 +44,7 @@ public class CustomAuthenticationEntryPointHandler implements AuthenticationEntr
      */
     @Override
     public void commence(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AuthenticationException authenticationException) {
-        log.debug("Request without an access token encountered.");
+        log.debug("Request without an access token encountered. Request was denied with status code 400-BAD_REQUEST.");
         
         if (!httpServletResponse.isCommitted() ) {
 	        // Set a 400-BAD_REQUEST status.
@@ -57,7 +57,7 @@ public class CustomAuthenticationEntryPointHandler implements AuthenticationEntr
 	            writer.print(HttpStatus.BAD_REQUEST.name().toUpperCase());
 			} catch (IOException e) {
 				// Not really critical since a HTTP status was successfully set already.
-				log.debug("Couldn't add a text to the 400-BAD_REQUEST state: " + e.getMessage());
+				log.trace("Couldn't add a text to the 400-BAD_REQUEST state: " + e.getMessage());
 			}
         }
     }

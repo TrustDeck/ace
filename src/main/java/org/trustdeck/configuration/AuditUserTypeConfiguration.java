@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.security.audittrail.usertype;
+package org.trustdeck.configuration;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,23 +31,24 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties
 public class AuditUserTypeConfiguration {
+	
 	/** The name of the item in the token containing the relevant information. */
-    @Value("${audittrail.oidc-group-mapper.token-claim-name:-}")
+    @Value("${audittrail.oidc-group-mapper.token-claim-name:trustdeck_groups}")
     private String tokenClaimName;
     
     /** The group name that defines the human user group. */
-    @Value("${audittrail.oidc-group-mapper.group-names.isHuman:-}")
+    @Value("${audittrail.oidc-group-mapper.group-names.isHuman:human}")
     private String humanUserGroupName;
 
     /** The group name that defines the technical user group. */
-    @Value("${audittrail.oidc-group-mapper.group-names.isTechnical:-}")
+    @Value("${audittrail.oidc-group-mapper.group-names.isTechnical:Technical}")
     private String technicalUserGroupName;
     
     /** The group name that defines the no-auditing user group. */
-    @Value("${audittrail.oidc-group-mapper.group-names.isNoAuditing:-}")
+    @Value("${audittrail.oidc-group-mapper.group-names.isNoAuditing:Unaudited}")
     private String noAuditingUserGroupName;
     
     /** The group name that defines the audit-everything user group. */
-    @Value("${audittrail.oidc-group-mapper.group-names.isAuditEverything:-}")
+    @Value("${audittrail.oidc-group-mapper.group-names.isAuditEverything:AuditEverything}")
     private String auditEverythingUserGroupName;
 }

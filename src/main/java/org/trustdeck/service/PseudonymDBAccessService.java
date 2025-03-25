@@ -35,12 +35,9 @@ import org.trustdeck.exception.DuplicateIdentifierException;
 import org.trustdeck.exception.DuplicatePseudonymException;
 import org.trustdeck.exception.PseudonymNotFoundException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
-import org.trustdeck.jooq.generated.tables.daos.AuditeventDao;
-import org.trustdeck.jooq.generated.tables.pojos.Auditevent;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.jooq.generated.tables.records.PseudonymRecord;
-import org.trustdeck.security.audittrail.event.AuditEventBuilder;
 import org.trustdeck.utils.Assertion;
 
 import static org.trustdeck.jooq.generated.Tables.PSEUDONYM;
@@ -56,13 +53,6 @@ import java.util.List;
 @Service
 @Slf4j
 public class PseudonymDBAccessService {
-    
-    /** The data access object for the audit trail table. */
-    private AuditeventDao auditDao;
-    
-    /** Links the service that creates audit event objects. */
-    @Autowired
-    private AuditEventBuilder auditEventBuilder;
 
     /** Enables the access to the domain specific database access methods. */
     @Autowired
@@ -83,19 +73,6 @@ public class PseudonymDBAccessService {
 
     /** Represents a successful insertion of a record into the database. */
     public static final String INSERTION_SUCCESS = "success";
-    
-    /**
-     * Method to retrieve the audit event data access object (or create it if it's {@code null}.)
-     *
-     * @return the audit event DAO
-     */
-    private AuditeventDao getAuditeventDao() {
-        if (this.auditDao == null) {
-            this.auditDao = new AuditeventDao(this.dslCtx.configuration());
-        }
-
-        return this.auditDao;
-    }
 
     /**
      * Method to delete multiple pseudonyms at once in a batch. Not found pseudonyms will be ignored.
@@ -144,15 +121,6 @@ public class PseudonymDBAccessService {
                 // Log information about the batch processing
                 log.debug("Deleted " + deleted + " pseudonym(s).");
                 log.debug("Ignored " + ignored + " pseudonym(s).");
-
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
 
                 // Return the number of successful deletions
                 return deleted;
@@ -224,15 +192,6 @@ public class PseudonymDBAccessService {
                     throw new UnexpectedResultSizeException(1, deletedRecords);
                 }
 
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
-
                 // Implicit transaction commit here
             });
 
@@ -293,23 +252,12 @@ public class PseudonymDBAccessService {
                 }
 
                 // Build and execute the query
-                List<Pseudonym> pseudo = DSL.using(configuration)
+                return DSL.using(configuration)
                         .selectFrom(PSEUDONYM)
                         .where(PSEUDONYM.IDENTIFIER.equal(identifier))
                         .and(PSEUDONYM.IDTYPE.equal(idType))
                         .and(PSEUDONYM.DOMAINID.eq(d.getId()))
                         .fetchInto(Pseudonym.class);
-
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
-                
-                return pseudo;
 
                 // Implicit transaction commit here
             });
@@ -349,22 +297,11 @@ public class PseudonymDBAccessService {
                 }
 
                 // Build and execute the query
-                Pseudonym pseudo = DSL.using(configuration)
+                return DSL.using(configuration)
                         .selectFrom(PSEUDONYM)
                         .where(PSEUDONYM.PSEUDONYM_.equal(psn))
                         .and(PSEUDONYM.DOMAINID.eq(d.getId()))
                         .fetchOneInto(Pseudonym.class);
-
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
-                
-                return pseudo;
 
                 // Implicit transaction commit here
             });
@@ -404,11 +341,12 @@ public class PseudonymDBAccessService {
     	} else if (Assertion.assertNullAll(identifier, idType) && psn != null) {
     		// Retrieve record through the pseudonym
     		List<Pseudonym> pList = new ArrayList<Pseudonym>();
-            Pseudonym p = getRecordFromPseudonym(domainName, psn, request);
-            if (p != null){
+            
+    		Pseudonym p = getRecordFromPseudonym(domainName, psn, request);
+            if (p != null) {
                 pList.add(p);
                 return pList;
-            }else{
+            } else {
                 return null;
             }
     	} else if (Assertion.assertNotNullAll(identifier, idType, psn)) {
@@ -477,15 +415,6 @@ public class PseudonymDBAccessService {
                 log.debug("Inserted " + loader.stored() + " pseudonym(s).");
                 log.debug("Ignored " + loader.ignored() + " pseudonym(s).");
 
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
-
                 // Implicit transaction commit here
             });
 
@@ -544,7 +473,7 @@ public class PseudonymDBAccessService {
 		                	// Record is already in the DB. Use exception to break the transaction.
 		                    throw new DuplicatePseudonymException(domainDBAccessService.getDomainByID(pseudonym.getDomainid(), null).getName(), pseudonym.getIdentifier(), pseudonym.getIdtype());
 		                } else {
-		                    // Re-throw the original exception
+		                    // Re-throw the original PSQL exception
 		                	throw psqlException;
 		                }
 		            } else {
@@ -559,16 +488,6 @@ public class PseudonymDBAccessService {
                     // an exception (which will rollback everything from the transaction).
                     log.error("Couldn't insert the record into the database.");
                     throw new UnexpectedResultSizeException(1, insertedRecords);
-                }
-
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
                 }
 
                 // Implicit transaction commit here
@@ -649,15 +568,6 @@ public class PseudonymDBAccessService {
                 log.debug("Updated " + updated + " pseudonym(s).");
                 log.debug("Ignored " + ignored + " pseudonym(s).");
 
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
-                }
-
                 // Return the number of successful deletions
                 return updated;
 
@@ -716,15 +626,6 @@ public class PseudonymDBAccessService {
                     // An unexpected number of records was affected. Log it and abort by throwing
                     // an exception (which will rollback everything from the transaction).
                     throw new UnexpectedResultSizeException(1, updatedRecords);
-                }
-
-                // Create audit event object
-                if (request != null) {
-	                Auditevent auditEvent = auditEventBuilder.build(request);
-	                if (auditEvent != null) {
-	                	// Write audit information into database
-	                	this.getAuditeventDao().insert(auditEvent);
-	                }
                 }
 
                 // Implicit transaction commit here

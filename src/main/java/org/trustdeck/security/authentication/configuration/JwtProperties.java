@@ -33,11 +33,11 @@ import org.springframework.context.annotation.Configuration;
 public class JwtProperties {
 
     /** The client ID of the keycloak resource. */
-    @Value("${spring.security.oauth2.resourceserver.jwt.client-id:-}")
+    @Value("${spring.security.oauth2.resourceserver.jwt.client-id:trustdeck}")
     private String clientId;
 
     /** The preferred name for the token, e.g., the username or the ID of the user. */
-    @Value("${spring.security.oauth2.resourceserver.jwt.principal-attribute:-}")
+    @Value("${spring.security.oauth2.resourceserver.jwt.principal-attribute:preferred_username}")
     private String principalAttribute;
 
     /** The claim name to read all group paths. */
@@ -48,18 +48,23 @@ public class JwtProperties {
     @Value("${spring.security.oauth2.resourceserver.jwt.domain-role-group-context-name:Domain}")
     private String domainRoleGroupContextName;
 
+    /** The user name of an admin account for Keycloak. This is used to handle automatic rights and roles management . */
     @Value("${spring.security.oauth2.resourceserver.jwt.admin-username:-}")
     private String adminUsername;
 
+    /** The password for the admin user account. */
     @Value("${spring.security.oauth2.resourceserver.jwt.admin-password:-}")
     private String adminPassword;
 
+    /** The client secret used for authentication against Keycloak. */
     @Value("${spring.security.oauth2.resourceserver.jwt.client-secret:-}")
     private String clientSecret;
 
+    /** The name of the Keycloak realm where the rights and roles live in. */
     @Value("${spring.security.oauth2.resourceserver.jwt.realm:-}")
     private String realm;
 
+    /** The Keycloak server URI. */
     @Value("${spring.security.oauth2.resourceserver.jwt.server-uri:-}")
     private String serverUri;
 
