@@ -26,8 +26,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.WebRequest;
 import org.trustdeck.configuration.ResponseMediaTypeConfig;
-import org.trustdeck.model.dto.HttpStatusDto;
-import org.trustdeck.model.dto.IRepresentation;
+import org.trustdeck.dto.HttpStatusDTO;
+import org.trustdeck.dto.IRepresentation;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -115,16 +115,16 @@ public class ResponseService {
      * @return the HTTP status response DTO or an (empty) string
      */
     public Object createHttpStatusDtoFromMediaType(HttpStatus status, String mediaType) {
-        HttpStatusDto httpStatusDto = new HttpStatusDto().assignPojoValues(status);
-        if (httpStatusDto == null) {
+        HttpStatusDTO httpStatusDTO = new HttpStatusDTO().assignPojoValues(status);
+        if (httpStatusDTO == null) {
         	return "";
         }
 
         switch (mediaType) {
             case MediaType.APPLICATION_JSON_VALUE:
-                return httpStatusDto;
+                return httpStatusDTO;
             case MediaType.TEXT_PLAIN_VALUE:
-                return httpStatusDto.toRepresentationString();
+                return httpStatusDTO.toRepresentationString();
             default:
                 // Due to several precautions, this case shouldn't be 
             	// reached, but this must return at least an empty string.

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.model.dto;
+package org.trustdeck.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -31,7 +31,7 @@ import org.springframework.http.HttpStatus;
 @Data
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request.
-public class HttpStatusDto implements IRepresentation<HttpStatus, HttpStatusDto> {
+public class HttpStatusDTO implements IRepresentation<HttpStatus, HttpStatusDTO> {
 
     /** The HTTP status code number. */
     private int statusCode;
@@ -41,7 +41,7 @@ public class HttpStatusDto implements IRepresentation<HttpStatus, HttpStatusDto>
 
     @JsonIgnore
     @Override
-    public HttpStatusDto assignPojoValues(HttpStatus pojo) {
+    public HttpStatusDTO assignPojoValues(HttpStatus pojo) {
         this.setStatusMessage(pojo.getReasonPhrase());
         this.setStatusCode(pojo.value());
         return this;
@@ -55,7 +55,7 @@ public class HttpStatusDto implements IRepresentation<HttpStatus, HttpStatusDto>
     
     @JsonIgnore
     @Override
-    public HttpStatusDto toReducedStandardView() {
+    public HttpStatusDTO toReducedStandardView() {
         // Is already reduced
         return this;
     }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.model.dto;
+package org.trustdeck.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -43,7 +43,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class RecordDto implements IRepresentation<IPseudonym, RecordDto> {
+public class RecordDTO implements IRepresentation<IPseudonym, RecordDTO> {
 
     /** Enables the access to the domain specific database access methods. */
 	@Getter(value=AccessLevel.NONE)
@@ -79,14 +79,14 @@ public class RecordDto implements IRepresentation<IPseudonym, RecordDto> {
     private String domainName;
 
     /** The domain object this entry belongs to. */
-    private DomainDto domain;
+    private DomainDTO domain;
 
     /**
-     * Maps all values from jOOQ's Pseudonym object to a RecordDto object.
+     * Maps all values from jOOQ's Pseudonym object to a RecordDTO object.
      */
     @JsonIgnore
     @Override
-    public RecordDto assignPojoValues(IPseudonym pojo) {
+    public RecordDTO assignPojoValues(IPseudonym pojo) {
         this.setId(pojo.getIdentifier() != null ? pojo.getIdentifier() : "");
         this.setIdType(pojo.getIdtype() != null ? pojo.getIdtype() : "");
         this.setPsn(pojo.getPseudonym() != null ? pojo.getPseudonym() : "");
@@ -94,7 +94,7 @@ public class RecordDto implements IRepresentation<IPseudonym, RecordDto> {
         this.setValidFromInherited(pojo.getValidfrominherited());
         this.setValidTo(pojo.getValidto() != null ? pojo.getValidto() : null);
         this.setValidToInherited(pojo.getValidtoinherited());
-        DomainDto d = pojo.getDomainid() != null ? new DomainDto().assignPojoValues(domainDBAccessService.getDomainByID(pojo.getDomainid(), null)) : null;
+        DomainDTO d = pojo.getDomainid() != null ? new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByID(pojo.getDomainid(), null)) : null;
         this.setDomainName(d != null ? d.getName() : null);
         this.setDomain(d != null ? d : null);
 
@@ -120,7 +120,7 @@ public class RecordDto implements IRepresentation<IPseudonym, RecordDto> {
      */
     @Override
     @JsonIgnore
-    public RecordDto toReducedStandardView() {
+    public RecordDTO toReducedStandardView() {
         this.setValidFromInherited(null);
         this.setValidToInherited(null);
         this.setValidityTime(null);

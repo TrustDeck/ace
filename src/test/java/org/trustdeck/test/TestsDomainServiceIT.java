@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.trustdeck.model.dto.DomainDto;
+import org.trustdeck.dto.DomainDTO;
 import org.trustdeck.service.AssertWebRequestService;
 import org.trustdeck.service.DomainOIDCService;
 
@@ -66,7 +66,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         String domainName = "WeitereStudie";
 
         // Check if common request works
-        DomainDto reducedDomainDto = new DomainDto();
+        DomainDTO reducedDomainDto = new DomainDTO();
         reducedDomainDto.setName(domainName);
         reducedDomainDto.setPrefix("WS-");
 
@@ -79,7 +79,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         assertTrue(content.contains("201"));
 
         String domainNameComplete = "WeitereStudieComplete";
-        DomainDto completeDomainDto = new DomainDto();
+        DomainDTO completeDomainDto = new DomainDTO();
         completeDomainDto.setName(domainNameComplete);
         completeDomainDto.setPrefix("WS-");
 
@@ -105,7 +105,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         Map<String, String> getParameterUpdateDomainForbidden = getParameterForbidden;
         getParameterUpdateDomainForbidden.put("recursive", "false");
 
-        DomainDto forbiddenDomainDto = new DomainDto();
+        DomainDTO forbiddenDomainDto = new DomainDTO();
 
         this.assertForbiddenRequest("commonUpdateDomainForbidden", put("/api/pseudonymization/domain/complete"), getParameterUpdateDomainForbidden, forbiddenDomainDto, this.getAccessToken());
 
@@ -146,9 +146,9 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
             put("recursive", "false");
         }};
         // Needs an non empty object to trigger not found
-        DomainDto domainDto = new DomainDto();
-        domainDto.setDescription("Just Something");
-        this.assertNotFoundRequest("updateDomainNotFoundDomainName", put("/api/pseudonymization/domain/complete"), updateParameter, domainDto, this.getAccessToken());
+        DomainDTO domainDTO = new DomainDTO();
+        domainDTO.setDescription("Just Something");
+        this.assertNotFoundRequest("updateDomainNotFoundDomainName", put("/api/pseudonymization/domain/complete"), updateParameter, domainDTO, this.getAccessToken());
 
         // Try updating the salt on you know ... a not yet created domain again :) (But needs a salt of length >= 32 to test it)
         Map<String, String> firstUpdateSaltParameter = new HashMap<>() {
@@ -215,7 +215,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
 
         MockHttpServletResponse response = this.assertOkRequest("getDomain", get("/api/pseudonymization/domain"), getParameter, null, this.getAccessToken());
         String content = response.getContentAsString();
-        DomainDto d = this.applySingleJsonContentToClass(content, DomainDto.class);
+        DomainDTO d = this.applySingleJsonContentToClass(content, DomainDTO.class);
 
         // Content must be a valid JSON and mappable
         assertNotNull(d);
@@ -366,7 +366,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         String parentDomainName = "TestStudie";
 
         // Add domains as children
-        DomainDto firstDomainDto = new DomainDto();
+        DomainDTO firstDomainDto = new DomainDTO();
         firstDomainDto.setName("TestStudie-Labor-Analyse");
         firstDomainDto.setPrefix("TS-L");
         firstDomainDto.setSuperDomainName(parentDomainName);
@@ -377,7 +377,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         // Check the length again
         this.assertEqualsListDomainHierarchyLength(2);
 
-        DomainDto secondDomainDto = new DomainDto();
+        DomainDTO secondDomainDto = new DomainDTO();
         secondDomainDto.setName("TestStudie-Paper");
         secondDomainDto.setPrefix("TS-P");
         secondDomainDto.setSuperDomainName(parentDomainName);
@@ -389,7 +389,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         this.assertEqualsListDomainHierarchyLength(3);
 
         // Should NOT have the permission on the domain
-        DomainDto thirdDomainDto = new DomainDto();
+        DomainDTO thirdDomainDto = new DomainDTO();
         thirdDomainDto.setName("No-Permission-Domain");
         thirdDomainDto.setPrefix("NoPe");
         thirdDomainDto.setSuperDomainName("TestStudie-Labor-Analyse");
@@ -398,10 +398,10 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
         this.assertCreatedRequest("addThirdDomainForListHierarchy", post("/api/pseudonymization/domain"), null, thirdDomainDto, this.getAccessToken());
 
         // Check the length again
-        List<DomainDto> domains = this.assertEqualsListDomainHierarchyLength(4);
+        List<DomainDTO> domains = this.assertEqualsListDomainHierarchyLength(4);
 
         // Check if the minimal domain-net makes sense here
-        for (DomainDto domain : domains) {
+        for (DomainDTO domain : domains) {
 
             switch (domain.getId()) {
                 case 1:

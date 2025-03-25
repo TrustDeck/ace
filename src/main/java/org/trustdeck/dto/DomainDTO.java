@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.model.dto;
+package org.trustdeck.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -44,7 +44,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request.
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DomainDto implements IRepresentation<IDomain, DomainDto> {
+public class DomainDTO implements IRepresentation<IDomain, DomainDTO> {
 	
 	/** Enables the access to the domain specific database access methods. */
 	@Getter(value=AccessLevel.NONE)
@@ -161,11 +161,11 @@ public class DomainDto implements IRepresentation<IDomain, DomainDto> {
     private String superDomainName;
 
     /**
-     * Maps all values from jOOQ's Domain object to a DomainDto object.
+     * Maps all values from jOOQ's Domain object to a DomainDTO object.
      */
     @JsonIgnore
     @Override
-    public DomainDto assignPojoValues(IDomain pojo) {
+    public DomainDTO assignPojoValues(IDomain pojo) {
     	this.setId(pojo.getId() == null ? null : pojo.getId());
         this.setName(pojo.getName());
         this.setPrefix(pojo.getPrefix());
@@ -251,7 +251,7 @@ public class DomainDto implements IRepresentation<IDomain, DomainDto> {
      */
     @Override
     @JsonIgnore
-    public DomainDto toReducedStandardView() {
+    public DomainDTO toReducedStandardView() {
     	this.setId(null);
         this.setValidFromInherited(null);
         this.setValidToInherited(null);

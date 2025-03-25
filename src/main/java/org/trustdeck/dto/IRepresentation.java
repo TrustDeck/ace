@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.model.dto;
+package org.trustdeck.dto;
 
 import org.springframework.context.annotation.Scope;
 

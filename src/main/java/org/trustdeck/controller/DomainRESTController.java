@@ -33,8 +33,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.trustdeck.dto.DomainDTO;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
-import org.trustdeck.model.dto.DomainDto;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
@@ -134,7 +134,7 @@ public class DomainRESTController {
      * Method to create a new domain. Creates the record inside the
      * domain table.
      *
-     * @param domainDto (required) the domain object
+     * @param domainDTO (required) the domain object
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>201-CREATED</b> status and the location to the
@@ -153,31 +153,31 @@ public class DomainRESTController {
     @PostMapping("/domain/complete")
     @PreAuthorize("hasRole('domain-create-complete')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
-    public ResponseEntity<?> createDomainComplete(@RequestBody DomainDto domainDto,
+    public ResponseEntity<?> createDomainComplete(@RequestBody DomainDTO domainDTO,
                                                   @RequestHeader(name = "accept", required = false) String responseContentType,
                                                   HttpServletRequest request) {
 
-        String domainName = domainDto.getName();
-        String domainPrefix = domainDto.getPrefix();
-        Timestamp validFrom = domainDto.getValidFrom() != null ? Timestamp.valueOf(domainDto.getValidFrom()) : null;
-        Timestamp validTo = domainDto.getValidTo() != null ? Timestamp.valueOf(domainDto.getValidTo()) : null;
-        Long validityTime = Utility.validityTimeToSeconds(domainDto.getValidityTime());
-        Boolean enforceStartDateValidity = domainDto.getEnforceStartDateValidity();
-        Boolean enforceEndDateValidity = domainDto.getEnforceEndDateValidity();
-        String algorithm = domainDto.getAlgorithm();
-        String alphabet = generateAlphabet(domainDto.getAlgorithm(), domainDto.getAlphabet());
-        Long randomAlgorithmDesiredSize = domainDto.getRandomAlgorithmDesiredSize();
-        Double randomAlgorithmDesiredSuccessProbability = domainDto.getRandomAlgorithmDesiredSuccessProbability();
-        Long consecVal = domainDto.getConsecutiveValueCounter();
-        Boolean multiplePsnAllowed = domainDto.getMultiplePsnAllowed();
-        Integer psnLength = domainDto.getPseudonymLength();
-        Character paddingChar = domainDto.getPaddingCharacter();
-        Boolean addCheckDigit = domainDto.getAddCheckDigit();
-        Boolean lengthIncludesCheckDigit = domainDto.getLengthIncludesCheckDigit();
-        String salt = domainDto.getSalt();
-        Integer saltLength = domainDto.getSaltLength();
-        String description = domainDto.getDescription();
-        String superDomainName = domainDto.getSuperDomainName();
+        String domainName = domainDTO.getName();
+        String domainPrefix = domainDTO.getPrefix();
+        Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
+        Timestamp validTo = domainDTO.getValidTo() != null ? Timestamp.valueOf(domainDTO.getValidTo()) : null;
+        Long validityTime = Utility.validityTimeToSeconds(domainDTO.getValidityTime());
+        Boolean enforceStartDateValidity = domainDTO.getEnforceStartDateValidity();
+        Boolean enforceEndDateValidity = domainDTO.getEnforceEndDateValidity();
+        String algorithm = domainDTO.getAlgorithm();
+        String alphabet = generateAlphabet(domainDTO.getAlgorithm(), domainDTO.getAlphabet());
+        Long randomAlgorithmDesiredSize = domainDTO.getRandomAlgorithmDesiredSize();
+        Double randomAlgorithmDesiredSuccessProbability = domainDTO.getRandomAlgorithmDesiredSuccessProbability();
+        Long consecVal = domainDTO.getConsecutiveValueCounter();
+        Boolean multiplePsnAllowed = domainDTO.getMultiplePsnAllowed();
+        Integer psnLength = domainDTO.getPseudonymLength();
+        Character paddingChar = domainDTO.getPaddingCharacter();
+        Boolean addCheckDigit = domainDTO.getAddCheckDigit();
+        Boolean lengthIncludesCheckDigit = domainDTO.getLengthIncludesCheckDigit();
+        String salt = domainDTO.getSalt();
+        Integer saltLength = domainDTO.getSaltLength();
+        String description = domainDTO.getDescription();
+        String superDomainName = domainDTO.getSuperDomainName();
 
         if (Assertion.assertNullAll(domainName, domainPrefix, validFrom, validTo, validityTime, enforceStartDateValidity,
                 enforceEndDateValidity, algorithm, alphabet, randomAlgorithmDesiredSize, randomAlgorithmDesiredSuccessProbability, 
@@ -478,7 +478,7 @@ public class DomainRESTController {
      * Method to create a new domain with a reduced set of attributes.
      * Creates the record inside the domain table.
      *
-     * @param domainDto (required) the domain object
+     * @param domainDTO (required) the domain object
      * @param responseContentType(optional) the response content type
      * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status when the domain was already
@@ -495,25 +495,25 @@ public class DomainRESTController {
     @PostMapping("/domain")
     @PreAuthorize("hasRole('domain-create')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
-    public ResponseEntity<?> createDomain(@RequestBody DomainDto domainDto,
+    public ResponseEntity<?> createDomain(@RequestBody DomainDTO domainDTO,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
                                           HttpServletRequest request) {
 
-        if (!domainDto.validate() || !domainDto.isValidStandardView()) {
-        	log.warn("422, because: " + (!domainDto.validate() ? "invalid - missing mandatory fields" : !domainDto.isValidStandardView() ? "non-standard view" : "IDK"));
+        if (!domainDTO.validate() || !domainDTO.isValidStandardView()) {
+        	log.warn("422, because: " + (!domainDTO.validate() ? "invalid - missing mandatory fields" : !domainDTO.isValidStandardView() ? "non-standard view" : "IDK"));
         	return responseService.unprocessableEntity(responseContentType);
         }
 
-        String domainName = domainDto.getName();
-        String domainPrefix = domainDto.getPrefix();
-        Timestamp validFrom = domainDto.getValidFrom() != null ? Timestamp.valueOf(domainDto.getValidFrom()) : null;
-        Timestamp validTo = domainDto.getValidTo() != null ? Timestamp.valueOf(domainDto.getValidTo()) : null;
-        Long validityTime = Utility.validityTimeToSeconds(domainDto.getValidityTime());
-        String algorithm = domainDto.getAlgorithm();
+        String domainName = domainDTO.getName();
+        String domainPrefix = domainDTO.getPrefix();
+        Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
+        Timestamp validTo = domainDTO.getValidTo() != null ? Timestamp.valueOf(domainDTO.getValidTo()) : null;
+        Long validityTime = Utility.validityTimeToSeconds(domainDTO.getValidityTime());
+        String algorithm = domainDTO.getAlgorithm();
         String alphabet = generateAlphabet(algorithm, null);
-        Boolean multiplePsnAllowed = domainDto.getMultiplePsnAllowed();
-        String description = domainDto.getDescription();
-        String superDomainName = domainDto.getSuperDomainName();
+        Boolean multiplePsnAllowed = domainDTO.getMultiplePsnAllowed();
+        String description = domainDTO.getDescription();
+        String superDomainName = domainDTO.getSuperDomainName();
 
         if (Assertion.assertNullAll(domainName, domainPrefix, validFrom, validTo, validityTime, algorithm, 
         		multiplePsnAllowed, description, superDomainName)) {
@@ -911,7 +911,7 @@ public class DomainRESTController {
     		return responseService.forbidden(responseContentType);
     	}
     	
-    	return responseService.ok(responseContentType, new DomainDto().assignPojoValues(temp));
+    	return responseService.ok(responseContentType, new DomainDTO().assignPojoValues(temp));
     }
 
     /**
@@ -936,15 +936,15 @@ public class DomainRESTController {
 
         if (domain != null) {
             // Successfully retrieved a domain, return it to the user
-            DomainDto domainDto = new DomainDto().assignPojoValues(domain);
+            DomainDTO domainDTO = new DomainDTO().assignPojoValues(domain);
 
             // Determine whether or not a reduced standard view or a complete view is requested
             if (!authorizationService.currentRequestHasRole("complete-view")) {
-                domainDto = domainDto.toReducedStandardView();
+                domainDTO = domainDTO.toReducedStandardView();
             }
 
             log.debug("Successfully retrieved the domain \"" + domainName + "\".");
-            return responseService.ok(responseContentType, domainDto);
+            return responseService.ok(responseContentType, domainDTO);
         } else {
             // Nothing found, return a 404-NOT_FOUND
             log.debug("No domain with the name \"" + domainName + "\" was found.");
@@ -971,19 +971,19 @@ public class DomainRESTController {
         // Determine whether or not a reduced standard view or a complete view is requested
         boolean canSeeComplete = authorizationService.currentRequestHasRole("complete-view");
 
-        List<DomainDto> domainDtos = new ArrayList<>();
+        List<DomainDTO> domainDTOs = new ArrayList<>();
         // Create a list of domains
         for (Domain domain : domains) {
-            DomainDto domainDto = new DomainDto().assignPojoValues(domain);
+            DomainDTO domainDTO = new DomainDTO().assignPojoValues(domain);
             
             if (canSeeComplete) {
-                domainDtos.add(domainDto);
+                domainDTOs.add(domainDTO);
             } else {
-                domainDtos.add(domainDto.toReducedStandardView());
+                domainDTOs.add(domainDTO.toReducedStandardView());
             }
         }
 
-        return responseService.ok(responseContentType, domainDtos);
+        return responseService.ok(responseContentType, domainDTOs);
     }
 
     /**
@@ -991,7 +991,7 @@ public class DomainRESTController {
      *
      * @param oldDomainName (required) the name of the domain that is to be updated
      * @param performRecursiveChanges (required) specifies whether or not changes should be cascaded to sub-domains
-     * @param domainDto (required) the domain object
+     * @param domainDTO (required) the domain object
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status when the update was successful</li>
@@ -1007,28 +1007,28 @@ public class DomainRESTController {
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a complete domain.")
     public ResponseEntity<String> updateDomainComplete(@RequestParam(name = "name", required = true) String oldDomainName,
                                                        @RequestParam(name = "recursive", required = true) Boolean performRecursiveChanges,
-                                                       @RequestBody DomainDto domainDto,
+                                                       @RequestBody DomainDTO domainDTO,
                                                        @RequestHeader(name = "accept", required = false) String responseContentType,
                                                        HttpServletRequest request) {
-        String newDomainName = domainDto.getName();
-        String prefix = domainDto.getPrefix();
-        Timestamp validFrom = domainDto.getValidFrom() != null ? Timestamp.valueOf(domainDto.getValidFrom()) : null;
-        Timestamp validTo = domainDto.getValidTo() != null ? Timestamp.valueOf(domainDto.getValidTo()) : null;
-        Boolean enforceStartDateValidity = domainDto.getEnforceStartDateValidity();
-        Boolean enforceEndDateValidity = domainDto.getEnforceEndDateValidity();
-        String algorithm = domainDto.getAlgorithm();
+        String newDomainName = domainDTO.getName();
+        String prefix = domainDTO.getPrefix();
+        Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
+        Timestamp validTo = domainDTO.getValidTo() != null ? Timestamp.valueOf(domainDTO.getValidTo()) : null;
+        Boolean enforceStartDateValidity = domainDTO.getEnforceStartDateValidity();
+        Boolean enforceEndDateValidity = domainDTO.getEnforceEndDateValidity();
+        String algorithm = domainDTO.getAlgorithm();
         String alphabet = generateAlphabet(algorithm, null);
-        Long randomAlgorithmDesiredSize = domainDto.getRandomAlgorithmDesiredSize();
-        Double randomAlgorithmDesiredSuccessProbability = domainDto.getRandomAlgorithmDesiredSuccessProbability();
-        Boolean multiplePsnAllowed = domainDto.getMultiplePsnAllowed();
-        Long consecVal = domainDto.getConsecutiveValueCounter();
-        Integer psnLength = domainDto.getPseudonymLength();
-        Character paddingChar = domainDto.getPaddingCharacter();
-        Boolean addCheckDigit = domainDto.getAddCheckDigit();
-        Boolean lengthIncludesCheckDigit = domainDto.getLengthIncludesCheckDigit();
-        String salt = domainDto.getSalt();
-        Integer saltLength = domainDto.getSaltLength();
-        String description = domainDto.getDescription();
+        Long randomAlgorithmDesiredSize = domainDTO.getRandomAlgorithmDesiredSize();
+        Double randomAlgorithmDesiredSuccessProbability = domainDTO.getRandomAlgorithmDesiredSuccessProbability();
+        Boolean multiplePsnAllowed = domainDTO.getMultiplePsnAllowed();
+        Long consecVal = domainDTO.getConsecutiveValueCounter();
+        Integer psnLength = domainDTO.getPseudonymLength();
+        Character paddingChar = domainDTO.getPaddingCharacter();
+        Boolean addCheckDigit = domainDTO.getAddCheckDigit();
+        Boolean lengthIncludesCheckDigit = domainDTO.getLengthIncludesCheckDigit();
+        String salt = domainDTO.getSalt();
+        Integer saltLength = domainDTO.getSaltLength();
+        String description = domainDTO.getDescription();
         
         if (domainDBAccessService.getAmountOfRecordsInDomain(oldDomainName, null) > 0) {
         	log.warn("Changes to the domain configuration can introduce inconsistencies when creating further pseudonyms.");
@@ -1144,7 +1144,7 @@ public class DomainRESTController {
      * only updatable when the domain is still empty.
      *
      * @param oldDomainName (required) the name of the domain that is to be updated
-     * @param domainDto (required) The domain object
+     * @param domainDTO (required) The domain object
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
      * @return 	<li> a <b>200-OK</b> status when the update was successful</li>
@@ -1157,19 +1157,19 @@ public class DomainRESTController {
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a domain.")
     public ResponseEntity<String> updateDomain(@RequestParam(name = "name", required = true) String oldDomainName,
-                                               @RequestBody DomainDto domainDto,
+                                               @RequestBody DomainDTO domainDTO,
                                                @RequestHeader(name = "accept", required = false) String responseContentType,
                                                HttpServletRequest request) {
         // Get old domain object
         Domain old = domainDBAccessService.getDomainByName(oldDomainName, null);
 
-        String newName = domainDto.getName();
-        String prefix = domainDto.getPrefix();
-        Timestamp validFrom = domainDto.getValidFrom() != null ? Timestamp.valueOf(domainDto.getValidFrom()) : null;
-        Timestamp validTo = domainDto.getValidTo() != null ? Timestamp.valueOf(domainDto.getValidTo()) : null;
-        String algorithm = domainDto.getAlgorithm();
-        Boolean multiplePsnAllowed = domainDto.getMultiplePsnAllowed();
-        String description = domainDto.getDescription();
+        String newName = domainDTO.getName();
+        String prefix = domainDTO.getPrefix();
+        Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
+        Timestamp validTo = domainDTO.getValidTo() != null ? Timestamp.valueOf(domainDTO.getValidTo()) : null;
+        String algorithm = domainDTO.getAlgorithm();
+        Boolean multiplePsnAllowed = domainDTO.getMultiplePsnAllowed();
+        String description = domainDTO.getDescription();
 
         if (Assertion.assertNullAll(newName, prefix, validFrom, validTo, algorithm, multiplePsnAllowed, description)) {
             // An empty object was passed, so there is nothing to update.

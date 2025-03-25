@@ -55,8 +55,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.context.WebApplicationContext;
-import org.trustdeck.model.dto.DomainDto;
-import org.trustdeck.model.dto.RecordDto;
+import org.trustdeck.dto.DomainDTO;
+import org.trustdeck.dto.RecordDTO;
 import org.trustdeck.utils.Assertion;
 
 import javax.net.ssl.SSLContext;
@@ -171,43 +171,43 @@ public class AssertWebRequestService {
 	        domainOidcService.deleteAllDomainRoles();
 	        
 	        // Create the test domain DTO
-	        DomainDto domainDto = new DomainDto();
-	        domainDto.setName("TestStudie");
-	        domainDto.setPrefix("TS-");
-	        domainDto.setValidFrom(LocalDateTime.of(2022, 2, 26, 19, 15, 20, 885853000));
-	        domainDto.setValidTo(LocalDateTime.of(2052, 2, 19, 19, 15, 20, 885853000));
-	        domainDto.setEnforceStartDateValidity(true);
-	        domainDto.setEnforceEndDateValidity(true);
-	        domainDto.setAlgorithm("MD5");
-	        domainDto.setAlphabet("ABCDEF0123456789");
-	        domainDto.setRandomAlgorithmDesiredSize(100000000L);
-	        domainDto.setRandomAlgorithmDesiredSuccessProbability(0.99999998d);
-	        domainDto.setMultiplePsnAllowed(false);
-	        domainDto.setConsecutiveValueCounter(1L);
-	        domainDto.setPseudonymLength(32);
-	        domainDto.setPaddingCharacter('0');
-	        domainDto.setAddCheckDigit(true);
-	        domainDto.setLengthIncludesCheckDigit(false);
-	        domainDto.setSalt("azMPTIQXJsept_4nDj5B1BXN83Bj_8VJ");
-	        domainDto.setSaltLength(32);
-	        domainDto.setAddCheckDigit(true);
-	        domainDto.setLengthIncludesCheckDigit(false);
+	        DomainDTO domainDTO = new DomainDTO();
+	        domainDTO.setName("TestStudie");
+	        domainDTO.setPrefix("TS-");
+	        domainDTO.setValidFrom(LocalDateTime.of(2022, 2, 26, 19, 15, 20, 885853000));
+	        domainDTO.setValidTo(LocalDateTime.of(2052, 2, 19, 19, 15, 20, 885853000));
+	        domainDTO.setEnforceStartDateValidity(true);
+	        domainDTO.setEnforceEndDateValidity(true);
+	        domainDTO.setAlgorithm("MD5");
+	        domainDTO.setAlphabet("ABCDEF0123456789");
+	        domainDTO.setRandomAlgorithmDesiredSize(100000000L);
+	        domainDTO.setRandomAlgorithmDesiredSuccessProbability(0.99999998d);
+	        domainDTO.setMultiplePsnAllowed(false);
+	        domainDTO.setConsecutiveValueCounter(1L);
+	        domainDTO.setPseudonymLength(32);
+	        domainDTO.setPaddingCharacter('0');
+	        domainDTO.setAddCheckDigit(true);
+	        domainDTO.setLengthIncludesCheckDigit(false);
+	        domainDTO.setSalt("azMPTIQXJsept_4nDj5B1BXN83Bj_8VJ");
+	        domainDTO.setSaltLength(32);
+	        domainDTO.setAddCheckDigit(true);
+	        domainDTO.setLengthIncludesCheckDigit(false);
 	    	
 	    	// Recreate the test domain
 	        log.debug("Recreating the test domain.");
-	        assertCreatedRequest("createTestDomain", post("/api/pseudonymization/domain/complete"), null, domainDto, this.getAccessToken());
+	        assertCreatedRequest("createTestDomain", post("/api/pseudonymization/domain/complete"), null, domainDTO, this.getAccessToken());
 	        
 	        // Create test record DTO
-	        RecordDto recordDto = new RecordDto();
-	        recordDto.setId("10000008912");
-	        recordDto.setIdType("ANY-ID");
-	        recordDto.setPsn("TS-9EEEE39F0D5C03507CB9388609E925F9");
-	        recordDto.setValidFrom(LocalDateTime.of(2022, 2, 26, 19, 15, 20, 885853000));
-	        recordDto.setValidTo(LocalDateTime.of(2052, 2, 19, 19, 15, 20, 885853000));
+	        RecordDTO recordDTO = new RecordDTO();
+	        recordDTO.setId("10000008912");
+	        recordDTO.setIdType("ANY-ID");
+	        recordDTO.setPsn("TS-9EEEE39F0D5C03507CB9388609E925F9");
+	        recordDTO.setValidFrom(LocalDateTime.of(2022, 2, 26, 19, 15, 20, 885853000));
+	        recordDTO.setValidTo(LocalDateTime.of(2052, 2, 19, 19, 15, 20, 885853000));
 	        
 	        // Recreate the test record
 	        log.debug("Recreating the test record.");
-	        assertCreatedRequest("createTestRecord", post("/api/pseudonymization/domains/"+domainDto.getName()+"/pseudonym"), null, recordDto, this.getAccessToken());
+	        assertCreatedRequest("createTestRecord", post("/api/pseudonymization/domains/"+domainDTO.getName()+"/pseudonym"), null, recordDTO, this.getAccessToken());
 	        
 	        return true;
         } catch (Exception e) {
@@ -710,7 +710,7 @@ public class AssertWebRequestService {
      * @return the list of domains that were checked and returned by the service
      * @throws Exception forwards any internally thrown exceptions
      */
-    protected List<DomainDto> assertEqualsListDomainHierarchyLength(int expectedLength) throws Exception {
+    protected List<DomainDTO> assertEqualsListDomainHierarchyLength(int expectedLength) throws Exception {
 
         // Unauthorized tests for getting this list
         this.assertBadRequestRequest("listDomainHierarchyBadRequest", get("/api/pseudonymization/experimental/domains/hierarchy"), null, null, "");
@@ -718,7 +718,7 @@ public class AssertWebRequestService {
 
         MockHttpServletResponse response = this.assertOkRequest("listDomainHierarchy", get("/api/pseudonymization/experimental/domains/hierarchy"), null, null, this.getAccessToken());
         String content = response.getContentAsString();
-        List<DomainDto> domains = this.mapJsonObjectsInStringToList(content, DomainDto.class);
+        List<DomainDTO> domains = this.mapJsonObjectsInStringToList(content, DomainDTO.class);
 
         if (expectedLength == 0) {
             assertNull(domains);
@@ -738,11 +738,11 @@ public class AssertWebRequestService {
      * @return the list of records that were checked and returned by the service
      * @throws Exception forwards any internally thrown exceptions
      */
-    protected List<RecordDto> assertEqualsListRecordsLength(int expectedLength, String goodDomainButNotFound, String goodDomain) throws Exception {
+    protected List<RecordDTO> assertEqualsListRecordsLength(int expectedLength, String goodDomainButNotFound, String goodDomain) throws Exception {
         this.assertNotFoundRequest("getRecordBatchNotFound", get("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonyms"), null, null, this.getAccessToken());
         MockHttpServletResponse response = this.assertOkRequest("getRecordBatch", get("/api/pseudonymization/domains/" + goodDomain + "/pseudonyms"), null, null, this.getAccessToken());
         String content = response.getContentAsString();
-        List<RecordDto> records = this.mapJsonObjectsInStringToList(content, RecordDto.class);
+        List<RecordDTO> records = this.mapJsonObjectsInStringToList(content, RecordDTO.class);
 
         if (expectedLength == 0) {
             assertNull(records);
@@ -760,7 +760,7 @@ public class AssertWebRequestService {
      * @param actualDomainName the domain name as string to request
      * @throws Exception forwards any internally thrown exceptions
      */
-    protected void domainUpdateHelperComplete(DomainDto expectedDomain, String actualDomainName, DomainDto domainDto) throws Exception {
+    protected void domainUpdateHelperComplete(DomainDTO expectedDomain, String actualDomainName, DomainDTO domainDTO) throws Exception {
         Map<String, String> updateParameterChange = new HashMap<>() {
 			private static final long serialVersionUID = -2708461912069760668L;
 		{
@@ -772,7 +772,7 @@ public class AssertWebRequestService {
         this.assertBadRequestRequest("updateDomainBadRequestComplete", put("/api/pseudonymization/domain/complete"), updateParameterChange, null, "");
         this.assertUnauthorizedRequest("updateDomainUnauthComplete", put("/api/pseudonymization/domain/complete"), updateParameterChange, null, "SomeToken");
 
-        this.assertOkRequest("commonUpdateDomainComplete", put("/api/pseudonymization/domain/complete"), updateParameterChange, domainDto, this.getAccessToken());
+        this.assertOkRequest("commonUpdateDomainComplete", put("/api/pseudonymization/domain/complete"), updateParameterChange, domainDTO, this.getAccessToken());
 
         this.getAndCheckDomain(expectedDomain, actualDomainName);
     }
@@ -784,7 +784,7 @@ public class AssertWebRequestService {
      * @param actualDomainName the domain name as string to request
      * @throws Exception forwards any internally thrown exceptions
      */
-    protected void domainUpdateHelperReduced(DomainDto expectedDomain, String actualDomainName, DomainDto domainDto) throws Exception {
+    protected void domainUpdateHelperReduced(DomainDTO expectedDomain, String actualDomainName, DomainDTO domainDTO) throws Exception {
         Map<String, String> updateParamterChange = new HashMap<>() {
         	private static final long serialVersionUID = 5655387819735798090L;
 		{
@@ -795,7 +795,7 @@ public class AssertWebRequestService {
         this.assertBadRequestRequest("updateDomainBadRequest", put("/api/pseudonymization/domain"), updateParamterChange, null, "");
         this.assertUnauthorizedRequest("updateDomainUnauth", put("/api/pseudonymization/domain"), updateParamterChange, null, "SomeToken");
 
-        this.assertOkRequest("commonUpdateDomain", put("/api/pseudonymization/domain"), updateParamterChange, domainDto, this.getAccessToken());
+        this.assertOkRequest("commonUpdateDomain", put("/api/pseudonymization/domain"), updateParamterChange, domainDTO, this.getAccessToken());
 
         this.getAndCheckDomain(expectedDomain, actualDomainName);
     }
@@ -807,7 +807,7 @@ public class AssertWebRequestService {
      * @param actualDomainName the domain name as string to request
      * @throws Exception forwards any internally thrown exceptions
      */
-    protected void getAndCheckDomain(DomainDto expectedDomain, String actualDomainName) throws Exception {
+    protected void getAndCheckDomain(DomainDTO expectedDomain, String actualDomainName) throws Exception {
 
         Map<String, String> getParameter = new HashMap<>() {
         	private static final long serialVersionUID = 5332670507736263759L;
@@ -818,7 +818,7 @@ public class AssertWebRequestService {
         MockHttpServletResponse response = this.assertOkRequest("getDomain", get("/api/pseudonymization/domain"), getParameter, null, this.getAccessToken());
         String content = response.getContentAsString();
 
-        DomainDto actualDomain = this.applySingleJsonContentToClass(content, DomainDto.class);
+        DomainDTO actualDomain = this.applySingleJsonContentToClass(content, DomainDTO.class);
 
         assertEquals(expectedDomain.getId(), actualDomain.getId());
         assertEquals(expectedDomain.getName(), actualDomain.getName());
