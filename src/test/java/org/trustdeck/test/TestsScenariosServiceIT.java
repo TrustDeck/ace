@@ -95,21 +95,21 @@ public class TestsScenariosServiceIT extends AssertWebRequestService {
     	/**
         String domainName = "TestStudie";
 
-        RecordDTO createFirstRecordDto = new RecordDTO();
+        PseudonymDTO createFirstRecordDto = new PseudonymDTO();
         createFirstRecordDto.setId("100");
         createFirstRecordDto.setIdType("ANY-ID");
 
         MockHttpServletResponse response = this.assertCreatedRequest("scenarioCreateFirstRecord", post("/api/pseudonymization/domain/" + domainName + "/pseudonym"), null, createFirstRecordDto, this.getAccessToken());
         String  content = response.getContentAsString();
-        RecordDTO r1 = this.applySingleJsonContentToClass(content, RecordDTO.class);
+        PseudonymDTO r1 = this.applySingleJsonContentToClass(content, PseudonymDTO.class);
 
-        RecordDTO createSecondRecordDto = new RecordDTO();
+        PseudonymDTO createSecondRecordDto = new PseudonymDTO();
         createSecondRecordDto.setId("200");
         createSecondRecordDto.setIdType("ANY-ID");
 
         response =  this.assertCreatedRequest("scenarioCreateSecondRecord", post("/api/pseudonymization/domain/" + domainName + "/pseudonym"), null, createSecondRecordDto, this.getAccessToken());
         content = response.getContentAsString();
-        RecordDTO r2 = this.applySingleJsonContentToClass(content, RecordDTO.class);
+        PseudonymDTO r2 = this.applySingleJsonContentToClass(content, PseudonymDTO.class);
 		*/
     	
         /*
@@ -123,7 +123,7 @@ public class TestsScenariosServiceIT extends AssertWebRequestService {
             }
         };
 
-        RecordDTO updateRecordDto = new RecordDTO();
+        PseudonymDTO updateRecordDto = new PseudonymDTO();
         updateRecordDto.setId("100");
         updateRecordDto.setIdType("ANY-ID");
         this.assertOkRequest("updateRecordCompleteByPseudonym", put("/api/pseudonymization/domain/" + domainName + "/pseudonym/complete"), updateParameter, updateRecordDto, this.getAccessToken());
@@ -140,7 +140,7 @@ public class TestsScenariosServiceIT extends AssertWebRequestService {
             }
         };
 
-        RecordDTO updateRecordDto = new RecordDTO();
+        PseudonymDTO updateRecordDto = new PseudonymDTO();
         updateRecordDto.setPsn(r1.getPsn());
 
         this.assertOkRequest("scenarioMergePseudonym", put("/api/pseudonymization/domain/" + domainName + "/pseudonym/complete"), updateParameter, updateRecordDto, this.getAccessToken());

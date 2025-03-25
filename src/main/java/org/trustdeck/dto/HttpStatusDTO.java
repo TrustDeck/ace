@@ -31,7 +31,7 @@ import org.springframework.http.HttpStatus;
 @Data
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request.
-public class HttpStatusDTO implements IRepresentation<HttpStatus, HttpStatusDTO> {
+public class HttpStatusDTO implements IObjectDTO<HttpStatus, HttpStatusDTO> {
 
     /** The HTTP status code number. */
     private int statusCode;

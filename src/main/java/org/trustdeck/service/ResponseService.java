@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.WebRequest;
 import org.trustdeck.configuration.ResponseMediaTypeConfig;
 import org.trustdeck.dto.HttpStatusDTO;
-import org.trustdeck.dto.IRepresentation;
+import org.trustdeck.dto.IObjectDTO;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -261,12 +261,12 @@ public class ResponseService {
             String contentTypeHeader = this.buildContentTypeHeaderStringForResponse(validResponseMediaType);
 
             // If the object is one of the usual DTOs
-            if (body instanceof IRepresentation) {
+            if (body instanceof IObjectDTO) {
                 switch (validResponseMediaType) {
                     case MediaType.APPLICATION_JSON_VALUE:
                         return ResponseEntity.status(status).header(HttpHeaders.CONTENT_TYPE, contentTypeHeader).location(location).body(body);
                     case MediaType.TEXT_PLAIN_VALUE:
-                        return (ResponseEntity<T>) ResponseEntity.status(status).header(HttpHeaders.CONTENT_TYPE, contentTypeHeader).location(location).body(((IRepresentation<?, ?>) body).toRepresentationString());
+                        return (ResponseEntity<T>) ResponseEntity.status(status).header(HttpHeaders.CONTENT_TYPE, contentTypeHeader).location(location).body(((IObjectDTO<?, ?>) body).toRepresentationString());
                     default:
                         return this.createResponseEntityFromHttpStatus(mediaType, status, location);
                 }

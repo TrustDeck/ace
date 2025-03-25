@@ -43,7 +43,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class RecordDTO implements IRepresentation<IPseudonym, RecordDTO> {
+public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
 
     /** Enables the access to the domain specific database access methods. */
 	@Getter(value=AccessLevel.NONE)
@@ -82,11 +82,11 @@ public class RecordDTO implements IRepresentation<IPseudonym, RecordDTO> {
     private DomainDTO domain;
 
     /**
-     * Maps all values from jOOQ's Pseudonym object to a RecordDTO object.
+     * Maps all values from jOOQ's Pseudonym object to a PseudonymDTO object.
      */
     @JsonIgnore
     @Override
-    public RecordDTO assignPojoValues(IPseudonym pojo) {
+    public PseudonymDTO assignPojoValues(IPseudonym pojo) {
         this.setId(pojo.getIdentifier() != null ? pojo.getIdentifier() : "");
         this.setIdType(pojo.getIdtype() != null ? pojo.getIdtype() : "");
         this.setPsn(pojo.getPseudonym() != null ? pojo.getPseudonym() : "");
@@ -120,7 +120,7 @@ public class RecordDTO implements IRepresentation<IPseudonym, RecordDTO> {
      */
     @Override
     @JsonIgnore
-    public RecordDTO toReducedStandardView() {
+    public PseudonymDTO toReducedStandardView() {
         this.setValidFromInherited(null);
         this.setValidToInherited(null);
         this.setValidityTime(null);

@@ -9,11 +9,15 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+import org.trustdeck.jooq.generated.tables.Algorithm;
 import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
+import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
+import org.trustdeck.jooq.generated.tables.records.AlgorithmRecord;
 import org.trustdeck.jooq.generated.tables.records.AuditeventRecord;
 import org.trustdeck.jooq.generated.tables.records.DomainRecord;
+import org.trustdeck.jooq.generated.tables.records.PersonRecord;
 import org.trustdeck.jooq.generated.tables.records.PseudonymRecord;
 
 
@@ -28,9 +32,14 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final UniqueKey<AlgorithmRecord> ALGORITHM_NAME_ALPHABET_RANDOMALGORITHMDESIREDSIZE_RANDOMAL_KEY = Internal.createUniqueKey(Algorithm.ALGORITHM, DSL.name("algorithm_name_alphabet_randomalgorithmdesiredsize_randomal_key"), new TableField[] { Algorithm.ALGORITHM.NAME, Algorithm.ALGORITHM.ALPHABET, Algorithm.ALGORITHM.RANDOMALGORITHMDESIREDSIZE, Algorithm.ALGORITHM.RANDOMALGORITHMDESIREDSUCCESSPROBABILITY, Algorithm.ALGORITHM.PSEUDONYMLENGTH, Algorithm.ALGORITHM.PADDINGCHARACTER, Algorithm.ALGORITHM.ADDCHECKDIGIT, Algorithm.ALGORITHM.LENGTHINCLUDESCHECKDIGIT }, true);
+    public static final UniqueKey<AlgorithmRecord> ALGORITHM_PKEY = Internal.createUniqueKey(Algorithm.ALGORITHM, DSL.name("algorithm_pkey"), new TableField[] { Algorithm.ALGORITHM.ID }, true);
     public static final UniqueKey<AuditeventRecord> AUDITEVENT_PKEY = Internal.createUniqueKey(Auditevent.AUDITEVENT, DSL.name("auditevent_pkey"), new TableField[] { Auditevent.AUDITEVENT.ID }, true);
     public static final UniqueKey<DomainRecord> DOMAIN_NAME_KEY = Internal.createUniqueKey(Domain.DOMAIN, DSL.name("domain_name_key"), new TableField[] { Domain.DOMAIN.NAME }, true);
     public static final UniqueKey<DomainRecord> DOMAIN_PKEY = Internal.createUniqueKey(Domain.DOMAIN, DSL.name("domain_pkey"), new TableField[] { Domain.DOMAIN.ID }, true);
+    public static final UniqueKey<PersonRecord> PERSON_FIRSTNAME_LASTNAME_BIRTHNAME_ADMINISTRATIVEGENDER_DA_KEY = Internal.createUniqueKey(Person.PERSON, DSL.name("person_firstname_lastname_birthname_administrativegender_da_key"), new TableField[] { Person.PERSON.FIRSTNAME, Person.PERSON.LASTNAME, Person.PERSON.BIRTHNAME, Person.PERSON.ADMINISTRATIVEGENDER, Person.PERSON.DATEOFBIRTH, Person.PERSON.STREET, Person.PERSON.POSTALCODE, Person.PERSON.CITY, Person.PERSON.COUNTRY }, true);
+    public static final UniqueKey<PersonRecord> PERSON_IDENTIFIER_IDTYPE_KEY = Internal.createUniqueKey(Person.PERSON, DSL.name("person_identifier_idtype_key"), new TableField[] { Person.PERSON.IDENTIFIER, Person.PERSON.IDTYPE }, true);
+    public static final UniqueKey<PersonRecord> PERSON_PKEY = Internal.createUniqueKey(Person.PERSON, DSL.name("person_pkey"), new TableField[] { Person.PERSON.ID }, true);
     public static final UniqueKey<PseudonymRecord> PSEUDONYM_IDENTIFIER_IDTYPE_DOMAINID_PSEUDONYM_KEY = Internal.createUniqueKey(Pseudonym.PSEUDONYM, DSL.name("pseudonym_identifier_idtype_domainid_pseudonym_key"), new TableField[] { Pseudonym.PSEUDONYM.IDENTIFIER, Pseudonym.PSEUDONYM.IDTYPE, Pseudonym.PSEUDONYM.DOMAINID, Pseudonym.PSEUDONYM.PSEUDONYM_ }, true);
     public static final UniqueKey<PseudonymRecord> PSEUDONYM_PKEY = Internal.createUniqueKey(Pseudonym.PSEUDONYM, DSL.name("pseudonym_pkey"), new TableField[] { Pseudonym.PSEUDONYM.ID }, true);
     public static final UniqueKey<PseudonymRecord> PSEUDONYM_PSN_DOMAINID_KEY = Internal.createUniqueKey(Pseudonym.PSEUDONYM, DSL.name("pseudonym_psn_domainid_key"), new TableField[] { Pseudonym.PSEUDONYM.DOMAINID, Pseudonym.PSEUDONYM.PSEUDONYM_ }, true);
@@ -40,5 +49,6 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final ForeignKey<DomainRecord, DomainRecord> DOMAIN__DOMAIN_SUPERDOMAINID_FKEY = Internal.createForeignKey(Domain.DOMAIN, DSL.name("domain_superdomainid_fkey"), new TableField[] { Domain.DOMAIN.SUPERDOMAINID }, Keys.DOMAIN_PKEY, new TableField[] { Domain.DOMAIN.ID }, true);
+    public static final ForeignKey<PersonRecord, AlgorithmRecord> PERSON__PERSON_IDENTIFIERALGORITHM_FKEY = Internal.createForeignKey(Person.PERSON, DSL.name("person_identifieralgorithm_fkey"), new TableField[] { Person.PERSON.IDENTIFIERALGORITHM }, Keys.ALGORITHM_PKEY, new TableField[] { Algorithm.ALGORITHM.ID }, true);
     public static final ForeignKey<PseudonymRecord, DomainRecord> PSEUDONYM__PSEUDONYM_DOMAINID_FKEY = Internal.createForeignKey(Pseudonym.PSEUDONYM, DSL.name("pseudonym_domainid_fkey"), new TableField[] { Pseudonym.PSEUDONYM.DOMAINID }, Keys.DOMAIN_PKEY, new TableField[] { Domain.DOMAIN.ID }, true);
 }

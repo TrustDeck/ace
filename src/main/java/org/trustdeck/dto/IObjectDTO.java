@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Scope;
  * @author Armin Müller & Eric Wündisch
  */
 @Scope("prototype") // Ensures that an instance is deleted after a request
-public interface IRepresentation<F, T> {
+public interface IObjectDTO<F, T> {
 	
     /** Assigns values from the given POJO to the desired DTO. */
     T assignPojoValues(F pojo);

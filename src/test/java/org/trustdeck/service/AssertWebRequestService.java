@@ -56,7 +56,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.trustdeck.dto.DomainDTO;
-import org.trustdeck.dto.RecordDTO;
+import org.trustdeck.dto.PseudonymDTO;
 import org.trustdeck.utils.Assertion;
 
 import javax.net.ssl.SSLContext;
@@ -198,16 +198,16 @@ public class AssertWebRequestService {
 	        assertCreatedRequest("createTestDomain", post("/api/pseudonymization/domain/complete"), null, domainDTO, this.getAccessToken());
 	        
 	        // Create test record DTO
-	        RecordDTO recordDTO = new RecordDTO();
-	        recordDTO.setId("10000008912");
-	        recordDTO.setIdType("ANY-ID");
-	        recordDTO.setPsn("TS-9EEEE39F0D5C03507CB9388609E925F9");
-	        recordDTO.setValidFrom(LocalDateTime.of(2022, 2, 26, 19, 15, 20, 885853000));
-	        recordDTO.setValidTo(LocalDateTime.of(2052, 2, 19, 19, 15, 20, 885853000));
+	        PseudonymDTO pseudonymDTO = new PseudonymDTO();
+	        pseudonymDTO.setId("10000008912");
+	        pseudonymDTO.setIdType("ANY-ID");
+	        pseudonymDTO.setPsn("TS-9EEEE39F0D5C03507CB9388609E925F9");
+	        pseudonymDTO.setValidFrom(LocalDateTime.of(2022, 2, 26, 19, 15, 20, 885853000));
+	        pseudonymDTO.setValidTo(LocalDateTime.of(2052, 2, 19, 19, 15, 20, 885853000));
 	        
 	        // Recreate the test record
 	        log.debug("Recreating the test record.");
-	        assertCreatedRequest("createTestRecord", post("/api/pseudonymization/domains/"+domainDTO.getName()+"/pseudonym"), null, recordDTO, this.getAccessToken());
+	        assertCreatedRequest("createTestRecord", post("/api/pseudonymization/domains/"+domainDTO.getName()+"/pseudonym"), null, pseudonymDTO, this.getAccessToken());
 	        
 	        return true;
         } catch (Exception e) {
@@ -738,11 +738,11 @@ public class AssertWebRequestService {
      * @return the list of records that were checked and returned by the service
      * @throws Exception forwards any internally thrown exceptions
      */
-    protected List<RecordDTO> assertEqualsListRecordsLength(int expectedLength, String goodDomainButNotFound, String goodDomain) throws Exception {
+    protected List<PseudonymDTO> assertEqualsListRecordsLength(int expectedLength, String goodDomainButNotFound, String goodDomain) throws Exception {
         this.assertNotFoundRequest("getRecordBatchNotFound", get("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonyms"), null, null, this.getAccessToken());
         MockHttpServletResponse response = this.assertOkRequest("getRecordBatch", get("/api/pseudonymization/domains/" + goodDomain + "/pseudonyms"), null, null, this.getAccessToken());
         String content = response.getContentAsString();
-        List<RecordDTO> records = this.mapJsonObjectsInStringToList(content, RecordDTO.class);
+        List<PseudonymDTO> records = this.mapJsonObjectsInStringToList(content, PseudonymDTO.class);
 
         if (expectedLength == 0) {
             assertNull(records);

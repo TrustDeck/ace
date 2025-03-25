@@ -10,8 +10,10 @@ import java.util.List;
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
+import org.trustdeck.jooq.generated.tables.Algorithm;
 import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
+import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
 
 
@@ -29,6 +31,11 @@ public class Public extends SchemaImpl {
     public static final Public PUBLIC = new Public();
 
     /**
+     * The table <code>public.algorithm</code>.
+     */
+    public final Algorithm ALGORITHM = Algorithm.ALGORITHM;
+
+    /**
      * The table <code>public.auditevent</code>.
      */
     public final Auditevent AUDITEVENT = Auditevent.AUDITEVENT;
@@ -37,6 +44,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.domain</code>.
      */
     public final Domain DOMAIN = Domain.DOMAIN;
+
+    /**
+     * The table <code>public.person</code>.
+     */
+    public final Person PERSON = Person.PERSON;
 
     /**
      * The table <code>public.pseudonym</code>.
@@ -59,8 +71,10 @@ public class Public extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
+            Algorithm.ALGORITHM,
             Auditevent.AUDITEVENT,
             Domain.DOMAIN,
+            Person.PERSON,
             Pseudonym.PSEUDONYM
         );
     }

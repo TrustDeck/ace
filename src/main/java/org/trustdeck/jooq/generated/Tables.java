@@ -4,8 +4,10 @@
 package org.trustdeck.jooq.generated;
 
 
+import org.trustdeck.jooq.generated.tables.Algorithm;
 import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
+import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
 
 
@@ -16,6 +18,11 @@ import org.trustdeck.jooq.generated.tables.Pseudonym;
 public class Tables {
 
     /**
+     * The table <code>public.algorithm</code>.
+     */
+    public static final Algorithm ALGORITHM = Algorithm.ALGORITHM;
+
+    /**
      * The table <code>public.auditevent</code>.
      */
     public static final Auditevent AUDITEVENT = Auditevent.AUDITEVENT;
@@ -24,6 +31,11 @@ public class Tables {
      * The table <code>public.domain</code>.
      */
     public static final Domain DOMAIN = Domain.DOMAIN;
+
+    /**
+     * The table <code>public.person</code>.
+     */
+    public static final Person PERSON = Person.PERSON;
 
     /**
      * The table <code>public.pseudonym</code>.

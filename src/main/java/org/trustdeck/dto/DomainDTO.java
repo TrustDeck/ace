@@ -44,7 +44,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request.
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DomainDTO implements IRepresentation<IDomain, DomainDTO> {
+public class DomainDTO implements IObjectDTO<IDomain, DomainDTO> {
 	
 	/** Enables the access to the domain specific database access methods. */
 	@Getter(value=AccessLevel.NONE)

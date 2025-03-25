@@ -8,8 +8,10 @@ import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+import org.trustdeck.jooq.generated.tables.Algorithm;
 import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
+import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
 
 
@@ -23,8 +25,17 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index ALGORITHM_NAME_UINDEX = Internal.createIndex(DSL.name("algorithm_name_uindex"), Algorithm.ALGORITHM, new OrderField[] { Algorithm.ALGORITHM.NAME }, false);
     public static final Index AUDITUSERNAMEIDX = Internal.createIndex(DSL.name("auditusernameidx"), Auditevent.AUDITEVENT, new OrderField[] { Auditevent.AUDITEVENT.USERNAME }, false);
     public static final Index IDIDTYPEIDX = Internal.createIndex(DSL.name("ididtypeidx"), Pseudonym.PSEUDONYM, new OrderField[] { Pseudonym.PSEUDONYM.IDENTIFIER, Pseudonym.PSEUDONYM.IDTYPE }, false);
     public static final Index IDPSNIDX = Internal.createIndex(DSL.name("idpsnidx"), Pseudonym.PSEUDONYM, new OrderField[] { Pseudonym.PSEUDONYM.IDENTIFIER, Pseudonym.PSEUDONYM.PSEUDONYM_ }, true);
     public static final Index METADATAIDX = Internal.createIndex(DSL.name("metadataidx"), Domain.DOMAIN, new OrderField[] { Domain.DOMAIN.NAME }, true);
+    public static final Index PERSON_FIRSTNAME_LASTNAME_ADMGENDER_DOB_UINDEX = Internal.createIndex(DSL.name("person_firstname_lastname_admgender_dob_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.FIRSTNAME, Person.PERSON.LASTNAME, Person.PERSON.ADMINISTRATIVEGENDER, Person.PERSON.DATEOFBIRTH }, false);
+    public static final Index PERSON_FIRSTNAME_LASTNAME_ADMGENDER_UINDEX = Internal.createIndex(DSL.name("person_firstname_lastname_admgender_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.FIRSTNAME, Person.PERSON.LASTNAME, Person.PERSON.ADMINISTRATIVEGENDER }, false);
+    public static final Index PERSON_FIRSTNAME_LASTNAME_DOB_UINDEX = Internal.createIndex(DSL.name("person_firstname_lastname_dob_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.FIRSTNAME, Person.PERSON.LASTNAME, Person.PERSON.DATEOFBIRTH }, false);
+    public static final Index PERSON_FIRSTNAME_LASTNAME_UINDEX = Internal.createIndex(DSL.name("person_firstname_lastname_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.FIRSTNAME, Person.PERSON.LASTNAME }, false);
+    public static final Index PERSON_FIRSTNAME_UINDEX = Internal.createIndex(DSL.name("person_firstname_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.FIRSTNAME }, false);
+    public static final Index PERSON_IDENTIFIER_UINDEX = Internal.createIndex(DSL.name("person_identifier_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.IDENTIFIER }, false);
+    public static final Index PERSON_LASTNAME_UINDEX = Internal.createIndex(DSL.name("person_lastname_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.LASTNAME }, false);
+    public static final Index PERSON_STREET_POSTALCODE_CITY_COUNTRY_UINDEX = Internal.createIndex(DSL.name("person_street_postalcode_city_country_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.STREET, Person.PERSON.POSTALCODE, Person.PERSON.CITY, Person.PERSON.COUNTRY }, false);
 }

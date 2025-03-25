@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.trustdeck.dto.DomainDTO;
-import org.trustdeck.dto.RecordDTO;
+import org.trustdeck.dto.PseudonymDTO;
 import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.service.AssertWebRequestService;
 
@@ -96,18 +96,18 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
      * @param domainName the name of the domain where the record should be in
      * @throws Exception forwards all thrown exceptions
      */
-    public RecordDTO createRecordHelper(String id, String idType, String domainName) throws Exception {
-        RecordDTO createRecord = new RecordDTO();
+    public PseudonymDTO createRecordHelper(String id, String idType, String domainName) throws Exception {
+        PseudonymDTO createRecord = new PseudonymDTO();
         createRecord.setId(id);
         createRecord.setIdType(idType);
 
         MockHttpServletResponse response = this.assertCreatedRequest("createRecord", post("/api/pseudonymization/domains/" + domainName + "/pseudonym"), null, createRecord, this.getAccessToken());
         String content = response.getContentAsString();
 
-        List<RecordDTO> r1l = this.mapJsonObjectsInStringToList(content, RecordDTO.class);
-        RecordDTO r = r1l.get(0);
+        List<PseudonymDTO> r1l = this.mapJsonObjectsInStringToList(content, PseudonymDTO.class);
+        PseudonymDTO r = r1l.get(0);
 
-        RecordDTO nextRecord = new RecordDTO();
+        PseudonymDTO nextRecord = new PseudonymDTO();
         nextRecord.setId(r.getPsn());
         nextRecord.setIdType(r.getDomainName());
 
@@ -140,27 +140,27 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         // Create pseudonyms inside the network
 
         // Regular creation without issues
-        RecordDTO a1 = this.createRecordHelper("1234356", "MP-ID", rootDomainName);
-        RecordDTO a2 = this.createRecordHelper(a1.getId(), a1.getIdType(), childOneName);
-        RecordDTO a3 = this.createRecordHelper(a1.getId(), a1.getIdType(), childTwoName);
-        RecordDTO a4 = this.createRecordHelper(a2.getId(), a2.getIdType(), childThreeName);
+        PseudonymDTO a1 = this.createRecordHelper("1234356", "MP-ID", rootDomainName);
+        PseudonymDTO a2 = this.createRecordHelper(a1.getId(), a1.getIdType(), childOneName);
+        PseudonymDTO a3 = this.createRecordHelper(a1.getId(), a1.getIdType(), childTwoName);
+        PseudonymDTO a4 = this.createRecordHelper(a2.getId(), a2.getIdType(), childThreeName);
 
         // Regular creation without issues
-        RecordDTO b1 = this.createRecordHelper("1234357", "MP-ID", rootDomainName);
-        RecordDTO b2 = this.createRecordHelper(b1.getId(), b1.getIdType(), childOneName);
-        RecordDTO b3 = this.createRecordHelper(b1.getId(), b1.getIdType(), childTwoName);
-        RecordDTO b4 = this.createRecordHelper(b2.getId(), b2.getIdType(), childThreeName);
+        PseudonymDTO b1 = this.createRecordHelper("1234357", "MP-ID", rootDomainName);
+        PseudonymDTO b2 = this.createRecordHelper(b1.getId(), b1.getIdType(), childOneName);
+        PseudonymDTO b3 = this.createRecordHelper(b1.getId(), b1.getIdType(), childTwoName);
+        PseudonymDTO b4 = this.createRecordHelper(b2.getId(), b2.getIdType(), childThreeName);
 
         // Regular creation without issues
-        RecordDTO c1 = this.createRecordHelper("1234357", "ANY-ID", rootDomainName);
-        RecordDTO c2 = this.createRecordHelper(c1.getId(), c1.getIdType(), childOneName);
-        RecordDTO c3 = this.createRecordHelper(c1.getId(), c1.getIdType(), childTwoName);
-        RecordDTO c4 = this.createRecordHelper(c2.getId(), c2.getIdType(), childThreeName);
+        PseudonymDTO c1 = this.createRecordHelper("1234357", "ANY-ID", rootDomainName);
+        PseudonymDTO c2 = this.createRecordHelper(c1.getId(), c1.getIdType(), childOneName);
+        PseudonymDTO c3 = this.createRecordHelper(c1.getId(), c1.getIdType(), childTwoName);
+        PseudonymDTO c4 = this.createRecordHelper(c2.getId(), c2.getIdType(), childThreeName);
 
         //Regular creation but without childThreeName
-        RecordDTO d1 = this.createRecordHelper("1234358", "MP-ID", rootDomainName);
-        RecordDTO d2 = this.createRecordHelper(d1.getId(), d1.getIdType(), childOneName);
-        RecordDTO d3 = this.createRecordHelper(d1.getId(), d1.getIdType(), childTwoName);
+        PseudonymDTO d1 = this.createRecordHelper("1234358", "MP-ID", rootDomainName);
+        PseudonymDTO d2 = this.createRecordHelper(d1.getId(), d1.getIdType(), childOneName);
+        PseudonymDTO d3 = this.createRecordHelper(d1.getId(), d1.getIdType(), childTwoName);
 
         // Set query parameter
         Map<String, String> getParameter = new HashMap<>() {
@@ -243,7 +243,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         String secondId = "1234357";
 
         // Create a record
-        RecordDTO recordCreate = new RecordDTO();
+        PseudonymDTO recordCreate = new PseudonymDTO();
         recordCreate.setId(firstId);
         recordCreate.setIdType(assertIdType);
 
@@ -251,7 +251,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         this.assertCreatedRequest("createNewRecord", post("/api/pseudonymization/domains/" + child + "/pseudonym"), null, recordCreate, this.getAccessToken());
         this.assertCreatedRequest("createNewRecord", post("/api/pseudonymization/domains/" + childOfChild + "/pseudonym"), null, recordCreate, this.getAccessToken());
 
-        RecordDTO anotherCreateRecord = new RecordDTO();
+        PseudonymDTO anotherCreateRecord = new PseudonymDTO();
         anotherCreateRecord.setId(secondId);
         anotherCreateRecord.setIdType(assertIdType);
 
@@ -270,13 +270,13 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         response = this.assertOkRequest("readRecord", get("/api/pseudonymization/domains/" + child + "/pseudonym"), getParameter, null, this.getAccessToken());
         content = response.getContentAsString();
 
-        List<RecordDTO> r1l = this.mapJsonObjectsInStringToList(content, RecordDTO.class);
-        RecordDTO r1 = r1l.get(0);
+        List<PseudonymDTO> r1l = this.mapJsonObjectsInStringToList(content, PseudonymDTO.class);
+        PseudonymDTO r1 = r1l.get(0);
 
         response = this.assertOkRequest("readRecord", get("/api/pseudonymization/domains/" + childOfChild + "/pseudonym"), getParameter, null, this.getAccessToken());
         content = response.getContentAsString();
-        List<RecordDTO> r2l = this.mapJsonObjectsInStringToList(content, RecordDTO.class);
-        RecordDTO r2 = r2l.get(0);
+        List<PseudonymDTO> r2l = this.mapJsonObjectsInStringToList(content, PseudonymDTO.class);
+        PseudonymDTO r2 = r2l.get(0);
 
         assertNotNull(r1.getPsn());
         assertNotNull(r2.getPsn());
@@ -302,8 +302,8 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         response = this.assertOkRequest("readRecord", get("/api/pseudonymization/domains/" + childOfChild + "/pseudonym"), anotherGetParameter, null, this.getAccessToken());
         content = response.getContentAsString();
 
-        List<RecordDTO> r3l = this.mapJsonObjectsInStringToList(content, RecordDTO.class);
-        RecordDTO r3 = r3l.get(0);
+        List<PseudonymDTO> r3l = this.mapJsonObjectsInStringToList(content, PseudonymDTO.class);
+        PseudonymDTO r3 = r3l.get(0);
 
         assertNotNull(r3.getPsn());
         assertEquals(secondId, r3.getId());
@@ -361,7 +361,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         this.domainUpdateHelperComplete(d, domainName, d);
 
         // Create a record
-        RecordDTO recordCreate = new RecordDTO();
+        PseudonymDTO recordCreate = new PseudonymDTO();
         recordCreate.setId(assertId);
         recordCreate.setIdType(assertIdType);
 
@@ -379,9 +379,9 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         pseudonym2.setValidfrominherited(true);
         pseudonym2.setValidtoinherited(true);
 
-        List<RecordDTO> recordDtoList = new ArrayList<>();
-        recordDtoList.add(new RecordDTO().assignPojoValues(pseudonym1));
-        recordDtoList.add(new RecordDTO().assignPojoValues(pseudonym2));
+        List<PseudonymDTO> recordDtoList = new ArrayList<>();
+        recordDtoList.add(new PseudonymDTO().assignPojoValues(pseudonym1));
+        recordDtoList.add(new PseudonymDTO().assignPojoValues(pseudonym2));
         this.assertUnprocessableEntity("createNewRecordBatch", post("/api/pseudonymization/domains/" + domainName + "/pseudonyms"), null, recordDtoList, this.getAccessToken());
     }
 
@@ -420,7 +420,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         assertEquals(domainDto.getValidFrom().plusSeconds(365*86400L), d.getValidTo());*/
 
         // Create a record with a user-friendly validity time string
-        RecordDTO record = new RecordDTO();
+        PseudonymDTO record = new PseudonymDTO();
         record.setId("testIdentifier");
         record.setIdType("testType");
         record.setValidFrom(LocalDateTime.parse("2023-01-01T12:00:00"));
@@ -428,8 +428,8 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
 
         MockHttpServletResponse response = this.assertCreatedRequest("createRecord", post("/api/pseudonymization/domains/" + parentDomainName + "/pseudonym"), null, record, this.getAccessToken());
 
-        List<RecordDTO> r1l = this.mapJsonObjectsInStringToList(response.getContentAsString(), RecordDTO.class);
-        RecordDTO r = r1l.get(0);
+        List<PseudonymDTO> r1l = this.mapJsonObjectsInStringToList(response.getContentAsString(), PseudonymDTO.class);
+        PseudonymDTO r = r1l.get(0);
 
         assertEquals(record.getValidFrom().plusSeconds(86400L), r.getValidTo());
 
@@ -442,11 +442,11 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
                 put("idType", "testType");
             }
         };
-        RecordDTO updateViaIdentifier = new RecordDTO();
+        PseudonymDTO updateViaIdentifier = new PseudonymDTO();
         updateViaIdentifier.setValidityTime("8 w");
 
         response = this.assertOkRequest("updateRecordViaIdentifier", put("/api/pseudonymization/domains/" + parentDomainName + "/pseudonym"), updateViaIdentifierParams, updateViaIdentifier, this.getAccessToken());
-        RecordDTO updatedViaIdentifier = this.applySingleJsonContentToClass(response.getContentAsString(), RecordDTO.class);
+        PseudonymDTO updatedViaIdentifier = this.applySingleJsonContentToClass(response.getContentAsString(), PseudonymDTO.class);
         assertEquals(record.getValidFrom().plusSeconds(8 * 7 * 86400L), updatedViaIdentifier.getValidTo());
 
         // Update a record with a user-friendly validity time string via psn
@@ -457,27 +457,27 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
                 put("psn", r.getPsn());
             }
         };
-        RecordDTO updateViaPsn = new RecordDTO();
+        PseudonymDTO updateViaPsn = new PseudonymDTO();
         updateViaPsn.setValidityTime("10hours");
 
         response = this.assertOkRequest("updateRecordViaPsnHours", put("/api/pseudonymization/domains/" + parentDomainName + "/pseudonym"), updateViaPsnParams, updateViaPsn, this.getAccessToken());
-        RecordDTO updatedViaPsn = this.applySingleJsonContentToClass(response.getContentAsString(), RecordDTO.class);
+        PseudonymDTO updatedViaPsn = this.applySingleJsonContentToClass(response.getContentAsString(), PseudonymDTO.class);
         assertEquals(record.getValidFrom().plusSeconds(10 * 3600L), updatedViaPsn.getValidTo());
 
         // Update using minutes
-        RecordDTO updateMinutes = new RecordDTO();
+        PseudonymDTO updateMinutes = new PseudonymDTO();
         updateMinutes.setValidityTime("12 minutes");
 
         response = this.assertOkRequest("updateRecordViaPsnMinutes", put("/api/pseudonymization/domains/" + parentDomainName + "/pseudonym"), updateViaPsnParams, updateMinutes, this.getAccessToken());
-        RecordDTO updatedMinutes = this.applySingleJsonContentToClass(response.getContentAsString(), RecordDTO.class);
+        PseudonymDTO updatedMinutes = this.applySingleJsonContentToClass(response.getContentAsString(), PseudonymDTO.class);
         assertEquals(record.getValidFrom().plusSeconds(12 * 60L), updatedMinutes.getValidTo());
 
         // Update using seconds
-        RecordDTO updateSeconds = new RecordDTO();
+        PseudonymDTO updateSeconds = new PseudonymDTO();
         updateSeconds.setValidityTime("53secs");
 
         response = this.assertOkRequest("updateRecordViaPsnSeconds", put("/api/pseudonymization/domains/" + parentDomainName + "/pseudonym"), updateViaPsnParams, updateSeconds, this.getAccessToken());
-        RecordDTO updatedSeconds = this.applySingleJsonContentToClass(response.getContentAsString(), RecordDTO.class);
+        PseudonymDTO updatedSeconds = this.applySingleJsonContentToClass(response.getContentAsString(), PseudonymDTO.class);
         assertEquals(record.getValidFrom().plusSeconds(53L), updatedSeconds.getValidTo());
     }
 }
