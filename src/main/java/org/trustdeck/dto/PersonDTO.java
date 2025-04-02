@@ -1,5 +1,5 @@
 /*
- * KING - Key Index of Names and General Identification Numbers
+ * Trust Deck Services
  * Copyright 2024-2025 Armin Müller
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.pojos.Person;
 import org.trustdeck.service.AlgorithmDBService;
-
+import org.trustdeck.utils.SpringBeanLocator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -40,6 +40,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
 
+	@JsonIgnore
 	private Integer id;
     private String firstName;
     private String lastName;
@@ -77,11 +78,16 @@ public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
 	    dto.setStreet(pojo.getStreet());
 	    dto.setPostalCode(pojo.getPostalcode());
 	    dto.setCity(pojo.getCity());
+	    dto.setCountry(pojo.getCountry());
 	    dto.setIdentifier(pojo.getIdentifier());
 	    dto.setIdType(pojo.getIdtype());
 
 	    // Insert the algorithm if the identifierAlgorithm (the ID of the used algorithm) is not null
 	    if (pojo.getIdentifieralgorithm() != null) {
+	    	if (this.algorithmDBService == null) {
+	    		this.algorithmDBService = SpringBeanLocator.getBean(AlgorithmDBService.class);
+	    	}
+	    	
 	    	Algorithm algo = algorithmDBService.getAlgorithmByID(pojo.getIdentifieralgorithm());
 	        dto.setAlgorithm(new AlgorithmDTO().assignPojoValues(algo));
 	    }
@@ -103,6 +109,7 @@ public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
         person.setStreet(this.getStreet());
         person.setPostalcode(this.getPostalCode());
         person.setCity(this.getCity());
+        person.setCountry(this.getCountry());
         person.setIdentifier(this.getIdentifier());
         person.setIdtype(this.getIdType());
         person.setIdentifieralgorithm(this.getAlgorithm().getId());
@@ -127,8 +134,23 @@ public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
 	@JsonIgnore
 	@Override
 	public String toRepresentationString() {
-		// TODO Auto-generated method stub
-		return null;
+	    String out = "";
+
+	    out += (this.getId() != null) ? "id: " + this.getId().toString() + ", " : "";
+	    out += (this.getFirstName() != null) ? "firstName: " + this.getFirstName() + ", " : "";
+	    out += (this.getLastName() != null) ? "lastName: " + this.getLastName() + ", " : "";
+	    out += (this.getBirthName() != null) ? "birthName: " + this.getBirthName() + ", " : "";
+	    out += (this.getAdministrativeGender() != null) ? "administrativeGender: " + this.getAdministrativeGender() + ", " : "";
+	    out += (this.getDateOfBirth() != null) ? "dateOfBirth: " + this.getDateOfBirth() + ", " : "";
+	    out += (this.getStreet() != null) ? "street: " + this.getStreet() + ", " : "";
+	    out += (this.getPostalCode() != null) ? "postalCode: " + this.getPostalCode() + ", " : "";
+	    out += (this.getCity() != null) ? "city: " + this.getCity() + ", " : "";
+	    out += (this.getCountry() != null) ? "country: " + this.getCountry() + ", " : "";
+	    out += (this.getIdentifier() != null) ? "identifier: " + this.getIdentifier() + ", " : "";
+	    out += (this.getIdType() != null) ? "idType: " + this.getIdType() + ", " : "";
+	    //out += (this.getAlgorithm() != null) ? "algorithm: {" + this.getAlgorithm().toRepresentationString() + "}, " : "";
+
+	    return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
 	}
 
 	@JsonIgnore

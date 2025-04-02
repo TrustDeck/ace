@@ -1,5 +1,5 @@
 /*
- * KING - Key Index of Names and General Identification Numbers
+ * Trust Deck Services
  * Copyright 2024-2025 Armin Müller
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlgorithmDTO implements IObjectDTO<Algorithm, AlgorithmDTO> {
 	
+	@JsonIgnore
 	@EqualsAndHashCode.Exclude
 	private Integer id;
 	private String name;
