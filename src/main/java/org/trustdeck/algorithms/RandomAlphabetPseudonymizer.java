@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.security.SecureRandom;
 
+import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 
 /**
@@ -83,10 +84,22 @@ public class RandomAlphabetPseudonymizer extends Pseudonymizer {
 	 * Basic constructor.
 	 * Number of retries is set to default, all other variables are directly retrieved from the domain object.
 	 * 
+	 * @param paddingWanted whether or not the pseudonyms should be padded to a certain length
 	 * @param domain the domain object
 	 */
 	public RandomAlphabetPseudonymizer(boolean paddingWanted, Domain domain) {
 		super(paddingWanted, domain);
+	}
+	
+	/**
+	 * Basic constructor.
+	 * Number of retries is set to default, all other variables are directly retrieved from the algorithm object.
+	 * 
+	 * @param paddingWanted whether or not the pseudonyms should be padded to a certain length
+	 * @param algorithm the algorithm object
+	 */
+	public RandomAlphabetPseudonymizer(boolean paddingWanted, Algorithm algorithm) {
+		super(paddingWanted, algorithm);
 	}
 	
 	/**

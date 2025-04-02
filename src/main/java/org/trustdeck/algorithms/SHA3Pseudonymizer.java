@@ -18,6 +18,7 @@
 package org.trustdeck.algorithms;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +77,17 @@ public class SHA3Pseudonymizer extends Pseudonymizer {
 	}
 	
 	/**
+	 * Basic constructor.
+	 * All necessary variables are directly retrieved from the algorithm object.
+	 * 
+	 * @param paddingWanted whether or not the pseudonyms should be padded to a certain length
+	 * @param algorithm the algorithm object
+	 */
+	public SHA3Pseudonymizer(boolean paddingWanted, Algorithm algorithm) {
+		super(paddingWanted, algorithm);
+	}
+	
+	/**
 	 * Creates a sha3 hash pseudonym from the given identifier.
 	 */
 	@Override
@@ -83,7 +95,7 @@ public class SHA3Pseudonymizer extends Pseudonymizer {
 		// Retrieve counter if needed. Immediately update it and write it back
 		Long counter = null;
 		if (isMultiplePsnAllowed()) {
-			counter = getDdba().getDomainByName(getDomainName(), null).getConsecutivevaluecounter();
+			counter = isAlgorithmObjectBased() ? getAdbs().getAlgorithmByID(getAlgorithmID()).getConsecutivevaluecounter() : getDdba().getDomainByName(getDomainName(), null).getConsecutivevaluecounter();
 			setCurrentValue(counter == null ? 1L : counter + 1L);
 			persist();
 		}

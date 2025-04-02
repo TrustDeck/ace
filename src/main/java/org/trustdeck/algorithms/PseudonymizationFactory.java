@@ -17,6 +17,7 @@
 
 package org.trustdeck.algorithms;
 
+import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.utils.Assertion;
 
@@ -30,7 +31,56 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PseudonymizationFactory {
 	
-
+	/**
+	 * Method for automatically creating the correct pseudonymizer 
+	 * depending on the desired algorithm.
+	 * 
+	 * @param algorithmName the name of the algorithm with which the inputs should be pseudonymized
+	 * @return the pre-configured pseudonymizer so that the pseudonymization step itself is easier to accomplish 
+	 */
+	public Pseudonymizer getPseudonymizer(Algorithm algorithm) {
+		// Select the desired pseudonymization algorithm and create a pseudonymizer
+        switch (algorithm.getName().toUpperCase()) {
+            case "MD5": {
+                return new MD5Pseudonymizer(true, algorithm);
+            }
+            case "SHA1": {
+                return new SHA1Pseudonymizer(true, algorithm);
+            }
+            case "SHA2": {
+            	return new SHA2Pseudonymizer(true, algorithm);
+            }
+            case "SHA3": {
+            	return new SHA3Pseudonymizer(true, algorithm);
+            }
+            case "BLAKE3": {
+            	return new BLAKE3Pseudonymizer(true, algorithm);
+            }
+            case "CONSECUTIVE": {
+            	return new ConsecutivePseudonymizer(true, algorithm);
+            }
+            case "RANDOM_NUM": {
+            	return new RandomNumberPseudonymizer(true, algorithm);
+            }
+            case "RANDOM": 
+            case "RANDOM_HEX": 
+            case "RANDOM_LET": 
+            case "RANDOM_SYM": 
+            case "RANDOM_SYM_BIOS": {
+            	return new RandomAlphabetPseudonymizer(true, algorithm);
+            }
+            case "XXHASH": {
+            	return new XxHashPseudonymizer(true, algorithm);
+            }
+            default: {
+                // Unrecognized algorithm. Use default.
+                log.warn("The pseudonymization algorithm that was requested (" + algorithm.getName() + ") wasn't recognized. Using random letters (A-Z) instead.");
+                algorithm.setName("RANDOM_LET");
+                algorithm.setAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+                return new RandomAlphabetPseudonymizer(true, algorithm);
+            }
+        }
+	}
 	
 	/**
 	 * Method for automatically creating the correct pseudonymizer 

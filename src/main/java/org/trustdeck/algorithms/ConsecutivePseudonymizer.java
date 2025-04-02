@@ -17,6 +17,7 @@
 
 package org.trustdeck.algorithms;
 
+import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 
 import lombok.extern.slf4j.Slf4j;
@@ -87,14 +88,32 @@ public class ConsecutivePseudonymizer extends Pseudonymizer {
 		super(paddingWanted, domain);
 		this.startValue = null;
 	}
+	
+	/**
+	 * Basic constructor.
+	 * All necessary variables are directly retrieved from the algorithm object.
+	 * 
+	 * @param paddingWanted whether or not the pseudonyms should be padded to a certain length
+	 * @param algorithm the algorithm object
+	 */
+	public ConsecutivePseudonymizer(boolean paddingWanted, Algorithm algorithm) {
+		super(paddingWanted, algorithm);
+		this.startValue = null;
+	}
 
 	/**
 	 * Creates a consecutive pseudonym. The identifier, however, is not actively used here.
 	 */
 	@Override
 	public String pseudonymize(String identifier, String domainPrefix) {
-		// Retrieve counter. (Use user-given start value if given.) Immediately update it and write it back
-		Long counter = startValue != null ? startValue : getDdba().getDomainByName(getDomainName(), null).getConsecutivevaluecounter();
+		// Retrieve counter or use user-given start value if given; immediately update it and write it back
+		Long counter;
+		if (startValue != null && startValue > 0) {
+			counter = startValue;
+		} else {
+			counter = isAlgorithmObjectBased() ? getAdbs().getAlgorithmByID(getAlgorithmID()).getConsecutivevaluecounter() : getDdba().getDomainByName(getDomainName(), null).getConsecutivevaluecounter();
+		}
+		
 		setCurrentValue(counter == null ? 1L : counter + 1L);
 		if (!persist()) {
 			log.error("Couldn't persist the current consecutive value in the database and it may not have been updated.");
