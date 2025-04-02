@@ -1,5 +1,5 @@
 /*
- * KING - Key Index of Names and General Identification Numbers
+ * Trust Deck Services
  * Copyright 2024-2025 Armin Müller
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.records.AlgorithmRecord;
+import org.trustdeck.utils.Assertion;
+import org.trustdeck.utils.Utility;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,20 +54,26 @@ public class AlgorithmDBService {
     /** The name of the default algorithm. */
     public static final String DEFAULT_ALGORITHM_NAME = "RANDOM";
 
-    /** The default alphabet for the above default algorithm. */
-    public static final String DEFAULT_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
     /** The default number of pseudonyms that a randomness-based algorithm should be able to produce. */
-    public static final int DEFAULT_RANDOM_ALGORITHM_DESIRED_SIZE = 1_000_000_000;
+    public static final long DEFAULT_RANDOM_ALGORITHM_DESIRED_SIZE = 1_000_000_000;
 
     /** The default success probability for creating a new pseudonym when using a randomness-based algorithm. */
     public static final double DEFAULT_RANDOM_ALGORITHM_DESIRED_SUCCESS_PROBABILITY = 0.999999998;
+
+    /** The default success probability for creating a new pseudonym when using a randomness-based algorithm. */
+    public static final String DEFAULT_RANDOM_ALGORITHM_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
     /** The default starting point for consecutive numbers as pseudonyms. */
     public static final long DEFAULT_CONSECUTIVE_VALUE_COUNTER = 1;
 
     /** The default length for the pseudonyms. */
-    public static final int DEFAULT_PSEUDONYM_LENGTH = 10;
+    public static final int DEFAULT_PSEUDONYM_LENGTH = 16;
+
+    /** The default length for the pseudonyms when using a random algorithm. */
+    public static final int DEFAULT_PSEUDONYM_LENGTH_RND = 10;
+    
+	/** Determines the default number of retries when a generated random pseudonym is already in use. */
+	private static final int DEFAULT_NUMBER_OF_RETRIES = 3;
 
     /** The default character used for padding the pseudonyms to the desired length. */
     public static final String DEFAULT_PADDING_CHARACTER = "0";
@@ -84,6 +92,31 @@ public class AlgorithmDBService {
 
     /** The maximum length a salt value given by the user is allowed to be. */
 	private static final int MAXIMUM_SALT_LENGTH = 256;
+	
+	/**
+	 * Calculate the length the pseudonyms need to be so that the desired number of pseudonyms can be stored.
+	 * 
+	 * @param desiredSize the desired number of pseudonyms that can be generated for the domain in question
+	 * @param desiredSuccessProbability the desired probability of successful pseudonym generation
+	 * @param alphabet the alphabet used for generating the pseudonyms
+	 * @return the minimal length the pseudonyms must have so that the desired amount can be generated
+	 */
+	private int calculatePseudonymLength(Long desiredSize, Double desiredSuccessProbability, String alphabet) {
+		// Collect variables
+		int m = DEFAULT_NUMBER_OF_RETRIES;
+		double T = desiredSuccessProbability;
+		long n = desiredSize;
+		
+		// Calculate the amount of possible pseudonyms needed so that the desired amount of pseudonyms will be 
+		// reasonably probable created: (1-(1-((k-n)/k))^m)>T -->
+		// k > n/((1-T)^(1/m)) --> k = ⌈n/((1-T)^(1/m))⌉
+		double k = Math.ceil(n/Math.pow((1.0-T), (1.0/m)));
+		
+		// Calculate length of the pseudonyms: k = alphabet.length^psn_length
+		double psnLength = Math.ceil(Math.log(k)/Math.log(alphabet.length()));
+		
+		return (int) psnLength;
+	}
     
 	/**
      * Creates an algorithm object in the database.
@@ -96,25 +129,52 @@ public class AlgorithmDBService {
 		// Insert new algorithm object into the database
 		int saltLength = (algorithm.getSaltlength() >= MINIMUM_SALT_LENGTH && algorithm.getSaltlength() <= MAXIMUM_SALT_LENGTH) ? algorithm.getSaltlength() : DEFAULT_SALT_LENGTH;
 		
-		AlgorithmRecord algorithmRecord = dsl.newRecord(ALGORITHM);
-        algorithmRecord.setName(algorithm.getName() != null ? algorithm.getName() : DEFAULT_ALGORITHM_NAME);
-        algorithmRecord.setAlphabet(generateAlphabet(algorithmRecord.getName(), algorithm.getAlphabet()));
-        algorithmRecord.setRandomalgorithmdesiredsize(algorithm.getRandomalgorithmdesiredsize() != null ? algorithm.getRandomalgorithmdesiredsize() : DEFAULT_RANDOM_ALGORITHM_DESIRED_SIZE);
-        algorithmRecord.setRandomalgorithmdesiredsuccessprobability(algorithm.getRandomalgorithmdesiredsuccessprobability() != null ? algorithm.getRandomalgorithmdesiredsuccessprobability() : DEFAULT_RANDOM_ALGORITHM_DESIRED_SUCCESS_PROBABILITY);
-        algorithmRecord.setConsecutivevaluecounter(algorithm.getConsecutivevaluecounter() != null ? algorithm.getConsecutivevaluecounter() : DEFAULT_CONSECUTIVE_VALUE_COUNTER);
-		algorithmRecord.setPseudonymlength(algorithm.getPseudonymlength() != null ? algorithm.getPseudonymlength() : DEFAULT_PSEUDONYM_LENGTH);
-		algorithmRecord.setPaddingcharacter(algorithm.getPaddingcharacter() != null ? algorithm.getPaddingcharacter() : DEFAULT_PADDING_CHARACTER);
-		algorithmRecord.setAddcheckdigit(algorithm.getAddcheckdigit() != null ? algorithm.getAddcheckdigit() : DEFAULT_ADD_CHECK_DIGIT);
-		algorithmRecord.setLengthincludescheckdigit(algorithm.getLengthincludescheckdigit() != null ? algorithm.getLengthincludescheckdigit() : DEFAULT_LENGTH_INCLUDES_CHECK_DIGIT);
-		algorithmRecord.setSalt(sanitizeOrGenerateSalt(algorithm.getSalt(), saltLength));
-		algorithmRecord.setSaltlength(saltLength);
-	
+		AlgorithmRecord algoRecord = dsl.newRecord(ALGORITHM);
+        algoRecord.setName(algorithm.getName() != null ? algorithm.getName() : DEFAULT_ALGORITHM_NAME);
+        algoRecord.setAlphabet(Utility.generateAlphabet(algoRecord.getName(), algorithm.getAlphabet()));
+        algoRecord.setRandomalgorithmdesiredsize(algorithm.getRandomalgorithmdesiredsize() != null && algorithm.getRandomalgorithmdesiredsize() > 1 ? algorithm.getRandomalgorithmdesiredsize() : DEFAULT_RANDOM_ALGORITHM_DESIRED_SIZE);
+        algoRecord.setRandomalgorithmdesiredsuccessprobability(algorithm.getRandomalgorithmdesiredsuccessprobability() != null && algorithm.getRandomalgorithmdesiredsuccessprobability() > 0 ? algorithm.getRandomalgorithmdesiredsuccessprobability() : DEFAULT_RANDOM_ALGORITHM_DESIRED_SUCCESS_PROBABILITY);
+        algoRecord.setConsecutivevaluecounter(algorithm.getConsecutivevaluecounter() != null && algorithm.getConsecutivevaluecounter() > 0 ? algorithm.getConsecutivevaluecounter() : DEFAULT_CONSECUTIVE_VALUE_COUNTER);
+		algoRecord.setPseudonymlength(algorithm.getPseudonymlength() != null && algorithm.getPseudonymlength() >= 4  ? algorithm.getPseudonymlength() : DEFAULT_PSEUDONYM_LENGTH);
+		algoRecord.setPaddingcharacter(algorithm.getPaddingcharacter() != null ? algorithm.getPaddingcharacter() : DEFAULT_PADDING_CHARACTER);
+		algoRecord.setAddcheckdigit(algorithm.getAddcheckdigit() != null ? algorithm.getAddcheckdigit() : DEFAULT_ADD_CHECK_DIGIT);
+		algoRecord.setLengthincludescheckdigit(algorithm.getLengthincludescheckdigit() != null ? algorithm.getLengthincludescheckdigit() : DEFAULT_LENGTH_INCLUDES_CHECK_DIGIT);
+		algoRecord.setSalt(sanitizeOrGenerateSalt(algorithm.getSalt(), saltLength));
+		algoRecord.setSaltlength(saltLength);
+		
+		// Calculate pseudonym length, if a randomness algorithm is used
+		if (algorithm.getName().trim().toUpperCase().startsWith("RANDOM")) {
+			// Check if the parameters for the algorithm are the default ones 
+			if (algorithm.getRandomalgorithmdesiredsize() == DEFAULT_RANDOM_ALGORITHM_DESIRED_SIZE 
+					&& algorithm.getRandomalgorithmdesiredsuccessprobability() == DEFAULT_RANDOM_ALGORITHM_DESIRED_SUCCESS_PROBABILITY 
+					&& algorithm.getAlphabet() == DEFAULT_RANDOM_ALGORITHM_ALPHABET) {
+				// Defaults are used --> use default length
+				algoRecord.setPseudonymlength(DEFAULT_PSEUDONYM_LENGTH_RND);
+			} else {
+				// Not all parameters are defaults --> calculate the length
+				int calculatedLength = calculatePseudonymLength(algoRecord.getRandomalgorithmdesiredsize(), algoRecord.getRandomalgorithmdesiredsuccessprobability(), algoRecord.getAlphabet());
+				
+				// Use the calculated length if it is longer than the user-given one
+				if (algorithm.getPseudonymlength() != null && calculatedLength < algorithm.getPseudonymlength()) {
+					algoRecord.setPseudonymlength(algorithm.getPseudonymlength());
+				} else {
+					log.debug("Used automatically calculated pseudonym length.");
+					algoRecord.setPseudonymlength(calculatedLength);
+				}
+			}
+		}
+		
     	// Store and determine success
-        int wasStored = algorithmRecord.insert();
-        log.debug("Creating the algorithm object \"" + algorithm.getName() + "\" " + ((wasStored == 1) ? "succeeded." : "failed."));
+        int wasStored = 0;
+        try {
+        	wasStored = algoRecord.insert();
+        } catch (Exception e) {
+        	log.debug("Failed to create algorithm: " + e.getMessage());
+        }
         
         // Return the new algorithm ID
-        return wasStored == 1 ? algorithmRecord.getId() : null;
+        log.debug("Creating the algorithm object \"" + algorithm.getName() + "\" " + ((wasStored == 1) ? "succeeded." : "failed."));
+        return wasStored == 1 ? algoRecord.getId() : null;
     }
     
 	/**
@@ -162,66 +222,9 @@ public class AlgorithmDBService {
     		throw new UnexpectedResultSizeException(1, deletedEntries);
     	}
     	
+    	log.debug("Successfully deleted algorithm with ID: " + ID);
     	return true;
     }
-	
-	/**
-	 * Method to generate the alphabet depending on the given algorithm.
-	 * 
-	 * @param algorithm the user-given algorithm
-	 * @param alphabet the alphabet provided by the user, if available
-	 * @return the alphabet that matches the algorithm as a String
-	 */
-	private String generateAlphabet(String algorithm, String alphabet) {
-		// The possible alphabets
-		String HEXADECIMAL_ALPHABET = "ABCDEF0123456789";
-		String NUMBERS_ONLY_ALPHABET = "0123456789";
-		String LETTERS_ONLY_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		String LETTERS_AND_NUMBERS_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-		String LETTERS_AND_NUMBERS_WITHOUT_BIOS_ALPHABET = "ACDEFGHJKLMNPQRTUVWXYZ0123456789";
-		
-		// If nothing was provided, return the default alphabet
-		if (algorithm == null || algorithm.isBlank()) {
-			return DEFAULT_ALPHABET;
-		}
-		
-		// Generate alphabet depending on the used algorithm
-		switch (algorithm.trim().toUpperCase()) {
-	        case "MD5":
-	        case "SHA1":
-	        case "SHA2":
-	        case "SHA3":
-	        case "BLAKE3":
-	        case "XXHASH": {
-	        	return HEXADECIMAL_ALPHABET;
-	        }
-	        case "CONSECUTIVE":
-	        case "RANDOM_NUM": {
-	        	return NUMBERS_ONLY_ALPHABET;
-	        }
-	        case "RANDOM": {
-	        	// If "RANDOM" was selected, use the user-provided alphabet or A-Z0-9 if nothing was provided
-	        	return (alphabet != null && !alphabet.isBlank()) ? alphabet : LETTERS_AND_NUMBERS_ALPHABET;
-	        }
-	        case "RANDOM_HEX": {
-	        	return HEXADECIMAL_ALPHABET;
-	        }
-	        case "RANDOM_LET": {
-	        	return LETTERS_ONLY_ALPHABET;
-	        }
-	        case "RANDOM_SYM": {
-	        	return LETTERS_AND_NUMBERS_ALPHABET;
-	        }
-	        case "RANDOM_SYM_BIOS": {
-	        	return LETTERS_AND_NUMBERS_WITHOUT_BIOS_ALPHABET;
-	        }
-	        default: {
-	            // Unrecognized algorithm
-	            log.debug("The pseudonymization algorithm that was requested (" + algorithm + ") wasn't recognized.");
-	            return DEFAULT_ALPHABET;
-	        }
-		}
-	}
     
     /**
      * Retrieves the algorithm object based on its unique ID.
@@ -285,16 +288,16 @@ public class AlgorithmDBService {
         if (alphabet != null) {
             condition = condition.and(ALGORITHM.ALPHABET.eq(alphabet));
         }
-        if (randomAlgoDesiredSize != null) {
+        if (randomAlgoDesiredSize != null && randomAlgoDesiredSize > 1) {
             condition = condition.and(ALGORITHM.RANDOMALGORITHMDESIREDSIZE.eq(randomAlgoDesiredSize));
         }
-        if (randomAlgoDesiredSuccessProbability != null) {
+        if (randomAlgoDesiredSuccessProbability != null && randomAlgoDesiredSuccessProbability > 0) {
             condition = condition.and(ALGORITHM.RANDOMALGORITHMDESIREDSUCCESSPROBABILITY.eq(randomAlgoDesiredSuccessProbability));
         }
-        if (pseudonymLength != null) {
+        if (pseudonymLength != null && pseudonymLength > 0) {
             condition = condition.and(ALGORITHM.PSEUDONYMLENGTH.eq(pseudonymLength));
         }
-        if (paddingChar != null) {
+        if (paddingChar != null && !paddingChar.isBlank()) {
             condition = condition.and(ALGORITHM.PADDINGCHARACTER.eq(paddingChar));
         }
         if (addCheckDigit != null) {
@@ -303,10 +306,10 @@ public class AlgorithmDBService {
         if (lengthIncludesCheckDigit != null) {
             condition = condition.and(ALGORITHM.LENGTHINCLUDESCHECKDIGIT.eq(lengthIncludesCheckDigit));
         }
-        if (salt != null) {
+        if (salt != null && !salt.isBlank()) {
             condition = condition.and(ALGORITHM.SALT.eq(salt));
         }
-        if (saltLength != null) {
+        if (saltLength != null && saltLength > 0) {
             condition = condition.and(ALGORITHM.SALTLENGTH.eq(saltLength));
         }
 
@@ -346,27 +349,30 @@ public class AlgorithmDBService {
     	
     	try {
     		id = dsl.select(ALGORITHM.ID)
-		        .from(ALGORITHM)
-		        .where(
-		            ALGORITHM.NAME.eq(algorithm.getName())
-		            .and(ALGORITHM.ALPHABET.eq(algorithm.getAlphabet()))
-		            .and(ALGORITHM.RANDOMALGORITHMDESIREDSIZE.eq(algorithm.getRandomalgorithmdesiredsize()))
-		            .and(ALGORITHM.RANDOMALGORITHMDESIREDSUCCESSPROBABILITY.eq(algorithm.getRandomalgorithmdesiredsuccessprobability()))
-		            .and(ALGORITHM.CONSECUTIVEVALUECOUNTER.eq(algorithm.getConsecutivevaluecounter()))
-		            .and(ALGORITHM.PSEUDONYMLENGTH.eq(algorithm.getPseudonymlength()))
-		            .and(ALGORITHM.PADDINGCHARACTER.eq(algorithm.getPaddingcharacter()))
-		            .and(ALGORITHM.ADDCHECKDIGIT.eq(algorithm.getAddcheckdigit()))
-		            .and(ALGORITHM.LENGTHINCLUDESCHECKDIGIT.eq(algorithm.getLengthincludescheckdigit()))
-		            .and(ALGORITHM.SALT.eq(algorithm.getSalt()))
-		            .and(ALGORITHM.SALTLENGTH.eq(algorithm.getSaltlength()))
-		        )
-		        .fetchOneInto(Integer.class); // returns null if no match is found
+    		        .from(ALGORITHM)
+    		        .where(
+    		            ALGORITHM.NAME.eq(algorithm.getName())
+    		            .and(ALGORITHM.ALPHABET.eq(algorithm.getAlphabet()))
+    		            .and(ALGORITHM.RANDOMALGORITHMDESIREDSIZE.eq(algorithm.getRandomalgorithmdesiredsize()))
+    		            .and(ALGORITHM.RANDOMALGORITHMDESIREDSUCCESSPROBABILITY.eq(algorithm.getRandomalgorithmdesiredsuccessprobability()))
+    		            .and(ALGORITHM.CONSECUTIVEVALUECOUNTER.eq(algorithm.getConsecutivevaluecounter()))
+    		            .and(ALGORITHM.PSEUDONYMLENGTH.eq(algorithm.getPseudonymlength()))
+    		            .and(ALGORITHM.PADDINGCHARACTER.eq(algorithm.getPaddingcharacter()))
+    		            .and(ALGORITHM.ADDCHECKDIGIT.eq(algorithm.getAddcheckdigit()))
+    		            .and(ALGORITHM.LENGTHINCLUDESCHECKDIGIT.eq(algorithm.getLengthincludescheckdigit()))
+    		            .and(ALGORITHM.SALT.eq(algorithm.getSalt()))
+    		            .and(ALGORITHM.SALTLENGTH.eq(algorithm.getSaltlength()))
+    		        )
+    		        .fetchOneInto(Integer.class); // returns null if no match is found
     	} catch (TooManyRowsException e) {
     	    log.debug("Too many entries found while searching for an algorithm object that should be unique: " + e.getMessage());
+    	    return null;
     	} catch (MappingException f) {
     		log.debug("Could not convert algorithm-id-search result into an integer: " + f.getMessage());
+    		return null;
     	} catch (DataAccessException g) {
     	    log.debug("Could not retrieve the algorithm ID from database: " + g.getMessage());
+    	    return null;
     	}
     	
     	return id;
@@ -379,6 +385,7 @@ public class AlgorithmDBService {
      * @param algorithmID the algorithm's ID
      * @return the number of person objects using the algorithm
      */
+    @Transactional
     public int getNumberOfPersonsUsingAlgorithm(int algorithmID) {
     	return dsl.fetchCount(PERSON, PERSON.IDENTIFIERALGORITHM.eq(algorithmID));
     }
@@ -389,7 +396,7 @@ public class AlgorithmDBService {
      * @return {@code true} if the salt value is not empty and within the right length-constraints, {@code false} otherwise
      */
     private boolean isSaltValueValid(String salt) {
-    	return salt != null && !salt.isBlank() && salt.length() >= MINIMUM_SALT_LENGTH && salt.length() <= MAXIMUM_SALT_LENGTH;
+    	return Assertion.isNotNullOrEmpty(salt) && salt.length() >= MINIMUM_SALT_LENGTH && salt.length() <= MAXIMUM_SALT_LENGTH;
     }
     
     /**
@@ -401,7 +408,7 @@ public class AlgorithmDBService {
      */
     private String sanitizeOrGenerateSalt(String salt, int saltLength) {
     	// Create a salt if not already given, or if its not a valid value
-        if (isSaltValueValid(salt)) {
+        if (!isSaltValueValid(salt)) {
         	String saltAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_+";
 	        SecureRandom rnd = new SecureRandom();
 	        StringBuilder sb = new StringBuilder(saltLength);
@@ -462,5 +469,45 @@ public class AlgorithmDBService {
         
         // Return the algorithm ID when successful
         return wasStored == 1 ? algorithmRecord.getId() : null;
+    }
+    
+    /**
+     * Method to update only the counter value of an algorithm.
+     * 
+     * @param counter the new counter value
+     * @param algorithmID the ID of the algorithm-object for which the counter should be updated
+     * @return {@code true}, when the update was successful, {@code false} otherwise.
+     */
+    @Transactional
+    public boolean updateCounter(Long counter, int algorithmID) {
+    	// Fetch the existing algorithm record
+        AlgorithmRecord algorithmRecord;
+        try {
+            algorithmRecord = dsl.fetchOne(ALGORITHM, ALGORITHM.ID.eq(algorithmID));
+        } catch (DataAccessException e) {
+            log.debug("Retrieving the algorithm record failed (ID: " + algorithmID + ").");
+            return false;
+        }
+
+        // Check if the algorithm record was found
+        if (algorithmRecord == null) {
+            log.debug("The algorithm record was not found (ID: " + algorithmID + ").");
+            return false;
+        }
+
+        // Validate and update consecutive value counter
+        if (counter != null && counter >= 1) {
+            algorithmRecord.setConsecutivevaluecounter(counter);
+        } else {
+            log.debug("Invalid consecutive value counter provided: " + counter);
+            return false;
+        }
+
+        // Store and determine success
+        int wasStored = algorithmRecord.update();
+        log.debug("Updating consecutive value counter for algorithm \"" + algorithmRecord.getName() + "\" (ID: " + algorithmRecord.getId() + ") " + ((wasStored == 1) ? "succeeded." : "failed."));
+
+        // Return the algorithm ID when successful
+        return wasStored == 1 ? true : false;
     }
 }

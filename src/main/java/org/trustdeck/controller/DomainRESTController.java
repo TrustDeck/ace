@@ -165,7 +165,7 @@ public class DomainRESTController {
         Boolean enforceStartDateValidity = domainDTO.getEnforceStartDateValidity();
         Boolean enforceEndDateValidity = domainDTO.getEnforceEndDateValidity();
         String algorithm = domainDTO.getAlgorithm();
-        String alphabet = generateAlphabet(domainDTO.getAlgorithm(), domainDTO.getAlphabet());
+        String alphabet = Utility.generateAlphabet(domainDTO.getAlgorithm(), domainDTO.getAlphabet());
         Long randomAlgorithmDesiredSize = domainDTO.getRandomAlgorithmDesiredSize();
         Double randomAlgorithmDesiredSuccessProbability = domainDTO.getRandomAlgorithmDesiredSuccessProbability();
         Long consecVal = domainDTO.getConsecutiveValueCounter();
@@ -510,7 +510,7 @@ public class DomainRESTController {
         Timestamp validTo = domainDTO.getValidTo() != null ? Timestamp.valueOf(domainDTO.getValidTo()) : null;
         Long validityTime = Utility.validityTimeToSeconds(domainDTO.getValidityTime());
         String algorithm = domainDTO.getAlgorithm();
-        String alphabet = generateAlphabet(algorithm, null);
+        String alphabet = Utility.generateAlphabet(algorithm, null);
         Boolean multiplePsnAllowed = domainDTO.getMultiplePsnAllowed();
         String description = domainDTO.getDescription();
         String superDomainName = domainDTO.getSuperDomainName();
@@ -1017,7 +1017,7 @@ public class DomainRESTController {
         Boolean enforceStartDateValidity = domainDTO.getEnforceStartDateValidity();
         Boolean enforceEndDateValidity = domainDTO.getEnforceEndDateValidity();
         String algorithm = domainDTO.getAlgorithm();
-        String alphabet = generateAlphabet(algorithm, null);
+        String alphabet = Utility.generateAlphabet(algorithm, null);
         Long randomAlgorithmDesiredSize = domainDTO.getRandomAlgorithmDesiredSize();
         Double randomAlgorithmDesiredSuccessProbability = domainDTO.getRandomAlgorithmDesiredSuccessProbability();
         Boolean multiplePsnAllowed = domainDTO.getMultiplePsnAllowed();
@@ -1300,64 +1300,6 @@ public class DomainRESTController {
 		double psnLength = Math.ceil(Math.log(k)/Math.log(alphabet.length()));
 		
 		return (int) psnLength;
-	}
-	
-	/**
-	 * Method to generate the alphabet depending on the given algorithm.
-	 * 
-	 * @param algorithm the user-given algorithm
-	 * @param alphabet the alphabet provided by the user, if available
-	 * @return the alphabet that matches the algorithm as a String
-	 */
-	private String generateAlphabet(String algorithm, String alphabet) {
-		// The possible alphabets
-		String HEXADECIMAL_ALPHABET = "ABCDEF0123456789";
-		String NUMBERS_ONLY_ALPHABET = "0123456789";
-		String LETTERS_ONLY_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-		String LETTERS_AND_NUMBERS_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-		String LETTERS_AND_NUMBERS_WITHOUT_BIOS_ALPHABET = "ACDEFGHJKLMNPQRTUVWXYZ0123456789";
-		
-		// If nothing was provided, return the default alphabet
-		if (algorithm == null) {
-			return DEFAULT_PSEUDONYMIZATION_ALPHABET;
-		}
-		
-		// Generate alphabet depending on the used algorithm
-		switch (algorithm.trim().toUpperCase()) {
-	        case "MD5":
-	        case "SHA1":
-	        case "SHA2":
-	        case "SHA3":
-	        case "BLAKE3":
-	        case "XXHASH": {
-	        	return HEXADECIMAL_ALPHABET;
-	        }
-	        case "CONSECUTIVE":
-	        case "RANDOM_NUM": {
-	        	return NUMBERS_ONLY_ALPHABET;
-	        }
-	        case "RANDOM": {
-	        	// If "RANDOM" was selected, use the user-provided alphabet or A-Z0-9 if nothing was provided
-	        	return (alphabet != null && !alphabet.isBlank()) ? alphabet : LETTERS_AND_NUMBERS_ALPHABET;
-	        }
-	        case "RANDOM_HEX": {
-	        	return HEXADECIMAL_ALPHABET;
-	        }
-	        case "RANDOM_LET": {
-	        	return LETTERS_ONLY_ALPHABET;
-	        }
-	        case "RANDOM_SYM": {
-	        	return LETTERS_AND_NUMBERS_ALPHABET;
-	        }
-	        case "RANDOM_SYM_BIOS": {
-	        	return LETTERS_AND_NUMBERS_WITHOUT_BIOS_ALPHABET;
-	        }
-	        default: {
-	            // Unrecognized algorithm
-	            log.debug("The pseudonymization algorithm that was requested (" + algorithm + ") wasn't recognized.");
-	            return DEFAULT_PSEUDONYMIZATION_ALPHABET;
-	        }
-		}
 	}
 
     /**

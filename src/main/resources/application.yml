@@ -94,3 +94,8 @@ app:
     - delete-table
     - read-table-storage
     - delete-roles
+    - person-create
+    - person-read
+    - person-update
+    - person-delete
+    - person-search
