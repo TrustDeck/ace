@@ -29,7 +29,7 @@ import org.trustdeck.jooq.generated.tables.interfaces.IPerson;
     name = "person",
     schema = "public",
     uniqueConstraints = {
-        @UniqueConstraint(name = "person_firstname_lastname_birthname_administrativegender_da_key", columnNames = { "firstname", "lastname", "birthname", "administrativegender", "dateofbirth", "street", "postalcode", "city", "country" }),
+        @UniqueConstraint(name = "person_firstname_lastname_administrativegender_dateofbirth__key", columnNames = { "firstname", "lastname", "administrativegender", "dateofbirth", "street", "postalcode", "city", "country" }),
         @UniqueConstraint(name = "person_identifier_idtype_key", columnNames = { "identifier", "idtype" })
     },
     indexes = {

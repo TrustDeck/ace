@@ -174,7 +174,7 @@ public class Person extends TableImpl<PersonRecord> {
 
     @Override
     public List<UniqueKey<PersonRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.PERSON_FIRSTNAME_LASTNAME_BIRTHNAME_ADMINISTRATIVEGENDER_DA_KEY, Keys.PERSON_IDENTIFIER_IDTYPE_KEY);
+        return Arrays.asList(Keys.PERSON_FIRSTNAME_LASTNAME_ADMINISTRATIVEGENDER_DATEOFBIRTH__KEY, Keys.PERSON_IDENTIFIER_IDTYPE_KEY);
     }
 
     @Override
