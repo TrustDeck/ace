@@ -20,6 +20,8 @@ package org.trustdeck.utils;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,8 +32,12 @@ import java.util.Map;
  *
  * @author Armin Müller & Eric Wündisch
  */
+@Slf4j
 @Component
 public class Utility {
+    
+    /** The default alphabet (A-Z0-9) used for the pseudonymization process. */
+    private static final String DEFAULT_PSEUDONYMIZATION_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	
 	/**
 	 * This method processes the given String, computes
@@ -175,5 +181,63 @@ public class Utility {
 
 		// Return null if no matching path is found
 		return null;
+	}
+	
+	/**
+	 * Method to generate the alphabet depending on the given algorithm.
+	 * 
+	 * @param algorithm the user-given algorithm
+	 * @param alphabet the alphabet provided by the user, if available
+	 * @return the alphabet that matches the algorithm as a String
+	 */
+	public static String generateAlphabet(String algorithm, String alphabet) {
+		// The possible alphabets
+		String HEXADECIMAL_ALPHABET = "ABCDEF0123456789";
+		String NUMBERS_ONLY_ALPHABET = "0123456789";
+		String LETTERS_ONLY_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		String LETTERS_AND_NUMBERS_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		String LETTERS_AND_NUMBERS_WITHOUT_BIOS_ALPHABET = "ACDEFGHJKLMNPQRTUVWXYZ0123456789";
+		
+		// If nothing was provided, return the default alphabet
+		if (algorithm == null) {
+			return DEFAULT_PSEUDONYMIZATION_ALPHABET;
+		}
+		
+		// Generate alphabet depending on the used algorithm
+		switch (algorithm.trim().toUpperCase()) {
+	        case "MD5":
+	        case "SHA1":
+	        case "SHA2":
+	        case "SHA3":
+	        case "BLAKE3":
+	        case "XXHASH": {
+	        	return HEXADECIMAL_ALPHABET;
+	        }
+	        case "CONSECUTIVE":
+	        case "RANDOM_NUM": {
+	        	return NUMBERS_ONLY_ALPHABET;
+	        }
+	        case "RANDOM": {
+	        	// If "RANDOM" was selected, use the user-provided alphabet or A-Z0-9 if nothing was provided
+	        	return (alphabet != null && !alphabet.isBlank()) ? alphabet : LETTERS_AND_NUMBERS_ALPHABET;
+	        }
+	        case "RANDOM_HEX": {
+	        	return HEXADECIMAL_ALPHABET;
+	        }
+	        case "RANDOM_LET": {
+	        	return LETTERS_ONLY_ALPHABET;
+	        }
+	        case "RANDOM_SYM": {
+	        	return LETTERS_AND_NUMBERS_ALPHABET;
+	        }
+	        case "RANDOM_SYM_BIOS": {
+	        	return LETTERS_AND_NUMBERS_WITHOUT_BIOS_ALPHABET;
+	        }
+	        default: {
+	            // Unrecognized algorithm
+	            log.debug("The pseudonymization algorithm that was requested (" + algorithm + ") wasn't recognized.");
+	            return DEFAULT_PSEUDONYMIZATION_ALPHABET;
+	        }
+		}
 	}
 }

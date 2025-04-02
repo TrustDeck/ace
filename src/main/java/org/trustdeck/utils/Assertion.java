@@ -65,6 +65,16 @@ public class Assertion {
     }
 
     /**
+     * Method that checks whether the given String <b>is</b> null or empty.
+     *
+     * @param value the String to check
+     * @return {@code true} only if the passed object is a string and null or empty, {@code false} otherwise.
+     */
+    public static Boolean isNullOrEmpty(String value) {
+        return value == null || value.isBlank();
+    }
+
+    /**
      * Method that checks whether the given String is <b>not</b> null nor empty.
      *
      * @param value the String to check
