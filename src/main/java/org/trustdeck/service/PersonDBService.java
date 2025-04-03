@@ -279,20 +279,34 @@ public class PersonDBService {
     @Transactional
     public List<Person> searchPersons(String query, HttpServletRequest request) {
         List<Person> persons = null;
+        
+        // Split so that multi-word searches are possible
+        String[] queryParts = query.split(" ");
+        
+        // Build query, start with a neutral condition
+        Condition condition = DSL.trueCondition();
+
+        for (String part : queryParts) {
+            String pattern = "%" + part + "%";
+            Condition partCondition = PERSON.LASTNAME.likeIgnoreCase(pattern)
+                .or(PERSON.FIRSTNAME.likeIgnoreCase(pattern))
+                .or(PERSON.BIRTHNAME.likeIgnoreCase(pattern))
+                .or(DSL.toChar(PERSON.DATEOFBIRTH, "YYYY-MM-DD").likeIgnoreCase(pattern))
+                .or(PERSON.STREET.likeIgnoreCase(pattern))
+                .or(PERSON.POSTALCODE.likeIgnoreCase(pattern))
+                .or(PERSON.CITY.likeIgnoreCase(pattern))
+                .or(PERSON.COUNTRY.likeIgnoreCase(pattern))
+                .or(PERSON.IDENTIFIER.likeIgnoreCase(pattern))
+                .or(PERSON.IDTYPE.likeIgnoreCase(pattern));
+
+            condition = condition.and(partCondition);
+        }
+
         try {
-        	persons = dsl.selectFrom(PERSON)
-        	    .where(PERSON.LASTNAME.likeIgnoreCase("%" + query + "%")
-        	        .or(PERSON.FIRSTNAME.likeIgnoreCase("%" + query + "%"))
-        	        .or(PERSON.BIRTHNAME.likeIgnoreCase("%" + query + "%"))
-        	        .or(DSL.toChar(PERSON.DATEOFBIRTH, "YYYY-MM-DD").likeIgnoreCase("%" + query + "%")))
-        	    	.or(PERSON.STREET.likeIgnoreCase("%" + query + "%"))
-        	    	.or(PERSON.POSTALCODE.likeIgnoreCase("%" + query + "%"))
-        	    	.or(PERSON.CITY.likeIgnoreCase("%" + query + "%"))
-        	    	.or(PERSON.COUNTRY.likeIgnoreCase("%" + query + "%"))
-        	    	.or(PERSON.IDENTIFIER.likeIgnoreCase("%" + query + "%"))
-        	    	.or(PERSON.IDTYPE.likeIgnoreCase("%" + query + "%"))
-    	    	.limit(DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS)
-        	    .fetchInto(Person.class);
+            persons = dsl.selectFrom(PERSON)
+                         .where(condition)
+                         .limit(DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS)
+                         .fetchInto(Person.class);
         } catch (MappingException e) {
         	log.debug("Could not map the person search result into the Person-POJO.");
         } catch (DataAccessException f) {
