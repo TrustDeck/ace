@@ -39,6 +39,7 @@ import org.trustdeck.jooq.generated.tables.pojos.Person;
 import org.trustdeck.jooq.generated.tables.records.PersonRecord;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static org.trustdeck.jooq.generated.Tables.PERSON;
@@ -59,6 +60,10 @@ public class PersonDBService {
 	/** Enables the access to the algorithm specific database access methods. */
     @Autowired
 	private AlgorithmDBService algorithmDBService;
+    
+    /** The default number of maximum allowed query results. If a query would result in more records, the surplus is omitted. */
+    @Getter
+    private static final int DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS = 20;
 	
 	/**
      * Method to insert a new person into the database table.
@@ -103,6 +108,7 @@ public class PersonDBService {
 	        }
 	        
 	        // Update person object after successful insertion
+	        person.setId(personRecord.getId());
 	        person.setIdentifier(personRecord.getIdentifier());
 	        person.setIdentifieralgorithm(algorithmID);
 	    } catch (DataAccessException e) {
@@ -285,6 +291,7 @@ public class PersonDBService {
         	    	.or(PERSON.COUNTRY.likeIgnoreCase("%" + query + "%"))
         	    	.or(PERSON.IDENTIFIER.likeIgnoreCase("%" + query + "%"))
         	    	.or(PERSON.IDTYPE.likeIgnoreCase("%" + query + "%"))
+    	    	.limit(DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS)
         	    .fetchInto(Person.class);
         } catch (MappingException e) {
         	log.debug("Could not map the person search result into the Person-POJO.");

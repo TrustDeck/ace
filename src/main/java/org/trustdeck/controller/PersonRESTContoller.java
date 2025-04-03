@@ -427,6 +427,11 @@ public class PersonRESTContoller {
     			resultDTOs.add(new PersonDTO().assignPojoValues(p));
     		}
     		
+    		// Notify, that we allow a maximum of PersonDBService.getDEFAULT_MAX_NUMBER_OF_QUERY_RESULTS() results
+    		if (resultDTOs.size() == PersonDBService.getDEFAULT_MAX_NUMBER_OF_QUERY_RESULTS()) {
+    			log.debug("The query returned " + PersonDBService.getDEFAULT_MAX_NUMBER_OF_QUERY_RESULTS() + " results. If there are further matching records in the database, these were deliberately omitted.");
+    		}
+    		
     		log.debug("The search for persons with query \"" + query + "\" returned " + resultDTOs.size() + (resultDTOs.size() == 1 ? " result." : " results."));
     		return responseService.ok(responseContentType, resultDTOs);
     	}
