@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 17.3 (Debian 17.3-3.pgdg120+1)
--- Dumped by pg_dump version 17.3 (Debian 17.3-3.pgdg120+1)
+-- Dumped from database version 17.4 (Debian 17.4-1.pgdg120+2)
+-- Dumped by pg_dump version 17.4 (Debian 17.4-1.pgdg120+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -20,6 +20,7 @@ SET row_security = off;
 \connect postgres
 
 DROP DATABASE IF EXISTS trustdeck WITH (FORCE);
+
 --
 -- Name: trustdeck; Type: DATABASE; Schema: -; Owner: trustdeck-manager
 --
@@ -46,6 +47,50 @@ SET row_security = off;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: algorithm; Type: TABLE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE TABLE public.algorithm (
+    id integer NOT NULL,
+    name text NOT NULL,
+    alphabet text NOT NULL,
+    randomalgorithmdesiredsize bigint NOT NULL,
+    randomalgorithmdesiredsuccessprobability double precision NOT NULL,
+    consecutivevaluecounter bigint NOT NULL,
+    pseudonymlength integer NOT NULL,
+    paddingcharacter character(1) NOT NULL,
+    addcheckdigit boolean NOT NULL,
+    lengthincludescheckdigit boolean NOT NULL,
+    salt text NOT NULL,
+    saltlength integer NOT NULL
+);
+
+
+ALTER TABLE public.algorithm OWNER TO "trustdeck-manager";
+
+--
+-- Name: algorithm_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE SEQUENCE public.algorithm_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.algorithm_id_seq OWNER TO "trustdeck-manager";
+
+--
+-- Name: algorithm_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER SEQUENCE public.algorithm_id_seq OWNED BY public.algorithm.id;
+
 
 --
 -- Name: auditevent; Type: TABLE; Schema: public; Owner: trustdeck-manager
@@ -151,6 +196,51 @@ ALTER SEQUENCE public.domain_id_seq OWNED BY public.domain.id;
 
 
 --
+-- Name: person; Type: TABLE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE TABLE public.person (
+    id integer NOT NULL,
+    firstname character varying(255) NOT NULL,
+    lastname character varying(255) NOT NULL,
+    birthname character varying(255),
+    administrativegender character(1) NOT NULL,
+    dateofbirth date,
+    street character varying(255),
+    postalcode character varying(20),
+    city character varying(255),
+    country character varying(100),
+    identifier text NOT NULL,
+    idtype text NOT NULL,
+    identifieralgorithm integer NOT NULL
+);
+
+
+ALTER TABLE public.person OWNER TO "trustdeck-manager";
+
+--
+-- Name: person_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE SEQUENCE public.person_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.person_id_seq OWNER TO "trustdeck-manager";
+
+--
+-- Name: person_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER SEQUENCE public.person_id_seq OWNED BY public.person.id;
+
+
+--
 -- Name: pseudonym; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
@@ -191,6 +281,13 @@ ALTER SEQUENCE public.pseudonym_id_seq OWNED BY public.pseudonym.id;
 
 
 --
+-- Name: algorithm id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.algorithm ALTER COLUMN id SET DEFAULT nextval('public.algorithm_id_seq'::regclass);
+
+
+--
 -- Name: auditevent id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
 --
 
@@ -205,6 +302,13 @@ ALTER TABLE ONLY public.domain ALTER COLUMN id SET DEFAULT nextval('public.domai
 
 
 --
+-- Name: person id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.person ALTER COLUMN id SET DEFAULT nextval('public.person_id_seq'::regclass);
+
+
+--
 -- Name: pseudonym id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
 --
 
@@ -212,42 +316,19 @@ ALTER TABLE ONLY public.pseudonym ALTER COLUMN id SET DEFAULT nextval('public.ps
 
 
 --
--- Data for Name: auditevent; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
+-- Name: algorithm algorithm_name_alphabet_randomalgorithmdesiredsize_randomal_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
-
-
---
--- Data for Name: domain; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
---
-
+ALTER TABLE ONLY public.algorithm
+    ADD CONSTRAINT algorithm_name_alphabet_randomalgorithmdesiredsize_randomal_key UNIQUE (name, alphabet, randomalgorithmdesiredsize, randomalgorithmdesiredsuccessprobability, pseudonymlength, paddingcharacter, addcheckdigit, lengthincludescheckdigit);
 
 
 --
--- Data for Name: pseudonym; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
+-- Name: algorithm algorithm_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
-
-
---
--- Name: auditevent_id_seq; Type: SEQUENCE SET; Schema: public; Owner: trustdeck-manager
---
-
-SELECT pg_catalog.setval('public.auditevent_id_seq', 1, false);
-
-
---
--- Name: domain_id_seq; Type: SEQUENCE SET; Schema: public; Owner: trustdeck-manager
---
-
-SELECT pg_catalog.setval('public.domain_id_seq', 1, false);
-
-
---
--- Name: pseudonym_id_seq; Type: SEQUENCE SET; Schema: public; Owner: trustdeck-manager
---
-
-SELECT pg_catalog.setval('public.pseudonym_id_seq', 1, false);
+ALTER TABLE ONLY public.algorithm
+    ADD CONSTRAINT algorithm_pkey PRIMARY KEY (id);
 
 
 --
@@ -275,6 +356,30 @@ ALTER TABLE ONLY public.domain
 
 
 --
+-- Name: person person_firstname_lastname_administrativegender_dateofbirth__key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.person
+    ADD CONSTRAINT person_firstname_lastname_administrativegender_dateofbirth__key UNIQUE (firstname, lastname, administrativegender, dateofbirth, street, postalcode, city, country);
+
+
+--
+-- Name: person person_identifier_idtype_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.person
+    ADD CONSTRAINT person_identifier_idtype_key UNIQUE (identifier, idtype);
+
+
+--
+-- Name: person person_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.person
+    ADD CONSTRAINT person_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: pseudonym pseudonym_identifier_idtype_domainid_pseudonym_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
@@ -296,6 +401,13 @@ ALTER TABLE ONLY public.pseudonym
 
 ALTER TABLE ONLY public.pseudonym
     ADD CONSTRAINT pseudonym_psn_domainid_key UNIQUE (domainid, pseudonym);
+
+
+--
+-- Name: algorithm_name_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX algorithm_name_uindex ON public.algorithm USING btree (name);
 
 
 --
@@ -327,11 +439,75 @@ CREATE UNIQUE INDEX metadataidx ON public.domain USING btree (name);
 
 
 --
+-- Name: person_firstname_lastname_admgender_dob_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX person_firstname_lastname_admgender_dob_uindex ON public.person USING btree (firstname, lastname, administrativegender, dateofbirth);
+
+
+--
+-- Name: person_firstname_lastname_admgender_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX person_firstname_lastname_admgender_uindex ON public.person USING btree (firstname, lastname, administrativegender);
+
+
+--
+-- Name: person_firstname_lastname_dob_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX person_firstname_lastname_dob_uindex ON public.person USING btree (firstname, lastname, dateofbirth);
+
+
+--
+-- Name: person_firstname_lastname_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX person_firstname_lastname_uindex ON public.person USING btree (firstname, lastname);
+
+
+--
+-- Name: person_firstname_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX person_firstname_uindex ON public.person USING btree (firstname);
+
+
+--
+-- Name: person_identifier_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX person_identifier_uindex ON public.person USING btree (identifier);
+
+
+--
+-- Name: person_lastname_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX person_lastname_uindex ON public.person USING btree (lastname);
+
+
+--
+-- Name: person_street_postalcode_city_country_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX person_street_postalcode_city_country_uindex ON public.person USING btree (street, postalcode, city, country);
+
+
+--
 -- Name: domain domain_superdomainid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.domain
     ADD CONSTRAINT domain_superdomainid_fkey FOREIGN KEY (superdomainid) REFERENCES public.domain(id);
+
+
+--
+-- Name: person person_identifieralgorithm_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.person
+    ADD CONSTRAINT person_identifieralgorithm_fkey FOREIGN KEY (identifieralgorithm) REFERENCES public.algorithm(id);
 
 
 --
