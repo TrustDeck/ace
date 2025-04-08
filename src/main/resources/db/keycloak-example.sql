@@ -17,7 +17,7 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-DROP DATABASE keycloak;
+DROP DATABASE IF EXISTS keycloak WITH (FORCE);
 --
 -- Name: keycloak; Type: DATABASE; Schema: -; Owner: trustdeck-manager
 --
