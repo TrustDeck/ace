@@ -17,16 +17,33 @@
 
 package org.trustdeck.ace.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.ace.algorithms.LuhnCheckDigit;
 import org.trustdeck.ace.algorithms.LuhnMod10CheckDigit;
 import org.trustdeck.ace.algorithms.LuhnMod16CheckDigit;
@@ -139,6 +156,66 @@ public class PseudonymRESTController {
      * 			<li>a <b>507-INSUFFICICENT_STORAGE</b> when the domain reached its 
      * 				filling point and we therefore only generated collisions.</li>
      */
+    @Operation(
+            summary = "Create records in batch",
+            description = "Creates new pseudonym records in the specified domain in batch. Allows passing pre-created pseudonyms or generates new ones.",
+            tags = {"Record"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"record-create-batch", "#domainName"})
+            },
+            requestBody = @RequestBody(
+                    description = "List of pseudonym records to be created",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = RecordDto.class))
+                    )
+            ),
+            parameters = {
+                    @Parameter(
+                            name = "domain",
+                            description = "Domain name where the records will be created",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "omitPrefix",
+                            description = "Whether to omit the prefix for pseudonyms",
+                            required = false,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "boolean", example = "true")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Records created successfully",
+                            content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = RecordDto.class))
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Domain not found"
+                    ),
+                    @ApiResponse(
+                            responseCode = "422",
+                            description = "Unprocessable entity or invalid batch size"
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "Internal server error during pseudonym generation"
+                    )
+            }
+    )
     @PostMapping("/domains/{domain}/pseudonyms")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-create-batch')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a batch of new records.")
@@ -330,6 +407,65 @@ public class PseudonymRESTController {
      * 			<li>a <b>507-INSUFFICICENT_STORAGE</b> when the domain reached its 
      * 				filling point and we therefore only generated collisions.</li>
      */
+    @Operation(
+            summary = "Create a record",
+            description = "Creates a new pseudonym record in the specified domain. Supports pre-created pseudonyms or generates new ones.",
+            tags = {"Record"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"record-create", "#domainName"})
+            },
+            requestBody = @RequestBody(
+                    description = "Pseudonym record to be created",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = RecordDto.class)
+                    )
+            ),
+            parameters = {
+                    @Parameter(
+                            name = "domain",
+                            description = "Domain name where the record will be created",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "omitPrefix",
+                            description = "Whether to omit the prefix for pseudonyms",
+                            required = false,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "boolean", example = "true")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Record created successfully",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = RecordDto.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Duplicate record found, returning existing data"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Domain not found"
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "Internal server error during pseudonym generation"
+                    )
+            }
+    )
     @PostMapping("/domains/{domain}/pseudonym")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-create')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new record.")
@@ -528,6 +664,44 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the
      * 				records could not be deleted</li>
      */
+    @Operation(
+            summary = "Delete records in batch",
+            description = "Deletes all pseudonym records within the specified domain.",
+            tags = {"Record"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"record-delete-batch", "#domainName"})
+            },
+            parameters = {
+                    @Parameter(
+                            name = "domain",
+                            description = "Domain name where the records will be deleted",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "204",
+                            description = "Records deleted successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Domain not found"
+                    ),
+                    @ApiResponse(
+                            responseCode = "422",
+                            description = "Unprocessable entity or deletion failed"
+                    )
+            }
+    )
     @DeleteMapping("/domains/{domain}/pseudonyms")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-delete-batch')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL, message = "Wants to delete a batch of records.")
@@ -587,6 +761,69 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the
      * 				record could not be deleted</li>
      */
+    @Operation(
+            summary = "Delete a record",
+            description = "Deletes a specific pseudonym record identified by its identifier or pseudonym in the specified domain.",
+            tags = {"Record"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"record-delete", "#domainName"})
+            },
+            parameters = {
+                    @Parameter(
+                            name = "domain",
+                            description = "Domain name where the record is stored",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "id",
+                            description = "Identifier of the record to be deleted",
+                            required = false,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "123456")
+                    ),
+                    @Parameter(
+                            name = "idType",
+                            description = "Type of the identifier",
+                            required = false,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "MY-IDTYPE")
+                    ),
+                    @Parameter(
+                            name = "psn",
+                            description = "Pseudonym of the record to be deleted",
+                            required = false,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "TS-1234567")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "204",
+                            description = "Record deleted successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Bad request due to invalid parameters"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Record or domain not found"
+                    ),
+                    @ApiResponse(
+                            responseCode = "422",
+                            description = "Unprocessable entity or deletion failed"
+                    )
+            }
+    )
     @DeleteMapping("/domains/{domain}/pseudonym")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-delete')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL, message = "Wants to delete a record.")
@@ -664,6 +901,76 @@ public class PseudonymRESTController {
      * 			<li>a <b>404-NOT_FOUND</b> when no linkable pseudonyms were found for the
      * 				given parameters</li>
      */
+    @Operation(
+            summary = "Get linked pseudonym records",
+            description = "Finds and links records along the pseudonym chain between two domains. Note that you must have permission to access these two domains. The result will be a linked list of matching record pairs.",
+            tags = {"Record"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"record-read", "link-pseudonyms", "#sourceDomain", "#targetDomain"})
+            },
+            parameters = {
+                    @Parameter(
+                            name = "sourceDomain",
+                            description = "Source domain for the pseudonym chain",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "SourceDomain")
+                    ),
+                    @Parameter(
+                            name = "targetDomain",
+                            description = "Target domain for the pseudonym chain",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "TargetDomain")
+                    ),
+                    @Parameter(
+                            name = "sourceIdentifier",
+                            description = "Identifier of the starting record in the source domain",
+                            required = false,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "123456")
+                    ),
+                    @Parameter(
+                            name = "sourceIdType",
+                            description = "Type of the identifier in the source domain",
+                            required = false,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "MY-IDTYPE")
+                    ),
+                    @Parameter(
+                            name = "sourcePsn",
+                            description = "Pseudonym of the starting record in the source domain",
+                            required = false,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "TS-1234567")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Linked list of record pairs retrieved successfully",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    array = @ArraySchema(schema = @Schema(implementation = RecordDto.class))
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = "Access denied for the source or target domain"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "No linked pseudonyms found"
+                    )
+            }
+    )
     @GetMapping(value = "/domains/linked-pseudonyms", params = {"sourceDomain", "targetDomain"})
     @PreAuthorize("hasRole('record-read') and hasRole('link-pseudonyms')")
     // Since the domains are given via query-parameters and not via path-parameters, 
@@ -734,6 +1041,48 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the
      * 				records could not be retrieved</li>
      */
+    @Operation(
+            summary = "Get records in batch",
+            description = "Retrieves all pseudonym records stored in the specified domain.",
+            tags = {"Record"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"record-read-batch", "#domainName"})
+            },
+            parameters = {
+                    @Parameter(
+                            name = "domain",
+                            description = "Name of the domain where the records are stored",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Records retrieved successfully",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    array = @ArraySchema(schema = @Schema(implementation = RecordDto.class))
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Domain not found"
+                    ),
+                    @ApiResponse(
+                            responseCode = "422",
+                            description = "Unprocessable entity or retrieval failed"
+                    )
+            }
+    )
     @GetMapping("/domains/{domain}/pseudonyms")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-read-batch')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read a batch of records.")
@@ -823,6 +1172,63 @@ public class PseudonymRESTController {
      * 			<li>a <b>404-NOT_FOUND</b> when no record was found for the
      * 				given identifier and idType</li>
      */
+    @Operation(
+            summary = "Get record by query",
+            description = "Fetches a record identified by its identifier and type or pseudonym within the specified domain.",
+            tags = {"Record"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"record-read", "#domainName"})
+            },
+            parameters = {
+                    @Parameter(
+                            name = "domain",
+                            description = "Name of the domain where the records are stored",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "id",
+                            description = "Identifier of the record",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "123456")
+                    ),
+                    @Parameter(
+                            name = "idType",
+                            description = "Type of the identifier",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "MY-IDTYPE")
+                    ),
+                    @Parameter(
+                            name = "psn",
+                            description = "Pseudonym of the record",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "TS-1234567")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Record retrieved successfully",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = RecordDto.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Domain or record not found"
+                    )
+            }
+    )
     @GetMapping(value = "/domains/{domain}/pseudonym", params = {"id", "idType"})
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read a record identified by its identifier.")
@@ -880,6 +1286,7 @@ public class PseudonymRESTController {
      * 			<li>a <b>404-NOT_FOUND</b> when no record was found for the
      * 				given pseudonym</li>
      */
+    @Hidden
     @GetMapping(value = "/domains/{domain}/pseudonym", params = "psn")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read a record identified by its pseudonym.")
@@ -930,6 +1337,20 @@ public class PseudonymRESTController {
      *
      * @return <li>a <b>200-OK</b> status</li>
      */
+    @Operation(
+            summary = "Ping the service",
+            description = "Checks if the pseudonymization service is operational.",
+            tags = {"Ping"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"domain-read"})
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Service is operational"
+                    )
+            }
+    )
     @GetMapping(value = "/ping")
     @PreAuthorize("hasRole('domain-read')")
     // Authorize a low-level role to include the authorization-time in the baseline
@@ -973,6 +1394,55 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
      *	 			record failed</li>
      */
+    @Operation(
+            summary = "Update records in batch",
+            description = "Updates a list of pseudonym records in the specified domain. Requires the domain name and list of updated records.",
+            tags = {"Record"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"record-update-batch", "#domainName"})
+            },
+            requestBody = @RequestBody(
+                    description = "List of pseudonym records to be updated",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = RecordDto.class))
+                    )
+            ),
+            parameters = {
+                    @Parameter(
+                            name = "domain",
+                            description = "Name of the domain where the records are stored",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Batch updated successfully",
+                            content = @Content(schema = @Schema(type = "string"))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Domain not found",
+                            content = @Content(schema = @Schema(type = "string"))
+                    ),
+                    @ApiResponse(
+                            responseCode = "422",
+                            description = "Unprocessable entity, update failed",
+                            content = @Content(schema = @Schema(type = "string"))
+                    )
+            }
+    )
     @PutMapping("/domains/{domain}/pseudonyms")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-update-batch')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a batch of records.")
@@ -1053,6 +1523,75 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
      * 				record failed</li>
      */
+    @Operation(
+            summary = "Update record by query (Complete)",
+            description = "Updates a single record identified by its identifier and idType or pseudonym in the specified domain.",
+            tags = {"Record"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"record-update-complete", "#domainName"})
+            },
+            requestBody = @RequestBody(
+                    description = "Complete record object with updated details",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = RecordDto.class)
+                    )
+            ),
+            parameters = {
+                    @Parameter(
+                            name = "domain",
+                            description = "Name of the domain where the records are stored",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),@Parameter(
+                            name = "id",
+                            description = "Identifier of the record to be updated",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "12345")
+                    ),
+                    @Parameter(
+                            name = "idType",
+                            description = "Type of the identifier",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "MY-IDTYPE")
+                    ),
+                    @Parameter(
+                            name = "psn",
+                            description = "Pseudonym of the record to be updated",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "TP-1234567")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Record updated successfully",
+                            content = @Content(mediaType = "application/json", schema = @Schema(implementation = RecordDto.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Domain or record not found",
+                            content = @Content(schema = @Schema(type = "string"))
+                    ),
+                    @ApiResponse(
+                            responseCode = "422",
+                            description = "Unprocessable entity, update failed",
+                            content = @Content(schema = @Schema(type = "string"))
+                    )
+            }
+    )
     @PutMapping(value = "/domains/{domain}/pseudonym/complete", params = {"id", "idType"})
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'record-update-complete')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a record identified by its identifier.")
@@ -1210,6 +1749,7 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
      * 				record failed</li>
      */
+    @Hidden
     @PutMapping(value = "/domains/{domain}/pseudonym/complete", params = "psn")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'record-update-complete')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a record identified by its pseudonym.")
@@ -1365,6 +1905,70 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
      * 				record failed</li>
      */
+    @Operation(
+            summary = "Update record by query",
+            description = "Partially updates a record identified by its identifier and idType or pseudonym in the specified domain.",
+            tags = {"Record"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"record-update", "#domainName"})
+            },
+            requestBody = @RequestBody(
+                    description = "Partial record object with updated details",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = RecordDto.class)
+                    )
+            ),
+            parameters = {
+                    @Parameter(
+                            name = "id",
+                            description = "Identifier of the record to be updated",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "12345")
+                    ),
+                    @Parameter(
+                            name = "idType",
+                            description = "Type of the identifier",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "MY-IDTYPE")
+                    ),
+                    @Parameter(
+                            name = "psn",
+                            description = "Pseudonym of the record to be updated",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "TP-1234567")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Record updated successfully",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = RecordDto.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Domain or record not found",
+                            content = @Content(schema = @Schema(type = "string"))
+                    ),
+                    @ApiResponse(
+                            responseCode = "422",
+                            description = "Unprocessable entity, update failed",
+                            content = @Content(schema = @Schema(type = "string"))
+                    )
+            }
+    )
     @PutMapping(value = "/domains/{domain}/pseudonym", params = {"id", "idType"})
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a record identified by its identifier.")
@@ -1495,6 +2099,7 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
      * 				record failed</li>
      */
+    @Hidden
     @PutMapping(value = "/domains/{domain}/pseudonym", params = "psn")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a record identified by its pseudonym.")
@@ -1617,6 +2222,59 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> status if there is 
      * 				no check digit according to the domain</li>
      */
+    @Operation(
+            summary = "Validate pseudonym",
+            description = "Validates a pseudonym in the specified domain to check its validity based on the domain's configuration.",
+            tags = {"Record"},
+            security = {
+                    @SecurityRequirement(name = "ace", scopes = {"record-read", "#domainName"})
+            },
+            parameters = {
+                    @Parameter(
+                            name = "domain",
+                            description = "Name of the domain where the records are stored",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string", example = "TestProject")
+                    ),
+                    @Parameter(
+                            name = "psn",
+                            description = "Pseudonym to validate",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string", example = "TP-1234567")
+                    ),
+                    @Parameter(
+                            name = "accept",
+                            description = "Optional response content type (e.g., application/json, application/xml)",
+                            required = false,
+                            in = ParameterIn.HEADER,
+                            schema = @Schema(type = "string", example = "application/json")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Validation successful",
+                            content = @Content(schema = @Schema(type = "boolean", example = "true"))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Domain or pseudonym not found",
+                            content = @Content(schema = @Schema(type = "string"))
+                    ),
+                    @ApiResponse(
+                            responseCode = "422",
+                            description = "Unprocessable entity, validation failed due to missing or incorrect configuration",
+                            content = @Content(schema = @Schema(type = "string"))
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Bad request, invalid pseudonym format or unexpected input",
+                            content = @Content(schema = @Schema(type = "string"))
+                    )
+            }
+    )
     @GetMapping("/domains/{domain}/pseudonym/validation")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to validate a pseudonym.")

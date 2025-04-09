@@ -20,6 +20,7 @@ package org.trustdeck.ace.model.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
@@ -53,111 +54,147 @@ public class DomainDto implements IRepresentation<IDomain, DomainDto> {
     DomainDBAccessService domainDBAccessService = SpringBeanLocator.getBean(DomainDBAccessService.class);
 	
     /** The id of this domain. */
+    @Schema(description = "The id of this domain", example = "12345")
     private Integer id;
 
     /** The name of the domain. */
+    @Schema(description = "The name of the domain", example = "TestProject")
     private String name;
 
     /** The prefix for the domain. Used in the pseudonyms. */
+    @Schema(description = "The prefix for the domain. Used in the pseudonyms.", example = "TS")
     private String prefix;
 
     /** The date (and time) when the validity period of the entry starts. */
+    @Schema(description = "The date (and time) when the validity period of the entry starts.", example = "2025-01-01T00:00:00", type = "string")
     private LocalDateTime validFrom;
 
     /** Determines if the validFrom value was inherited from the super domain. */
+    @Schema(description = "Indicates whether the validFrom value was inherited from the super domain.", example = "true", defaultValue = "false")
     private Boolean validFromInherited;
 
     /** The date (and time) when the validity period of the entry ends. */
+    @Schema(description = "The date (and time) when the validity period of the entry ends.", example = "2030-01-01T00:00:00", type = "string")
     private LocalDateTime validTo;
-    
+
     /** An amount of time a domain should be valid for. (Only needed for the creation.) */
+    @Schema(description = "An amount of time a domain should be valid for. (Only needed for the creation.)", example = "10minutes")
     private String validityTime;
 
     /** Determines if the validTo value was inherited from the super domain. */
+    @Schema(description = "Indicates whether the validTo value was inherited from the super domain.", example = "false", defaultValue = "false")
     private Boolean validToInherited;
 
     /** An option to ensure that the valid-from date of entries is always after or equal to the domain one. */
+    @Schema(description = "An option to ensure that the valid-from date of entries is always after or equal to the domain one.", example = "true", defaultValue = "true")
     private Boolean enforceStartDateValidity;
 
     /** Indicates whether or not the enforceStartDateValidity option was inherited. */
+    @Schema(description = "Indicates whether the enforceStartDateValidity option was inherited.", example = "true", defaultValue = "false")
     private Boolean enforceStartDateValidityInherited;
 
     /** An option to ensure that the valid-to date of entries is always before or equal to the domain one. */
+    @Schema(description = "An option to ensure that the valid-to date of entries is always before or equal to the domain one.", example = "true", defaultValue = "true")
     private Boolean enforceEndDateValidity;
 
     /** Indicates whether or not the enforceEndDateValidity option was inherited. */
+    @Schema(description = "Indicates whether the enforceEndDateValidity option was inherited.", example = "false", defaultValue = "false")
     private Boolean enforceEndDateValidityInherited;
 
     /** The algorithm used for pseudonymization. */
+    @Schema(description = "The algorithm used for pseudonymization.", example = "SHA3", defaultValue = "RANDOM_LET")
     private String algorithm;
 
     /** Determines if the algorithm value was inherited from the super domain. */
+    @Schema(description = "Indicates whether the algorithm value was inherited from the super domain.", example = "false", defaultValue = "false")
     private Boolean algorithmInherited;
-    
-    /** The alphabet that should be used for generating new pseudonyms. */
-    private String alphabet;
-    
-    /** Determines whether or not the alphabet value was inherited from the super domain. */
-    private Boolean alphabetInherited;
-    
-    /** The amount of pseudonyms the user wants to be able to store in this domain. */
-    private Long randomAlgorithmDesiredSize;
-    
-    /** Determines whether or not the desired minimal size value was inherited from the super domain. */
-    private Boolean randomAlgorithmDesiredSizeInherited;
-    
-    /** The probability with which the algorithm should successfully generate new pseudonyms in an already partly filled domain. */
-    private Double randomAlgorithmDesiredSuccessProbability;
-    
-    /** Determines whether or not the desired success probability value was inherited from the super domain. */
-    private Boolean randomAlgorithmDesiredSuccessProbabilityInherited;
-    
-    /** Determines if the domain can store multiple pseudonyms per given identifier or only one (1:n vs. 1:1). */
-    private Boolean multiplePsnAllowed;
-    
-    /** Determines whether or not the multiple allowed pseudonyms option was inherited from the super domain. */
-    private Boolean multiplePsnAllowedInherited;
-	
-	/** A counter for consecutive numbering as the pseudonymization algorithm. */
-	private Long consecutiveValueCounter;
 
-    /** The length of the pseudonyms for this domain */
+    /** The alphabet that should be used for generating new pseudonyms. */
+    @Schema(description = "The alphabet that should be used for generating new pseudonyms.", example = "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    private String alphabet;
+
+    /** Determines whether or not the alphabet value was inherited from the super domain. */
+    @Schema(description = "Indicates whether the alphabet value was inherited from the super domain.", example = "true", defaultValue = "false")
+    private Boolean alphabetInherited;
+
+    /** The amount of pseudonyms the user wants to be able to store in this domain. */
+    @Schema(description = "The amount of pseudonyms the user wants to be able to store in this domain.", example = "1000000", defaultValue = "100000000")
+    private Long randomAlgorithmDesiredSize;
+
+    /** Determines whether or not the desired minimal size value was inherited from the super domain. */
+    @Schema(description = "Indicates whether the desired minimal size value was inherited from the super domain.", example = "false", defaultValue = "false")
+    private Boolean randomAlgorithmDesiredSizeInherited;
+
+    /** The probability with which the algorithm should successfully generate new pseudonyms in an already partly filled domain. */
+    @Schema(description = "The probability with which the algorithm should successfully generate new pseudonyms in an already partly filled domain.", example = "0.99")
+    private Double randomAlgorithmDesiredSuccessProbability;
+
+    /** Determines whether or not the desired success probability value was inherited from the super domain. */
+    @Schema(description = "Indicates whether the desired success probability value was inherited from the super domain.", example = "true", defaultValue = "false")
+    private Boolean randomAlgorithmDesiredSuccessProbabilityInherited;
+
+    /** Determines if the domain can store multiple pseudonyms per given identifier or only one (1:n vs. 1:1). */
+    @Schema(description = "Indicates if the domain can store multiple pseudonyms per given identifier or only one (1:n vs. 1:1).", example = "true", defaultValue = "false")
+    private Boolean multiplePsnAllowed;
+
+    /** Determines whether or not the multiple allowed pseudonyms option was inherited from the super domain. */
+    @Schema(description = "Indicates whether the multiple allowed pseudonyms option was inherited from the super domain.", example = "true", defaultValue = "false")
+    private Boolean multiplePsnAllowedInherited;
+
+    /** A counter for consecutive numbering as the pseudonymization algorithm. */
+    @Schema(description = "A counter for consecutive numbering as the pseudonymization algorithm.", example = "100")
+    private Long consecutiveValueCounter;
+
+    /** The length of the pseudonyms for this domain. */
+    @Schema(description = "The length of the pseudonyms for this domain.", example = "10")
     private Integer pseudonymLength;
 
     /** Determines if the pseudonym length was inherited. */
+    @Schema(description = "Indicates whether the pseudonym length was inherited.", example = "false", defaultValue = "false")
     private Boolean pseudonymLengthInherited;
 
     /** The character that should be used for padding the pseudonyms, if necessary. */
+    @Schema(description = "The character that should be used for padding the pseudonyms, if necessary.", example = "0", defaultValue = "0")
     private Character paddingCharacter;
 
     /** Determines if the padding character was inherited. */
+    @Schema(description = "Indicates whether the padding character was inherited.", example = "true", defaultValue = "false")
     private Boolean paddingCharacterInherited;
-    
+
     /** Determines whether or not a check digit should be added to the pseudonym. */
+    @Schema(description = "Indicates whether a check digit should be added to the pseudonym.", example = "true", defaultValue = "true")
     private Boolean addCheckDigit;
-    
-    /** Determines if the check digit is was inherited. */
+
+    /** Determines if the check digit was inherited. */
+    @Schema(description = "Indicates whether the check digit was inherited.", example = "false", defaultValue = "false")
     private Boolean addCheckDigitInherited;
-    
+
     /** Determines whether or not the check digit should be part of the pseudonym length. */
+    @Schema(description = "Indicates whether the check digit should be part of the pseudonym length.", example = "true", defaultValue = "false")
     private Boolean lengthIncludesCheckDigit;
-    
-    /** Determines if the check digit in length inclusion status is was inherited */
+
+    /** Determines if the check digit in length inclusion status was inherited. */
+    @Schema(description = "Indicates whether the check digit inclusion status was inherited.", example = "false", defaultValue = "false")
     private Boolean lengthIncludesCheckDigitInherited;
 
     /** The salt for this domain. */
+    @Schema(description = "The salt for this domain.", example = "randomSaltValue123")
     private String salt;
 
     /** The salt length for this domain. */
+    @Schema(description = "The salt length for this domain.", example = "16", defaultValue = "32")
     private Integer saltLength;
 
     /** A description of the domain. */
+    @Schema(description = "A description of the domain.", example = "This is a test domain for pseudonymization.")
     private String description;
 
     /** The super-domain ID of this domain. */
+    @Schema(description = "The super-domain ID of this domain.", example = "123")
     private Integer superDomainID;
 
     /** The super-domain name of this domain. */
+    @Schema(description = "The super-domain name of this domain.", example = "SuperTestDomain")
     private String superDomainName;
 
     /**
