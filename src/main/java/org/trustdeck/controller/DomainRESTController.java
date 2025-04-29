@@ -152,7 +152,7 @@ public class DomainRESTController {
      */
     @PostMapping("/domain/complete")
     @PreAuthorize("hasRole('domain-create-complete')")
-    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
+    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> createDomainComplete(@RequestBody DomainDTO domainDTO,
                                                   @RequestHeader(name = "accept", required = false) String responseContentType,
                                                   HttpServletRequest request) {
@@ -494,7 +494,7 @@ public class DomainRESTController {
      */
     @PostMapping("/domain")
     @PreAuthorize("hasRole('domain-create')")
-    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
+    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> createDomain(@RequestBody DomainDTO domainDTO,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
                                           HttpServletRequest request) {
@@ -733,7 +733,7 @@ public class DomainRESTController {
      */
     @DeleteMapping("/domain")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-delete')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL, message = "Wants to delete a domain.")
+    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> deleteDomain(@RequestParam(name = "name", required = true) String domainName,
                                           @RequestParam(name = "recursive", required = false) Boolean performRecursiveChanges,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -781,7 +781,7 @@ public class DomainRESTController {
      */
     @GetMapping("/domains/{domain}/{attribute}")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read a specific attribute from a domain.")
+    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getDomainAttribute(@PathVariable("domain") String domainName,
     											@PathVariable("attribute") String attributeName,
     		                                    @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -927,7 +927,7 @@ public class DomainRESTController {
      */
     @GetMapping("/domain")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read a domain.")
+    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getDomain(@RequestParam(name = "name", required = true) String domainName,
                                        @RequestHeader(name = "accept", required = false) String responseContentType,
                                        HttpServletRequest request) {
@@ -962,7 +962,7 @@ public class DomainRESTController {
      */
     @GetMapping(value = "/domains/hierarchy")
     @PreAuthorize("hasRole('domain-list-all')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read all domains in a minimal representation.")
+    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> listDomainHierarchy(@RequestHeader(name = "accept", required = false) String responseContentType,
                                                  HttpServletRequest request) {
         List<Domain> domains = domainDBAccessService.listDomains(request);
@@ -1003,7 +1003,7 @@ public class DomainRESTController {
      */
     @PutMapping("/domain/complete")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update-complete')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a complete domain.")
+    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<String> updateDomainComplete(@RequestParam(name = "name", required = true) String oldDomainName,
                                                        @RequestParam(name = "recursive", required = true) Boolean performRecursiveChanges,
                                                        @RequestBody DomainDTO domainDTO,
@@ -1154,7 +1154,7 @@ public class DomainRESTController {
      */
     @PutMapping("/domain")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a domain.")
+    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<String> updateDomain(@RequestParam(name = "name", required = true) String oldDomainName,
                                                @RequestBody DomainDTO domainDTO,
                                                @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -1236,7 +1236,7 @@ public class DomainRESTController {
      */
     @PutMapping("/domains/{domain}/salt")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-update-salt')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update the salt from a domain.")
+    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> updateSalt(@PathVariable("domain") String domainName,
                                         @RequestParam(name = "salt", required = true) String newSalt,
                                         @RequestParam(name = "allowEmpty", required = false, defaultValue = "false") Boolean allowEmpty,
