@@ -280,7 +280,7 @@ public class PersonDBService {
     public List<Person> searchPersons(String query, HttpServletRequest request) {
         List<Person> persons = null;
         
-        // Split so that multi-word searches are possible
+        // Split, so that multi-word searches are possible
         String[] queryParts = query.split(" ");
         
         // Build query, start with a neutral condition
@@ -302,6 +302,7 @@ public class PersonDBService {
             condition = condition.and(partCondition);
         }
 
+        // Execute query
         try {
             persons = dsl.selectFrom(PERSON)
                          .where(condition)

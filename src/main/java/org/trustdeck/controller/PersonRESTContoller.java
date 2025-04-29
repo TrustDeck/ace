@@ -91,6 +91,8 @@ public class PersonRESTContoller {
      * 				information from the person object is missing 
      * 				(such as the first and last names or the 
      * 				administrative gender)</li>
+     * 			<li>a <b>409-CONFLICT</b> when the data entered was an 
+     * 				exact match to already existing data </li>
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when an algorithm 
      * 				object could not be created or when the person 
      * 				creation step itself failed</li>
@@ -445,10 +447,11 @@ public class PersonRESTContoller {
      * @param idType the idType of the person you want to delete
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
-     * @return	<li>a <b>200-OK</b> status when no person object was 
-     * 				found and therefore, nothing needed to be deleted</li>
-     * 			<li>a <b>204-NO_CONTENT</b> status when the person was 
+     * @return	<li>a <b>204-NO_CONTENT</b> status when the person was 
      * 				successfully deleted</li>
+     * 			<li>a <b>404-NOT_FOUND</b> status when no person object was 
+     * 				found for the given identifier and idType and therefore,
+     * 				nothing could be deleted</li>
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the deletion
      * 				would affect more than one person object</li>
      */

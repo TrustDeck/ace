@@ -490,7 +490,7 @@ public class DomainRESTController {
      * 			<li>a <b>406-NOT_ACCEPTABLE</b> status when the domain
      * 				name is violating the URI-validity</li>
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the addition
-     * 				of the domain failed</li>
+     * 				of the domain failed or when the DTO was invalid</li>
      */
     @PostMapping("/domain")
     @PreAuthorize("hasRole('domain-create')")
@@ -500,7 +500,7 @@ public class DomainRESTController {
                                           HttpServletRequest request) {
 
         if (!domainDTO.validate() || !domainDTO.isValidStandardView()) {
-        	log.warn("422, because: " + (!domainDTO.validate() ? "invalid - missing mandatory fields" : !domainDTO.isValidStandardView() ? "non-standard view" : "IDK"));
+        	log.debug("The given domain DTO is invalid, due to " + (!domainDTO.validate() ? "missing mandatory fields." : "having non-standard information."));
         	return responseService.unprocessableEntity(responseContentType);
         }
 
@@ -954,14 +954,13 @@ public class DomainRESTController {
 
     /**
      * This method returns all domains from the database in a minimal version.
-     * This endpoint is marked as experimental.
      *
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the <b>list of minimal
      * 				domains</b> when the query was successful</li>
      */
-    @GetMapping(value = "/experimental/domains/hierarchy")
+    @GetMapping(value = "/domains/hierarchy")
     @PreAuthorize("hasRole('domain-list-all')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read all domains in a minimal representation.")
     public ResponseEntity<?> listDomainHierarchy(@RequestHeader(name = "accept", required = false) String responseContentType,
