@@ -19,7 +19,6 @@ package org.trustdeck.ace.service;
 
 import jakarta.ws.rs.core.Response;
 import lombok.Getter;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -40,7 +39,6 @@ import org.trustdeck.ace.security.authentication.configuration.JwtProperties;
 import org.trustdeck.ace.utils.Utility;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -380,9 +378,7 @@ public class OidcService implements InitializingBean {
         return this.getKeycloakRealm().groups().groups("", false, 0, Integer.MAX_VALUE, false);
     }
 
-
     /**
-     * Retrieves all groups in the realm including their subgroups recursively.
      * This method first fetches all top-level groups and then recursively retrieves
      * all their subgroups to build a complete group hierarchy.
      *
@@ -390,10 +386,10 @@ public class OidcService implements InitializingBean {
      *         and all their nested subgroups
      */
     public List<GroupRepresentation> getRealmGroupsWithSubGroups() {
-        // Fetch all top-level groups from Keycloak realm
+        // Fetch all top-level groups from the Keycloak realm
         // search query: "" (empty string) to retrieve all groups
         // briefRepresentation: false, to include detailed group information
-        // Exact matching -false, to enable partial matching
+        // Exact matching: false, to enable partial matching
         List<GroupRepresentation> topGroups = this.getKeycloakRealm().groups().groups("", false, 0, Integer.MAX_VALUE, false);
 
         // Process these groups recursively to get all subgroups
@@ -405,7 +401,7 @@ public class OidcService implements InitializingBean {
      * For each group, it retrieves its direct subgroups and then recursively processes
      * those subgroups to build a complete hierarchy.
      *
-     * @param groups List of parent groups whose subgroups need to be fetched
+     * @param groups a list of parent groups whose subgroups need to be fetched
      * @return A flat list containing all groups and their nested subgroups
      */
     private List<GroupRepresentation> fetchSubGroupsRecursively(List<GroupRepresentation> groups) {
@@ -418,7 +414,7 @@ public class OidcService implements InitializingBean {
                 // Fetch direct subgroups for current group using Keycloak API
                 // Parameters: no pagination, include all subgroups, full representation
                 List<GroupRepresentation> subGroups = this.getKeycloakRealm().groups().group(group.getId())
-                        .getSubGroups(0, Integer.MAX_VALUE, true);
+                     .getSubGroups(0, Integer.MAX_VALUE, true);
 
                 // Add direct subgroups to result list
                 allGroups.addAll(subGroups);
@@ -429,9 +425,10 @@ public class OidcService implements InitializingBean {
                 }
             } catch (Exception e) {
                 // Log warning if fetching subgroups fails for a particular group
-                log.warn("Failed to fetch subgroups for group {}: {}", group.getPath(), e.getMessage());
+                log.warn("Failed to fetch subgroups for group \"" + group.getPath() + "\": " + e.getMessage());
             }
         }
+
         return allGroups;
     }
 
