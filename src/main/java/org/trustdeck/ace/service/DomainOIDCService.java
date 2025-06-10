@@ -73,8 +73,8 @@ public class DomainOIDCService {
      * @return {@code true} if the domain name is not in use, or {@code false} if a group with this name already exists
      */
     public Boolean canBeUsedAsDomainGroup(String domainName) {
-        // Retrieve a flat map of group paths for all groups in the realm
-        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(oidcService.getRealmGroups(), true);
+        // Retrieve a flat map of group paths for all groups and subgroups in the realm
+        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(oidcService.getRealmGroupsWithSubGroups(), true);
 
         // Iterate over each operation-role defined in the configuration
         for (String role : roleConfig.getOperations()) {
@@ -155,8 +155,8 @@ public class DomainOIDCService {
      * @param domainName the name of the domain that should be purged from Keycloak
      */
     public void leaveAndDeleteDomainGroupsAndRoles(String domainName) {
-    	// Retrieve a flat map of group paths for all groups in the realm
-        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(oidcService.getRealmGroups(), true);
+    	// Retrieve a flat map of group paths for all groups and subgroups in the realm
+        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(oidcService.getRealmGroupsWithSubGroups(), true);
     	
         // Iterate over all groups to find those that need to be removed
         for (Map.Entry<String, String> e : flatGroupPaths.entrySet()) {
@@ -197,8 +197,8 @@ public class DomainOIDCService {
         List<String> operations = roleConfig.getOperations();
         List<String> auditUserTypeNames = getAuditUserGroupNames();
         
-    	// Retrieve a flat map of group paths for all groups in the realm
-        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(oidcService.getRealmGroups(), true);
+    	// Retrieve a flat map of group paths for all groups and subgroups in the realm
+        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(oidcService.getRealmGroupsWithSubGroups(), true);
 
         // Iterate over all available groups
         for (Map.Entry<String, String> e : flatGroupPaths.entrySet()) {
