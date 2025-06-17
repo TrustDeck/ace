@@ -35,7 +35,7 @@ import org.trustdeck.utils.SpringBeanLocator;
 import java.time.LocalDateTime;
 
 /**
- * This class offers an Data Transfer Object (DTO) for the representation in a response to a REST-API-request.
+ * This class offers an Data Transfer Object (DTO) for a pseudonym.
  *
  * @author Armin Müller & Eric Wündisch
  */

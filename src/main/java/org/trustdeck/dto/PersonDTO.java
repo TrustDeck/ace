@@ -25,40 +25,75 @@ import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.pojos.Person;
 import org.trustdeck.service.AlgorithmDBService;
+import org.trustdeck.utils.Assertion;
 import org.trustdeck.utils.SpringBeanLocator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
- * 
+ * This class offers an Data Transfer Object (DTO) for a person.
+ *
+ * @author Armin Müller
  */
 @Data
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request.
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
-
+	
+	/** The (internal) ID of this person. Do not expose it to users. */
 	@JsonIgnore
 	private Integer id;
+	
+	/** The person's first (given) name(s). */
     private String firstName;
+	
+	/** The person's last (family) name. */
     private String lastName;
+	
+	/** The person's previous last (family) name (e.g. before marriage). */
     private String birthName;
+	
+	/** The person's administrative gender. */
     private String administrativeGender;
+	
+	/** The person's birth date. */
     private String dateOfBirth;
+	
+	/** The street and house number part of the person's primary address. */
     private String street;
+	
+	/** The postal (ZIP) code for the person's primary address. */
     private String postalCode;
+	
+	/** The city where the person lives (primarily) in. */
     private String city;
+	
+	/** The country in which the person lives (primarily). */
     private String country;
+	
+	/** An (external) identifier for this person (e.g. a pseudonym, a SAP-ID, ...). */
     private String identifier;
+	
+	/** The type of the person's (external) identifier. */
     private String idType;
+	
+	/** The algorithm which was used to generate the identifier (pseudonym) for the person. */
     private AlgorithmDTO algorithm;
-    
+	
+	/** Allows interaction with the algorithm objects in the database. */
+	@Getter(value=AccessLevel.NONE)
+    @Setter(value=AccessLevel.NONE)
     @JsonIgnore
     @Autowired
     private AlgorithmDBService algorithmDBService;
-
+	
 	@JsonIgnore
 	@Override
 	public PersonDTO assignPojoValues(Person pojo) {
@@ -95,6 +130,11 @@ public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
 	    return dto;
 	}
 	
+	/**
+	 * This method transforms a person DTO into a plain java object.
+	 * 
+	 * @return
+	 */
 	@JsonIgnore
 	public Person convertToPOJO() {
         DateTimeFormatter dobFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -120,14 +160,14 @@ public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
 	@JsonIgnore
 	@Override
 	public Boolean isValidStandardView() {
-		// TODO Auto-generated method stub
+		// Currently not needed
 		return null;
 	}
 
 	@JsonIgnore
 	@Override
 	public PersonDTO toReducedStandardView() {
-		// TODO Auto-generated method stub
+		// Currently not needed
 		return null;
 	}
 
@@ -156,8 +196,7 @@ public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
 	@JsonIgnore
 	@Override
 	public Boolean validate() {
-		// TODO Auto-generated method stub
-		return null;
+		return Assertion.assertNotNullAll(this.getFirstName(), this.getLastName(), this.getDateOfBirth());
 	}
 
 }
