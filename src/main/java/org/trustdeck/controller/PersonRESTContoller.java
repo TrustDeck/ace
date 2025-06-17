@@ -77,6 +77,9 @@ public class PersonRESTContoller {
     /** Enables services for better working with responses. */
     @Autowired
     private ResponseService responseService;
+    
+    /** The default number of maximum allowed query results. If a query would result in more records, the surplus is omitted. */
+    private static final int DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS = 20;
 
     /**
      * Endpoint to create a new person object.
@@ -108,7 +111,7 @@ public class PersonRESTContoller {
     	
     	// Create and sanitize algorithm object, if necessary
     	Algorithm algorithm = null;
-    	if (algorithmDTO.getId() != null && algorithmDTO.getId() >= 1) {
+    	if (algorithmDTO != null && algorithmDTO.getId() != null && algorithmDTO.getId() >= 1) {
     		// Valid algorithm ID given, retrieve the algorithm
     		algorithm = algorithmDBService.getAlgorithmByID(algorithmDTO.getId());
     		if (algorithm == null) {
@@ -119,8 +122,10 @@ public class PersonRESTContoller {
     	if (algorithm == null) {
     		// There either was no (valid) ID given, or the given ID was not found in the database
     		// Try finding the algorithm object
-			algorithm = algorithmDBService.getAlgorithmByValues(algorithmDTO.getName(), algorithmDTO.getAlphabet(), algorithmDTO.getRandomAlgorithmDesiredSize(), algorithmDTO.getRandomAlgorithmDesiredSuccessProbability(), algorithmDTO.getPseudonymLength(), algorithmDTO.getPaddingCharacter(), algorithmDTO.isAddCheckDigit(), algorithmDTO.isLengthIncludesCheckDigit(), algorithmDTO.getSalt(), algorithmDTO.getSaltLength());
-			
+    		if (algorithmDTO != null) {
+    			algorithm = algorithmDBService.getAlgorithmByValues(algorithmDTO.getName(), algorithmDTO.getAlphabet(), algorithmDTO.getRandomAlgorithmDesiredSize(), algorithmDTO.getRandomAlgorithmDesiredSuccessProbability(), algorithmDTO.getPseudonymLength(), algorithmDTO.getPaddingCharacter(), algorithmDTO.isAddCheckDigit(), algorithmDTO.isLengthIncludesCheckDigit(), algorithmDTO.getSalt(), algorithmDTO.getSaltLength());
+    		}
+    			
 			// Check if something was found
 			if (algorithm == null) {
 				log.debug("The algorithm information provided did not lead to a known algorithm in the database. A new algorithm object will be created.");
@@ -128,6 +133,7 @@ public class PersonRESTContoller {
     		
     		// Check if there's still no algorithm object found
     		if (algorithm == null) {
+    			//TODO: handle case where no algorithm info at all is given
     			// There was nothing found in the database that fits the given algorithm information, create a new algorithm object
     			Integer algoID = algorithmDBService.createAlgorithm(algorithmDTO.convertToPOJO());
     			
@@ -423,19 +429,28 @@ public class PersonRESTContoller {
     		log.debug("No results were found for the given query string (" + query + ").");
     		return responseService.notFound(responseContentType);
     	} else {
+    		// Check if we found too many results
+    		boolean wasTruncated = false;
+    		if (results.size() > DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS) {
+    			log.trace("The query returned " + results.size() + " results. This is more than the allowed maxmimum (" + DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS + ") so that the results are truncated to the allowed maximum.");
+    			results = results.subList(0, DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS - 1);
+    			wasTruncated = true;
+    		}
+    		
     		// Transform POJOs to DTOs and return
     		List<PersonDTO> resultDTOs = new ArrayList<PersonDTO>();
     		for (Person p : results) {
     			resultDTOs.add(new PersonDTO().assignPojoValues(p));
     		}
     		
-    		// Notify, that we allow a maximum of PersonDBService.getDEFAULT_MAX_NUMBER_OF_QUERY_RESULTS() results
-    		if (resultDTOs.size() == PersonDBService.getDEFAULT_MAX_NUMBER_OF_QUERY_RESULTS()) {
-    			log.debug("The query returned " + PersonDBService.getDEFAULT_MAX_NUMBER_OF_QUERY_RESULTS() + " results. If there are further matching records in the database, these were deliberately omitted.");
+    		// If we truncated the list due to it being too long, return a partial content response code
+    		if (wasTruncated) {
+    			log.debug("The search for persons with query \"" + query + "\" returned more than " + DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS + " results and was therefore truncated.");
+    			return responseService.partialContent(responseContentType, resultDTOs);
+    		} else {
+	    		log.debug("The search for persons with query \"" + query + "\" returned " + resultDTOs.size() + (resultDTOs.size() == 1 ? " result." : " results."));
+	    		return responseService.ok(responseContentType, resultDTOs);
     		}
-    		
-    		log.debug("The search for persons with query \"" + query + "\" returned " + resultDTOs.size() + (resultDTOs.size() == 1 ? " result." : " results."));
-    		return responseService.ok(responseContentType, resultDTOs);
     	}
     }
 

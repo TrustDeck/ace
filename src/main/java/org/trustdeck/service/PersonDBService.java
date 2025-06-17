@@ -60,10 +60,6 @@ public class PersonDBService {
 	/** Enables the access to the algorithm specific database access methods. */
     @Autowired
 	private AlgorithmDBService algorithmDBService;
-    
-    /** The default number of maximum allowed query results. If a query would result in more records, the surplus is omitted. */
-    @Getter
-    private static final int DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS = 20;
 	
 	/**
      * Method to insert a new person into the database table.
@@ -102,7 +98,7 @@ public class PersonDBService {
 	        personRecord.setIdentifieralgorithm(algorithmID);
 	
 	        // Store and determine success
-	        if(personRecord.insert() == 0) {
+	        if (personRecord.insert() == 0) {
 	        	log.debug("Inserting the person with identifier \"" + personRecord.getIdentifier() + "\" failed due to an equal record already being in the database.");
 	        	return null;
 	        }
@@ -233,6 +229,7 @@ public class PersonDBService {
         	
         	// Determine success
             if (deletedRecords > 1) {
+            	// Throw exception to terminate the transaction
                 log.debug("Deleting the person with identifier \"" + person.getIdentifier() + "\" and idType \"" + idType + "\" would not affect exactly one entry. Aborting.");
                 throw new UnexpectedResultSizeException(1, deletedRecords);
             } else if (deletedRecords == 0) {
@@ -250,7 +247,7 @@ public class PersonDBService {
             } catch (UnexpectedResultSizeException e) {
             	log.debug("Deleting the algorithm would affect other algorithm objects, so it will not be deleted.");
             	
-            	// Re-throw the exception to break the transaction
+            	// Re-throw the exception to terminate the transaction
             	throw e;
             }
             
@@ -265,7 +262,7 @@ public class PersonDBService {
         }
         
         // At this point, no person with the given identifier and idType was found
-        log.debug("Nothing to delete.");
+        log.debug("No person with the given identifier and idType found. Nothing to delete.");
         return false;
     }
 
@@ -306,7 +303,6 @@ public class PersonDBService {
         try {
             persons = dsl.selectFrom(PERSON)
                          .where(condition)
-                         .limit(DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS)
                          .fetchInto(Person.class);
         } catch (MappingException e) {
         	log.debug("Could not map the person search result into the Person-POJO.");
@@ -427,7 +423,7 @@ public class PersonDBService {
         int wasStored = personRecord.update();
         log.debug("Updating the person object \"" + personRecord.getIdentifier() + "\" " + ((wasStored == 1) ? "succeeded." : "failed."));
         
-        // Return the algorithm ID when successful
+        // Return the person ID when successful
         return wasStored == 1 ? personRecord.getId() : null;
     }
 }
