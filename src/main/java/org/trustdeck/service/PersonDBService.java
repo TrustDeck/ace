@@ -39,7 +39,6 @@ import org.trustdeck.jooq.generated.tables.pojos.Person;
 import org.trustdeck.jooq.generated.tables.records.PersonRecord;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static org.trustdeck.jooq.generated.Tables.PERSON;
