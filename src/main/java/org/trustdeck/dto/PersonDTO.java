@@ -145,7 +145,7 @@ public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
         person.setLastname(this.getLastName());
         person.setBirthname(this.getBirthName());
         person.setAdministrativegender(this.getAdministrativeGender());
-        person.setDateofbirth(LocalDate.parse(this.getDateOfBirth(), dobFormatter));
+        person.setDateofbirth(this.getDateOfBirth() != null ? LocalDate.parse(this.getDateOfBirth(), dobFormatter) : null);
         person.setStreet(this.getStreet());
         person.setPostalcode(this.getPostalCode());
         person.setCity(this.getCity());
