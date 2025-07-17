@@ -99,3 +99,7 @@ app:
     - person-update
     - person-delete
     - person-search
+    - permission-manager
+  root-operations:
+    # Used to define that only a domain without a superdomain can have this relationship currently
+    - permission-manager
