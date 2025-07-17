@@ -17,6 +17,19 @@
 
 package org.trustdeck.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,20 +40,6 @@ import org.trustdeck.dto.PseudonymDTO;
 import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.service.AssertWebRequestService;
 import org.trustdeck.service.DomainOIDCService;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 
 /**
  * This class offers tests to test only the record endpoints.
@@ -394,7 +393,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         this.assertBadRequestRequest("deleteRecordBadRequest", delete("/api/pseudonymization/domains/" + goodDomain + "/pseudonym"), null, null, this.getAccessToken());
 
         // Trigger a "not found" if permission for a domain is given but the domain is not yet created
-        domainOidcService.createDomainGroupsAndRolesAndJoin(goodDomainButNotFound, "3dfb6717-3def-493b-a237-b7345fc42718");
+        domainOidcService.createDomainGroupsAndRolesAndJoin(goodDomainButNotFound, "3dfb6717-3def-493b-a237-b7345fc42718", false);
         this.assertNotFoundRequest("createRecordNotFound", post("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonym"), null, createRecordDto, this.getAccessToken());
         this.assertNotFoundRequest("readRecordNotFound", get("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonym"), getParameter, null, this.getAccessToken());
         this.assertNotFoundRequest("updateRecordNotFound", put("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonym/complete"), updateParameter, updateRecordDto, this.getAccessToken());
@@ -472,7 +471,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         this.assertCreatedRequest("createNewRecordBatch", post("/api/pseudonymization/domains/" + goodDomain + "/pseudonyms"), null, recordDtoList, this.getAccessToken());
 
         // Domain wrong
-        domainOidcService.createDomainGroupsAndRolesAndJoin(goodDomainButNotFound, "3dfb6717-3def-493b-a237-b7345fc42718");
+        domainOidcService.createDomainGroupsAndRolesAndJoin(goodDomainButNotFound, "3dfb6717-3def-493b-a237-b7345fc42718", false);
         this.assertNotFoundRequest("createNewRecordBatchDomainNotFound", post("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonyms"), null, recordDtoList, this.getAccessToken());
 
         // Trigger too many records
