@@ -18,6 +18,10 @@
 package org.trustdeck.service;
 
 import jakarta.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
@@ -27,8 +31,10 @@ import org.keycloak.admin.client.resource.ClientResource;
 import org.keycloak.admin.client.resource.ClientsResource;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.ClientRepresentation;
+import org.keycloak.representations.idm.ComponentRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,10 +43,6 @@ import org.trustdeck.exception.OIDCException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.security.authentication.configuration.JwtProperties;
 import org.trustdeck.utils.Utility;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * This class provides services for managing clients, roles, and groups
@@ -72,6 +74,10 @@ public class OidcService implements InitializingBean {
     /** List of group IDs representing the operation groups in the Keycloak server. */
     @Getter
     private List<String> operationGroupIDs;
+
+
+    @Getter
+    private List<String> rootOperationGroupIDs;
 
     /**
      * Initializes the Keycloak client and sets up the necessary roles and groups.
@@ -245,13 +251,18 @@ public class OidcService implements InitializingBean {
 
         // List to store the group IDs for each role
         List<String> groupIds = new ArrayList<>();
-
+        List<String> rootGroupIds = new ArrayList<>();
         // Match the created roles to their group IDs based on paths
         for (String role : roleConfig.getOperations()) {
             Map.Entry<String, String> groupEntry = Utility.findGroupEntryByPath(finalGroupPaths, "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role);
 
             if (groupEntry != null) {
                 groupIds.add(groupEntry.getKey());
+
+                if(roleConfig.getRootOperations().contains(role)){
+                    rootGroupIds.add(groupEntry.getKey());
+                }
+
             }
         }
 
@@ -260,8 +271,16 @@ public class OidcService implements InitializingBean {
             throw new OIDCException("Could not find all groups and roles that should have been added.");
         }
 
+        // Ensure that the number of root groups matches the number of roles
+        if (rootGroupIds.size() != roleConfig.getRootOperations().size()) {
+            throw new OIDCException("Could not find all groups and roles that should have been added.");
+        }
+
         // Cache the standard group IDs for future use
         this.operationGroupIDs = groupIds;
+
+        // Cache the root group IDs for future use
+        this.rootOperationGroupIDs = rootGroupIds;
     }
 
     /**
@@ -275,7 +294,7 @@ public class OidcService implements InitializingBean {
     public RoleRepresentation createClientRole(String roleName) {
     	// Create a new RoleRepresentation object to define the role attributes
         RoleRepresentation roleRepresentation = new RoleRepresentation();
-    	
+
     	try {
             roleRepresentation.setName(roleName);
             roleRepresentation.setClientRole(true); // Mark the role as a client role (specific to a client in contrast to global realm roles)
@@ -290,7 +309,7 @@ public class OidcService implements InitializingBean {
             	// Role already exists
             	return roleRepresentation;
             }
-            
+
         	// Log the exception message and return null if an error occurs
             log.error("Could not create client role: " + e.getMessage() + ". Does the Keycloak admin-account have all the necessary rights (realm-management: manage-users, manage-clients)?");
             return null;
@@ -300,7 +319,7 @@ public class OidcService implements InitializingBean {
     /**
      * Retrieves a list of all client role names for the currently configured Keycloak client.
      * This method interacts with the Keycloak Admin API to fetch all roles defined for the client.
-     * It returns a list of the names of these roles. Each role is represented using the 
+     * It returns a list of the names of these roles. Each role is represented using the
      * {@link RoleRepresentation} class, and only the role names are extracted and returned.
      *
      * @return {@link List} of {@link String} containing the names of all roles associated with the configured client,
@@ -516,7 +535,7 @@ public class OidcService implements InitializingBean {
                 return false;
             }
         }
-        
+
         return true;
     }
 
@@ -551,13 +570,13 @@ public class OidcService implements InitializingBean {
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     /**
      * Removes the specified roles from a user.
-     * 
+     *
      * @param roleNames a list of roles that should be deleted
      * @param userId the id of the user
      * @return {@code true} if removal was successful, {@code false} otherwise
@@ -570,20 +589,20 @@ public class OidcService implements InitializingBean {
 	    		rolesToRemove.add(getClientRoleByName(roleName));
 	    		log.debug("Marked role \"" + roleName + "\" for removal.");
 	    	}
-	    	
+
 	    	// Remove roles
 	    	this.getKeycloakRealm().users().get(userId).roles().clientLevel(clientUUID).remove(rolesToRemove);
     	} catch (Exception e) {
     		log.error("Removing roles from user \"" + userId + "\" was unsuccessful: " + e.getMessage());
     		return false;
     	}
-    	
+
     	return true;
     }
-    
+
     /**
      * Removes a single role from a user.
-     * 
+     *
      * @param roleName the role that should be deleted
      * @param userId the id of the user
      * @return {@code true} if removal was successful, {@code false} otherwise
@@ -591,10 +610,10 @@ public class OidcService implements InitializingBean {
     public boolean removeRoleFromUser(String roleName, String userId) {
     	return removeRolesFromUser(List.of(roleName), userId);
     }
-    
+
     /**
      * Adds the specified roles to a user.
-     * 
+     *
      * @param roleNames a list of roles that should be added
      * @param userId the id of the user
      * @return {@code true} if addition was successful, {@code false} otherwise
@@ -607,25 +626,62 @@ public class OidcService implements InitializingBean {
 	    		rolesToAdd.add(getClientRoleByName(roleName));
 	    		log.debug("Marked role \"" + roleName + "\" for addition.");
 	    	}
-	    	
+
 	    	// Add roles
 	    	this.getKeycloakRealm().users().get(userId).roles().clientLevel(clientUUID).add(rolesToAdd);
     	} catch (Exception e) {
     		log.error("Adding roles to user \"" + userId + "\" was unsuccessful: " + e.getMessage());
     		return false;
     	}
-    	
+
     	return true;
     }
-    
+
     /**
      * Adds a single role to a user.
-     * 
+     *
      * @param roleName the role that should be added
      * @param userId the id of the user
      * @return {@code true} if addition was successful, {@code false} otherwise
      */
     public boolean addRoleToUser(String roleName, String userId) {
     	return addRolesToUser(List.of(roleName), userId);
+    }
+
+    /**
+     * Retrieves a map of user federations.
+     * <p>
+     * This method uses the Keycloak Admin API to fetch all federations of the type
+     * `org.keycloak.storage.UserStorageProvider`. The federations are represented as
+     * `ComponentRepresentation` objects and converted into a map, where the IDs of the federations
+     * are used as keys and the names of the federations as values.
+     * </p>
+     *
+     * @return A map that associates the IDs of the federations with their names.
+     */
+    public Map<String, String> getFederations() {
+        List<ComponentRepresentation> federations = this.getKeycloakRealm().components()
+            .query(null, "org.keycloak.storage.UserStorageProvider");
+
+        Map<String, String> fedMap = federations.stream()
+            .collect(Collectors.toMap(ComponentRepresentation::getId,
+                ComponentRepresentation::getName));
+
+        return fedMap;
+    }
+
+    /**
+     * Searches for users based on a search term.
+     * <p>
+     * This method uses the Keycloak Admin API to search for users whose attributes match the
+     * specified search term. The search is not limited to a specific number of results and returns
+     * all matching users.
+     * </p>
+     *
+     * @param query The search term used to find users.
+     * @return A list of `UserRepresentation` objects representing the found users.
+     */
+    public List<UserRepresentation> searchUsers(String query) {
+        return this.getKeycloakRealm().users().search(query, 0, Integer.MAX_VALUE);
     }
 }
