@@ -52,7 +52,7 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
     private DomainDBAccessService domainDBAccessService = SpringBeanLocator.getBean(DomainDBAccessService.class);
 
     /** Stores the identifier for that entry. */
-    private String id;
+    private String identifier;
 
     /** The type of the identifier. */
     private String idType;
@@ -87,7 +87,7 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
     @JsonIgnore
     @Override
     public PseudonymDTO assignPojoValues(IPseudonym pojo) {
-        this.setId(pojo.getIdentifier() != null ? pojo.getIdentifier() : "");
+        this.setIdentifier(pojo.getIdentifier() != null ? pojo.getIdentifier() : "");
         this.setIdType(pojo.getIdtype() != null ? pojo.getIdtype() : "");
         this.setPsn(pojo.getPseudonym() != null ? pojo.getPseudonym() : "");
         this.setValidFrom(pojo.getValidfrom() != null ? pojo.getValidfrom() : null);
@@ -136,7 +136,7 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
     @Override
     public String toRepresentationString() {
         String out = "";
-        out += (this.getId() != null) ? "id: " + this.getId() + ", " : "";
+        out += (this.getIdentifier() != null) ? "identifier: " + this.getIdentifier() + ", " : "";
         out += (this.getIdType() != null) ? "idType: " + this.getIdType() + ", " : "";
         out += (this.getPsn() != null) ? "pseudonym: " + this.getPsn() + ", " : "";
         out += (this.getValidFrom() != null) ? "validFrom: " + this.getValidFrom().toString() + ", " : "";
@@ -152,7 +152,7 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
     @Override
     @JsonIgnore
     public Boolean validate() {
-        if (this.getId() == null || this.getId().trim().equals("") || this.getIdType() == null || this.getIdType().trim().equals("")) {
+        if (this.getIdentifier() == null || this.getIdentifier().trim().equals("") || this.getIdType() == null || this.getIdType().trim().equals("")) {
             return false;
         }
 
