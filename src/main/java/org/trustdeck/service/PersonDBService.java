@@ -34,6 +34,7 @@ import org.trustdeck.dto.PersonDTO;
 import org.trustdeck.exception.DuplicatePersonException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.exception.UpdateException;
+import org.trustdeck.jooq.generated.tables.daos.PersonDao;
 import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.pojos.Person;
 import org.trustdeck.jooq.generated.tables.records.PersonRecord;
@@ -67,11 +68,11 @@ public class PersonDBService {
      * @param algorithm the algorithm object containing information about how the person identifier was generated
      * @param request the http request object containing information necessary for the audit trail
      * @throws DuplicatePersonException when the identifier & idType combination are already in the database
-     * @return The inserted person object including the ID when the insertion was successful,
+     * @return The newly inserted person object when the insertion was successful,
      * 		   {@code null} when the insertion failed or would create a duplicate.
      */
     @Transactional
-    public Person createPerson(Person person, Algorithm algorithm, HttpServletRequest request) throws DuplicatePersonException {
+    public PersonDTO createPerson(Person person, Algorithm algorithm, HttpServletRequest request) throws DuplicatePersonException {
     	// Retrieve the proper ID for the algorithm
     	Integer algorithmID = algorithm.getId() != null && algorithm.getId() > 0 ? algorithm.getId() : algorithmDBService.createOrGetAlgorithm(algorithm);
     	
@@ -119,7 +120,7 @@ public class PersonDBService {
 	    
 	    // Return the person object
         log.debug("Creating the person with identifier \"" + person.getIdentifier() + "\" was successful.");
-	    return person;
+	    return new PersonDTO().assignPojoValues(new PersonDao().fetchOneById(person.getId()));
     }
 
     /**
@@ -325,10 +326,10 @@ public class PersonDBService {
      * @param idType the idType of the person that should be updated
      * @param updatedPerson the person object containing the updated information
      * @param request the http request object containing information necessary for the audit trail
-     * @return the ID of the updated person, or {@code null} if an error occurred
+     * @return the updated person, or {@code null} if an error occurred
      */
     @Transactional
-    public Integer updatePerson(String identifier, String idType, PersonDTO updatedPerson, HttpServletRequest request) {
+    public PersonDTO updatePerson(String identifier, String idType, PersonDTO updatedPerson, HttpServletRequest request) {
     	DateTimeFormatter dobFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     	
     	// Get data needed for the update
@@ -423,6 +424,6 @@ public class PersonDBService {
         log.debug("Updating the person object \"" + personRecord.getIdentifier() + "\" " + ((wasStored == 1) ? "succeeded." : "failed."));
         
         // Return the person ID when successful
-        return wasStored == 1 ? personRecord.getId() : null;
+        return wasStored == 1 ? new PersonDTO().assignPojoValues(new PersonDao().fetchOneById(personRecord.getId())) : null;
     }
 }

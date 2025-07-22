@@ -206,7 +206,7 @@ public class PersonRESTContoller {
     	}
 
     	// Create the object in the database
-    	Person p = null;
+    	PersonDTO p = null;
     	try {
     		p = personDBService.createPerson(personDTO.convertToPOJO(), algorithm, request);
     	} catch (DuplicatePersonException e) {
@@ -218,7 +218,7 @@ public class PersonRESTContoller {
     	if (p != null) {
     		// Creation was successful
     		log.debug("Successfully created person object with ID: " + p.getId());
-    		return responseService.created(responseContentType);
+    		return responseService.created(responseContentType, p);
     	} else {
     		// Creation failed
     		log.info("Creating person object failed: " + personDTO.toRepresentationString());
@@ -353,12 +353,13 @@ public class PersonRESTContoller {
     	updatePersonDTO.setAlgorithm(oldPerson.getAlgorithm());
     	
     	// Update person object
-    	if (personDBService.updatePerson(identifier, idType, updatePersonDTO, request) == null) {
+    	PersonDTO p = personDBService.updatePerson(identifier, idType, updatePersonDTO, request);
+    	if (p == null) {
     		log.debug("Updating the person object with ID " + oldPerson.getId() + " failed.");
     		return responseService.unprocessableEntity(responseContentType);
     	} else {
     		log.debug("Successfully updated the person object with ID: " + oldPerson.getId());
-    		return responseService.ok(responseContentType);
+    		return responseService.ok(responseContentType, p);
     	}
     }
 

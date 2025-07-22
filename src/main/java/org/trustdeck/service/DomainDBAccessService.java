@@ -754,7 +754,7 @@ public class DomainDBAccessService {
      * auditing should be performed, you can pass {@code null}.
      * @return {@code true} if the update was successful, {@code false} otherwise
      */
-    public boolean updateDomain(Domain oldDomain, Domain newDomain, boolean recursiveChanges, HttpServletRequest request) {
+    public Domain updateDomain(Domain oldDomain, Domain newDomain, boolean recursiveChanges, HttpServletRequest request) {
         try {
             this.dslCtx.transaction(configuration -> {
                 // Check if the domain to be updated exists
@@ -867,7 +867,7 @@ public class DomainDBAccessService {
                         updateDomain.setLengthincludescheckdigitinherited(oldChild.getLengthincludescheckdigitinherited());
 
                         // Recursive call of the update method
-                        if (updateDomain(oldChild, updateDomain, recursiveChanges, request)) {
+                        if (updateDomain(oldChild, updateDomain, recursiveChanges, request) != null) {
                             log.debug("Successfully updated the child-domain \"" + oldChild.getName() + "\".");
                         } else {
                             // Failed update of child-domain. Use exception to break the transaction.
@@ -900,27 +900,28 @@ public class DomainDBAccessService {
             });
 
             // Successful update
-            log.info("Successfully updated the domain \"" + ((newDomain.getName() != null) ? newDomain.getName() : oldDomain.getName()) + "\".");
-            return true;
+            String name = (newDomain.getName() != null) ? newDomain.getName() : oldDomain.getName();
+            log.info("Successfully updated the domain \"" + name + "\".");
+            return getDomainByName(name, null);
         } catch (DomainNotFoundException e) {
             log.info("The domain (\"" + e.getDomainName() + "\") is not in the database. Nothing to update.");
-            return false;
+            return null;
         } catch (UnexpectedResultSizeException f) {
             log.error("The update would have affected an unexpected number of records. It should only affect 1 record, "
                     + "but affected " + f.getActualSize() + " records.");
-            return false;
+            return null;
         } catch (FailedPseudonymUpdateException g) {
             log.error("While updating the records in the domain \"" + g.getDomainName() + "\" an error occurred. The update was therefore rolled back.");
-            return false;
+            return null;
         } catch (FailedChildDomainUpdateException h) {
             log.error("Updating the child-domain \"" + h.getChildName() + "\" was unsuccessful and was therefore rolled back.");
-            return false;
+            return null;
         } catch (DomainOIDCException i) {
             log.error("Updating the OIDC rights and roles failed for the domain (" + i.getDomainName() + "). The update was therefore rolled back.");
-            return false;
+            return null;
         } catch (Exception j) {
             log.error("Couldn't update the domain: " + j.getMessage() + "\n");
-            return false;
+            return null;
         }
     }
 }
