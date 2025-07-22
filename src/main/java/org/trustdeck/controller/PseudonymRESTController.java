@@ -495,15 +495,15 @@ public class PseudonymRESTController {
             }
             
             // Determine whether or not a reduced standard view or a complete view is requested
-            PseudonymDTO newRecordDto = null;
+            PseudonymDTO recordDto = null;
             if (!authorizationService.currentRequestHasRole("complete-view")) {
-                newRecordDto = new PseudonymDTO().assignPojoValues(ps.getFirst()).toReducedStandardView();
+                recordDto = new PseudonymDTO().assignPojoValues(ps.getFirst()).toReducedStandardView();
             } else {
-                newRecordDto = new PseudonymDTO().assignPojoValues(ps.getFirst());
+                recordDto = new PseudonymDTO().assignPojoValues(ps.getFirst());
             }
 
             log.debug("The pseudonym-record requested to be inserted was skipped because it is already in the database.");
-            return responseService.ok(responseContentType, newRecordDto);
+            return responseService.ok(responseContentType, recordDto);
         } else {
             // Nothing added. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Insertion of a new pseudonym-record failed.");
