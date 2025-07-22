@@ -98,7 +98,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
      */
     public PseudonymDTO createRecordHelper(String id, String idType, String domainName) throws Exception {
         PseudonymDTO createRecord = new PseudonymDTO();
-        createRecord.setId(id);
+        createRecord.setIdentifier(id);
         createRecord.setIdType(idType);
 
         MockHttpServletResponse response = this.assertCreatedRequest("createRecord", post("/api/pseudonymization/domains/" + domainName + "/pseudonym"), null, createRecord, this.getAccessToken());
@@ -108,7 +108,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         PseudonymDTO r = r1l.get(0);
 
         PseudonymDTO nextRecord = new PseudonymDTO();
-        nextRecord.setId(r.getPsn());
+        nextRecord.setIdentifier(r.getPsn());
         nextRecord.setIdType(r.getDomainName());
 
         return nextRecord;
@@ -141,26 +141,26 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
 
         // Regular creation without issues
         PseudonymDTO a1 = this.createRecordHelper("1234356", "MP-ID", rootDomainName);
-        PseudonymDTO a2 = this.createRecordHelper(a1.getId(), a1.getIdType(), childOneName);
-        PseudonymDTO a3 = this.createRecordHelper(a1.getId(), a1.getIdType(), childTwoName);
-        PseudonymDTO a4 = this.createRecordHelper(a2.getId(), a2.getIdType(), childThreeName);
+        PseudonymDTO a2 = this.createRecordHelper(a1.getIdentifier(), a1.getIdType(), childOneName);
+        PseudonymDTO a3 = this.createRecordHelper(a1.getIdentifier(), a1.getIdType(), childTwoName);
+        PseudonymDTO a4 = this.createRecordHelper(a2.getIdentifier(), a2.getIdType(), childThreeName);
 
         // Regular creation without issues
         PseudonymDTO b1 = this.createRecordHelper("1234357", "MP-ID", rootDomainName);
-        PseudonymDTO b2 = this.createRecordHelper(b1.getId(), b1.getIdType(), childOneName);
-        PseudonymDTO b3 = this.createRecordHelper(b1.getId(), b1.getIdType(), childTwoName);
-        PseudonymDTO b4 = this.createRecordHelper(b2.getId(), b2.getIdType(), childThreeName);
+        PseudonymDTO b2 = this.createRecordHelper(b1.getIdentifier(), b1.getIdType(), childOneName);
+        PseudonymDTO b3 = this.createRecordHelper(b1.getIdentifier(), b1.getIdType(), childTwoName);
+        PseudonymDTO b4 = this.createRecordHelper(b2.getIdentifier(), b2.getIdType(), childThreeName);
 
         // Regular creation without issues
         PseudonymDTO c1 = this.createRecordHelper("1234357", "ANY-ID", rootDomainName);
-        PseudonymDTO c2 = this.createRecordHelper(c1.getId(), c1.getIdType(), childOneName);
-        PseudonymDTO c3 = this.createRecordHelper(c1.getId(), c1.getIdType(), childTwoName);
-        PseudonymDTO c4 = this.createRecordHelper(c2.getId(), c2.getIdType(), childThreeName);
+        PseudonymDTO c2 = this.createRecordHelper(c1.getIdentifier(), c1.getIdType(), childOneName);
+        PseudonymDTO c3 = this.createRecordHelper(c1.getIdentifier(), c1.getIdType(), childTwoName);
+        PseudonymDTO c4 = this.createRecordHelper(c2.getIdentifier(), c2.getIdType(), childThreeName);
 
         //Regular creation but without childThreeName
         PseudonymDTO d1 = this.createRecordHelper("1234358", "MP-ID", rootDomainName);
-        PseudonymDTO d2 = this.createRecordHelper(d1.getId(), d1.getIdType(), childOneName);
-        PseudonymDTO d3 = this.createRecordHelper(d1.getId(), d1.getIdType(), childTwoName);
+        PseudonymDTO d2 = this.createRecordHelper(d1.getIdentifier(), d1.getIdType(), childOneName);
+        PseudonymDTO d3 = this.createRecordHelper(d1.getIdentifier(), d1.getIdType(), childTwoName);
 
         // Set query parameter
         Map<String, String> getParameter = new HashMap<>() {
@@ -169,7 +169,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
                 put("sourceDomain", childTwoName);
                 put("targetDomain", childThreeName);
                 //id is the next psn from helper method...
-                put("sourcePsn", b3.getId());
+                put("sourcePsn", b3.getIdentifier());
             }
         };
 
@@ -244,7 +244,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
 
         // Create a record
         PseudonymDTO recordCreate = new PseudonymDTO();
-        recordCreate.setId(firstId);
+        recordCreate.setIdentifier(firstId);
         recordCreate.setIdType(assertIdType);
 
         // Inserting the same record in two different domains (that have a relation between each other) must work.
@@ -252,7 +252,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         this.assertCreatedRequest("createNewRecord", post("/api/pseudonymization/domains/" + childOfChild + "/pseudonym"), null, recordCreate, this.getAccessToken());
 
         PseudonymDTO anotherCreateRecord = new PseudonymDTO();
-        anotherCreateRecord.setId(secondId);
+        anotherCreateRecord.setIdentifier(secondId);
         anotherCreateRecord.setIdType(assertIdType);
 
         this.assertCreatedRequest("createNewRecord", post("/api/pseudonymization/domains/" + childOfChild + "/pseudonym"), null, anotherCreateRecord, this.getAccessToken());
@@ -281,8 +281,8 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         assertNotNull(r1.getPsn());
         assertNotNull(r2.getPsn());
 
-        assertEquals(firstId, r1.getId());
-        assertEquals(firstId, r2.getId());
+        assertEquals(firstId, r1.getIdentifier());
+        assertEquals(firstId, r2.getIdentifier());
 
         assertEquals(assertIdType, r1.getIdType());
         assertEquals(assertIdType, r2.getIdType());
@@ -306,7 +306,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
         PseudonymDTO r3 = r3l.get(0);
 
         assertNotNull(r3.getPsn());
-        assertEquals(secondId, r3.getId());
+        assertEquals(secondId, r3.getIdentifier());
         assertEquals(assertIdType, r3.getIdType());
         // At this point all pseudonyms are saved correctly
 
@@ -362,7 +362,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
 
         // Create a record
         PseudonymDTO recordCreate = new PseudonymDTO();
-        recordCreate.setId(assertId);
+        recordCreate.setIdentifier(assertId);
         recordCreate.setIdType(assertIdType);
 
         this.assertUnprocessableEntity("createNewRecord", post("/api/pseudonymization/domains/" + domainName + "/pseudonym"), null, recordCreate, this.getAccessToken());
@@ -421,7 +421,7 @@ public class TestsCompositeServiceIT extends AssertWebRequestService {
 
         // Create a record with a user-friendly validity time string
         PseudonymDTO record = new PseudonymDTO();
-        record.setId("testIdentifier");
+        record.setIdentifier("testIdentifier");
         record.setIdType("testType");
         record.setValidFrom(LocalDateTime.parse("2023-01-01T12:00:00"));
         record.setValidityTime("1d");

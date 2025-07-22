@@ -199,7 +199,7 @@ public class AssertWebRequestService {
 	        
 	        // Create test record DTO
 	        PseudonymDTO pseudonymDTO = new PseudonymDTO();
-	        pseudonymDTO.setId("10000008912");
+	        pseudonymDTO.setIdentifier("10000008912");
 	        pseudonymDTO.setIdType("ANY-ID");
 	        pseudonymDTO.setPsn("TS-9EEEE39F0D5C03507CB9388609E925F9");
 	        pseudonymDTO.setValidFrom(LocalDateTime.of(2022, 2, 26, 19, 15, 20, 885853000));
