@@ -354,12 +354,12 @@ public class PersonRESTContoller {
     	
     	// Update person object
     	PersonDTO p = personDBService.updatePerson(identifier, idType, updatePersonDTO, request);
-    	if (p == null) {
-    		log.debug("Updating the person object with ID " + oldPerson.getId() + " failed.");
-    		return responseService.unprocessableEntity(responseContentType);
-    	} else {
+    	if (p != null) {
     		log.debug("Successfully updated the person object with ID: " + oldPerson.getId());
     		return responseService.ok(responseContentType, p);
+    	} else {
+    		log.debug("Updating the person object with ID " + oldPerson.getId() + " failed.");
+    		return responseService.unprocessableEntity(responseContentType);
     	}
     }
 

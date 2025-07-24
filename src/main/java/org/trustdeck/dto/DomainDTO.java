@@ -166,7 +166,7 @@ public class DomainDTO implements IObjectDTO<IDomain, DomainDTO> {
     @JsonIgnore
     @Override
     public DomainDTO assignPojoValues(IDomain pojo) {
-    	this.setId(pojo.getId() == null ? null : pojo.getId());
+    	this.setId(null);
         this.setName(pojo.getName());
         this.setPrefix(pojo.getPrefix());
         this.setValidFrom(pojo.getValidfrom());

@@ -461,12 +461,22 @@ public class DomainRESTController {
         
         if (result.equals(DomainDBAccessService.INSERTION_SUCCESS)) {
             // Return a 201-CREATED status and the location to the domain inside the response header.
+        	DomainDTO createdDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	createdDomDTO = createdDomDTO.toReducedStandardView();
+            }
+            
             log.info("Successfully created the domain \"" + domainName + "\".");
-            return responseService.created(responseContentType, location, domainDBAccessService.getDomainByName(domain.getName(), null));
+            return responseService.created(responseContentType, location, createdDomDTO);
         } else if (result.equals(DomainDBAccessService.INSERTION_DUPLICATE)) {
             // Nothing added since the entry is a duplicate. Return an 200-OK status.
+        	DomainDTO existingDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	existingDomDTO = existingDomDTO.toReducedStandardView();
+            }
+            
             log.info("The domain requested to be inserted was skipped because it is already in the database.");
-            return responseService.ok(responseContentType);
+            return responseService.ok(responseContentType, existingDomDTO);
         } else {
             // Creating the domain failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Adding the domain \"" + domainName + "\" was unsuccessful.");
@@ -514,12 +524,18 @@ public class DomainRESTController {
         Boolean multiplePsnAllowed = domainDTO.getMultiplePsnAllowed();
         String description = domainDTO.getDescription();
         String superDomainName = domainDTO.getSuperDomainName();
-
+        
         if (Assertion.assertNullAll(domainName, domainPrefix, validFrom, validTo, validityTime, algorithm, 
         		multiplePsnAllowed, description, superDomainName)) {
             // An empty object was passed, so there is nothing to create.
             log.debug("The domain DTO passed by the user was empty. Nothing to create.");
             return responseService.unprocessableEntity(responseContentType);
+        }
+
+        if (Assertion.assertNotNullAll(domainName, domainPrefix)) {
+        	// These two attributes must be given
+        	log.debug("No name and/or no prefix were provided for the domain.");
+        	return responseService.unprocessableEntity(responseContentType);
         }
 
         // Check if the name is valid in an URI. If not, tell the user and abort
@@ -705,12 +721,22 @@ public class DomainRESTController {
         
         if (result.equals(DomainDBAccessService.INSERTION_SUCCESS)) {
             // Return a 201-CREATED status and the location to the domain inside the response header.
+            DomainDTO createdDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	createdDomDTO = createdDomDTO.toReducedStandardView();
+            }
+            
             log.info("Successfully created the domain \"" + domainName + "\".");
-            return responseService.created(responseContentType, location, domainDBAccessService.getDomainByName(domain.getName(), null));
+            return responseService.created(responseContentType, location, createdDomDTO);
         } else if (result.equals(DomainDBAccessService.INSERTION_DUPLICATE)) {
             // Nothing added since the entry is a duplicate. Return an 200-OK status.
+        	DomainDTO existingDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	existingDomDTO = existingDomDTO.toReducedStandardView();
+            }
+            
             log.info("The domain requested to be inserted was skipped because it is already in the database.");
-            return responseService.ok(responseContentType);
+            return responseService.ok(responseContentType, existingDomDTO);
         } else {
             // Creating the domain failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Adding the domain \"" + domainName + "\" was unsuccessful.");
@@ -1129,8 +1155,13 @@ public class DomainRESTController {
         Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, performRecursiveChanges, request);
         if (updatedDomain != null) {
             // Success. Return a 200-OK status.
+        	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	updatedDomDTO = updatedDomDTO.toReducedStandardView();
+            }
+            
             log.info("Successfully updated the domain \"" + domainName + "\".");
-            return responseService.ok(responseContentType, new DomainDTO().assignPojoValues(updatedDomain));
+            return responseService.ok(responseContentType, updatedDomDTO);
         } else {
             // Updating the meta-information failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Updating the domain \"" + domainName + "\" was unsuccessful.");
@@ -1157,9 +1188,9 @@ public class DomainRESTController {
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> updateDomain(@RequestParam(name = "name", required = true) String oldDomainName,
-                                               @RequestBody DomainDTO domainDTO,
-                                               @RequestHeader(name = "accept", required = false) String responseContentType,
-                                               HttpServletRequest request) {
+                                          @RequestBody DomainDTO domainDTO,
+                                          @RequestHeader(name = "accept", required = false) String responseContentType,
+                                          HttpServletRequest request) {
         // Get old domain object
         Domain old = domainDBAccessService.getDomainByName(oldDomainName, null);
 
@@ -1211,8 +1242,13 @@ public class DomainRESTController {
         Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, DEFAULT_PERFORM_RECURSIVE_CHANGES, request);
         if (updatedDomain != null) {
             // Success. Return a 200-OK status.
+        	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	updatedDomDTO = updatedDomDTO.toReducedStandardView();
+            }
+            
             log.info("Successfully updated the domain \"" + newName + "\".");
-            return responseService.ok(responseContentType, new DomainDTO().assignPojoValues(updatedDomain));
+            return responseService.ok(responseContentType, updatedDomDTO);
         } else {
             // Updating the meta-information failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Updating the domain \"" + newName + "\" was unsuccessful.");
@@ -1270,8 +1306,13 @@ public class DomainRESTController {
         Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, false, request);
         if (updatedDomain != null) {
             // Success. Return a 200-OK status.
+        	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	updatedDomDTO = updatedDomDTO.toReducedStandardView();
+            }
+            
             log.info("Successfully updated the salt for the domain \"" + domainName + "\". It is now \"" + newSalt + "\".");
-            return responseService.ok(responseContentType, new DomainDTO().assignPojoValues(updatedDomain));
+            return responseService.ok(responseContentType, updatedDomDTO);
         } else {
             // Updating the salt failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Updating the salt for the domain \"" + domainName + "\" was unsuccessful.");

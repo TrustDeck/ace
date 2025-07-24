@@ -980,14 +980,14 @@ public class PseudonymRESTController {
             // Check if any of the attributes of a record is missing
             if (Assertion.assertNotNullAll(r.getIdentifier(), r.getIdType(), r.getPsn(), r.getValidFrom(), r.getValidFromInherited(), r.getValidTo(), r.getValidToInherited())) {
                 // Everything that is needed is available. Create new pseudonym-record.
-                newPseudonym.setIdentifier(r.getIdentifier());
-                newPseudonym.setIdtype(r.getIdType());
+//                newPseudonym.setIdentifier(r.getIdentifier());
+//                newPseudonym.setIdtype(r.getIdType());
                 newPseudonym.setPseudonym(r.getPsn());
                 newPseudonym.setValidfrom(r.getValidFrom());
                 newPseudonym.setValidfrominherited(r.getValidFromInherited());
                 newPseudonym.setValidto(r.getValidTo());
                 newPseudonym.setValidtoinherited(r.getValidToInherited());
-                newPseudonym.setDomainid(d.getId());
+//                newPseudonym.setDomainid(d.getId());
             } else {
                 // Missing attribute values. Log and ignore.
                 log.debug("The record with number " + (i + 1) + " is missing some attributes. This (part of the) request is ignored.");
@@ -1010,7 +1010,8 @@ public class PseudonymRESTController {
         	for (int i = 0; i < updateablePseudonyms.size(); i++) {
         		if (updateSuccess.get(i) != null && updateSuccess.get(i)) {
         			Pseudonym updatedPseudonym = pseudonymDBAccessService.getRecordFromIdentifier(domainName, updateablePseudonyms.get(i).getIdentifier(), updateablePseudonyms.get(i).getIdtype(), null).getFirst();
-        			updatedPseudonyms.add(new PseudonymDTO().assignPojoValues(updatedPseudonym));
+        			PseudonymDTO updatedDTO = new PseudonymDTO().assignPojoValues(updatedPseudonym);
+        			updatedPseudonyms.add(authorizationService.currentRequestHasRole("complete-view") ? updatedDTO : updatedDTO.toReducedStandardView());
         		}
         	}
         	
@@ -1161,14 +1162,14 @@ public class PseudonymRESTController {
             String id = (newIdentifier != null && !newIdentifier.trim().equals("")) ? newIdentifier : identifier;
             String idT = (newIdType != null && !newIdType.trim().equals("")) ? newIdType : idType;
             String p = (newPsn != null && !newPsn.trim().equals("")) ? newPsn : oldRecord.getPseudonym();
-            Pseudonym record = pseudonymDBAccessService.getRecord(d.getName(), id, idT, p, null).get(0);
+            Pseudonym updatedRecord = pseudonymDBAccessService.getRecord(d.getName(), id, idT, p, null).get(0);
             PseudonymDTO newRecordDto = null;
 
             // Determine whether or not a reduced standard view or a complete view is requested
             if (!authorizationService.currentRequestHasRole("complete-view")) {
-                newRecordDto = new PseudonymDTO().assignPojoValues(record).toReducedStandardView();
+                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord).toReducedStandardView();
             } else {
-                newRecordDto = new PseudonymDTO().assignPojoValues(record);
+                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord);
             }
 
             // Success. Return a status code 200 and the pseudonym-record as payload.
@@ -1315,14 +1316,14 @@ public class PseudonymRESTController {
         if (pseudonymDBAccessService.updatePseudonym(oldRecord, newRecord, request)) {
             // Update successful. Retrieve the updated record to show it to the user.
             String p = (newPsn != null && !newPsn.trim().equals("")) ? newPsn : psn;
-            Pseudonym record = pseudonymDBAccessService.getRecord(d.getName(), null, null, p, null).get(0);
+            Pseudonym updatedRecord = pseudonymDBAccessService.getRecord(d.getName(), null, null, p, null).get(0);
             PseudonymDTO newRecordDto = null;
 
             // Determine whether or not a reduced standard view or a complete view is requested
             if (!authorizationService.currentRequestHasRole("complete-view")) {
-                newRecordDto = new PseudonymDTO().assignPojoValues(record).toReducedStandardView();
+                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord).toReducedStandardView();
             } else {
-                newRecordDto = new PseudonymDTO().assignPojoValues(record);
+                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord);
             }
 
             // Success. Return a status code 200 and the pseudonym-record as payload.
@@ -1446,14 +1447,14 @@ public class PseudonymRESTController {
         // Update record
         if (pseudonymDBAccessService.updatePseudonym(oldRecord, newRecord, request)) {
             // Update successful. Retrieve the updated record to show it to the user.
-            Pseudonym record = pseudonymDBAccessService.getRecord(d.getName(), identifier, idType, oldRecord.getPseudonym(), null).get(0);
+            Pseudonym updatedRecord = pseudonymDBAccessService.getRecord(d.getName(), identifier, idType, oldRecord.getPseudonym(), null).get(0);
             PseudonymDTO newRecordDto = null;
 
             // Determine whether or not a reduced standard view or a complete view is requested
             if (!authorizationService.currentRequestHasRole("complete-view")) {
-                newRecordDto = new PseudonymDTO().assignPojoValues(record).toReducedStandardView();
+                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord).toReducedStandardView();
             } else {
-                newRecordDto = new PseudonymDTO().assignPojoValues(record);
+                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord);
             }
 
             // Success. Return a status code 200 and the pseudonym-record as payload.
@@ -1575,14 +1576,14 @@ public class PseudonymRESTController {
         // Update record
         if (pseudonymDBAccessService.updatePseudonym(oldRecord, newRecord, request)) {
             // Update successful. Retrieve the updated record to show it to the user.
-            Pseudonym record = pseudonymDBAccessService.getRecord(d.getName(), null, null, psn, null).get(0);
+            Pseudonym updatedRecord = pseudonymDBAccessService.getRecord(d.getName(), null, null, psn, null).get(0);
             PseudonymDTO newRecordDto = null;
 
             // Determine whether or not a reduced standard view or a complete view is requested
             if (!authorizationService.currentRequestHasRole("complete-view")) {
-                newRecordDto = new PseudonymDTO().assignPojoValues(record).toReducedStandardView();
+                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord).toReducedStandardView();
             } else {
-                newRecordDto = new PseudonymDTO().assignPojoValues(record);
+                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord);
             }
 
             // Success. Return a status code 200 and the pseudonym-record as payload.
