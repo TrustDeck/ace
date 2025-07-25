@@ -64,11 +64,11 @@ app:
     preferred-accept-mime-type: application/json
   datasource:
     trustdeck:
-      url: jdbc:postgresql://${SPRING_TRUSTDECK_HOST}:${SPRING_TRUSTDECK_PORT}/trustdeck
+      url: jdbc:postgresql://${DATABASE_TRUSTDECK_HOST}:${DATABASE_TRUSTDECK_PORT}/trustdeck
       username: ${DATABASE_TRUSTDECK_USER}
       password: ${DATABASE_TRUSTDECK_PASSWORD}
       configuration:
-        maximum-pool-size: ${SPRING_TRUSTDECK_MAX_POOLSIZE}
+        maximum-pool-size: ${DATABASE_TRUSTDECK_MAX_POOLSIZE}
   operations:
     # Name of all possible rights -- used for rights and roles management
     - domain-create
