@@ -25,25 +25,53 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * Data transfer object for the exchange of algorithm data.
+ *
+ * @author Armin Müller
+ */
 @Data
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request.
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlgorithmDTO implements IObjectDTO<Algorithm, AlgorithmDTO> {
 	
+	/** The (internal) id of the algorithm object. */
 	@JsonIgnore
 	@EqualsAndHashCode.Exclude
 	private Integer id;
+	
+	/** The name given to this algorithm object. */
 	private String name;
+	
+	/** The alphabet used in creating the pseudonyms. */
 	private String alphabet;
+	
+	/** The desired number of possible pseudonyms when using a randomness-based algorithm. */
     private long randomAlgorithmDesiredSize;
+	
+	/** The desired probability with which the pseudonymization should be successful when using a randomness-based algorithm. */
     private double randomAlgorithmDesiredSuccessProbability;
+	
+	/** The current value of the counter when using a consecutive value-based algorithm or when multiple pseudonyms per identifier are allowed. */
     private long consecutiveValueCounter;
+	
+	/** The length the pseudonym should have. */
     private int pseudonymLength;
+	
+	/** The character that should be used for padding if needed. */
     private String paddingCharacter;
+	
+	/** Whether or not to add a check digit to the pseudonym. */
     private boolean addCheckDigit;
+	
+	/** Whether or not the desired pseudonym length should include the check digit (thus, the check digit replaces the last character of the generated pseudonym). */
     private boolean lengthIncludesCheckDigit;
+	
+	/** The salt value. */
     private String salt;
+	
+	/** The desired length of the salt value. */
     private int saltLength;
 	
 	@JsonIgnore
