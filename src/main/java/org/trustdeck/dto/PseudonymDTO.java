@@ -150,10 +150,6 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
     @Override
     @JsonIgnore
     public Boolean validate() {
-        if (this.getIdentifierItem().validate()) {
-            return false;
-        }
-
-        return true;
+        return this.getIdentifierItem().validate();
     }
 }
