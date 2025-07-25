@@ -11,7 +11,7 @@ server:
 
 logging:
   level:
-    org.trustdeck: TRUSTDECK_LOG_LEVEL:INFO
+    org.trustdeck: TRUSTDECK_LOG_LEVEL
     root: ERROR
 
 spring:

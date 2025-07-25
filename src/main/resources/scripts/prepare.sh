@@ -19,7 +19,7 @@ done
 echo "Replacing ENV in configurations ..."
 # DB configurations
 
-sed -i 's|TRUSTDECK_LOG_LEVEL|'"${TRUSTDECK_LOG_LEVEL}"'|g' run.yml
+sed -i 's|TRUSTDECK_LOG_LEVEL|'"${TRUSTDECK_LOG_LEVEL:-INFO}"'|g' run.yml
 sed -i 's|KEYCLOAK_SERVER_URI|'"${KEYCLOAK_SERVER_URI}"'|g' run.yml
 sed -i 's|TRUSTSTORE_PATH|'"${TRUSTSTORE_PATH:-classpath:pki_chain.truststore}"'|g' run.yml
 sed -i 's|TRUSTSTORE_PASSWORD|'"${TRUSTSTORE_PASSWORD:-l129VwykBVwp5FlfdPe7qQ9GOaq2rckC}"'|g' run.yml
