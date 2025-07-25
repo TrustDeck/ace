@@ -339,8 +339,9 @@ public class PseudonymRESTController {
                                           @RequestParam(name = "omitPrefix", required = false, defaultValue = "false") Boolean omitPrefix,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
                                           HttpServletRequest request) {
-    	
+
         if (!pseudonymDTO.validate() || !pseudonymDTO.isValidStandardView()) {
+        	log.debug("The given PseudonymDTO was either invalid or had information that is not allowed in it.");
             return responseService.unprocessableEntity(responseContentType);
         }
 
@@ -452,7 +453,7 @@ public class PseudonymRESTController {
         	for (int i = 1; i < Pseudonymizer.DEFAULT_NUMBER_OF_RETRIES; i++) {
 	        	// Check if its actually a duplicate
         		if (result.equals(PseudonymDBAccessService.INSERTION_DUPLICATE_PSEUDONYM)) {
-					    // Check the domain's filling rate
+					// Check the domain's filling rate
         			checkDomainFillingRate(domain);
 	        		
 	        		// Retry
@@ -903,21 +904,6 @@ public class PseudonymRESTController {
             // Nothing found, return a 404-NOT_FOUND
             return responseService.notFound(responseContentType);
         }
-    }
-
-    /**
-     * This method functions as a ping endpoint.
-     *
-     * @return <li>a <b>200-OK</b> status</li>
-     */
-    @GetMapping(value = "/ping")
-    @PreAuthorize("hasRole('domain-read')")
-    // Authorize a low-level role to include the authorization-time in the baseline
-    @Audit(eventType = AuditEventType.PING, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> ping() {
-        // The response to the ping is just a 200-OK status code
-        log.debug("Ping.");
-        return ResponseEntity.ok().build();
     }
     
     /**
