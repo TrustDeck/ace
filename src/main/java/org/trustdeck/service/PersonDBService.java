@@ -120,7 +120,7 @@ public class PersonDBService {
 	    
 	    // Return the person object
         log.debug("Creating the person with identifier \"" + person.getIdentifier() + "\" was successful.");
-	    return new PersonDTO().assignPojoValues(new PersonDao().fetchOneById(person.getId()));
+	    return new PersonDTO().assignPojoValues(getPersonDAO().fetchOneById(person.getId()));
     }
 
     /**
@@ -424,6 +424,16 @@ public class PersonDBService {
         log.debug("Updating the person object \"" + personRecord.getIdentifier() + "\" " + ((wasStored == 1) ? "succeeded." : "failed."));
         
         // Return the person ID when successful
-        return wasStored == 1 ? new PersonDTO().assignPojoValues(new PersonDao().fetchOneById(personRecord.getId())) : null;
+        return wasStored == 1 ? new PersonDTO().assignPojoValues(getPersonDAO().fetchOneById(personRecord.getId())) : null;
+    }
+    
+    /**
+     * Method to retrieve the person data access object.
+     *
+     * @return the audit event DAO
+     */
+    private PersonDao getPersonDAO() {
+    	// Attaches DAO to the current transactional context
+    	return new PersonDao(dsl.configuration());
     }
 }
