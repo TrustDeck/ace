@@ -24,7 +24,7 @@ WORKDIR /home/spring
 
 COPY ../src/main/resources/scripts/prepare.sh prepare.sh
 COPY ../src/main/resources/scripts/entrypoint.sh entrypoint.sh
-COPY ../src/main/resources/application.yml .
+COPY ../src/main/resources/application.yml.template .
 ADD ../target/trustdeck*.jar trustdeck.jar
 
 USER root
