@@ -25,6 +25,7 @@ import org.trustdeck.algorithms.XxHashPseudonymizer;
 import org.trustdeck.dto.DomainDTO;
 import org.trustdeck.dto.PseudonymDTO;
 import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
+import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.service.AssertWebRequestService;
 import org.trustdeck.service.DomainOIDCService;
 
@@ -85,8 +86,8 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         String content = response.getContentAsString();
         PseudonymDTO r = this.applySingleJsonContentToClass(content, PseudonymDTO.class);
         assertEquals(assertPseudonym, r.getPsn());
-        assertEquals(assertId, r.getIdentifier());
-        assertEquals(assertIdType, r.getIdType());
+        assertEquals(assertId, r.getIdentifierItem().getIdentifier());
+        assertEquals(assertIdType, r.getIdentifierItem().getIdType());
 
         assertEquals(d.getMonthValue(), r.getValidFrom().getMonthValue());
         assertEquals(d.getYear(), r.getValidFrom().getYear());
@@ -128,8 +129,8 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         String content = response.getContentAsString();
         PseudonymDTO r = this.applySingleJsonContentToClass(content, PseudonymDTO.class);
         assertEquals(assertPseudonym, r.getPsn());
-        assertEquals(assertId, r.getIdentifier());
-        assertEquals(assertIdType, r.getIdType());
+        assertEquals(assertId, r.getIdentifierItem().getIdentifier());
+        assertEquals(assertIdType, r.getIdentifierItem().getIdType());
 
         assertEquals(d.getMonthValue(), r.getValidFrom().getMonthValue());
         assertEquals(d.getYear(), r.getValidFrom().getYear());
@@ -166,13 +167,13 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         };
 
         PseudonymDTO updateRecordDto = new PseudonymDTO();
-        updateRecordDto.setIdType(assertNewIdType);
+        updateRecordDto.setIdentifierItem(IdentifierItem.builder().idType(assertNewIdType).build());
 
         MockHttpServletResponse response = this.assertOkRequest("updateRecordCompleteByIdentifier", put("/api/pseudonymization/domains/" + domainName + "/pseudonym/complete"), updateParameter, updateRecordDto, this.getAccessToken());
         String content = response.getContentAsString();
         PseudonymDTO r = this.applySingleJsonContentToClass(content, PseudonymDTO.class);
-        assertEquals(assertId, r.getIdentifier());
-        assertEquals(assertNewIdType, r.getIdType());
+        assertEquals(assertId, r.getIdentifierItem().getIdentifier());
+        assertEquals(assertNewIdType, r.getIdentifierItem().getIdType());
     }
 
 
@@ -198,13 +199,13 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         };
 
         PseudonymDTO updateRecordDto = new PseudonymDTO();
-        updateRecordDto.setIdType(assertNewIdType);
+        updateRecordDto.setIdentifierItem(IdentifierItem.builder().idType(assertNewIdType).build());
 
         MockHttpServletResponse response = this.assertOkRequest("updateRecordCompleteByPseudonym", put("/api/pseudonymization/domains/" + domainName + "/pseudonym/complete"), updateParameter, updateRecordDto, this.getAccessToken());
         String content = response.getContentAsString();
         PseudonymDTO r = this.applySingleJsonContentToClass(content, PseudonymDTO.class);
         assertEquals(assertPseudonym, r.getPsn());
-        assertEquals(assertNewIdType, r.getIdType());
+        assertEquals(assertNewIdType, r.getIdentifierItem().getIdType());
     }
 
 
@@ -230,8 +231,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         }};*/
 
         PseudonymDTO createRecordDto = new PseudonymDTO();
-        createRecordDto.setIdentifier(assertId);
-        createRecordDto.setIdType(assertIdType);
+        createRecordDto.setIdentifierItem(IdentifierItem.builder().identifier(assertId).idType(assertIdType).build());
 
         // Unauthorized tests for creating
         this.assertBadRequestRequest("createNewRecordBadRequest", post("/api/pseudonymization/domains/" + domainName + "/pseudonym"), null, createRecordDto, "");
@@ -287,8 +287,8 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         List<PseudonymDTO> r3l = this.mapJsonObjectsInStringToList(content, PseudonymDTO.class);
         r = r3l.get(0);
 
-        assertEquals(assertId, r.getIdentifier());
-        assertEquals(assertIdType, r.getIdType());
+        assertEquals(assertId, r.getIdentifierItem().getIdentifier());
+        assertEquals(assertIdType, r.getIdentifierItem().getIdType());
 
         // Update a record
         Map<String, String> updateParameter = new HashMap<>() {
@@ -300,7 +300,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         };
 
         PseudonymDTO updateRecordDto = new PseudonymDTO();
-        updateRecordDto.setIdType(assertNewIdType);
+        updateRecordDto.setIdentifierItem(IdentifierItem.builder().idType(assertNewIdType).build());
 
         // Unauthorized test for updating
         this.assertBadRequestRequest("updateRecordBadRequest", put("/api/pseudonymization/domains/" + domainName + "/pseudonym/complete"), updateParameter, updateRecordDto, "");
@@ -344,8 +344,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
 
         // Create record forbidden
         PseudonymDTO createRecordDto = new PseudonymDTO();
-        createRecordDto.setIdentifier(assertId);
-        createRecordDto.setIdType(assertIdType);
+        createRecordDto.setIdentifierItem(IdentifierItem.builder().identifier(assertId).idType(assertIdType).build());
 
         this.assertForbiddenRequest("createRecordForbidden", post("/api/pseudonymization/domains/" + failDomainName + "/pseudonym"), null, createRecordDto, this.getAccessToken());
 
@@ -370,7 +369,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
             }
         };
         PseudonymDTO updateRecordDto = new PseudonymDTO();
-        updateRecordDto.setIdType(assertNewIdType);
+        updateRecordDto.setIdentifierItem(IdentifierItem.builder().idType(assertNewIdType).build());
         this.assertForbiddenRequest("updateRecordForbidden", put("/api/pseudonymization/domains/" + failDomainName + "/pseudonym/complete"), updateParameter, updateRecordDto, this.getAccessToken());
 
         // Delete record forbidden
@@ -635,8 +634,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
 
         // Create record forbidden
         PseudonymDTO createRecordDto = new PseudonymDTO();
-        createRecordDto.setIdentifier("1234356");
-        createRecordDto.setIdType("MP-ID");
+        createRecordDto.setIdentifierItem(IdentifierItem.builder().identifier("123456").idType("MP-ID").build());
 
         MockHttpServletResponse response = this.assertCreatedRequest("createCommonRecord", post("/api/pseudonymization/domains/" + goodDomain + "/pseudonym"), null, createRecordDto, this.getAccessToken());
 
@@ -649,8 +647,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
 
         //like insert in a separate domain only for ids
         PseudonymDTO createLinkedRecordDto = new PseudonymDTO();
-        createLinkedRecordDto.setIdentifier(r.getPsn());
-        createLinkedRecordDto.setIdType("TestStudie");
+        createLinkedRecordDto.setIdentifierItem(IdentifierItem.builder().identifier(r.getPsn()).idType("TestStudie").build());
         createLinkedRecordDto.setPsn("1234356");
 
         Map<String, String> createLinkedPsnParams = new HashMap<>() {
@@ -667,9 +664,9 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
 
         assertNotNull(r.getPsn());
         assertNotNull(linkedRecord.getPsn());
-        assertNotNull(linkedRecord.getIdentifier());
+        assertNotNull(linkedRecord.getIdentifierItem().getIdentifier());
         assertNotEquals("", r.getPsn());
-        assertNotEquals("", linkedRecord.getIdentifier());
-        assertEquals(r.getPsn(), linkedRecord.getIdentifier());
+        assertNotEquals("", linkedRecord.getIdentifierItem().getIdentifier());
+        assertEquals(r.getPsn(), linkedRecord.getIdentifierItem().getIdentifier());
     }
 }

@@ -532,7 +532,7 @@ public class DomainRESTController {
             return responseService.unprocessableEntity(responseContentType);
         }
 
-        if (Assertion.assertNotNullAll(domainName, domainPrefix)) {
+        if (domainName == null || domainPrefix == null) {
         	// These two attributes must be given
         	log.debug("No name and/or no prefix were provided for the domain.");
         	return responseService.unprocessableEntity(responseContentType);

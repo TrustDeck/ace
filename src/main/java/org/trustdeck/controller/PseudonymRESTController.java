@@ -176,8 +176,8 @@ public class PseudonymRESTController {
         for (PseudonymDTO pseudonymDTO : recordDtoList) {
             // Start creating the record
             Pseudonym p = new Pseudonym();
-            p.setIdentifier(pseudonymDTO.getIdentifier());
-            p.setIdtype(pseudonymDTO.getIdType());
+            p.setIdentifier(pseudonymDTO.getIdentifierItem().getIdentifier());
+            p.setIdtype(pseudonymDTO.getIdentifierItem().getIdType());
             p.setDomainid(domain.getId());
 
             // Pseudonymize the identifier and store it in the object
@@ -194,7 +194,7 @@ public class PseudonymRESTController {
                 // Generate a new pseudonym
                 String prefix = (omitPrefix != null && omitPrefix) ? "" : domain.getPrefix(); // Omitting the prefix here shouldn't be the norm
                 Pseudonymizer pseudonymizer = new PseudonymizationFactory().getPseudonymizer(domain);
-                pseudonym = pseudonymizer.pseudonymize(pseudonymDTO.getIdentifier() + pseudonymDTO.getIdType() + domain.getSalt(), prefix);
+                pseudonym = pseudonymizer.pseudonymize(pseudonymDTO.getIdentifierItem().getIdentifier() + pseudonymDTO.getIdentifierItem().getIdType() + domain.getSalt(), prefix);
                 pseudonym = domain.getAddcheckdigit() ? pseudonymizer.addCheckDigit(pseudonym, domain.getLengthincludescheckdigit(), domain.getName(), prefix) : pseudonym;
 
                 if (domain.getAlgorithm().toUpperCase().startsWith("RANDOM") && pseudonym.equals(RandomNumberPseudonymizer.DOMAIN_FULL)) {
@@ -205,12 +205,12 @@ public class PseudonymRESTController {
                 	return responseService.insufficientStorage(responseContentType);
                 } else if (pseudonym == null && domain.getAlgorithm().toUpperCase().startsWith("RANDOM")) {
                 	// Pseudonymization failed: probably no non-colliding pseudonym was found.
-                	log.warn("Pseudonymization failed for identifier \"" + pseudonymDTO.getIdentifier() + "\" and idType \"" + pseudonymDTO.getIdType() + "\". "
+                	log.warn("Pseudonymization failed for identifier \"" + pseudonymDTO.getIdentifierItem().getIdentifier() + "\" and idType \"" + pseudonymDTO.getIdentifierItem().getIdType() + "\". "
                 			+ "Probably due to collisions with other pseudonyms. Try a greater pseudonym-length.");
                 	return responseService.unprocessableEntity(responseContentType);
             	} else if (pseudonym == null) {
                     // Pseudonymization failed. Return a 500-INTERNAL_SERVER_ERROR.
-                    log.error("Pseudonymization failed for identifier \"" + pseudonymDTO.getIdentifier() + "\" and idType \"" + pseudonymDTO.getIdType() + "\".");
+                    log.error("Pseudonymization failed for identifier \"" + pseudonymDTO.getIdentifierItem().getIdentifier() + "\" and idType \"" + pseudonymDTO.getIdentifierItem().getIdType() + "\".");
                     return responseService.internalServerError(responseContentType);
                 }
             }
@@ -344,8 +344,8 @@ public class PseudonymRESTController {
             return responseService.unprocessableEntity(responseContentType);
         }
 
-        String identifier = pseudonymDTO.getIdentifier();
-        String idType = pseudonymDTO.getIdType();
+        String identifier = pseudonymDTO.getIdentifierItem().getIdentifier();
+        String idType = pseudonymDTO.getIdentifierItem().getIdType();
         String psn = pseudonymDTO.getPsn();
         Timestamp validFrom = pseudonymDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymDTO.getValidFrom()) : null;
         Timestamp validTo = pseudonymDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymDTO.getValidTo()) : null;
@@ -978,7 +978,7 @@ public class PseudonymRESTController {
             Pseudonym newPseudonym = new Pseudonym();
 
             // Check if any of the attributes of a record is missing
-            if (Assertion.assertNotNullAll(r.getIdentifier(), r.getIdType(), r.getPsn(), r.getValidFrom(), r.getValidFromInherited(), r.getValidTo(), r.getValidToInherited())) {
+            if (Assertion.assertNotNullAll(r.getIdentifierItem().getIdentifier(), r.getIdentifierItem().getIdType(), r.getPsn(), r.getValidFrom(), r.getValidFromInherited(), r.getValidTo(), r.getValidToInherited())) {
                 // Everything that is needed is available. Create new pseudonym-record.
 //                newPseudonym.setIdentifier(r.getIdentifier());
 //                newPseudonym.setIdtype(r.getIdType());
@@ -1052,8 +1052,8 @@ public class PseudonymRESTController {
                                                               @RequestParam(name = "idType", required = true) String idType,
                                                               @RequestHeader(name = "accept", required = false) String responseContentType,
                                                               HttpServletRequest request) {
-        String newIdentifier = pseudonymDTO.getIdentifier();
-        String newIdType = pseudonymDTO.getIdType();
+        String newIdentifier = pseudonymDTO.getIdentifierItem().getIdentifier();
+        String newIdType = pseudonymDTO.getIdentifierItem().getIdType();
         String newPsn = pseudonymDTO.getPsn();
         Timestamp validFrom = pseudonymDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymDTO.getValidFrom()) : null;
         Timestamp validTo = pseudonymDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymDTO.getValidTo()) : null;
@@ -1208,8 +1208,8 @@ public class PseudonymRESTController {
                                                              @RequestParam(name = "psn", required = true) String psn,
                                                              @RequestHeader(name = "accept", required = false) String responseContentType,
                                                              HttpServletRequest request) {
-        String newIdentifier = pseudonymDTO.getIdentifier();
-        String newIdType = pseudonymDTO.getIdType();
+        String newIdentifier = pseudonymDTO.getIdentifierItem().getIdentifier();
+        String newIdType = pseudonymDTO.getIdentifierItem().getIdType();
         String newPsn = pseudonymDTO.getPsn();
         Timestamp validFrom = pseudonymDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymDTO.getValidFrom()) : null;
         Timestamp validTo = pseudonymDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymDTO.getValidTo()) : null;
