@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.pojos.Person;
+import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.service.AlgorithmDBService;
 import org.trustdeck.utils.Assertion;
 import org.trustdeck.utils.SpringBeanLocator;
@@ -78,11 +79,8 @@ public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
 	/** The country in which the person lives (primarily). */
     private String country;
 	
-	/** An (external) identifier for this person (e.g. a pseudonym, a SAP-ID, ...). */
-    private String identifier;
-	
-	/** The type of the person's (external) identifier. */
-    private String idType;
+	/** An (external) identifier and its type for this person (e.g. a pseudonym, a SAP-ID, ...). */
+    private IdentifierItem identifierItem;
 	
 	/** The algorithm which was used to generate the identifier (pseudonym) for the person. */
     private AlgorithmDTO algorithm;
@@ -114,8 +112,7 @@ public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
 	    dto.setPostalCode(pojo.getPostalcode());
 	    dto.setCity(pojo.getCity());
 	    dto.setCountry(pojo.getCountry());
-	    dto.setIdentifier(pojo.getIdentifier());
-	    dto.setIdType(pojo.getIdtype());
+	    dto.setIdentifierItem(IdentifierItem.builder().identifier(pojo.getIdentifier()).idType(pojo.getIdtype()).build());
 
 	    // Insert the algorithm if the identifierAlgorithm (the ID of the used algorithm) is not null
 	    if (pojo.getIdentifieralgorithm() != null) {
@@ -150,8 +147,8 @@ public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
         person.setPostalcode(this.getPostalCode());
         person.setCity(this.getCity());
         person.setCountry(this.getCountry());
-        person.setIdentifier(this.getIdentifier());
-        person.setIdtype(this.getIdType());
+        person.setIdentifier(this.getIdentifierItem().getIdentifier());
+        person.setIdtype(this.getIdentifierItem().getIdType());
         person.setIdentifieralgorithm(this.getAlgorithm().getId());
         
         return person;
@@ -186,8 +183,7 @@ public class PersonDTO implements IObjectDTO<Person, PersonDTO> {
 	    out += (this.getPostalCode() != null) ? "postalCode: " + this.getPostalCode() + ", " : "";
 	    out += (this.getCity() != null) ? "city: " + this.getCity() + ", " : "";
 	    out += (this.getCountry() != null) ? "country: " + this.getCountry() + ", " : "";
-	    out += (this.getIdentifier() != null) ? "identifier: " + this.getIdentifier() + ", " : "";
-	    out += (this.getIdType() != null) ? "idType: " + this.getIdType() + ", " : "";
+	    out += (this.getIdentifierItem().getIdentifier() != null) ? "identifierItem: {" + this.getIdentifierItem().toRepresentationString() + "}, " : "";
 	    //out += (this.getAlgorithm() != null) ? "algorithm: {" + this.getAlgorithm().toRepresentationString() + "}, " : "";
 
 	    return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);

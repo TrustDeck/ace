@@ -230,7 +230,7 @@ public class PersonDBService {
         	// Determine success
             if (deletedRecords > 1) {
             	// Throw exception to terminate the transaction
-                log.debug("Deleting the person with identifier \"" + person.getIdentifier() + "\" and idType \"" + idType + "\" would not affect exactly one entry. Aborting.");
+                log.debug("Deleting the person with identifier \"" + person.getIdentifierItem().getIdentifier() + "\" and idType \"" + idType + "\" would not affect exactly one entry. Aborting.");
                 throw new UnexpectedResultSizeException(1, deletedRecords);
             } else if (deletedRecords == 0) {
             	log.debug("Nothing found to delete.");
@@ -253,7 +253,7 @@ public class PersonDBService {
             
             // If the deletion of the algorithm object failed, then probably because it is not orphaned, which is totally fine
             if (!deletedAlgo) {
-            	log.debug("While deleting the person object with identifier \"" + person.getIdentifier() + "\": the algorithm object was not deleted.");
+            	log.debug("While deleting the person object with identifier \"" + person.getIdentifierItem().getIdentifier() + "\": the algorithm object was not deleted.");
             } else {
             	log.debug("Successfully deleted the orphaned algorithm.");
             }
@@ -415,8 +415,8 @@ public class PersonDBService {
         personRecord.setPostalcode(updatedPerson.getPostalCode() != null && !updatedPerson.getPostalCode().isBlank() ? updatedPerson.getPostalCode() : oldPerson.getPostalCode());
         personRecord.setCity(updatedPerson.getCity() != null && !updatedPerson.getCity().isBlank() ? updatedPerson.getCity() : oldPerson.getCity());
         personRecord.setCountry(updatedPerson.getCountry() != null && !updatedPerson.getCountry().isBlank() ? updatedPerson.getCountry() : oldPerson.getCountry());
-        personRecord.setIdentifier(updatedPerson.getIdentifier() != null && !updatedPerson.getIdentifier().isBlank() ? updatedPerson.getIdentifier() : oldPerson.getIdentifier());
-        personRecord.setIdtype(updatedPerson.getIdType() != null && !updatedPerson.getIdType().isBlank() ? updatedPerson.getIdType() : oldPerson.getIdType());
+        personRecord.setIdentifier(updatedPerson.getIdentifierItem().getIdentifier() != null && !updatedPerson.getIdentifierItem().getIdentifier().isBlank() ? updatedPerson.getIdentifierItem().getIdentifier() : oldPerson.getIdentifierItem().getIdentifier());
+        personRecord.setIdtype(updatedPerson.getIdentifierItem().getIdType() != null && !updatedPerson.getIdentifierItem().getIdType().isBlank() ? updatedPerson.getIdentifierItem().getIdType() : oldPerson.getIdentifierItem().getIdType());
         personRecord.setIdentifieralgorithm(newAlgoID);
         
         // Store and determine success

@@ -47,6 +47,7 @@ import org.trustdeck.exception.DuplicatePersonException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.pojos.Person;
+import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.service.AlgorithmDBService;
@@ -182,28 +183,32 @@ public class PersonRESTContoller {
     	if (Assertion.isNullOrEmpty(personDTO.getCountry())) {
     		personDTO.setCountry(null);
     	}
-    	if (Assertion.isNullOrEmpty(personDTO.getIdentifier())) {
+    	
+    	// Set identifier item
+    	String identifier, idType;
+    	if (personDTO.getIdentifierItem() == null || Assertion.isNullOrEmpty(personDTO.getIdentifierItem().getIdentifier())) {
     		// Create new pseudonym-identifier
-    		String psnIdentifier = pseudonymize(personDTO.getFirstName() + personDTO.getLastName() + personDTO.getBirthName() + personDTO.getDateOfBirth(), "generatedFromPersonData", algorithm);
-    		personDTO.setIdentifier(psnIdentifier);
+    		identifier = pseudonymize(personDTO.getFirstName() + personDTO.getLastName() + personDTO.getBirthName() + personDTO.getDateOfBirth(), "generatedFromPersonData", algorithm);
     		pseudonymCreated = true;
     	} else {
     		// Store a given identifier
-    		personDTO.setIdentifier(personDTO.getIdentifier().trim());
+    		identifier = personDTO.getIdentifierItem().getIdentifier().trim();
     		pseudonymCreated = false;
     	}
-    	if (Assertion.isNullOrEmpty(personDTO.getIdType())) {
-    		// Set idType
-    		if (!pseudonymCreated && Assertion.isNullOrEmpty(personDTO.getIdType())) {
-    			// The user provided an identifier but no idType
-    			personDTO.setIdType("userProvidedIdentifier");
-    		} else if (!pseudonymCreated && Assertion.isNotNullOrEmpty(personDTO.getIdType())) {
-    			// The user provided an identifier and an idType; nothing to do
-    		} else {
-    			// The user did not provide an identifier, so one was generated --> overwrite everything currently in idType
-    			personDTO.setIdType("generatedFromPersonData");
-    		}
-    	}
+    	
+		// Set idType
+		if (!pseudonymCreated && (personDTO.getIdentifierItem() == null || Assertion.isNullOrEmpty(personDTO.getIdentifierItem().getIdType()))) {
+			// The user provided an identifier but no idType
+			idType = "userProvidedIdentifier";
+		} else if (!pseudonymCreated && Assertion.isNotNullOrEmpty(personDTO.getIdentifierItem().getIdType())) {
+			// The user provided an identifier and an idType
+			idType = personDTO.getIdentifierItem().getIdType();
+		} else {
+			// The user did not provide an identifier, so one was generated --> overwrites everything currently in idType
+			idType = "generatedFromPersonData";
+		}
+		personDTO.setIdentifierItem(IdentifierItem.builder().identifier(identifier).idType(idType).build());
+
 
     	// Create the object in the database
     	PersonDTO p = null;
