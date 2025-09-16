@@ -19,7 +19,7 @@ package org.trustdeck.dto;
 
 import org.jooq.JSONB;
 import org.springframework.context.annotation.Scope;
-import org.trustdeck.jooq.generated.tables.pojos.Objecttype;
+import org.trustdeck.jooq.generated.tables.pojos.Entitytype;
 import org.trustdeck.utils.Assertion;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,7 +28,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * This class represents a Data Transfer Object (DTO) for an object type.
+ * This class represents a Data Transfer Object (DTO) for an entity type.
  *
  * @author Armin Müller
  */
@@ -36,29 +36,29 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request.
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ObjectTypeDTO implements IObjectDTO<Objecttype, ObjectTypeDTO> {
+public class EntityTypeDTO implements IObjectDTO<Entitytype, EntityTypeDTO> {
 	
-	/** The (internal) ID of this object type. Do not expose it to users. */
+	/** The (internal) ID of this entity type. Do not expose it to users. */
 	@JsonIgnore
 	private Integer id;
 	
 	/** The object type's name. */
 	private String name;
 	
-	/** The version number of this object type. */
+	/** The version number of this entity type. */
 	private String version;
 	
-	/** The type definition of this object. */
+	/** The type definition of this entity. */
 	private JSONB typeDefinition;
 
 	@JsonIgnore
 	@Override
-	public ObjectTypeDTO assignPojoValues(Objecttype pojo) {
+	public EntityTypeDTO assignPojoValues(Entitytype pojo) {
 		if (pojo == null) {
 	        return null;
 	    }
 		
-		ObjectTypeDTO dto = new ObjectTypeDTO();
+		EntityTypeDTO dto = new EntityTypeDTO();
 	    
 	    dto.setId(pojo.getId());
 	    dto.setName(pojo.getName());
@@ -77,7 +77,7 @@ public class ObjectTypeDTO implements IObjectDTO<Objecttype, ObjectTypeDTO> {
 
 	@JsonIgnore
 	@Override
-	public ObjectTypeDTO toReducedStandardView() {
+	public EntityTypeDTO toReducedStandardView() {
 		// Currently not needed
 		return null;
 	}
