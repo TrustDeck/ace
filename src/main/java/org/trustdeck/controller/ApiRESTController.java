@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequestMapping(value = "/api")
-public class ApiController {
+public class ApiRESTController {
 
     /**
      * This method functions as a ping endpoint.
