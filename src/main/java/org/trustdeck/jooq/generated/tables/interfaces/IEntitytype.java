@@ -11,7 +11,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -26,25 +25,22 @@ import org.jooq.JSONB;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "objecttype",
+    name = "entitytype",
     schema = "public",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "objecttype_name_version_key", columnNames = { "name", "version" })
-    },
     indexes = {
-        @Index(name = "objecttype_name_idx", columnList = "name ASC"),
-        @Index(name = "objecttype_typedef_gin_idx", columnList = "typedef ASC")
+        @Index(name = "entitytype_name_idx", columnList = "name ASC"),
+        @Index(name = "entitytype_typedef_gin_idx", columnList = "typedef ASC")
     }
 )
-public interface IObjecttype extends Serializable {
+public interface IEntitytype extends Serializable {
 
     /**
-     * Setter for <code>public.objecttype.id</code>.
+     * Setter for <code>public.entitytype.id</code>.
      */
-    public IObjecttype setId(Integer value);
+    public IEntitytype setId(Integer value);
 
     /**
-     * Getter for <code>public.objecttype.id</code>.
+     * Getter for <code>public.entitytype.id</code>.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,12 +48,12 @@ public interface IObjecttype extends Serializable {
     public Integer getId();
 
     /**
-     * Setter for <code>public.objecttype.name</code>.
+     * Setter for <code>public.entitytype.name</code>.
      */
-    public IObjecttype setName(String value);
+    public IEntitytype setName(String value);
 
     /**
-     * Getter for <code>public.objecttype.name</code>.
+     * Getter for <code>public.entitytype.name</code>.
      */
     @Column(name = "name", nullable = false, length = 255)
     @NotNull
@@ -65,12 +61,12 @@ public interface IObjecttype extends Serializable {
     public String getName();
 
     /**
-     * Setter for <code>public.objecttype.version</code>.
+     * Setter for <code>public.entitytype.version</code>.
      */
-    public IObjecttype setVersion(String value);
+    public IEntitytype setVersion(String value);
 
     /**
-     * Getter for <code>public.objecttype.version</code>.
+     * Getter for <code>public.entitytype.version</code>.
      */
     @Column(name = "version", nullable = false, length = 255)
     @NotNull
@@ -78,12 +74,12 @@ public interface IObjecttype extends Serializable {
     public String getVersion();
 
     /**
-     * Setter for <code>public.objecttype.typedef</code>.
+     * Setter for <code>public.entitytype.typedef</code>.
      */
-    public IObjecttype setTypedef(JSONB value);
+    public IEntitytype setTypedef(JSONB value);
 
     /**
-     * Getter for <code>public.objecttype.typedef</code>.
+     * Getter for <code>public.entitytype.typedef</code>.
      */
     @Column(name = "typedef", nullable = false)
     @NotNull
@@ -95,13 +91,13 @@ public interface IObjecttype extends Serializable {
 
     /**
      * Load data from another generated Record/POJO implementing the common
-     * interface IObjecttype
+     * interface IEntitytype
      */
-    public void from(IObjecttype from);
+    public void from(IEntitytype from);
 
     /**
      * Copy data into another generated Record/POJO implementing the common
-     * interface IObjecttype
+     * interface IEntitytype
      */
-    public <E extends IObjecttype> E into(E into);
+    public <E extends IEntitytype> E into(E into);
 }

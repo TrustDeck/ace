@@ -11,12 +11,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.jooq.JSONB;
-import org.trustdeck.jooq.generated.tables.interfaces.IObjecttype;
+import org.trustdeck.jooq.generated.tables.interfaces.IEntitytype;
 
 
 /**
@@ -25,17 +24,14 @@ import org.trustdeck.jooq.generated.tables.interfaces.IObjecttype;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "objecttype",
+    name = "entitytype",
     schema = "public",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "objecttype_name_version_key", columnNames = { "name", "version" })
-    },
     indexes = {
-        @Index(name = "objecttype_name_idx", columnList = "name ASC"),
-        @Index(name = "objecttype_typedef_gin_idx", columnList = "typedef ASC")
+        @Index(name = "entitytype_name_idx", columnList = "name ASC"),
+        @Index(name = "entitytype_typedef_gin_idx", columnList = "typedef ASC")
     }
 )
-public class Objecttype implements IObjecttype {
+public class Entitytype implements IEntitytype {
 
     private static final long serialVersionUID = 1L;
 
@@ -44,16 +40,16 @@ public class Objecttype implements IObjecttype {
     private String version;
     private JSONB typedef;
 
-    public Objecttype() {}
+    public Entitytype() {}
 
-    public Objecttype(IObjecttype value) {
+    public Entitytype(IEntitytype value) {
         this.id = value.getId();
         this.name = value.getName();
         this.version = value.getVersion();
         this.typedef = value.getTypedef();
     }
 
-    public Objecttype(
+    public Entitytype(
         Integer id,
         String name,
         String version,
@@ -66,7 +62,7 @@ public class Objecttype implements IObjecttype {
     }
 
     /**
-     * Getter for <code>public.objecttype.id</code>.
+     * Getter for <code>public.entitytype.id</code>.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -77,16 +73,16 @@ public class Objecttype implements IObjecttype {
     }
 
     /**
-     * Setter for <code>public.objecttype.id</code>.
+     * Setter for <code>public.entitytype.id</code>.
      */
     @Override
-    public Objecttype setId(Integer id) {
+    public Entitytype setId(Integer id) {
         this.id = id;
         return this;
     }
 
     /**
-     * Getter for <code>public.objecttype.name</code>.
+     * Getter for <code>public.entitytype.name</code>.
      */
     @Column(name = "name", nullable = false, length = 255)
     @NotNull
@@ -97,16 +93,16 @@ public class Objecttype implements IObjecttype {
     }
 
     /**
-     * Setter for <code>public.objecttype.name</code>.
+     * Setter for <code>public.entitytype.name</code>.
      */
     @Override
-    public Objecttype setName(String name) {
+    public Entitytype setName(String name) {
         this.name = name;
         return this;
     }
 
     /**
-     * Getter for <code>public.objecttype.version</code>.
+     * Getter for <code>public.entitytype.version</code>.
      */
     @Column(name = "version", nullable = false, length = 255)
     @NotNull
@@ -117,16 +113,16 @@ public class Objecttype implements IObjecttype {
     }
 
     /**
-     * Setter for <code>public.objecttype.version</code>.
+     * Setter for <code>public.entitytype.version</code>.
      */
     @Override
-    public Objecttype setVersion(String version) {
+    public Entitytype setVersion(String version) {
         this.version = version;
         return this;
     }
 
     /**
-     * Getter for <code>public.objecttype.typedef</code>.
+     * Getter for <code>public.entitytype.typedef</code>.
      */
     @Column(name = "typedef", nullable = false)
     @NotNull
@@ -136,10 +132,10 @@ public class Objecttype implements IObjecttype {
     }
 
     /**
-     * Setter for <code>public.objecttype.typedef</code>.
+     * Setter for <code>public.entitytype.typedef</code>.
      */
     @Override
-    public Objecttype setTypedef(JSONB typedef) {
+    public Entitytype setTypedef(JSONB typedef) {
         this.typedef = typedef;
         return this;
     }
@@ -152,7 +148,7 @@ public class Objecttype implements IObjecttype {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        final Objecttype other = (Objecttype) obj;
+        final Entitytype other = (Entitytype) obj;
         if (this.id == null) {
             if (other.id != null)
                 return false;
@@ -193,7 +189,7 @@ public class Objecttype implements IObjecttype {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("Objecttype (");
+        StringBuilder sb = new StringBuilder("Entitytype (");
 
         sb.append(id);
         sb.append(", ").append(name);
@@ -209,7 +205,7 @@ public class Objecttype implements IObjecttype {
     // -------------------------------------------------------------------------
 
     @Override
-    public void from(IObjecttype from) {
+    public void from(IEntitytype from) {
         setId(from.getId());
         setName(from.getName());
         setVersion(from.getVersion());
@@ -217,7 +213,7 @@ public class Objecttype implements IObjecttype {
     }
 
     @Override
-    public <E extends IObjecttype> E into(E into) {
+    public <E extends IEntitytype> E into(E into) {
         into.from(this);
         return into;
     }

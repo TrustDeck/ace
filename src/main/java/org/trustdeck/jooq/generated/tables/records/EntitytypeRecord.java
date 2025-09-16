@@ -11,7 +11,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -21,8 +20,8 @@ import org.jooq.Record1;
 import org.jooq.Record4;
 import org.jooq.Row4;
 import org.jooq.impl.UpdatableRecordImpl;
-import org.trustdeck.jooq.generated.tables.Objecttype;
-import org.trustdeck.jooq.generated.tables.interfaces.IObjecttype;
+import org.trustdeck.jooq.generated.tables.Entitytype;
+import org.trustdeck.jooq.generated.tables.interfaces.IEntitytype;
 
 
 /**
@@ -31,31 +30,28 @@ import org.trustdeck.jooq.generated.tables.interfaces.IObjecttype;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "objecttype",
+    name = "entitytype",
     schema = "public",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "objecttype_name_version_key", columnNames = { "name", "version" })
-    },
     indexes = {
-        @Index(name = "objecttype_name_idx", columnList = "name ASC"),
-        @Index(name = "objecttype_typedef_gin_idx", columnList = "typedef ASC")
+        @Index(name = "entitytype_name_idx", columnList = "name ASC"),
+        @Index(name = "entitytype_typedef_gin_idx", columnList = "typedef ASC")
     }
 )
-public class ObjecttypeRecord extends UpdatableRecordImpl<ObjecttypeRecord> implements Record4<Integer, String, String, JSONB>, IObjecttype {
+public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> implements Record4<Integer, String, String, JSONB>, IEntitytype {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.objecttype.id</code>.
+     * Setter for <code>public.entitytype.id</code>.
      */
     @Override
-    public ObjecttypeRecord setId(Integer value) {
+    public EntitytypeRecord setId(Integer value) {
         set(0, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.objecttype.id</code>.
+     * Getter for <code>public.entitytype.id</code>.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -66,16 +62,16 @@ public class ObjecttypeRecord extends UpdatableRecordImpl<ObjecttypeRecord> impl
     }
 
     /**
-     * Setter for <code>public.objecttype.name</code>.
+     * Setter for <code>public.entitytype.name</code>.
      */
     @Override
-    public ObjecttypeRecord setName(String value) {
+    public EntitytypeRecord setName(String value) {
         set(1, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.objecttype.name</code>.
+     * Getter for <code>public.entitytype.name</code>.
      */
     @Column(name = "name", nullable = false, length = 255)
     @NotNull
@@ -86,16 +82,16 @@ public class ObjecttypeRecord extends UpdatableRecordImpl<ObjecttypeRecord> impl
     }
 
     /**
-     * Setter for <code>public.objecttype.version</code>.
+     * Setter for <code>public.entitytype.version</code>.
      */
     @Override
-    public ObjecttypeRecord setVersion(String value) {
+    public EntitytypeRecord setVersion(String value) {
         set(2, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.objecttype.version</code>.
+     * Getter for <code>public.entitytype.version</code>.
      */
     @Column(name = "version", nullable = false, length = 255)
     @NotNull
@@ -106,16 +102,16 @@ public class ObjecttypeRecord extends UpdatableRecordImpl<ObjecttypeRecord> impl
     }
 
     /**
-     * Setter for <code>public.objecttype.typedef</code>.
+     * Setter for <code>public.entitytype.typedef</code>.
      */
     @Override
-    public ObjecttypeRecord setTypedef(JSONB value) {
+    public EntitytypeRecord setTypedef(JSONB value) {
         set(3, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.objecttype.typedef</code>.
+     * Getter for <code>public.entitytype.typedef</code>.
      */
     @Column(name = "typedef", nullable = false)
     @NotNull
@@ -149,22 +145,22 @@ public class ObjecttypeRecord extends UpdatableRecordImpl<ObjecttypeRecord> impl
 
     @Override
     public Field<Integer> field1() {
-        return Objecttype.OBJECTTYPE.ID;
+        return Entitytype.ENTITYTYPE.ID;
     }
 
     @Override
     public Field<String> field2() {
-        return Objecttype.OBJECTTYPE.NAME;
+        return Entitytype.ENTITYTYPE.NAME;
     }
 
     @Override
     public Field<String> field3() {
-        return Objecttype.OBJECTTYPE.VERSION;
+        return Entitytype.ENTITYTYPE.VERSION;
     }
 
     @Override
     public Field<JSONB> field4() {
-        return Objecttype.OBJECTTYPE.TYPEDEF;
+        return Entitytype.ENTITYTYPE.TYPEDEF;
     }
 
     @Override
@@ -208,31 +204,31 @@ public class ObjecttypeRecord extends UpdatableRecordImpl<ObjecttypeRecord> impl
     }
 
     @Override
-    public ObjecttypeRecord value1(Integer value) {
+    public EntitytypeRecord value1(Integer value) {
         setId(value);
         return this;
     }
 
     @Override
-    public ObjecttypeRecord value2(String value) {
+    public EntitytypeRecord value2(String value) {
         setName(value);
         return this;
     }
 
     @Override
-    public ObjecttypeRecord value3(String value) {
+    public EntitytypeRecord value3(String value) {
         setVersion(value);
         return this;
     }
 
     @Override
-    public ObjecttypeRecord value4(JSONB value) {
+    public EntitytypeRecord value4(JSONB value) {
         setTypedef(value);
         return this;
     }
 
     @Override
-    public ObjecttypeRecord values(Integer value1, String value2, String value3, JSONB value4) {
+    public EntitytypeRecord values(Integer value1, String value2, String value3, JSONB value4) {
         value1(value1);
         value2(value2);
         value3(value3);
@@ -245,7 +241,7 @@ public class ObjecttypeRecord extends UpdatableRecordImpl<ObjecttypeRecord> impl
     // -------------------------------------------------------------------------
 
     @Override
-    public void from(IObjecttype from) {
+    public void from(IEntitytype from) {
         setId(from.getId());
         setName(from.getName());
         setVersion(from.getVersion());
@@ -254,7 +250,7 @@ public class ObjecttypeRecord extends UpdatableRecordImpl<ObjecttypeRecord> impl
     }
 
     @Override
-    public <E extends IObjecttype> E into(E into) {
+    public <E extends IEntitytype> E into(E into) {
         into.from(this);
         return into;
     }
@@ -264,17 +260,17 @@ public class ObjecttypeRecord extends UpdatableRecordImpl<ObjecttypeRecord> impl
     // -------------------------------------------------------------------------
 
     /**
-     * Create a detached ObjecttypeRecord
+     * Create a detached EntitytypeRecord
      */
-    public ObjecttypeRecord() {
-        super(Objecttype.OBJECTTYPE);
+    public EntitytypeRecord() {
+        super(Entitytype.ENTITYTYPE);
     }
 
     /**
-     * Create a detached, initialised ObjecttypeRecord
+     * Create a detached, initialised EntitytypeRecord
      */
-    public ObjecttypeRecord(Integer id, String name, String version, JSONB typedef) {
-        super(Objecttype.OBJECTTYPE);
+    public EntitytypeRecord(Integer id, String name, String version, JSONB typedef) {
+        super(Entitytype.ENTITYTYPE);
 
         setId(id);
         setName(name);
@@ -284,10 +280,10 @@ public class ObjecttypeRecord extends UpdatableRecordImpl<ObjecttypeRecord> impl
     }
 
     /**
-     * Create a detached, initialised ObjecttypeRecord
+     * Create a detached, initialised EntitytypeRecord
      */
-    public ObjecttypeRecord(org.trustdeck.jooq.generated.tables.pojos.Objecttype value) {
-        super(Objecttype.OBJECTTYPE);
+    public EntitytypeRecord(org.trustdeck.jooq.generated.tables.pojos.Entitytype value) {
+        super(Entitytype.ENTITYTYPE);
 
         if (value != null) {
             setId(value.getId());

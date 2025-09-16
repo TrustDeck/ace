@@ -123,23 +123,6 @@ public class Objectinstance extends TableImpl<ObjectinstanceRecord> {
     }
 
     @Override
-    public List<ForeignKey<ObjectinstanceRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.OBJECTINSTANCE__OBJECTINSTANCE_OBJECTTYPE_ID_FKEY);
-    }
-
-    private transient Objecttype _objecttype;
-
-    /**
-     * Get the implicit join path to the <code>public.objecttype</code> table.
-     */
-    public Objecttype objecttype() {
-        if (_objecttype == null)
-            _objecttype = new Objecttype(this, Keys.OBJECTINSTANCE__OBJECTINSTANCE_OBJECTTYPE_ID_FKEY);
-
-        return _objecttype;
-    }
-
-    @Override
     public Objectinstance as(String alias) {
         return new Objectinstance(DSL.name(alias), this);
     }

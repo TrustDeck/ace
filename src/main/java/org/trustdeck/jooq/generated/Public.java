@@ -13,8 +13,8 @@ import org.jooq.impl.SchemaImpl;
 import org.trustdeck.jooq.generated.tables.Algorithm;
 import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
+import org.trustdeck.jooq.generated.tables.Entitytype;
 import org.trustdeck.jooq.generated.tables.Objectinstance;
-import org.trustdeck.jooq.generated.tables.Objecttype;
 import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
@@ -49,14 +49,14 @@ public class Public extends SchemaImpl {
     public final Domain DOMAIN = Domain.DOMAIN;
 
     /**
+     * The table <code>public.entitytype</code>.
+     */
+    public final Entitytype ENTITYTYPE = Entitytype.ENTITYTYPE;
+
+    /**
      * The table <code>public.objectinstance</code>.
      */
     public final Objectinstance OBJECTINSTANCE = Objectinstance.OBJECTINSTANCE;
-
-    /**
-     * The table <code>public.objecttype</code>.
-     */
-    public final Objecttype OBJECTTYPE = Objecttype.OBJECTTYPE;
 
     /**
      * The table <code>public.person</code>.
@@ -92,8 +92,8 @@ public class Public extends SchemaImpl {
             Algorithm.ALGORITHM,
             Auditevent.AUDITEVENT,
             Domain.DOMAIN,
+            Entitytype.ENTITYTYPE,
             Objectinstance.OBJECTINSTANCE,
-            Objecttype.OBJECTTYPE,
             Person.PERSON,
             Project.PROJECT,
             Pseudonym.PSEUDONYM
