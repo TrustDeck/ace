@@ -10,14 +10,14 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function4;
+import org.jooq.Function6;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row4;
+import org.jooq.Row6;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -70,9 +70,19 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
     public final TableField<EntitytypeRecord, String> VERSION = createField(DSL.name("version"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
+     * The column <code>public.entitytype.isbasetype</code>.
+     */
+    public final TableField<EntitytypeRecord, Boolean> ISBASETYPE = createField(DSL.name("isbasetype"), SQLDataType.BOOLEAN.nullable(false), this, "");
+
+    /**
      * The column <code>public.entitytype.typedef</code>.
      */
     public final TableField<EntitytypeRecord, JSONB> TYPEDEF = createField(DSL.name("typedef"), SQLDataType.JSONB.nullable(false), this, "");
+
+    /**
+     * The column <code>public.entitytype.projectid</code>.
+     */
+    public final TableField<EntitytypeRecord, Integer> PROJECTID = createField(DSL.name("projectid"), SQLDataType.INTEGER, this, "");
 
     private Entitytype(Name alias, Table<EntitytypeRecord> aliased) {
         this(alias, aliased, null);
@@ -128,6 +138,23 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
     }
 
     @Override
+    public List<ForeignKey<EntitytypeRecord, ?>> getReferences() {
+        return Arrays.asList(Keys.ENTITYTYPE__ENTITYTYPE_PROJECTID_FKEY);
+    }
+
+    private transient Project _project;
+
+    /**
+     * Get the implicit join path to the <code>public.project</code> table.
+     */
+    public Project project() {
+        if (_project == null)
+            _project = new Project(this, Keys.ENTITYTYPE__ENTITYTYPE_PROJECTID_FKEY);
+
+        return _project;
+    }
+
+    @Override
     public Entitytype as(String alias) {
         return new Entitytype(DSL.name(alias), this);
     }
@@ -167,18 +194,18 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row4 type methods
+    // Row6 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row4<Integer, String, String, JSONB> fieldsRow() {
-        return (Row4) super.fieldsRow();
+    public Row6<Integer, String, String, Boolean, JSONB, Integer> fieldsRow() {
+        return (Row6) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function4<? super Integer, ? super String, ? super String, ? super JSONB, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function6<? super Integer, ? super String, ? super String, ? super Boolean, ? super JSONB, ? super Integer, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -186,7 +213,7 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function4<? super Integer, ? super String, ? super String, ? super JSONB, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function6<? super Integer, ? super String, ? super String, ? super Boolean, ? super JSONB, ? super Integer, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

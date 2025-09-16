@@ -99,6 +99,21 @@ public class EntitytypeDao extends DAOImpl<EntitytypeRecord, org.trustdeck.jooq.
     }
 
     /**
+     * Fetch records that have <code>isbasetype BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entitytype> fetchRangeOfIsbasetype(Boolean lowerInclusive, Boolean upperInclusive) {
+        return fetchRange(Entitytype.ENTITYTYPE.ISBASETYPE, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>isbasetype IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entitytype> fetchByIsbasetype(Boolean... values) {
+        return fetch(Entitytype.ENTITYTYPE.ISBASETYPE, values);
+    }
+
+    /**
      * Fetch records that have <code>typedef BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */
@@ -111,5 +126,20 @@ public class EntitytypeDao extends DAOImpl<EntitytypeRecord, org.trustdeck.jooq.
      */
     public List<org.trustdeck.jooq.generated.tables.pojos.Entitytype> fetchByTypedef(JSONB... values) {
         return fetch(Entitytype.ENTITYTYPE.TYPEDEF, values);
+    }
+
+    /**
+     * Fetch records that have <code>projectid BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entitytype> fetchRangeOfProjectid(Integer lowerInclusive, Integer upperInclusive) {
+        return fetchRange(Entitytype.ENTITYTYPE.PROJECTID, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>projectid IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entitytype> fetchByProjectid(Integer... values) {
+        return fetch(Entitytype.ENTITYTYPE.PROJECTID, values);
     }
 }

@@ -74,6 +74,18 @@ public interface IEntitytype extends Serializable {
     public String getVersion();
 
     /**
+     * Setter for <code>public.entitytype.isbasetype</code>.
+     */
+    public IEntitytype setIsbasetype(Boolean value);
+
+    /**
+     * Getter for <code>public.entitytype.isbasetype</code>.
+     */
+    @Column(name = "isbasetype", nullable = false)
+    @NotNull
+    public Boolean getIsbasetype();
+
+    /**
      * Setter for <code>public.entitytype.typedef</code>.
      */
     public IEntitytype setTypedef(JSONB value);
@@ -84,6 +96,17 @@ public interface IEntitytype extends Serializable {
     @Column(name = "typedef", nullable = false)
     @NotNull
     public JSONB getTypedef();
+
+    /**
+     * Setter for <code>public.entitytype.projectid</code>.
+     */
+    public IEntitytype setProjectid(Integer value);
+
+    /**
+     * Getter for <code>public.entitytype.projectid</code>.
+     */
+    @Column(name = "projectid")
+    public Integer getProjectid();
 
     // -------------------------------------------------------------------------
     // FROM and INTO

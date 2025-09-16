@@ -17,8 +17,8 @@ import jakarta.validation.constraints.Size;
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.Record1;
-import org.jooq.Record4;
-import org.jooq.Row4;
+import org.jooq.Record6;
+import org.jooq.Row6;
 import org.jooq.impl.UpdatableRecordImpl;
 import org.trustdeck.jooq.generated.tables.Entitytype;
 import org.trustdeck.jooq.generated.tables.interfaces.IEntitytype;
@@ -37,7 +37,7 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntitytype;
         @Index(name = "entitytype_typedef_gin_idx", columnList = "typedef ASC")
     }
 )
-public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> implements Record4<Integer, String, String, JSONB>, IEntitytype {
+public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> implements Record6<Integer, String, String, Boolean, JSONB, Integer>, IEntitytype {
 
     private static final long serialVersionUID = 1L;
 
@@ -102,11 +102,30 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     }
 
     /**
+     * Setter for <code>public.entitytype.isbasetype</code>.
+     */
+    @Override
+    public EntitytypeRecord setIsbasetype(Boolean value) {
+        set(3, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entitytype.isbasetype</code>.
+     */
+    @Column(name = "isbasetype", nullable = false)
+    @NotNull
+    @Override
+    public Boolean getIsbasetype() {
+        return (Boolean) get(3);
+    }
+
+    /**
      * Setter for <code>public.entitytype.typedef</code>.
      */
     @Override
     public EntitytypeRecord setTypedef(JSONB value) {
-        set(3, value);
+        set(4, value);
         return this;
     }
 
@@ -117,7 +136,25 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     @NotNull
     @Override
     public JSONB getTypedef() {
-        return (JSONB) get(3);
+        return (JSONB) get(4);
+    }
+
+    /**
+     * Setter for <code>public.entitytype.projectid</code>.
+     */
+    @Override
+    public EntitytypeRecord setProjectid(Integer value) {
+        set(5, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entitytype.projectid</code>.
+     */
+    @Column(name = "projectid")
+    @Override
+    public Integer getProjectid() {
+        return (Integer) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -130,17 +167,17 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     }
 
     // -------------------------------------------------------------------------
-    // Record4 type implementation
+    // Record6 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row4<Integer, String, String, JSONB> fieldsRow() {
-        return (Row4) super.fieldsRow();
+    public Row6<Integer, String, String, Boolean, JSONB, Integer> fieldsRow() {
+        return (Row6) super.fieldsRow();
     }
 
     @Override
-    public Row4<Integer, String, String, JSONB> valuesRow() {
-        return (Row4) super.valuesRow();
+    public Row6<Integer, String, String, Boolean, JSONB, Integer> valuesRow() {
+        return (Row6) super.valuesRow();
     }
 
     @Override
@@ -159,8 +196,18 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     }
 
     @Override
-    public Field<JSONB> field4() {
+    public Field<Boolean> field4() {
+        return Entitytype.ENTITYTYPE.ISBASETYPE;
+    }
+
+    @Override
+    public Field<JSONB> field5() {
         return Entitytype.ENTITYTYPE.TYPEDEF;
+    }
+
+    @Override
+    public Field<Integer> field6() {
+        return Entitytype.ENTITYTYPE.PROJECTID;
     }
 
     @Override
@@ -179,8 +226,18 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     }
 
     @Override
-    public JSONB component4() {
+    public Boolean component4() {
+        return getIsbasetype();
+    }
+
+    @Override
+    public JSONB component5() {
         return getTypedef();
+    }
+
+    @Override
+    public Integer component6() {
+        return getProjectid();
     }
 
     @Override
@@ -199,8 +256,18 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     }
 
     @Override
-    public JSONB value4() {
+    public Boolean value4() {
+        return getIsbasetype();
+    }
+
+    @Override
+    public JSONB value5() {
         return getTypedef();
+    }
+
+    @Override
+    public Integer value6() {
+        return getProjectid();
     }
 
     @Override
@@ -222,17 +289,31 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     }
 
     @Override
-    public EntitytypeRecord value4(JSONB value) {
+    public EntitytypeRecord value4(Boolean value) {
+        setIsbasetype(value);
+        return this;
+    }
+
+    @Override
+    public EntitytypeRecord value5(JSONB value) {
         setTypedef(value);
         return this;
     }
 
     @Override
-    public EntitytypeRecord values(Integer value1, String value2, String value3, JSONB value4) {
+    public EntitytypeRecord value6(Integer value) {
+        setProjectid(value);
+        return this;
+    }
+
+    @Override
+    public EntitytypeRecord values(Integer value1, String value2, String value3, Boolean value4, JSONB value5, Integer value6) {
         value1(value1);
         value2(value2);
         value3(value3);
         value4(value4);
+        value5(value5);
+        value6(value6);
         return this;
     }
 
@@ -245,7 +326,9 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
         setId(from.getId());
         setName(from.getName());
         setVersion(from.getVersion());
+        setIsbasetype(from.getIsbasetype());
         setTypedef(from.getTypedef());
+        setProjectid(from.getProjectid());
         resetChangedOnNotNull();
     }
 
@@ -269,13 +352,15 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     /**
      * Create a detached, initialised EntitytypeRecord
      */
-    public EntitytypeRecord(Integer id, String name, String version, JSONB typedef) {
+    public EntitytypeRecord(Integer id, String name, String version, Boolean isbasetype, JSONB typedef, Integer projectid) {
         super(Entitytype.ENTITYTYPE);
 
         setId(id);
         setName(name);
         setVersion(version);
+        setIsbasetype(isbasetype);
         setTypedef(typedef);
+        setProjectid(projectid);
         resetChangedOnNotNull();
     }
 
@@ -289,7 +374,9 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
             setId(value.getId());
             setName(value.getName());
             setVersion(value.getVersion());
+            setIsbasetype(value.getIsbasetype());
             setTypedef(value.getTypedef());
+            setProjectid(value.getProjectid());
             resetChangedOnNotNull();
         }
     }

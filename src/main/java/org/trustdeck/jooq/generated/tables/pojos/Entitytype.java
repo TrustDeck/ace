@@ -38,7 +38,9 @@ public class Entitytype implements IEntitytype {
     private Integer id;
     private String name;
     private String version;
+    private Boolean isbasetype;
     private JSONB typedef;
+    private Integer projectid;
 
     public Entitytype() {}
 
@@ -46,19 +48,25 @@ public class Entitytype implements IEntitytype {
         this.id = value.getId();
         this.name = value.getName();
         this.version = value.getVersion();
+        this.isbasetype = value.getIsbasetype();
         this.typedef = value.getTypedef();
+        this.projectid = value.getProjectid();
     }
 
     public Entitytype(
         Integer id,
         String name,
         String version,
-        JSONB typedef
+        Boolean isbasetype,
+        JSONB typedef,
+        Integer projectid
     ) {
         this.id = id;
         this.name = name;
         this.version = version;
+        this.isbasetype = isbasetype;
         this.typedef = typedef;
+        this.projectid = projectid;
     }
 
     /**
@@ -122,6 +130,25 @@ public class Entitytype implements IEntitytype {
     }
 
     /**
+     * Getter for <code>public.entitytype.isbasetype</code>.
+     */
+    @Column(name = "isbasetype", nullable = false)
+    @NotNull
+    @Override
+    public Boolean getIsbasetype() {
+        return this.isbasetype;
+    }
+
+    /**
+     * Setter for <code>public.entitytype.isbasetype</code>.
+     */
+    @Override
+    public Entitytype setIsbasetype(Boolean isbasetype) {
+        this.isbasetype = isbasetype;
+        return this;
+    }
+
+    /**
      * Getter for <code>public.entitytype.typedef</code>.
      */
     @Column(name = "typedef", nullable = false)
@@ -137,6 +164,24 @@ public class Entitytype implements IEntitytype {
     @Override
     public Entitytype setTypedef(JSONB typedef) {
         this.typedef = typedef;
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entitytype.projectid</code>.
+     */
+    @Column(name = "projectid")
+    @Override
+    public Integer getProjectid() {
+        return this.projectid;
+    }
+
+    /**
+     * Setter for <code>public.entitytype.projectid</code>.
+     */
+    @Override
+    public Entitytype setProjectid(Integer projectid) {
+        this.projectid = projectid;
         return this;
     }
 
@@ -167,11 +212,23 @@ public class Entitytype implements IEntitytype {
         }
         else if (!this.version.equals(other.version))
             return false;
+        if (this.isbasetype == null) {
+            if (other.isbasetype != null)
+                return false;
+        }
+        else if (!this.isbasetype.equals(other.isbasetype))
+            return false;
         if (this.typedef == null) {
             if (other.typedef != null)
                 return false;
         }
         else if (!this.typedef.equals(other.typedef))
+            return false;
+        if (this.projectid == null) {
+            if (other.projectid != null)
+                return false;
+        }
+        else if (!this.projectid.equals(other.projectid))
             return false;
         return true;
     }
@@ -183,7 +240,9 @@ public class Entitytype implements IEntitytype {
         result = prime * result + ((this.id == null) ? 0 : this.id.hashCode());
         result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
         result = prime * result + ((this.version == null) ? 0 : this.version.hashCode());
+        result = prime * result + ((this.isbasetype == null) ? 0 : this.isbasetype.hashCode());
         result = prime * result + ((this.typedef == null) ? 0 : this.typedef.hashCode());
+        result = prime * result + ((this.projectid == null) ? 0 : this.projectid.hashCode());
         return result;
     }
 
@@ -194,7 +253,9 @@ public class Entitytype implements IEntitytype {
         sb.append(id);
         sb.append(", ").append(name);
         sb.append(", ").append(version);
+        sb.append(", ").append(isbasetype);
         sb.append(", ").append(typedef);
+        sb.append(", ").append(projectid);
 
         sb.append(")");
         return sb.toString();
@@ -209,7 +270,9 @@ public class Entitytype implements IEntitytype {
         setId(from.getId());
         setName(from.getName());
         setVersion(from.getVersion());
+        setIsbasetype(from.getIsbasetype());
         setTypedef(from.getTypedef());
+        setProjectid(from.getProjectid());
     }
 
     @Override
