@@ -193,9 +193,9 @@ public class OidcService implements InitializingBean {
         }
 
         // Retrieve a flat map of all existing groups in the realm
-        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(this.getRealmGroups(), true);
-
-        // List to store group names that need to be created
+        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(this.getRealmGroupsWithSubGroups(), true);
+        
+		// List to store group names that need to be created
         List<String> newGroups = new ArrayList<>();
 
         // Check for each operation role if a corresponding group path exists
@@ -241,8 +241,9 @@ public class OidcService implements InitializingBean {
         }
 
         // Re-fetch the list of all groups after creation to ensure consistency
-        Map<String, String> finalGroupPaths = Utility.flattenGroupIDToPathMapping(this.getRealmGroups(), true);
-
+        Map<String, String> finalGroupPaths = Utility.flattenGroupIDToPathMapping(this.getRealmGroupsWithSubGroups(), true);
+        log.trace("After group creation: group paths {" + finalGroupPaths + "}");
+        
         // List to store the group IDs for each role
         List<String> groupIds = new ArrayList<>();
 
@@ -275,7 +276,7 @@ public class OidcService implements InitializingBean {
     public RoleRepresentation createClientRole(String roleName) {
     	// Create a new RoleRepresentation object to define the role attributes
         RoleRepresentation roleRepresentation = new RoleRepresentation();
-    	
+
     	try {
             roleRepresentation.setName(roleName);
             roleRepresentation.setClientRole(true); // Mark the role as a client role (specific to a client in contrast to global realm roles)
@@ -290,7 +291,7 @@ public class OidcService implements InitializingBean {
             	// Role already exists
             	return roleRepresentation;
             }
-            
+
         	// Log the exception message and return null if an error occurs
             log.error("Could not create client role: " + e.getMessage() + ". Does the Keycloak admin-account have all the necessary rights (realm-management: manage-users, manage-clients)?");
             return null;
@@ -300,7 +301,7 @@ public class OidcService implements InitializingBean {
     /**
      * Retrieves a list of all client role names for the currently configured Keycloak client.
      * This method interacts with the Keycloak Admin API to fetch all roles defined for the client.
-     * It returns a list of the names of these roles. Each role is represented using the 
+     * It returns a list of the names of these roles. Each role is represented using the
      * {@link RoleRepresentation} class, and only the role names are extracted and returned.
      *
      * @return {@link List} of {@link String} containing the names of all roles associated with the configured client,
@@ -368,7 +369,7 @@ public class OidcService implements InitializingBean {
     }
 
     /**
-     * Retrieves a list of all groups within the configured Keycloak realm.
+     * Retrieves a list of all (top-level) groups within the configured Keycloak realm.
      *
      * @return {@link List} of {@link GroupRepresentation} containing all groups in the current realm.
      */
@@ -376,6 +377,60 @@ public class OidcService implements InitializingBean {
         // search query: "" (empty string) to retrieve all groups
         // briefRepresentation: false, to include detailed group information
         return this.getKeycloakRealm().groups().groups("", false, 0, Integer.MAX_VALUE, false);
+    }
+
+    /**
+     * This method first fetches all top-level groups and then recursively retrieves
+     * all their subgroups to build a complete group hierarchy.
+     *
+     * @return A list of all GroupRepresentation objects including top-level groups
+     *         and all their nested subgroups
+     */
+    public List<GroupRepresentation> getRealmGroupsWithSubGroups() {
+        // Fetch all top-level groups from the Keycloak realm
+        // search query: "" (empty string) to retrieve all groups
+        // briefRepresentation: false, to include detailed group information
+        // Exact matching: false, to enable partial matching
+        List<GroupRepresentation> topGroups = this.getKeycloakRealm().groups().groups("", false, 0, Integer.MAX_VALUE, false);
+
+        // Process these groups recursively to get all subgroups
+        return fetchSubGroupsRecursively(topGroups);
+    }
+
+    /**
+     * Helper method that recursively fetches all subgroups for a given list of groups.
+     * For each group, it retrieves its direct subgroups and then recursively processes
+     * those subgroups to build a complete hierarchy.
+     *
+     * @param groups a list of parent groups whose subgroups need to be fetched
+     * @return A flat list containing all groups and their nested subgroups
+     */
+    private List<GroupRepresentation> fetchSubGroupsRecursively(List<GroupRepresentation> groups) {
+        // Initialize result list with parent groups
+        List<GroupRepresentation> allGroups = new ArrayList<>(groups);
+
+        // Create a new ArrayList to avoid ConcurrentModificationException during iteration
+        for (GroupRepresentation group : new ArrayList<>(groups)) {
+            try {
+                // Fetch direct subgroups for current group using Keycloak API
+                // Parameters: no pagination, include all subgroups, full representation
+                List<GroupRepresentation> subGroups = this.getKeycloakRealm().groups().group(group.getId())
+                        .getSubGroups(0, Integer.MAX_VALUE, true);
+
+                // Add direct subgroups to result list
+                allGroups.addAll(subGroups);
+
+                // Recursively process subgroups if any exist
+                if (!subGroups.isEmpty()) {
+                    allGroups.addAll(fetchSubGroupsRecursively(subGroups));
+                }
+            } catch (Exception e) {
+                // Log warning if fetching subgroups fails for a particular group
+                log.warn("Failed to fetch subgroups for group \"" + group.getPath() + "\": " + e.getMessage());
+            }
+        }
+        
+        return allGroups;
     }
 
     /**
@@ -516,7 +571,7 @@ public class OidcService implements InitializingBean {
                 return false;
             }
         }
-        
+
         return true;
     }
 
@@ -551,13 +606,13 @@ public class OidcService implements InitializingBean {
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     /**
      * Removes the specified roles from a user.
-     * 
+     *
      * @param roleNames a list of roles that should be deleted
      * @param userId the id of the user
      * @return {@code true} if removal was successful, {@code false} otherwise
@@ -570,20 +625,20 @@ public class OidcService implements InitializingBean {
 	    		rolesToRemove.add(getClientRoleByName(roleName));
 	    		log.debug("Marked role \"" + roleName + "\" for removal.");
 	    	}
-	    	
+
 	    	// Remove roles
 	    	this.getKeycloakRealm().users().get(userId).roles().clientLevel(clientUUID).remove(rolesToRemove);
     	} catch (Exception e) {
     		log.error("Removing roles from user \"" + userId + "\" was unsuccessful: " + e.getMessage());
     		return false;
     	}
-    	
+
     	return true;
     }
-    
+
     /**
      * Removes a single role from a user.
-     * 
+     *
      * @param roleName the role that should be deleted
      * @param userId the id of the user
      * @return {@code true} if removal was successful, {@code false} otherwise
@@ -591,10 +646,10 @@ public class OidcService implements InitializingBean {
     public boolean removeRoleFromUser(String roleName, String userId) {
     	return removeRolesFromUser(List.of(roleName), userId);
     }
-    
+
     /**
      * Adds the specified roles to a user.
-     * 
+     *
      * @param roleNames a list of roles that should be added
      * @param userId the id of the user
      * @return {@code true} if addition was successful, {@code false} otherwise
@@ -607,20 +662,20 @@ public class OidcService implements InitializingBean {
 	    		rolesToAdd.add(getClientRoleByName(roleName));
 	    		log.debug("Marked role \"" + roleName + "\" for addition.");
 	    	}
-	    	
+
 	    	// Add roles
 	    	this.getKeycloakRealm().users().get(userId).roles().clientLevel(clientUUID).add(rolesToAdd);
     	} catch (Exception e) {
     		log.error("Adding roles to user \"" + userId + "\" was unsuccessful: " + e.getMessage());
     		return false;
     	}
-    	
+
     	return true;
     }
-    
+
     /**
      * Adds a single role to a user.
-     * 
+     *
      * @param roleName the role that should be added
      * @param userId the id of the user
      * @return {@code true} if addition was successful, {@code false} otherwise

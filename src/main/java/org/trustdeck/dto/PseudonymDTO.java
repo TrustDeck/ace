@@ -28,6 +28,7 @@ import lombok.Setter;
 
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.interfaces.IPseudonym;
+import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.utils.Assertion;
 import org.trustdeck.utils.SpringBeanLocator;
@@ -35,7 +36,7 @@ import org.trustdeck.utils.SpringBeanLocator;
 import java.time.LocalDateTime;
 
 /**
- * This class offers an Data Transfer Object (DTO) for the representation in a response to a REST-API-request.
+ * This class offers an Data Transfer Object (DTO) for a pseudonym.
  *
  * @author Armin Müller & Eric Wündisch
  */
@@ -52,10 +53,7 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
     private DomainDBAccessService domainDBAccessService = SpringBeanLocator.getBean(DomainDBAccessService.class);
 
     /** Stores the identifier for that entry. */
-    private String id;
-
-    /** The type of the identifier. */
-    private String idType;
+    private IdentifierItem identifierItem;
 
     /** The pseudonym belonging to the identifier. */
     private String psn;
@@ -87,8 +85,9 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
     @JsonIgnore
     @Override
     public PseudonymDTO assignPojoValues(IPseudonym pojo) {
-        this.setId(pojo.getIdentifier() != null ? pojo.getIdentifier() : "");
-        this.setIdType(pojo.getIdtype() != null ? pojo.getIdtype() : "");
+        String identifier = pojo.getIdentifier() != null ? pojo.getIdentifier() : "";
+        String idType = pojo.getIdtype() != null ? pojo.getIdtype() : "";
+        this.setIdentifierItem(IdentifierItem.builder().identifier(identifier).idType(idType).build());
         this.setPsn(pojo.getPseudonym() != null ? pojo.getPseudonym() : "");
         this.setValidFrom(pojo.getValidfrom() != null ? pojo.getValidfrom() : null);
         this.setValidFromInherited(pojo.getValidfrominherited());
@@ -136,8 +135,7 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
     @Override
     public String toRepresentationString() {
         String out = "";
-        out += (this.getId() != null) ? "id: " + this.getId() + ", " : "";
-        out += (this.getIdType() != null) ? "idType: " + this.getIdType() + ", " : "";
+        out += (this.getIdentifierItem() != null) ? "identifierItem: {" + this.getIdentifierItem().toRepresentationString() + "}, " : "";
         out += (this.getPsn() != null) ? "pseudonym: " + this.getPsn() + ", " : "";
         out += (this.getValidFrom() != null) ? "validFrom: " + this.getValidFrom().toString() + ", " : "";
         out += (this.getValidFromInherited() != null) ? "validFromInherited: " + this.getValidFromInherited() + ", " : "";
@@ -152,10 +150,6 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
     @Override
     @JsonIgnore
     public Boolean validate() {
-        if (this.getId() == null || this.getId().trim().equals("") || this.getIdType() == null || this.getIdType().trim().equals("")) {
-            return false;
-        }
-
-        return true;
+        return this.getIdentifierItem().validate();
     }
 }

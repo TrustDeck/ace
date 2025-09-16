@@ -48,7 +48,7 @@ public class DuplicatePersonException extends RuntimeException {
 	 * @param idType the idType of the exception-causing person
 	 */
 	public DuplicatePersonException(String identifier, String idType) {
-		super("A duplicate of the pseudonym was found.");
+		super("A duplicate of the person was found.");
 		
 		this.identifier = identifier;
 		this.idType = idType;
