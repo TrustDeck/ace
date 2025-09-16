@@ -30,10 +30,11 @@ import org.trustdeck.jooq.generated.tables.interfaces.IProject;
     name = "project",
     schema = "public",
     uniqueConstraints = {
-        @UniqueConstraint(name = "project_name_key", columnNames = { "name" })
+        @UniqueConstraint(name = "project_name_key", columnNames = { "name" }),
+        @UniqueConstraint(name = "project_abbreviation_key", columnNames = { "abbreviation" })
     },
     indexes = {
-        @Index(name = "project_associated_objecttype_ids_gin_idx", columnList = "associated_objecttype_ids ASC")
+        @Index(name = "project_associated_entitytype_ids_gin_idx", columnList = "associated_entitytype_ids ASC")
     }
 )
 public class Project implements IProject {
@@ -42,36 +43,48 @@ public class Project implements IProject {
 
     private Integer id;
     private String name;
+    private String abbreviation;
     private LocalDate startdate;
     private LocalDate enddate;
-    private String mainContact;
-    private Integer[] associatedObjecttypeIds;
+    private Boolean storeentities;
+    private Boolean createpseudonyms;
+    private String description;
+    private Integer[] associatedEntitytypeIds;
 
     public Project() {}
 
     public Project(IProject value) {
         this.id = value.getId();
         this.name = value.getName();
+        this.abbreviation = value.getAbbreviation();
         this.startdate = value.getStartdate();
         this.enddate = value.getEnddate();
-        this.mainContact = value.getMainContact();
-        this.associatedObjecttypeIds = value.getAssociatedObjecttypeIds();
+        this.storeentities = value.getStoreentities();
+        this.createpseudonyms = value.getCreatepseudonyms();
+        this.description = value.getDescription();
+        this.associatedEntitytypeIds = value.getAssociatedEntitytypeIds();
     }
 
     public Project(
         Integer id,
         String name,
+        String abbreviation,
         LocalDate startdate,
         LocalDate enddate,
-        String mainContact,
-        Integer[] associatedObjecttypeIds
+        Boolean storeentities,
+        Boolean createpseudonyms,
+        String description,
+        Integer[] associatedEntitytypeIds
     ) {
         this.id = id;
         this.name = name;
+        this.abbreviation = abbreviation;
         this.startdate = startdate;
         this.enddate = enddate;
-        this.mainContact = mainContact;
-        this.associatedObjecttypeIds = associatedObjecttypeIds;
+        this.storeentities = storeentities;
+        this.createpseudonyms = createpseudonyms;
+        this.description = description;
+        this.associatedEntitytypeIds = associatedEntitytypeIds;
     }
 
     /**
@@ -115,6 +128,26 @@ public class Project implements IProject {
     }
 
     /**
+     * Getter for <code>public.project.abbreviation</code>.
+     */
+    @Column(name = "abbreviation", nullable = false, length = 50)
+    @NotNull
+    @Size(max = 50)
+    @Override
+    public String getAbbreviation() {
+        return this.abbreviation;
+    }
+
+    /**
+     * Setter for <code>public.project.abbreviation</code>.
+     */
+    @Override
+    public Project setAbbreviation(String abbreviation) {
+        this.abbreviation = abbreviation;
+        return this;
+    }
+
+    /**
      * Getter for <code>public.project.startdate</code>.
      */
     @Column(name = "startdate")
@@ -151,38 +184,76 @@ public class Project implements IProject {
     }
 
     /**
-     * Getter for <code>public.project.main_contact</code>.
+     * Getter for <code>public.project.storeentities</code>.
      */
-    @Column(name = "main_contact")
+    @Column(name = "storeentities", nullable = false)
+    @NotNull
     @Override
-    public String getMainContact() {
-        return this.mainContact;
+    public Boolean getStoreentities() {
+        return this.storeentities;
     }
 
     /**
-     * Setter for <code>public.project.main_contact</code>.
+     * Setter for <code>public.project.storeentities</code>.
      */
     @Override
-    public Project setMainContact(String mainContact) {
-        this.mainContact = mainContact;
+    public Project setStoreentities(Boolean storeentities) {
+        this.storeentities = storeentities;
         return this;
     }
 
     /**
-     * Getter for <code>public.project.associated_objecttype_ids</code>.
+     * Getter for <code>public.project.createpseudonyms</code>.
      */
-    @Column(name = "associated_objecttype_ids")
+    @Column(name = "createpseudonyms", nullable = false)
+    @NotNull
     @Override
-    public Integer[] getAssociatedObjecttypeIds() {
-        return this.associatedObjecttypeIds;
+    public Boolean getCreatepseudonyms() {
+        return this.createpseudonyms;
     }
 
     /**
-     * Setter for <code>public.project.associated_objecttype_ids</code>.
+     * Setter for <code>public.project.createpseudonyms</code>.
      */
     @Override
-    public Project setAssociatedObjecttypeIds(Integer[] associatedObjecttypeIds) {
-        this.associatedObjecttypeIds = associatedObjecttypeIds;
+    public Project setCreatepseudonyms(Boolean createpseudonyms) {
+        this.createpseudonyms = createpseudonyms;
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.project.description</code>.
+     */
+    @Column(name = "description")
+    @Override
+    public String getDescription() {
+        return this.description;
+    }
+
+    /**
+     * Setter for <code>public.project.description</code>.
+     */
+    @Override
+    public Project setDescription(String description) {
+        this.description = description;
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.project.associated_entitytype_ids</code>.
+     */
+    @Column(name = "associated_entitytype_ids")
+    @Override
+    public Integer[] getAssociatedEntitytypeIds() {
+        return this.associatedEntitytypeIds;
+    }
+
+    /**
+     * Setter for <code>public.project.associated_entitytype_ids</code>.
+     */
+    @Override
+    public Project setAssociatedEntitytypeIds(Integer[] associatedEntitytypeIds) {
+        this.associatedEntitytypeIds = associatedEntitytypeIds;
         return this;
     }
 
@@ -207,6 +278,12 @@ public class Project implements IProject {
         }
         else if (!this.name.equals(other.name))
             return false;
+        if (this.abbreviation == null) {
+            if (other.abbreviation != null)
+                return false;
+        }
+        else if (!this.abbreviation.equals(other.abbreviation))
+            return false;
         if (this.startdate == null) {
             if (other.startdate != null)
                 return false;
@@ -219,17 +296,29 @@ public class Project implements IProject {
         }
         else if (!this.enddate.equals(other.enddate))
             return false;
-        if (this.mainContact == null) {
-            if (other.mainContact != null)
+        if (this.storeentities == null) {
+            if (other.storeentities != null)
                 return false;
         }
-        else if (!this.mainContact.equals(other.mainContact))
+        else if (!this.storeentities.equals(other.storeentities))
             return false;
-        if (this.associatedObjecttypeIds == null) {
-            if (other.associatedObjecttypeIds != null)
+        if (this.createpseudonyms == null) {
+            if (other.createpseudonyms != null)
                 return false;
         }
-        else if (!Arrays.deepEquals(this.associatedObjecttypeIds, other.associatedObjecttypeIds))
+        else if (!this.createpseudonyms.equals(other.createpseudonyms))
+            return false;
+        if (this.description == null) {
+            if (other.description != null)
+                return false;
+        }
+        else if (!this.description.equals(other.description))
+            return false;
+        if (this.associatedEntitytypeIds == null) {
+            if (other.associatedEntitytypeIds != null)
+                return false;
+        }
+        else if (!Arrays.deepEquals(this.associatedEntitytypeIds, other.associatedEntitytypeIds))
             return false;
         return true;
     }
@@ -240,10 +329,13 @@ public class Project implements IProject {
         int result = 1;
         result = prime * result + ((this.id == null) ? 0 : this.id.hashCode());
         result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
+        result = prime * result + ((this.abbreviation == null) ? 0 : this.abbreviation.hashCode());
         result = prime * result + ((this.startdate == null) ? 0 : this.startdate.hashCode());
         result = prime * result + ((this.enddate == null) ? 0 : this.enddate.hashCode());
-        result = prime * result + ((this.mainContact == null) ? 0 : this.mainContact.hashCode());
-        result = prime * result + ((this.associatedObjecttypeIds == null) ? 0 : Arrays.deepHashCode(this.associatedObjecttypeIds));
+        result = prime * result + ((this.storeentities == null) ? 0 : this.storeentities.hashCode());
+        result = prime * result + ((this.createpseudonyms == null) ? 0 : this.createpseudonyms.hashCode());
+        result = prime * result + ((this.description == null) ? 0 : this.description.hashCode());
+        result = prime * result + ((this.associatedEntitytypeIds == null) ? 0 : Arrays.deepHashCode(this.associatedEntitytypeIds));
         return result;
     }
 
@@ -253,10 +345,13 @@ public class Project implements IProject {
 
         sb.append(id);
         sb.append(", ").append(name);
+        sb.append(", ").append(abbreviation);
         sb.append(", ").append(startdate);
         sb.append(", ").append(enddate);
-        sb.append(", ").append(mainContact);
-        sb.append(", ").append(Arrays.deepToString(associatedObjecttypeIds));
+        sb.append(", ").append(storeentities);
+        sb.append(", ").append(createpseudonyms);
+        sb.append(", ").append(description);
+        sb.append(", ").append(Arrays.deepToString(associatedEntitytypeIds));
 
         sb.append(")");
         return sb.toString();
@@ -270,10 +365,13 @@ public class Project implements IProject {
     public void from(IProject from) {
         setId(from.getId());
         setName(from.getName());
+        setAbbreviation(from.getAbbreviation());
         setStartdate(from.getStartdate());
         setEnddate(from.getEnddate());
-        setMainContact(from.getMainContact());
-        setAssociatedObjecttypeIds(from.getAssociatedObjecttypeIds());
+        setStoreentities(from.getStoreentities());
+        setCreatepseudonyms(from.getCreatepseudonyms());
+        setDescription(from.getDescription());
+        setAssociatedEntitytypeIds(from.getAssociatedEntitytypeIds());
     }
 
     @Override

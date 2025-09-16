@@ -12,13 +12,13 @@ import java.util.function.Function;
 import org.jooq.Check;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function6;
+import org.jooq.Function9;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row6;
+import org.jooq.Row9;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -67,6 +67,11 @@ public class Project extends TableImpl<ProjectRecord> {
     public final TableField<ProjectRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
+     * The column <code>public.project.abbreviation</code>.
+     */
+    public final TableField<ProjectRecord, String> ABBREVIATION = createField(DSL.name("abbreviation"), SQLDataType.VARCHAR(50).nullable(false), this, "");
+
+    /**
      * The column <code>public.project.startdate</code>.
      */
     public final TableField<ProjectRecord, LocalDate> STARTDATE = createField(DSL.name("startdate"), SQLDataType.LOCALDATE, this, "");
@@ -77,14 +82,24 @@ public class Project extends TableImpl<ProjectRecord> {
     public final TableField<ProjectRecord, LocalDate> ENDDATE = createField(DSL.name("enddate"), SQLDataType.LOCALDATE, this, "");
 
     /**
-     * The column <code>public.project.main_contact</code>.
+     * The column <code>public.project.storeentities</code>.
      */
-    public final TableField<ProjectRecord, String> MAIN_CONTACT = createField(DSL.name("main_contact"), SQLDataType.CLOB, this, "");
+    public final TableField<ProjectRecord, Boolean> STOREENTITIES = createField(DSL.name("storeentities"), SQLDataType.BOOLEAN.nullable(false), this, "");
 
     /**
-     * The column <code>public.project.associated_objecttype_ids</code>.
+     * The column <code>public.project.createpseudonyms</code>.
      */
-    public final TableField<ProjectRecord, Integer[]> ASSOCIATED_OBJECTTYPE_IDS = createField(DSL.name("associated_objecttype_ids"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("'{}'::integer[]"), SQLDataType.INTEGER)).array(), this, "");
+    public final TableField<ProjectRecord, Boolean> CREATEPSEUDONYMS = createField(DSL.name("createpseudonyms"), SQLDataType.BOOLEAN.nullable(false), this, "");
+
+    /**
+     * The column <code>public.project.description</code>.
+     */
+    public final TableField<ProjectRecord, String> DESCRIPTION = createField(DSL.name("description"), SQLDataType.CLOB, this, "");
+
+    /**
+     * The column <code>public.project.associated_entitytype_ids</code>.
+     */
+    public final TableField<ProjectRecord, Integer[]> ASSOCIATED_ENTITYTYPE_IDS = createField(DSL.name("associated_entitytype_ids"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("'{}'::integer[]"), SQLDataType.INTEGER)).array(), this, "");
 
     private Project(Name alias, Table<ProjectRecord> aliased) {
         this(alias, aliased, null);
@@ -126,7 +141,7 @@ public class Project extends TableImpl<ProjectRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.PROJECT_ASSOCIATED_OBJECTTYPE_IDS_GIN_IDX);
+        return Arrays.asList(Indexes.PROJECT_ASSOCIATED_ENTITYTYPE_IDS_GIN_IDX);
     }
 
     @Override
@@ -141,7 +156,7 @@ public class Project extends TableImpl<ProjectRecord> {
 
     @Override
     public List<UniqueKey<ProjectRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.PROJECT_NAME_KEY);
+        return Arrays.asList(Keys.PROJECT_NAME_KEY, Keys.PROJECT_ABBREVIATION_KEY);
     }
 
     @Override
@@ -191,18 +206,18 @@ public class Project extends TableImpl<ProjectRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row6 type methods
+    // Row9 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row6<Integer, String, LocalDate, LocalDate, String, Integer[]> fieldsRow() {
-        return (Row6) super.fieldsRow();
+    public Row9<Integer, String, String, LocalDate, LocalDate, Boolean, Boolean, String, Integer[]> fieldsRow() {
+        return (Row9) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function6<? super Integer, ? super String, ? super LocalDate, ? super LocalDate, ? super String, ? super Integer[], ? extends U> from) {
+    public <U> SelectField<U> mapping(Function9<? super Integer, ? super String, ? super String, ? super LocalDate, ? super LocalDate, ? super Boolean, ? super Boolean, ? super String, ? super Integer[], ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -210,7 +225,7 @@ public class Project extends TableImpl<ProjectRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function6<? super Integer, ? super String, ? super LocalDate, ? super LocalDate, ? super String, ? super Integer[], ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function9<? super Integer, ? super String, ? super String, ? super LocalDate, ? super LocalDate, ? super Boolean, ? super Boolean, ? super String, ? super Integer[], ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

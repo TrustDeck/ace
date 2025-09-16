@@ -98,6 +98,35 @@ public class ProjectDao extends DAOImpl<ProjectRecord, org.trustdeck.jooq.genera
     }
 
     /**
+     * Fetch records that have <code>abbreviation BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfAbbreviation(String lowerInclusive, String upperInclusive) {
+        return fetchRange(Project.PROJECT.ABBREVIATION, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>abbreviation IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByAbbreviation(String... values) {
+        return fetch(Project.PROJECT.ABBREVIATION, values);
+    }
+
+    /**
+     * Fetch a unique record that has <code>abbreviation = value</code>
+     */
+    public org.trustdeck.jooq.generated.tables.pojos.Project fetchOneByAbbreviation(String value) {
+        return fetchOne(Project.PROJECT.ABBREVIATION, value);
+    }
+
+    /**
+     * Fetch a unique record that has <code>abbreviation = value</code>
+     */
+    public Optional<org.trustdeck.jooq.generated.tables.pojos.Project> fetchOptionalByAbbreviation(String value) {
+        return fetchOptional(Project.PROJECT.ABBREVIATION, value);
+    }
+
+    /**
      * Fetch records that have <code>startdate BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */
@@ -128,33 +157,63 @@ public class ProjectDao extends DAOImpl<ProjectRecord, org.trustdeck.jooq.genera
     }
 
     /**
-     * Fetch records that have <code>main_contact BETWEEN lowerInclusive AND
+     * Fetch records that have <code>storeentities BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfMainContact(String lowerInclusive, String upperInclusive) {
-        return fetchRange(Project.PROJECT.MAIN_CONTACT, lowerInclusive, upperInclusive);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfStoreentities(Boolean lowerInclusive, Boolean upperInclusive) {
+        return fetchRange(Project.PROJECT.STOREENTITIES, lowerInclusive, upperInclusive);
     }
 
     /**
-     * Fetch records that have <code>main_contact IN (values)</code>
+     * Fetch records that have <code>storeentities IN (values)</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByMainContact(String... values) {
-        return fetch(Project.PROJECT.MAIN_CONTACT, values);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByStoreentities(Boolean... values) {
+        return fetch(Project.PROJECT.STOREENTITIES, values);
     }
 
     /**
-     * Fetch records that have <code>associated_objecttype_ids BETWEEN
+     * Fetch records that have <code>createpseudonyms BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfCreatepseudonyms(Boolean lowerInclusive, Boolean upperInclusive) {
+        return fetchRange(Project.PROJECT.CREATEPSEUDONYMS, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>createpseudonyms IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByCreatepseudonyms(Boolean... values) {
+        return fetch(Project.PROJECT.CREATEPSEUDONYMS, values);
+    }
+
+    /**
+     * Fetch records that have <code>description BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfDescription(String lowerInclusive, String upperInclusive) {
+        return fetchRange(Project.PROJECT.DESCRIPTION, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>description IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByDescription(String... values) {
+        return fetch(Project.PROJECT.DESCRIPTION, values);
+    }
+
+    /**
+     * Fetch records that have <code>associated_entitytype_ids BETWEEN
      * lowerInclusive AND upperInclusive</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfAssociatedObjecttypeIds(Integer[] lowerInclusive, Integer[] upperInclusive) {
-        return fetchRange(Project.PROJECT.ASSOCIATED_OBJECTTYPE_IDS, lowerInclusive, upperInclusive);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfAssociatedEntitytypeIds(Integer[] lowerInclusive, Integer[] upperInclusive) {
+        return fetchRange(Project.PROJECT.ASSOCIATED_ENTITYTYPE_IDS, lowerInclusive, upperInclusive);
     }
 
     /**
-     * Fetch records that have <code>associated_objecttype_ids IN
+     * Fetch records that have <code>associated_entitytype_ids IN
      * (values)</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByAssociatedObjecttypeIds(Integer[]... values) {
-        return fetch(Project.PROJECT.ASSOCIATED_OBJECTTYPE_IDS, values);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByAssociatedEntitytypeIds(Integer[]... values) {
+        return fetch(Project.PROJECT.ASSOCIATED_ENTITYTYPE_IDS, values);
     }
 }

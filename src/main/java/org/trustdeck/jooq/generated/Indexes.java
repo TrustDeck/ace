@@ -45,5 +45,5 @@ public class Indexes {
     public static final Index PERSON_IDENTIFIER_UINDEX = Internal.createIndex(DSL.name("person_identifier_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.IDENTIFIER }, false);
     public static final Index PERSON_LASTNAME_UINDEX = Internal.createIndex(DSL.name("person_lastname_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.LASTNAME }, false);
     public static final Index PERSON_STREET_POSTALCODE_CITY_COUNTRY_UINDEX = Internal.createIndex(DSL.name("person_street_postalcode_city_country_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.STREET, Person.PERSON.POSTALCODE, Person.PERSON.CITY, Person.PERSON.COUNTRY }, false);
-    public static final Index PROJECT_ASSOCIATED_OBJECTTYPE_IDS_GIN_IDX = Internal.createIndex(DSL.name("project_associated_objecttype_ids_gin_idx"), Project.PROJECT, new OrderField[] { Project.PROJECT.ASSOCIATED_OBJECTTYPE_IDS }, false);
+    public static final Index PROJECT_ASSOCIATED_ENTITYTYPE_IDS_GIN_IDX = Internal.createIndex(DSL.name("project_associated_entitytype_ids_gin_idx"), Project.PROJECT, new OrderField[] { Project.PROJECT.ASSOCIATED_ENTITYTYPE_IDS }, false);
 }

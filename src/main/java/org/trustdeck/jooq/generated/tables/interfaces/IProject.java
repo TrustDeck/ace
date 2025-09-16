@@ -28,10 +28,11 @@ import java.time.LocalDate;
     name = "project",
     schema = "public",
     uniqueConstraints = {
-        @UniqueConstraint(name = "project_name_key", columnNames = { "name" })
+        @UniqueConstraint(name = "project_name_key", columnNames = { "name" }),
+        @UniqueConstraint(name = "project_abbreviation_key", columnNames = { "abbreviation" })
     },
     indexes = {
-        @Index(name = "project_associated_objecttype_ids_gin_idx", columnList = "associated_objecttype_ids ASC")
+        @Index(name = "project_associated_entitytype_ids_gin_idx", columnList = "associated_entitytype_ids ASC")
     }
 )
 public interface IProject extends Serializable {
@@ -63,6 +64,19 @@ public interface IProject extends Serializable {
     public String getName();
 
     /**
+     * Setter for <code>public.project.abbreviation</code>.
+     */
+    public IProject setAbbreviation(String value);
+
+    /**
+     * Getter for <code>public.project.abbreviation</code>.
+     */
+    @Column(name = "abbreviation", nullable = false, length = 50)
+    @NotNull
+    @Size(max = 50)
+    public String getAbbreviation();
+
+    /**
      * Setter for <code>public.project.startdate</code>.
      */
     public IProject setStartdate(LocalDate value);
@@ -85,26 +99,50 @@ public interface IProject extends Serializable {
     public LocalDate getEnddate();
 
     /**
-     * Setter for <code>public.project.main_contact</code>.
+     * Setter for <code>public.project.storeentities</code>.
      */
-    public IProject setMainContact(String value);
+    public IProject setStoreentities(Boolean value);
 
     /**
-     * Getter for <code>public.project.main_contact</code>.
+     * Getter for <code>public.project.storeentities</code>.
      */
-    @Column(name = "main_contact")
-    public String getMainContact();
+    @Column(name = "storeentities", nullable = false)
+    @NotNull
+    public Boolean getStoreentities();
 
     /**
-     * Setter for <code>public.project.associated_objecttype_ids</code>.
+     * Setter for <code>public.project.createpseudonyms</code>.
      */
-    public IProject setAssociatedObjecttypeIds(Integer[] value);
+    public IProject setCreatepseudonyms(Boolean value);
 
     /**
-     * Getter for <code>public.project.associated_objecttype_ids</code>.
+     * Getter for <code>public.project.createpseudonyms</code>.
      */
-    @Column(name = "associated_objecttype_ids")
-    public Integer[] getAssociatedObjecttypeIds();
+    @Column(name = "createpseudonyms", nullable = false)
+    @NotNull
+    public Boolean getCreatepseudonyms();
+
+    /**
+     * Setter for <code>public.project.description</code>.
+     */
+    public IProject setDescription(String value);
+
+    /**
+     * Getter for <code>public.project.description</code>.
+     */
+    @Column(name = "description")
+    public String getDescription();
+
+    /**
+     * Setter for <code>public.project.associated_entitytype_ids</code>.
+     */
+    public IProject setAssociatedEntitytypeIds(Integer[] value);
+
+    /**
+     * Getter for <code>public.project.associated_entitytype_ids</code>.
+     */
+    @Column(name = "associated_entitytype_ids")
+    public Integer[] getAssociatedEntitytypeIds();
 
     // -------------------------------------------------------------------------
     // FROM and INTO

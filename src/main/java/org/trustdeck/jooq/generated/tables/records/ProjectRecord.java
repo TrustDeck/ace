@@ -19,8 +19,8 @@ import java.time.LocalDate;
 
 import org.jooq.Field;
 import org.jooq.Record1;
-import org.jooq.Record6;
-import org.jooq.Row6;
+import org.jooq.Record9;
+import org.jooq.Row9;
 import org.jooq.impl.UpdatableRecordImpl;
 import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.interfaces.IProject;
@@ -35,13 +35,14 @@ import org.trustdeck.jooq.generated.tables.interfaces.IProject;
     name = "project",
     schema = "public",
     uniqueConstraints = {
-        @UniqueConstraint(name = "project_name_key", columnNames = { "name" })
+        @UniqueConstraint(name = "project_name_key", columnNames = { "name" }),
+        @UniqueConstraint(name = "project_abbreviation_key", columnNames = { "abbreviation" })
     },
     indexes = {
-        @Index(name = "project_associated_objecttype_ids_gin_idx", columnList = "associated_objecttype_ids ASC")
+        @Index(name = "project_associated_entitytype_ids_gin_idx", columnList = "associated_entitytype_ids ASC")
     }
 )
-public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements Record6<Integer, String, LocalDate, LocalDate, String, Integer[]>, IProject {
+public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements Record9<Integer, String, String, LocalDate, LocalDate, Boolean, Boolean, String, Integer[]>, IProject {
 
     private static final long serialVersionUID = 1L;
 
@@ -86,11 +87,31 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     /**
+     * Setter for <code>public.project.abbreviation</code>.
+     */
+    @Override
+    public ProjectRecord setAbbreviation(String value) {
+        set(2, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.project.abbreviation</code>.
+     */
+    @Column(name = "abbreviation", nullable = false, length = 50)
+    @NotNull
+    @Size(max = 50)
+    @Override
+    public String getAbbreviation() {
+        return (String) get(2);
+    }
+
+    /**
      * Setter for <code>public.project.startdate</code>.
      */
     @Override
     public ProjectRecord setStartdate(LocalDate value) {
-        set(2, value);
+        set(3, value);
         return this;
     }
 
@@ -100,7 +121,7 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     @Column(name = "startdate")
     @Override
     public LocalDate getStartdate() {
-        return (LocalDate) get(2);
+        return (LocalDate) get(3);
     }
 
     /**
@@ -108,7 +129,7 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
      */
     @Override
     public ProjectRecord setEnddate(LocalDate value) {
-        set(3, value);
+        set(4, value);
         return this;
     }
 
@@ -118,43 +139,81 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     @Column(name = "enddate")
     @Override
     public LocalDate getEnddate() {
-        return (LocalDate) get(3);
+        return (LocalDate) get(4);
     }
 
     /**
-     * Setter for <code>public.project.main_contact</code>.
+     * Setter for <code>public.project.storeentities</code>.
      */
     @Override
-    public ProjectRecord setMainContact(String value) {
-        set(4, value);
-        return this;
-    }
-
-    /**
-     * Getter for <code>public.project.main_contact</code>.
-     */
-    @Column(name = "main_contact")
-    @Override
-    public String getMainContact() {
-        return (String) get(4);
-    }
-
-    /**
-     * Setter for <code>public.project.associated_objecttype_ids</code>.
-     */
-    @Override
-    public ProjectRecord setAssociatedObjecttypeIds(Integer[] value) {
+    public ProjectRecord setStoreentities(Boolean value) {
         set(5, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.project.associated_objecttype_ids</code>.
+     * Getter for <code>public.project.storeentities</code>.
      */
-    @Column(name = "associated_objecttype_ids")
+    @Column(name = "storeentities", nullable = false)
+    @NotNull
     @Override
-    public Integer[] getAssociatedObjecttypeIds() {
-        return (Integer[]) get(5);
+    public Boolean getStoreentities() {
+        return (Boolean) get(5);
+    }
+
+    /**
+     * Setter for <code>public.project.createpseudonyms</code>.
+     */
+    @Override
+    public ProjectRecord setCreatepseudonyms(Boolean value) {
+        set(6, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.project.createpseudonyms</code>.
+     */
+    @Column(name = "createpseudonyms", nullable = false)
+    @NotNull
+    @Override
+    public Boolean getCreatepseudonyms() {
+        return (Boolean) get(6);
+    }
+
+    /**
+     * Setter for <code>public.project.description</code>.
+     */
+    @Override
+    public ProjectRecord setDescription(String value) {
+        set(7, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.project.description</code>.
+     */
+    @Column(name = "description")
+    @Override
+    public String getDescription() {
+        return (String) get(7);
+    }
+
+    /**
+     * Setter for <code>public.project.associated_entitytype_ids</code>.
+     */
+    @Override
+    public ProjectRecord setAssociatedEntitytypeIds(Integer[] value) {
+        set(8, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.project.associated_entitytype_ids</code>.
+     */
+    @Column(name = "associated_entitytype_ids")
+    @Override
+    public Integer[] getAssociatedEntitytypeIds() {
+        return (Integer[]) get(8);
     }
 
     // -------------------------------------------------------------------------
@@ -167,17 +226,17 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     // -------------------------------------------------------------------------
-    // Record6 type implementation
+    // Record9 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row6<Integer, String, LocalDate, LocalDate, String, Integer[]> fieldsRow() {
-        return (Row6) super.fieldsRow();
+    public Row9<Integer, String, String, LocalDate, LocalDate, Boolean, Boolean, String, Integer[]> fieldsRow() {
+        return (Row9) super.fieldsRow();
     }
 
     @Override
-    public Row6<Integer, String, LocalDate, LocalDate, String, Integer[]> valuesRow() {
-        return (Row6) super.valuesRow();
+    public Row9<Integer, String, String, LocalDate, LocalDate, Boolean, Boolean, String, Integer[]> valuesRow() {
+        return (Row9) super.valuesRow();
     }
 
     @Override
@@ -191,23 +250,38 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public Field<LocalDate> field3() {
-        return Project.PROJECT.STARTDATE;
+    public Field<String> field3() {
+        return Project.PROJECT.ABBREVIATION;
     }
 
     @Override
     public Field<LocalDate> field4() {
+        return Project.PROJECT.STARTDATE;
+    }
+
+    @Override
+    public Field<LocalDate> field5() {
         return Project.PROJECT.ENDDATE;
     }
 
     @Override
-    public Field<String> field5() {
-        return Project.PROJECT.MAIN_CONTACT;
+    public Field<Boolean> field6() {
+        return Project.PROJECT.STOREENTITIES;
     }
 
     @Override
-    public Field<Integer[]> field6() {
-        return Project.PROJECT.ASSOCIATED_OBJECTTYPE_IDS;
+    public Field<Boolean> field7() {
+        return Project.PROJECT.CREATEPSEUDONYMS;
+    }
+
+    @Override
+    public Field<String> field8() {
+        return Project.PROJECT.DESCRIPTION;
+    }
+
+    @Override
+    public Field<Integer[]> field9() {
+        return Project.PROJECT.ASSOCIATED_ENTITYTYPE_IDS;
     }
 
     @Override
@@ -221,23 +295,38 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public LocalDate component3() {
-        return getStartdate();
+    public String component3() {
+        return getAbbreviation();
     }
 
     @Override
     public LocalDate component4() {
+        return getStartdate();
+    }
+
+    @Override
+    public LocalDate component5() {
         return getEnddate();
     }
 
     @Override
-    public String component5() {
-        return getMainContact();
+    public Boolean component6() {
+        return getStoreentities();
     }
 
     @Override
-    public Integer[] component6() {
-        return getAssociatedObjecttypeIds();
+    public Boolean component7() {
+        return getCreatepseudonyms();
+    }
+
+    @Override
+    public String component8() {
+        return getDescription();
+    }
+
+    @Override
+    public Integer[] component9() {
+        return getAssociatedEntitytypeIds();
     }
 
     @Override
@@ -251,23 +340,38 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public LocalDate value3() {
-        return getStartdate();
+    public String value3() {
+        return getAbbreviation();
     }
 
     @Override
     public LocalDate value4() {
+        return getStartdate();
+    }
+
+    @Override
+    public LocalDate value5() {
         return getEnddate();
     }
 
     @Override
-    public String value5() {
-        return getMainContact();
+    public Boolean value6() {
+        return getStoreentities();
     }
 
     @Override
-    public Integer[] value6() {
-        return getAssociatedObjecttypeIds();
+    public Boolean value7() {
+        return getCreatepseudonyms();
+    }
+
+    @Override
+    public String value8() {
+        return getDescription();
+    }
+
+    @Override
+    public Integer[] value9() {
+        return getAssociatedEntitytypeIds();
     }
 
     @Override
@@ -283,37 +387,58 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public ProjectRecord value3(LocalDate value) {
-        setStartdate(value);
+    public ProjectRecord value3(String value) {
+        setAbbreviation(value);
         return this;
     }
 
     @Override
     public ProjectRecord value4(LocalDate value) {
+        setStartdate(value);
+        return this;
+    }
+
+    @Override
+    public ProjectRecord value5(LocalDate value) {
         setEnddate(value);
         return this;
     }
 
     @Override
-    public ProjectRecord value5(String value) {
-        setMainContact(value);
+    public ProjectRecord value6(Boolean value) {
+        setStoreentities(value);
         return this;
     }
 
     @Override
-    public ProjectRecord value6(Integer[] value) {
-        setAssociatedObjecttypeIds(value);
+    public ProjectRecord value7(Boolean value) {
+        setCreatepseudonyms(value);
         return this;
     }
 
     @Override
-    public ProjectRecord values(Integer value1, String value2, LocalDate value3, LocalDate value4, String value5, Integer[] value6) {
+    public ProjectRecord value8(String value) {
+        setDescription(value);
+        return this;
+    }
+
+    @Override
+    public ProjectRecord value9(Integer[] value) {
+        setAssociatedEntitytypeIds(value);
+        return this;
+    }
+
+    @Override
+    public ProjectRecord values(Integer value1, String value2, String value3, LocalDate value4, LocalDate value5, Boolean value6, Boolean value7, String value8, Integer[] value9) {
         value1(value1);
         value2(value2);
         value3(value3);
         value4(value4);
         value5(value5);
         value6(value6);
+        value7(value7);
+        value8(value8);
+        value9(value9);
         return this;
     }
 
@@ -325,10 +450,13 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     public void from(IProject from) {
         setId(from.getId());
         setName(from.getName());
+        setAbbreviation(from.getAbbreviation());
         setStartdate(from.getStartdate());
         setEnddate(from.getEnddate());
-        setMainContact(from.getMainContact());
-        setAssociatedObjecttypeIds(from.getAssociatedObjecttypeIds());
+        setStoreentities(from.getStoreentities());
+        setCreatepseudonyms(from.getCreatepseudonyms());
+        setDescription(from.getDescription());
+        setAssociatedEntitytypeIds(from.getAssociatedEntitytypeIds());
         resetChangedOnNotNull();
     }
 
@@ -352,15 +480,18 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     /**
      * Create a detached, initialised ProjectRecord
      */
-    public ProjectRecord(Integer id, String name, LocalDate startdate, LocalDate enddate, String mainContact, Integer[] associatedObjecttypeIds) {
+    public ProjectRecord(Integer id, String name, String abbreviation, LocalDate startdate, LocalDate enddate, Boolean storeentities, Boolean createpseudonyms, String description, Integer[] associatedEntitytypeIds) {
         super(Project.PROJECT);
 
         setId(id);
         setName(name);
+        setAbbreviation(abbreviation);
         setStartdate(startdate);
         setEnddate(enddate);
-        setMainContact(mainContact);
-        setAssociatedObjecttypeIds(associatedObjecttypeIds);
+        setStoreentities(storeentities);
+        setCreatepseudonyms(createpseudonyms);
+        setDescription(description);
+        setAssociatedEntitytypeIds(associatedEntitytypeIds);
         resetChangedOnNotNull();
     }
 
@@ -373,10 +504,13 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
         if (value != null) {
             setId(value.getId());
             setName(value.getName());
+            setAbbreviation(value.getAbbreviation());
             setStartdate(value.getStartdate());
             setEnddate(value.getEnddate());
-            setMainContact(value.getMainContact());
-            setAssociatedObjecttypeIds(value.getAssociatedObjecttypeIds());
+            setStoreentities(value.getStoreentities());
+            setCreatepseudonyms(value.getCreatepseudonyms());
+            setDescription(value.getDescription());
+            setAssociatedEntitytypeIds(value.getAssociatedEntitytypeIds());
             resetChangedOnNotNull();
         }
     }
