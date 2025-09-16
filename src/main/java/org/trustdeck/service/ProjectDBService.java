@@ -37,7 +37,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static org.trustdeck.jooq.generated.Tables.OBJECTTYPE;
+import static org.trustdeck.jooq.generated.Tables.ENTITYTYPE;
 import static org.trustdeck.jooq.generated.Tables.PROJECT;
 
 /**
@@ -65,10 +65,13 @@ public class ProjectDBService {
     	try {
     		ProjectRecord projectRecord = dsl.newRecord(PROJECT);
     		projectRecord.setName(project.getName());
+    		projectRecord.setAbbreviation(project.getAbbreviation());
     		projectRecord.setStartdate(project.getStartdate());
     		projectRecord.setEnddate(project.getEnddate());
-    		projectRecord.setMainContact(project.getMainContact());
-    		projectRecord.setAssociatedObjecttypeIds(project.getAssociatedObjecttypeIds());
+    		projectRecord.setStoreentities(project.getStoreentities());
+    		projectRecord.setCreatepseudonyms(project.getCreatepseudonyms());
+    		projectRecord.setDescription(project.getDescription());
+    		projectRecord.setAssociatedEntitytypeIds(project.getAssociatedEntitytypeIds());
     		
     		// Store and determine success
 	        if(projectRecord.insert() == 0) {
@@ -119,6 +122,40 @@ public class ProjectDBService {
         // Check if the search was successful
     	if (projects == null || projects.size() == 0) {
     		log.debug("No project with name \"" + name + "\" found.");
+            return null;
+    	} else if (projects.size() > 1) {
+        	log.debug("More than one project object was found. The first result will be used.");
+        }
+
+        // Create a ProjectDTO, populate and return it
+        return new ProjectDTO().assignPojoValues(projects.getFirst());
+    }
+    
+    /**
+     * This method retrieves a project by its abbreviation.
+     * 
+     * @param abbreviation the abbreviation of the project to search for
+     * @param request the http request object containing information necessary for the audit trail
+     * @return the project object or {@code null} if nothing was found
+     */
+    @Transactional
+    public ProjectDTO getProjectByAbbreviation(String abbreviation, HttpServletRequest request) {
+    	// Build and execute the query
+    	List<Project> projects = null;
+        try {
+	        // Execute the query
+        	projects = dsl.selectFrom(PROJECT)
+	                  .where(PROJECT.ABBREVIATION.equalIgnoreCase(abbreviation))
+	                  .fetchInto(Project.class);
+        } catch (MappingException e) {
+        	log.debug("Could not map the project search result into the Project-POJO.");
+        } catch (DataAccessException f) {
+        	log.debug("Searching for the project in the database failed: " + f.getMessage());
+        }
+    	
+        // Check if the search was successful
+    	if (projects == null || projects.size() == 0) {
+    		log.debug("No project with abbreviation \"" + abbreviation + "\" found.");
             return null;
     	} else if (projects.size() > 1) {
         	log.debug("More than one project object was found. The first result will be used.");
@@ -216,7 +253,6 @@ public class ProjectDBService {
     	
     	// Get data needed for the update
     	ProjectDTO oldProject = getProjectByName(name, null);
-    	
     	    		
     	// Update the project object
     	// Fetch old project record
@@ -236,10 +272,13 @@ public class ProjectDBService {
 		
 		// Sanitize the given values and update the attributes
 		projectRecord.setName(updatedProject.getName() != null && !updatedProject.getName().isBlank() ? updatedProject.getName() : oldProject.getName());
+		projectRecord.setAbbreviation(updatedProject.getAbbreviation() != null && !updatedProject.getAbbreviation().isBlank() ? updatedProject.getAbbreviation() : oldProject.getAbbreviation());
 		projectRecord.setStartdate(updatedProject.getStartDate() != null && !updatedProject.getStartDate().isBlank() ? LocalDate.parse(updatedProject.getStartDate(), dateFormatter) : LocalDate.parse(oldProject.getStartDate(), dateFormatter));
 		projectRecord.setEnddate(updatedProject.getEndDate() != null && !updatedProject.getEndDate().isBlank() ? LocalDate.parse(updatedProject.getEndDate(), dateFormatter) : LocalDate.parse(oldProject.getEndDate(), dateFormatter));
-		projectRecord.setMainContact(updatedProject.getMainContact() != null && !updatedProject.getMainContact().isBlank() ? updatedProject.getMainContact() : oldProject.getMainContact());
-		projectRecord.setAssociatedObjecttypeIds(updatedProject.getAssociatedObjects() != null && updatedProject.getAssociatedObjects().length != 0 ? getObjectTypeIDs(updatedProject.getAssociatedObjects()) : getObjectTypeIDs(oldProject.getAssociatedObjects()));
+		projectRecord.setStoreentities(updatedProject.getStoreEntities() != null ? updatedProject.getStoreEntities() : oldProject.getStoreEntities());
+		projectRecord.setCreatepseudonyms(updatedProject.getCreatePseudonyms() != null ? updatedProject.getCreatePseudonyms() : oldProject.getCreatePseudonyms());
+		projectRecord.setDescription(updatedProject.getDescription() != null ? updatedProject.getDescription() : oldProject.getDescription());
+		projectRecord.setAssociatedEntitytypeIds(updatedProject.getAssociatedEntityTypes() != null && updatedProject.getAssociatedEntityTypes().length != 0 ? getEntityTypeIDs(updatedProject.getAssociatedEntityTypes()) : getEntityTypeIDs(oldProject.getAssociatedEntityTypes()));
         
         // Store and determine success
         int wasStored = projectRecord.update();
@@ -250,66 +289,66 @@ public class ProjectDBService {
     }
     
     /**
-     * This method retrieves the names for the given object type IDs from a project.
+     * This method retrieves the names for the given entity type IDs from a project.
      * 
-     * @param objectTypeIDs the array of object type IDs stored in a project
-     * @return an array of the names of the object types in the same order as the IDs were given.
+     * @param entityTypeIDs the array of entity type IDs stored in a project
+     * @return an array of the names of the entity types in the same order as the IDs were given.
      */
     @Transactional
-    public String[] getObjectTypeNames(Integer[] objectTypeIDs) {
-    	String[] objectTypeNames = new String[objectTypeIDs.length];
+    public String[] getEntityTypeNames(Integer[] entityTypeIDs) {
+    	String[] entityTypeNames = new String[entityTypeIDs.length];
     	
-    	for (int i = 0; i < objectTypeIDs.length; i++) {
+    	for (int i = 0; i < entityTypeIDs.length; i++) {
     		String name = null;
     		
     		try {
-    			name = dsl.select(OBJECTTYPE.NAME)
-	    	                 .from(OBJECTTYPE)
-	    	                 .where(OBJECTTYPE.ID.eq(objectTypeIDs[i]))
+    			name = dsl.select(ENTITYTYPE.NAME)
+	    	                 .from(ENTITYTYPE)
+	    	                 .where(ENTITYTYPE.ID.eq(entityTypeIDs[i]))
 	    	                 .fetchOneInto(String.class);
     		} catch (TooManyRowsException e) {
             	log.debug("Found more than one project.");
         	} catch (MappingException f) {
             	log.debug("Could not map the search result.");
             } catch (DataAccessException g) {
-            	log.debug("Searching for the object name in the database failed: " + g.getMessage());
+            	log.debug("Searching for the entity name in the database failed: " + g.getMessage());
             }
     		
-    		objectTypeNames[i] = name;
+    		entityTypeNames[i] = name;
     	}
     	
-    	return objectTypeNames;
+    	return entityTypeNames;
     }
     
     /**
-     * This method retrieves the IDs for the given object type names from a project.
+     * This method retrieves the IDs for the given entity type names from a project.
      * 
-     * @param objectTypeNames the array of object type names stored in a project
-     * @return an array of the IDs of the object types in the same order as the names were given.
+     * @param entityTypeNames the array of entity type names stored in a project
+     * @return an array of the IDs of the entity types in the same order as the names were given.
      */
     @Transactional
-    public Integer[] getObjectTypeIDs(String[] objectTypeNames) {
-    	Integer[] objectTypeIDs = new Integer[objectTypeNames.length];
+    public Integer[] getEntityTypeIDs(String[] entityTypeNames) {
+    	Integer[] entityTypeIDs = new Integer[entityTypeNames.length];
     	
-    	for (int i = 0; i < objectTypeNames.length; i++) {
+    	for (int i = 0; i < entityTypeNames.length; i++) {
     		Integer id = null;
     		
     		try {
-    			id = dsl.select(OBJECTTYPE.ID)
-	    	            .from(OBJECTTYPE)
-	    	            .where(OBJECTTYPE.NAME.equalIgnoreCase(objectTypeNames[i]))
+    			id = dsl.select(ENTITYTYPE.ID)
+	    	            .from(ENTITYTYPE)
+	    	            .where(ENTITYTYPE.NAME.equalIgnoreCase(entityTypeNames[i]))
 	    	            .fetchOneInto(Integer.class);
     		} catch (TooManyRowsException e) {
             	log.debug("Found more than one project.");
         	} catch (MappingException f) {
             	log.debug("Could not map the search result.");
             } catch (DataAccessException g) {
-            	log.debug("Searching for the object ID in the database failed: " + g.getMessage());
+            	log.debug("Searching for the entity ID in the database failed: " + g.getMessage());
             }
     		
-    		objectTypeIDs[i] = id;
+    		entityTypeIDs[i] = id;
     	}
     	
-    	return objectTypeIDs;
+    	return entityTypeIDs;
     }
 }

@@ -51,17 +51,26 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	/** The project's unique name. */
 	private String name;
 	
+	/** The unique abbreviation for the project's name. */
+	private String abbreviation;
+	
 	/** The project's start date. */
 	private String startDate;
 	
 	/** The project's end date. */
 	private String endDate;
 	
-	/** The project's main contact point (e.g. address, phone-number, email-address, PI name). */
-	private String mainContact;
+	/** A flag determining whether or not entities are stored in the project. */
+	private Boolean storeEntities;
+	
+	/** A flag determining whether or not pseudonyms are created in the project. */
+	private Boolean createPseudonyms;
+	
+	/** The project description. */
+	private String description;
 	
 	/** A list of the names of the associated object types. */
-	private String[] associatedObjects;
+	private String[] associatedEntityTypes;
 	
 	/** Allows interaction with the project objects in the database. */
 	@Getter(value=AccessLevel.NONE)
@@ -82,16 +91,18 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	    
 	    dto.setId(pojo.getId());
 	    dto.setName(pojo.getName());
+	    dto.setAbbreviation(pojo.getAbbreviation());
 	    dto.setStartDate(pojo.getStartdate() != null ? pojo.getStartdate().format(dateFormatter) : null);
 	    dto.setEndDate(pojo.getEnddate() != null ? pojo.getEnddate().format(dateFormatter) : null);
-	    dto.setMainContact(pojo.getMainContact());
+	    dto.setStoreEntities(pojo.getStoreentities());
+	    dto.setCreatePseudonyms(pojo.getCreatepseudonyms());
+	    dto.setDescription(pojo.getDescription());
 	    
 	    // Insert the object type names
 	    if (this.projectDBService == null) {
 	    	this.projectDBService = SpringBeanLocator.getBean(ProjectDBService.class);
 	    }
-	    	
-    	dto.setAssociatedObjects(projectDBService.getObjectTypeNames(pojo.getAssociatedObjecttypeIds()));
+    	dto.setAssociatedEntityTypes(projectDBService.getEntityTypeNames(pojo.getAssociatedEntitytypeIds()));
 
 	    return dto;
 	}
@@ -117,16 +128,18 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 
 	    out += (this.getId() != null) ? "id: " + this.getId().toString() + ", " : "";
 	    out += (this.getName() != null) ? "name: " + this.getName() + ", " : "";
+	    out += (this.getAbbreviation() != null) ? "abbreviation: " + this.getAbbreviation() + ", " : "";
 	    out += (this.getStartDate() != null) ? "startDate: " + this.getStartDate() + ", " : "";
 	    out += (this.getEndDate() != null) ? "endDate: " + this.getEndDate() + ", " : "";
-	    out += (this.getMainContact() != null) ? "mainContact: " + this.getMainContact() + ", " : "";
-	    if (this.getAssociatedObjects() != null) {
-	    	out += "associatedObjects: [";
+	    out += (this.getStoreEntities() != null) ? "storeEntities: " + this.getStoreEntities().toString() + ", " : "";
+	    out += (this.getCreatePseudonyms() != null) ? "createPseudonyms: " + this.getCreatePseudonyms().toString() + ", " : "";
+	    out += (this.getDescription() != null) ? "description: " + this.getDescription() + ", " : "";
+	    if (this.getAssociatedEntityTypes() != null) {
+	    	out += "associatedEntityTypes: [";
 	    	
-	    	for (int i = 0; i < this.getAssociatedObjects().length; i++) {
-	    		out += this.getAssociatedObjects()[i] + ((i == this.getAssociatedObjects().length-1) ? "" : ", ");
+	    	for (int i = 0; i < this.getAssociatedEntityTypes().length; i++) {
+	    		out += this.getAssociatedEntityTypes()[i] + ((i == this.getAssociatedEntityTypes().length-1) ? "" : ", ");
 	    	}
-	    	
 	    	out += "]";
 	    }
 	    
@@ -136,6 +149,6 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	@JsonIgnore
 	@Override
 	public Boolean validate() {
-		return !this.getName().isBlank();
+		return !this.getName().isBlank() && !this.getAbbreviation().isBlank();
 	}
 }
