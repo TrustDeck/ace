@@ -23,6 +23,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.exception.AuditTrailException;
 import org.trustdeck.jooq.generated.tables.daos.AuditeventDao;
 import org.trustdeck.jooq.generated.tables.pojos.Auditevent;
@@ -54,20 +56,14 @@ public class AuditAnnotationAspect {
     @Autowired
     private DSLContext dsl;
     
-    /** The data access object for the audit trail table. */
-    private AuditeventDao auditDao;
-    
     /**
-     * Method to retrieve the audit event data access object (or create it if it's {@code null}.)
+     * Method to retrieve the audit event data access object.
      *
      * @return the audit event DAO
      */
     private AuditeventDao getAuditeventDao() {
-        if (this.auditDao == null) {
-            this.auditDao = new AuditeventDao(this.dsl.configuration());
-        }
-
-        return this.auditDao;
+    	// Attaches DAO to the current transactional context
+    	return new AuditeventDao(this.dsl.configuration());
     }
 
     /**
@@ -81,6 +77,7 @@ public class AuditAnnotationAspect {
      * 			is thrown in order to abort the current transaction and roll back to a consistent database state.
      */
     @Around("@annotation(auditAnnotation)")
+    @Transactional(propagation = Propagation.REQUIRED)
     public Object auditMethod(ProceedingJoinPoint joinPoint, Audit auditAnnotation) throws AuditTrailException {
         Object result = null;
 
@@ -98,7 +95,7 @@ public class AuditAnnotationAspect {
             }
         } catch (Throwable e) {
         	log.debug("Audit trail information could not be stored: " + e.getClass().getSimpleName());
-            log.trace("\t" + e.getMessage());
+            log.trace("", e);
             
             // Throw an exception to terminate the transaction that surrounds the audit annotation processing.
             throw new AuditTrailException();
