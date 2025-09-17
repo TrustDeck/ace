@@ -24,22 +24,22 @@ import org.jooq.JSONB;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "objectinstance",
+    name = "entityinstance",
     schema = "public",
     indexes = {
-        @Index(name = "objectinstance_data_gin_idx", columnList = "data ASC"),
-        @Index(name = "objectinstance_objecttype_id_idx", columnList = "objecttype_id ASC")
+        @Index(name = "entityinstance_data_gin_idx", columnList = "data ASC"),
+        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC")
     }
 )
-public interface IObjectinstance extends Serializable {
+public interface IEntityinstance extends Serializable {
 
     /**
-     * Setter for <code>public.objectinstance.id</code>.
+     * Setter for <code>public.entityinstance.id</code>.
      */
-    public IObjectinstance setId(Long value);
+    public IEntityinstance setId(Long value);
 
     /**
-     * Getter for <code>public.objectinstance.id</code>.
+     * Getter for <code>public.entityinstance.id</code>.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,24 +47,24 @@ public interface IObjectinstance extends Serializable {
     public Long getId();
 
     /**
-     * Setter for <code>public.objectinstance.objecttype_id</code>.
+     * Setter for <code>public.entityinstance.entitytypeid</code>.
      */
-    public IObjectinstance setObjecttypeId(Integer value);
+    public IEntityinstance setEntitytypeid(Integer value);
 
     /**
-     * Getter for <code>public.objectinstance.objecttype_id</code>.
+     * Getter for <code>public.entityinstance.entitytypeid</code>.
      */
-    @Column(name = "objecttype_id", nullable = false)
+    @Column(name = "entitytypeid", nullable = false)
     @NotNull
-    public Integer getObjecttypeId();
+    public Integer getEntitytypeid();
 
     /**
-     * Setter for <code>public.objectinstance.data</code>.
+     * Setter for <code>public.entityinstance.data</code>.
      */
-    public IObjectinstance setData(JSONB value);
+    public IEntityinstance setData(JSONB value);
 
     /**
-     * Getter for <code>public.objectinstance.data</code>.
+     * Getter for <code>public.entityinstance.data</code>.
      */
     @Column(name = "data", nullable = false)
     @NotNull
@@ -76,13 +76,13 @@ public interface IObjectinstance extends Serializable {
 
     /**
      * Load data from another generated Record/POJO implementing the common
-     * interface IObjectinstance
+     * interface IEntityinstance
      */
-    public void from(IObjectinstance from);
+    public void from(IEntityinstance from);
 
     /**
      * Copy data into another generated Record/POJO implementing the common
-     * interface IObjectinstance
+     * interface IEntityinstance
      */
-    public <E extends IObjectinstance> E into(E into);
+    public <E extends IEntityinstance> E into(E into);
 }

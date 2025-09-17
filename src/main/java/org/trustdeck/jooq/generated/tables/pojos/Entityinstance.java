@@ -14,7 +14,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
 import org.jooq.JSONB;
-import org.trustdeck.jooq.generated.tables.interfaces.IObjectinstance;
+import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
 
 
 /**
@@ -23,41 +23,41 @@ import org.trustdeck.jooq.generated.tables.interfaces.IObjectinstance;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "objectinstance",
+    name = "entityinstance",
     schema = "public",
     indexes = {
-        @Index(name = "objectinstance_data_gin_idx", columnList = "data ASC"),
-        @Index(name = "objectinstance_objecttype_id_idx", columnList = "objecttype_id ASC")
+        @Index(name = "entityinstance_data_gin_idx", columnList = "data ASC"),
+        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC")
     }
 )
-public class Objectinstance implements IObjectinstance {
+public class Entityinstance implements IEntityinstance {
 
     private static final long serialVersionUID = 1L;
 
     private Long id;
-    private Integer objecttypeId;
+    private Integer entitytypeid;
     private JSONB data;
 
-    public Objectinstance() {}
+    public Entityinstance() {}
 
-    public Objectinstance(IObjectinstance value) {
+    public Entityinstance(IEntityinstance value) {
         this.id = value.getId();
-        this.objecttypeId = value.getObjecttypeId();
+        this.entitytypeid = value.getEntitytypeid();
         this.data = value.getData();
     }
 
-    public Objectinstance(
+    public Entityinstance(
         Long id,
-        Integer objecttypeId,
+        Integer entitytypeid,
         JSONB data
     ) {
         this.id = id;
-        this.objecttypeId = objecttypeId;
+        this.entitytypeid = entitytypeid;
         this.data = data;
     }
 
     /**
-     * Getter for <code>public.objectinstance.id</code>.
+     * Getter for <code>public.entityinstance.id</code>.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,35 +68,35 @@ public class Objectinstance implements IObjectinstance {
     }
 
     /**
-     * Setter for <code>public.objectinstance.id</code>.
+     * Setter for <code>public.entityinstance.id</code>.
      */
     @Override
-    public Objectinstance setId(Long id) {
+    public Entityinstance setId(Long id) {
         this.id = id;
         return this;
     }
 
     /**
-     * Getter for <code>public.objectinstance.objecttype_id</code>.
+     * Getter for <code>public.entityinstance.entitytypeid</code>.
      */
-    @Column(name = "objecttype_id", nullable = false)
+    @Column(name = "entitytypeid", nullable = false)
     @NotNull
     @Override
-    public Integer getObjecttypeId() {
-        return this.objecttypeId;
+    public Integer getEntitytypeid() {
+        return this.entitytypeid;
     }
 
     /**
-     * Setter for <code>public.objectinstance.objecttype_id</code>.
+     * Setter for <code>public.entityinstance.entitytypeid</code>.
      */
     @Override
-    public Objectinstance setObjecttypeId(Integer objecttypeId) {
-        this.objecttypeId = objecttypeId;
+    public Entityinstance setEntitytypeid(Integer entitytypeid) {
+        this.entitytypeid = entitytypeid;
         return this;
     }
 
     /**
-     * Getter for <code>public.objectinstance.data</code>.
+     * Getter for <code>public.entityinstance.data</code>.
      */
     @Column(name = "data", nullable = false)
     @NotNull
@@ -106,10 +106,10 @@ public class Objectinstance implements IObjectinstance {
     }
 
     /**
-     * Setter for <code>public.objectinstance.data</code>.
+     * Setter for <code>public.entityinstance.data</code>.
      */
     @Override
-    public Objectinstance setData(JSONB data) {
+    public Entityinstance setData(JSONB data) {
         this.data = data;
         return this;
     }
@@ -122,18 +122,18 @@ public class Objectinstance implements IObjectinstance {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        final Objectinstance other = (Objectinstance) obj;
+        final Entityinstance other = (Entityinstance) obj;
         if (this.id == null) {
             if (other.id != null)
                 return false;
         }
         else if (!this.id.equals(other.id))
             return false;
-        if (this.objecttypeId == null) {
-            if (other.objecttypeId != null)
+        if (this.entitytypeid == null) {
+            if (other.entitytypeid != null)
                 return false;
         }
-        else if (!this.objecttypeId.equals(other.objecttypeId))
+        else if (!this.entitytypeid.equals(other.entitytypeid))
             return false;
         if (this.data == null) {
             if (other.data != null)
@@ -149,17 +149,17 @@ public class Objectinstance implements IObjectinstance {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((this.id == null) ? 0 : this.id.hashCode());
-        result = prime * result + ((this.objecttypeId == null) ? 0 : this.objecttypeId.hashCode());
+        result = prime * result + ((this.entitytypeid == null) ? 0 : this.entitytypeid.hashCode());
         result = prime * result + ((this.data == null) ? 0 : this.data.hashCode());
         return result;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("Objectinstance (");
+        StringBuilder sb = new StringBuilder("Entityinstance (");
 
         sb.append(id);
-        sb.append(", ").append(objecttypeId);
+        sb.append(", ").append(entitytypeid);
         sb.append(", ").append(data);
 
         sb.append(")");
@@ -171,14 +171,14 @@ public class Objectinstance implements IObjectinstance {
     // -------------------------------------------------------------------------
 
     @Override
-    public void from(IObjectinstance from) {
+    public void from(IEntityinstance from) {
         setId(from.getId());
-        setObjecttypeId(from.getObjecttypeId());
+        setEntitytypeid(from.getEntitytypeid());
         setData(from.getData());
     }
 
     @Override
-    public <E extends IObjectinstance> E into(E into) {
+    public <E extends IEntityinstance> E into(E into) {
         into.from(this);
         return into;
     }

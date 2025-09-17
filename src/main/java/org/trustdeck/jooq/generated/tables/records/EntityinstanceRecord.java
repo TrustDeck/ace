@@ -19,8 +19,8 @@ import org.jooq.Record1;
 import org.jooq.Record3;
 import org.jooq.Row3;
 import org.jooq.impl.UpdatableRecordImpl;
-import org.trustdeck.jooq.generated.tables.Objectinstance;
-import org.trustdeck.jooq.generated.tables.interfaces.IObjectinstance;
+import org.trustdeck.jooq.generated.tables.Entityinstance;
+import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
 
 
 /**
@@ -29,28 +29,28 @@ import org.trustdeck.jooq.generated.tables.interfaces.IObjectinstance;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "objectinstance",
+    name = "entityinstance",
     schema = "public",
     indexes = {
-        @Index(name = "objectinstance_data_gin_idx", columnList = "data ASC"),
-        @Index(name = "objectinstance_objecttype_id_idx", columnList = "objecttype_id ASC")
+        @Index(name = "entityinstance_data_gin_idx", columnList = "data ASC"),
+        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC")
     }
 )
-public class ObjectinstanceRecord extends UpdatableRecordImpl<ObjectinstanceRecord> implements Record3<Long, Integer, JSONB>, IObjectinstance {
+public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceRecord> implements Record3<Long, Integer, JSONB>, IEntityinstance {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.objectinstance.id</code>.
+     * Setter for <code>public.entityinstance.id</code>.
      */
     @Override
-    public ObjectinstanceRecord setId(Long value) {
+    public EntityinstanceRecord setId(Long value) {
         set(0, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.objectinstance.id</code>.
+     * Getter for <code>public.entityinstance.id</code>.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,35 +61,35 @@ public class ObjectinstanceRecord extends UpdatableRecordImpl<ObjectinstanceReco
     }
 
     /**
-     * Setter for <code>public.objectinstance.objecttype_id</code>.
+     * Setter for <code>public.entityinstance.entitytypeid</code>.
      */
     @Override
-    public ObjectinstanceRecord setObjecttypeId(Integer value) {
+    public EntityinstanceRecord setEntitytypeid(Integer value) {
         set(1, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.objectinstance.objecttype_id</code>.
+     * Getter for <code>public.entityinstance.entitytypeid</code>.
      */
-    @Column(name = "objecttype_id", nullable = false)
+    @Column(name = "entitytypeid", nullable = false)
     @NotNull
     @Override
-    public Integer getObjecttypeId() {
+    public Integer getEntitytypeid() {
         return (Integer) get(1);
     }
 
     /**
-     * Setter for <code>public.objectinstance.data</code>.
+     * Setter for <code>public.entityinstance.data</code>.
      */
     @Override
-    public ObjectinstanceRecord setData(JSONB value) {
+    public EntityinstanceRecord setData(JSONB value) {
         set(2, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.objectinstance.data</code>.
+     * Getter for <code>public.entityinstance.data</code>.
      */
     @Column(name = "data", nullable = false)
     @NotNull
@@ -123,17 +123,17 @@ public class ObjectinstanceRecord extends UpdatableRecordImpl<ObjectinstanceReco
 
     @Override
     public Field<Long> field1() {
-        return Objectinstance.OBJECTINSTANCE.ID;
+        return Entityinstance.ENTITYINSTANCE.ID;
     }
 
     @Override
     public Field<Integer> field2() {
-        return Objectinstance.OBJECTINSTANCE.OBJECTTYPE_ID;
+        return Entityinstance.ENTITYINSTANCE.ENTITYTYPEID;
     }
 
     @Override
     public Field<JSONB> field3() {
-        return Objectinstance.OBJECTINSTANCE.DATA;
+        return Entityinstance.ENTITYINSTANCE.DATA;
     }
 
     @Override
@@ -143,7 +143,7 @@ public class ObjectinstanceRecord extends UpdatableRecordImpl<ObjectinstanceReco
 
     @Override
     public Integer component2() {
-        return getObjecttypeId();
+        return getEntitytypeid();
     }
 
     @Override
@@ -158,7 +158,7 @@ public class ObjectinstanceRecord extends UpdatableRecordImpl<ObjectinstanceReco
 
     @Override
     public Integer value2() {
-        return getObjecttypeId();
+        return getEntitytypeid();
     }
 
     @Override
@@ -167,25 +167,25 @@ public class ObjectinstanceRecord extends UpdatableRecordImpl<ObjectinstanceReco
     }
 
     @Override
-    public ObjectinstanceRecord value1(Long value) {
+    public EntityinstanceRecord value1(Long value) {
         setId(value);
         return this;
     }
 
     @Override
-    public ObjectinstanceRecord value2(Integer value) {
-        setObjecttypeId(value);
+    public EntityinstanceRecord value2(Integer value) {
+        setEntitytypeid(value);
         return this;
     }
 
     @Override
-    public ObjectinstanceRecord value3(JSONB value) {
+    public EntityinstanceRecord value3(JSONB value) {
         setData(value);
         return this;
     }
 
     @Override
-    public ObjectinstanceRecord values(Long value1, Integer value2, JSONB value3) {
+    public EntityinstanceRecord values(Long value1, Integer value2, JSONB value3) {
         value1(value1);
         value2(value2);
         value3(value3);
@@ -197,15 +197,15 @@ public class ObjectinstanceRecord extends UpdatableRecordImpl<ObjectinstanceReco
     // -------------------------------------------------------------------------
 
     @Override
-    public void from(IObjectinstance from) {
+    public void from(IEntityinstance from) {
         setId(from.getId());
-        setObjecttypeId(from.getObjecttypeId());
+        setEntitytypeid(from.getEntitytypeid());
         setData(from.getData());
         resetChangedOnNotNull();
     }
 
     @Override
-    public <E extends IObjectinstance> E into(E into) {
+    public <E extends IEntityinstance> E into(E into) {
         into.from(this);
         return into;
     }
@@ -215,33 +215,33 @@ public class ObjectinstanceRecord extends UpdatableRecordImpl<ObjectinstanceReco
     // -------------------------------------------------------------------------
 
     /**
-     * Create a detached ObjectinstanceRecord
+     * Create a detached EntityinstanceRecord
      */
-    public ObjectinstanceRecord() {
-        super(Objectinstance.OBJECTINSTANCE);
+    public EntityinstanceRecord() {
+        super(Entityinstance.ENTITYINSTANCE);
     }
 
     /**
-     * Create a detached, initialised ObjectinstanceRecord
+     * Create a detached, initialised EntityinstanceRecord
      */
-    public ObjectinstanceRecord(Long id, Integer objecttypeId, JSONB data) {
-        super(Objectinstance.OBJECTINSTANCE);
+    public EntityinstanceRecord(Long id, Integer entitytypeid, JSONB data) {
+        super(Entityinstance.ENTITYINSTANCE);
 
         setId(id);
-        setObjecttypeId(objecttypeId);
+        setEntitytypeid(entitytypeid);
         setData(data);
         resetChangedOnNotNull();
     }
 
     /**
-     * Create a detached, initialised ObjectinstanceRecord
+     * Create a detached, initialised EntityinstanceRecord
      */
-    public ObjectinstanceRecord(org.trustdeck.jooq.generated.tables.pojos.Objectinstance value) {
-        super(Objectinstance.OBJECTINSTANCE);
+    public EntityinstanceRecord(org.trustdeck.jooq.generated.tables.pojos.Entityinstance value) {
+        super(Entityinstance.ENTITYINSTANCE);
 
         if (value != null) {
             setId(value.getId());
-            setObjecttypeId(value.getObjecttypeId());
+            setEntitytypeid(value.getEntitytypeid());
             setData(value.getData());
             resetChangedOnNotNull();
         }

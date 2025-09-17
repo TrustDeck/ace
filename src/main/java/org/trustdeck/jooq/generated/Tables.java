@@ -7,8 +7,8 @@ package org.trustdeck.jooq.generated;
 import org.trustdeck.jooq.generated.tables.Algorithm;
 import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
+import org.trustdeck.jooq.generated.tables.Entityinstance;
 import org.trustdeck.jooq.generated.tables.Entitytype;
-import org.trustdeck.jooq.generated.tables.Objectinstance;
 import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
@@ -36,14 +36,14 @@ public class Tables {
     public static final Domain DOMAIN = Domain.DOMAIN;
 
     /**
+     * The table <code>public.entityinstance</code>.
+     */
+    public static final Entityinstance ENTITYINSTANCE = Entityinstance.ENTITYINSTANCE;
+
+    /**
      * The table <code>public.entitytype</code>.
      */
     public static final Entitytype ENTITYTYPE = Entitytype.ENTITYTYPE;
-
-    /**
-     * The table <code>public.objectinstance</code>.
-     */
-    public static final Objectinstance OBJECTINSTANCE = Objectinstance.OBJECTINSTANCE;
 
     /**
      * The table <code>public.person</code>.
