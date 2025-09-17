@@ -19,7 +19,7 @@ package org.trustdeck.dto;
 
 import org.jooq.JSONB;
 import org.springframework.context.annotation.Scope;
-import org.trustdeck.jooq.generated.tables.pojos.Objectinstance;
+import org.trustdeck.jooq.generated.tables.pojos.Entityinstance;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -27,7 +27,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * This class represents a Data Transfer Object (DTO) for an object instance.
+ * This class represents a Data Transfer Object (DTO) for an entity instance.
  *
  * @author Armin Müller
  */
@@ -35,29 +35,29 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request.
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ObjectInstanceDTO implements IObjectDTO<Objectinstance, ObjectInstanceDTO> {
+public class EntityInstanceDTO implements IObjectDTO<Entityinstance, EntityInstanceDTO> {
 	
-	/** The (internal) ID of this object instance. Do not expose it to users. */
+	/** The (internal) ID of this entity instance. Do not expose it to users. */
 	@JsonIgnore
 	private Long id;
 	
-	/** This object instance's type ID. */
-	private Integer objectTypeID;
+	/** The ID of the type of this entity instance. */
+	private Integer entityTypeID;
 	
-	/** This object instance's data (i.e. the attributes and values). */
+	/** This entity instance's data (i.e. the attributes and values). */
 	private JSONB data;
 
 	@JsonIgnore
 	@Override
-	public ObjectInstanceDTO assignPojoValues(Objectinstance pojo) {
+	public EntityInstanceDTO assignPojoValues(Entityinstance pojo) {
 		if (pojo == null) {
 	        return null;
 	    }
 		
-		ObjectInstanceDTO dto = new ObjectInstanceDTO();
+		EntityInstanceDTO dto = new EntityInstanceDTO();
 	    
 	    dto.setId(pojo.getId());
-	    dto.setObjectTypeID(pojo.getObjecttypeId());
+	    dto.setEntityTypeID(pojo.getEntitytypeid());
 	    dto.setData(pojo.getData());
 
 	    return dto;
@@ -72,7 +72,7 @@ public class ObjectInstanceDTO implements IObjectDTO<Objectinstance, ObjectInsta
 
 	@JsonIgnore
 	@Override
-	public ObjectInstanceDTO toReducedStandardView() {
+	public EntityInstanceDTO toReducedStandardView() {
 		// Currently not needed
 		return null;
 	}
@@ -83,7 +83,7 @@ public class ObjectInstanceDTO implements IObjectDTO<Objectinstance, ObjectInsta
 		String out = "";
 
 	    out += (this.getId() != null) ? "id: " + this.getId().toString() + ", " : "";
-	    out += (this.getObjectTypeID() != null) ? "objectTypeID: " + this.getObjectTypeID().toString() + ", " : "";
+	    out += (this.getEntityTypeID() != null) ? "entityTypeID: " + this.getEntityTypeID().toString() + ", " : "";
 	    out += (this.getData() != null) ? "data: " + this.getData().toString() + ", " : "";
 
 	    return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
@@ -92,6 +92,6 @@ public class ObjectInstanceDTO implements IObjectDTO<Objectinstance, ObjectInsta
 	@JsonIgnore
 	@Override
 	public Boolean validate() {
-		return this.getObjectTypeID() != null;
+		return this.getEntityTypeID() != null;
 	}
 }
