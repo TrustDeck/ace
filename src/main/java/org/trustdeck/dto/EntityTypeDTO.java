@@ -48,8 +48,14 @@ public class EntityTypeDTO implements IObjectDTO<Entitytype, EntityTypeDTO> {
 	/** The version number of this entity type. */
 	private String version;
 	
+	/** Flag that determines if this type is a base type that is defined by TrustDeck admins. Other types can extend from this. */
+	private Boolean isBaseType;
+	
 	/** The type definition of this entity. */
 	private JSONB typeDefinition;
+	
+	/** The ID of the project where this type is defined in. */
+	private Integer projectID;
 
 	@JsonIgnore
 	@Override
@@ -63,7 +69,9 @@ public class EntityTypeDTO implements IObjectDTO<Entitytype, EntityTypeDTO> {
 	    dto.setId(pojo.getId());
 	    dto.setName(pojo.getName());
 	    dto.setVersion(pojo.getVersion());
+	    dto.setIsBaseType(pojo.getIsbasetype());
 	    dto.setTypeDefinition(pojo.getTypedef());
+	    dto.setProjectID(pojo.getProjectid());
 
 	    return dto;
 	}
@@ -90,7 +98,9 @@ public class EntityTypeDTO implements IObjectDTO<Entitytype, EntityTypeDTO> {
 	    out += (this.getId() != null) ? "id: " + this.getId().toString() + ", " : "";
 	    out += (this.getName() != null) ? "name: " + this.getName() + ", " : "";
 	    out += (this.getVersion() != null) ? "version: " + this.getVersion() + ", " : "";
+	    out += (this.getIsBaseType() != null) ? "isBaseType: " + this.getIsBaseType() + ", " : "";
 	    out += (this.getTypeDefinition() != null) ? "typeDefinition: " + this.getTypeDefinition().toString() + ", " : "";
+	    out += (this.getProjectID() != null) ? "projectID: " + this.getProjectID() + ", " : "";
 	    
 	    return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
 	}
