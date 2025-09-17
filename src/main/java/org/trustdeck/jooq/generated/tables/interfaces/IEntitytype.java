@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -27,6 +28,9 @@ import org.jooq.JSONB;
 @Table(
     name = "entitytype",
     schema = "public",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "entitytype_name_version_projectid_key", columnNames = { "name", "version", "projectid" })
+    },
     indexes = {
         @Index(name = "entitytype_name_idx", columnList = "name ASC"),
         @Index(name = "entitytype_typedef_gin_idx", columnList = "typedef ASC")

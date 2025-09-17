@@ -138,6 +138,11 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
     }
 
     @Override
+    public List<UniqueKey<EntitytypeRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.ENTITYTYPE_NAME_VERSION_PROJECTID_KEY);
+    }
+
+    @Override
     public List<ForeignKey<EntitytypeRecord, ?>> getReferences() {
         return Arrays.asList(Keys.ENTITYTYPE__ENTITYTYPE_PROJECTID_FKEY);
     }
