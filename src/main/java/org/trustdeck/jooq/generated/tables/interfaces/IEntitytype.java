@@ -78,6 +78,18 @@ public interface IEntitytype extends Serializable {
     public String getVersion();
 
     /**
+     * Setter for <code>public.entitytype.isdeprecated</code>.
+     */
+    public IEntitytype setIsdeprecated(Boolean value);
+
+    /**
+     * Getter for <code>public.entitytype.isdeprecated</code>.
+     */
+    @Column(name = "isdeprecated", nullable = false)
+    @NotNull
+    public Boolean getIsdeprecated();
+
+    /**
      * Setter for <code>public.entitytype.isbasetype</code>.
      */
     public IEntitytype setIsbasetype(Boolean value);

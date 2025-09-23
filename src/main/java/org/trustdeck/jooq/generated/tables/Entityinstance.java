@@ -123,23 +123,6 @@ public class Entityinstance extends TableImpl<EntityinstanceRecord> {
     }
 
     @Override
-    public List<ForeignKey<EntityinstanceRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.ENTITYINSTANCE__ENTITYINSTANCE_ENTITYTYPEID_FKEY);
-    }
-
-    private transient Entitytype _entitytype;
-
-    /**
-     * Get the implicit join path to the <code>public.entitytype</code> table.
-     */
-    public Entitytype entitytype() {
-        if (_entitytype == null)
-            _entitytype = new Entitytype(this, Keys.ENTITYINSTANCE__ENTITYINSTANCE_ENTITYTYPEID_FKEY);
-
-        return _entitytype;
-    }
-
-    @Override
     public Entityinstance as(String alias) {
         return new Entityinstance(DSL.name(alias), this);
     }

@@ -10,14 +10,14 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function6;
+import org.jooq.Function7;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row6;
+import org.jooq.Row7;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -68,6 +68,11 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
      * The column <code>public.entitytype.version</code>.
      */
     public final TableField<EntitytypeRecord, String> VERSION = createField(DSL.name("version"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>public.entitytype.isdeprecated</code>.
+     */
+    public final TableField<EntitytypeRecord, Boolean> ISDEPRECATED = createField(DSL.name("isdeprecated"), SQLDataType.BOOLEAN.nullable(false), this, "");
 
     /**
      * The column <code>public.entitytype.isbasetype</code>.
@@ -199,18 +204,18 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row6 type methods
+    // Row7 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row6<Integer, String, String, Boolean, JSONB, Integer> fieldsRow() {
-        return (Row6) super.fieldsRow();
+    public Row7<Integer, String, String, Boolean, Boolean, JSONB, Integer> fieldsRow() {
+        return (Row7) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function6<? super Integer, ? super String, ? super String, ? super Boolean, ? super JSONB, ? super Integer, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function7<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Integer, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -218,7 +223,7 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function6<? super Integer, ? super String, ? super String, ? super Boolean, ? super JSONB, ? super Integer, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function7<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Integer, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

@@ -99,6 +99,21 @@ public class EntitytypeDao extends DAOImpl<EntitytypeRecord, org.trustdeck.jooq.
     }
 
     /**
+     * Fetch records that have <code>isdeprecated BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entitytype> fetchRangeOfIsdeprecated(Boolean lowerInclusive, Boolean upperInclusive) {
+        return fetchRange(Entitytype.ENTITYTYPE.ISDEPRECATED, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>isdeprecated IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entitytype> fetchByIsdeprecated(Boolean... values) {
+        return fetch(Entitytype.ENTITYTYPE.ISDEPRECATED, values);
+    }
+
+    /**
      * Fetch records that have <code>isbasetype BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */

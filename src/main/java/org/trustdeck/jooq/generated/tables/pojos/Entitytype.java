@@ -42,6 +42,7 @@ public class Entitytype implements IEntitytype {
     private Integer id;
     private String name;
     private String version;
+    private Boolean isdeprecated;
     private Boolean isbasetype;
     private JSONB typedef;
     private Integer projectid;
@@ -52,6 +53,7 @@ public class Entitytype implements IEntitytype {
         this.id = value.getId();
         this.name = value.getName();
         this.version = value.getVersion();
+        this.isdeprecated = value.getIsdeprecated();
         this.isbasetype = value.getIsbasetype();
         this.typedef = value.getTypedef();
         this.projectid = value.getProjectid();
@@ -61,6 +63,7 @@ public class Entitytype implements IEntitytype {
         Integer id,
         String name,
         String version,
+        Boolean isdeprecated,
         Boolean isbasetype,
         JSONB typedef,
         Integer projectid
@@ -68,6 +71,7 @@ public class Entitytype implements IEntitytype {
         this.id = id;
         this.name = name;
         this.version = version;
+        this.isdeprecated = isdeprecated;
         this.isbasetype = isbasetype;
         this.typedef = typedef;
         this.projectid = projectid;
@@ -130,6 +134,25 @@ public class Entitytype implements IEntitytype {
     @Override
     public Entitytype setVersion(String version) {
         this.version = version;
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entitytype.isdeprecated</code>.
+     */
+    @Column(name = "isdeprecated", nullable = false)
+    @NotNull
+    @Override
+    public Boolean getIsdeprecated() {
+        return this.isdeprecated;
+    }
+
+    /**
+     * Setter for <code>public.entitytype.isdeprecated</code>.
+     */
+    @Override
+    public Entitytype setIsdeprecated(Boolean isdeprecated) {
+        this.isdeprecated = isdeprecated;
         return this;
     }
 
@@ -216,6 +239,12 @@ public class Entitytype implements IEntitytype {
         }
         else if (!this.version.equals(other.version))
             return false;
+        if (this.isdeprecated == null) {
+            if (other.isdeprecated != null)
+                return false;
+        }
+        else if (!this.isdeprecated.equals(other.isdeprecated))
+            return false;
         if (this.isbasetype == null) {
             if (other.isbasetype != null)
                 return false;
@@ -244,6 +273,7 @@ public class Entitytype implements IEntitytype {
         result = prime * result + ((this.id == null) ? 0 : this.id.hashCode());
         result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
         result = prime * result + ((this.version == null) ? 0 : this.version.hashCode());
+        result = prime * result + ((this.isdeprecated == null) ? 0 : this.isdeprecated.hashCode());
         result = prime * result + ((this.isbasetype == null) ? 0 : this.isbasetype.hashCode());
         result = prime * result + ((this.typedef == null) ? 0 : this.typedef.hashCode());
         result = prime * result + ((this.projectid == null) ? 0 : this.projectid.hashCode());
@@ -257,6 +287,7 @@ public class Entitytype implements IEntitytype {
         sb.append(id);
         sb.append(", ").append(name);
         sb.append(", ").append(version);
+        sb.append(", ").append(isdeprecated);
         sb.append(", ").append(isbasetype);
         sb.append(", ").append(typedef);
         sb.append(", ").append(projectid);
@@ -274,6 +305,7 @@ public class Entitytype implements IEntitytype {
         setId(from.getId());
         setName(from.getName());
         setVersion(from.getVersion());
+        setIsdeprecated(from.getIsdeprecated());
         setIsbasetype(from.getIsbasetype());
         setTypedef(from.getTypedef());
         setProjectid(from.getProjectid());
