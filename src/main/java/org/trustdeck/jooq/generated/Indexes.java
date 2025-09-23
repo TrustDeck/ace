@@ -32,6 +32,7 @@ public class Indexes {
     public static final Index AUDITUSERNAMEIDX = Internal.createIndex(DSL.name("auditusernameidx"), Auditevent.AUDITEVENT, new OrderField[] { Auditevent.AUDITEVENT.USERNAME }, false);
     public static final Index ENTITYINSTANCE_DATA_GIN_IDX = Internal.createIndex(DSL.name("entityinstance_data_gin_idx"), Entityinstance.ENTITYINSTANCE, new OrderField[] { Entityinstance.ENTITYINSTANCE.DATA }, false);
     public static final Index ENTITYINSTANCE_ENTITYTYPE_ID_IDX = Internal.createIndex(DSL.name("entityinstance_entitytype_id_idx"), Entityinstance.ENTITYINSTANCE, new OrderField[] { Entityinstance.ENTITYINSTANCE.ENTITYTYPEID }, false);
+    public static final Index ENTITYTYPE_FTS_IDX = Internal.createIndex(DSL.name("entitytype_fts_idx"), Entitytype.ENTITYTYPE, new OrderField[] { Entitytype.ENTITYTYPE.FTS }, false);
     public static final Index ENTITYTYPE_NAME_IDX = Internal.createIndex(DSL.name("entitytype_name_idx"), Entitytype.ENTITYTYPE, new OrderField[] { Entitytype.ENTITYTYPE.NAME }, false);
     public static final Index ENTITYTYPE_TYPEDEF_GIN_IDX = Internal.createIndex(DSL.name("entitytype_typedef_gin_idx"), Entitytype.ENTITYTYPE, new OrderField[] { Entitytype.ENTITYTYPE.TYPEDEF }, false);
     public static final Index IDIDTYPEIDX = Internal.createIndex(DSL.name("ididtypeidx"), Pseudonym.PSEUDONYM, new OrderField[] { Pseudonym.PSEUDONYM.IDENTIFIER, Pseudonym.PSEUDONYM.IDTYPE }, false);

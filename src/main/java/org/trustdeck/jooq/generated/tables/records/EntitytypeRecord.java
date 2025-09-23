@@ -18,8 +18,8 @@ import jakarta.validation.constraints.Size;
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.Record1;
-import org.jooq.Record7;
-import org.jooq.Row7;
+import org.jooq.Record8;
+import org.jooq.Row8;
 import org.jooq.impl.UpdatableRecordImpl;
 import org.trustdeck.jooq.generated.tables.Entitytype;
 import org.trustdeck.jooq.generated.tables.interfaces.IEntitytype;
@@ -37,11 +37,12 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntitytype;
         @UniqueConstraint(name = "entitytype_name_version_projectid_key", columnNames = { "name", "version", "projectid" })
     },
     indexes = {
+        @Index(name = "entitytype_fts_idx", columnList = "fts ASC"),
         @Index(name = "entitytype_name_idx", columnList = "name ASC"),
         @Index(name = "entitytype_typedef_gin_idx", columnList = "typedef ASC")
     }
 )
-public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> implements Record7<Integer, String, String, Boolean, Boolean, JSONB, Integer>, IEntitytype {
+public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> implements Record8<Integer, String, String, Boolean, Boolean, JSONB, Object, Integer>, IEntitytype {
 
     private static final long serialVersionUID = 1L;
 
@@ -163,11 +164,41 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     }
 
     /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Override
+    public EntitytypeRecord setFts(Object value) {
+        set(6, value);
+        return this;
+    }
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Column(name = "fts")
+    @Override
+    public Object getFts() {
+        return get(6);
+    }
+
+    /**
      * Setter for <code>public.entitytype.projectid</code>.
      */
     @Override
     public EntitytypeRecord setProjectid(Integer value) {
-        set(6, value);
+        set(7, value);
         return this;
     }
 
@@ -177,7 +208,7 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     @Column(name = "projectid")
     @Override
     public Integer getProjectid() {
-        return (Integer) get(6);
+        return (Integer) get(7);
     }
 
     // -------------------------------------------------------------------------
@@ -190,17 +221,17 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     }
 
     // -------------------------------------------------------------------------
-    // Record7 type implementation
+    // Record8 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<Integer, String, String, Boolean, Boolean, JSONB, Integer> fieldsRow() {
-        return (Row7) super.fieldsRow();
+    public Row8<Integer, String, String, Boolean, Boolean, JSONB, Object, Integer> fieldsRow() {
+        return (Row8) super.fieldsRow();
     }
 
     @Override
-    public Row7<Integer, String, String, Boolean, Boolean, JSONB, Integer> valuesRow() {
-        return (Row7) super.valuesRow();
+    public Row8<Integer, String, String, Boolean, Boolean, JSONB, Object, Integer> valuesRow() {
+        return (Row8) super.valuesRow();
     }
 
     @Override
@@ -233,8 +264,22 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
         return Entitytype.ENTITYTYPE.TYPEDEF;
     }
 
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
     @Override
-    public Field<Integer> field7() {
+    public Field<Object> field7() {
+        return Entitytype.ENTITYTYPE.FTS;
+    }
+
+    @Override
+    public Field<Integer> field8() {
         return Entitytype.ENTITYTYPE.PROJECTID;
     }
 
@@ -268,8 +313,22 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
         return getTypedef();
     }
 
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
     @Override
-    public Integer component7() {
+    public Object component7() {
+        return getFts();
+    }
+
+    @Override
+    public Integer component8() {
         return getProjectid();
     }
 
@@ -303,8 +362,22 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
         return getTypedef();
     }
 
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
     @Override
-    public Integer value7() {
+    public Object value7() {
+        return getFts();
+    }
+
+    @Override
+    public Integer value8() {
         return getProjectid();
     }
 
@@ -344,14 +417,29 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
         return this;
     }
 
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
     @Override
-    public EntitytypeRecord value7(Integer value) {
+    public EntitytypeRecord value7(Object value) {
+        setFts(value);
+        return this;
+    }
+
+    @Override
+    public EntitytypeRecord value8(Integer value) {
         setProjectid(value);
         return this;
     }
 
     @Override
-    public EntitytypeRecord values(Integer value1, String value2, String value3, Boolean value4, Boolean value5, JSONB value6, Integer value7) {
+    public EntitytypeRecord values(Integer value1, String value2, String value3, Boolean value4, Boolean value5, JSONB value6, Object value7, Integer value8) {
         value1(value1);
         value2(value2);
         value3(value3);
@@ -359,6 +447,7 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
         value5(value5);
         value6(value6);
         value7(value7);
+        value8(value8);
         return this;
     }
 
@@ -374,6 +463,7 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
         setIsdeprecated(from.getIsdeprecated());
         setIsbasetype(from.getIsbasetype());
         setTypedef(from.getTypedef());
+        setFts(from.getFts());
         setProjectid(from.getProjectid());
         resetChangedOnNotNull();
     }
@@ -398,7 +488,7 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     /**
      * Create a detached, initialised EntitytypeRecord
      */
-    public EntitytypeRecord(Integer id, String name, String version, Boolean isdeprecated, Boolean isbasetype, JSONB typedef, Integer projectid) {
+    public EntitytypeRecord(Integer id, String name, String version, Boolean isdeprecated, Boolean isbasetype, JSONB typedef, Object fts, Integer projectid) {
         super(Entitytype.ENTITYTYPE);
 
         setId(id);
@@ -407,6 +497,7 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
         setIsdeprecated(isdeprecated);
         setIsbasetype(isbasetype);
         setTypedef(typedef);
+        setFts(fts);
         setProjectid(projectid);
         resetChangedOnNotNull();
     }
@@ -424,6 +515,7 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
             setIsdeprecated(value.getIsdeprecated());
             setIsbasetype(value.getIsbasetype());
             setTypedef(value.getTypedef());
+            setFts(value.getFts());
             setProjectid(value.getProjectid());
             resetChangedOnNotNull();
         }

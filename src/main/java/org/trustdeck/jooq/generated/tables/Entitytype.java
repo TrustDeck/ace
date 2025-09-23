@@ -10,14 +10,14 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function7;
+import org.jooq.Function8;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row7;
+import org.jooq.Row8;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -85,6 +85,17 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
     public final TableField<EntitytypeRecord, JSONB> TYPEDEF = createField(DSL.name("typedef"), SQLDataType.JSONB.nullable(false), this, "");
 
     /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    public final TableField<EntitytypeRecord, Object> FTS = createField(DSL.name("fts"), org.jooq.impl.DefaultDataType.getDefaultDataType("\"pg_catalog\".\"tsvector\""), this, "");
+
+    /**
      * The column <code>public.entitytype.projectid</code>.
      */
     public final TableField<EntitytypeRecord, Integer> PROJECTID = createField(DSL.name("projectid"), SQLDataType.INTEGER, this, "");
@@ -129,7 +140,7 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.ENTITYTYPE_NAME_IDX, Indexes.ENTITYTYPE_TYPEDEF_GIN_IDX);
+        return Arrays.asList(Indexes.ENTITYTYPE_FTS_IDX, Indexes.ENTITYTYPE_NAME_IDX, Indexes.ENTITYTYPE_TYPEDEF_GIN_IDX);
     }
 
     @Override
@@ -204,18 +215,18 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row7 type methods
+    // Row8 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<Integer, String, String, Boolean, Boolean, JSONB, Integer> fieldsRow() {
-        return (Row7) super.fieldsRow();
+    public Row8<Integer, String, String, Boolean, Boolean, JSONB, Object, Integer> fieldsRow() {
+        return (Row8) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function7<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Integer, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function8<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Object, ? super Integer, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -223,7 +234,7 @@ public class Entitytype extends TableImpl<EntitytypeRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function7<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Integer, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function8<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Object, ? super Integer, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

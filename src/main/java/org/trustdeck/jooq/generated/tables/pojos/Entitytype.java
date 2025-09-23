@@ -31,6 +31,7 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntitytype;
         @UniqueConstraint(name = "entitytype_name_version_projectid_key", columnNames = { "name", "version", "projectid" })
     },
     indexes = {
+        @Index(name = "entitytype_fts_idx", columnList = "fts ASC"),
         @Index(name = "entitytype_name_idx", columnList = "name ASC"),
         @Index(name = "entitytype_typedef_gin_idx", columnList = "typedef ASC")
     }
@@ -45,6 +46,7 @@ public class Entitytype implements IEntitytype {
     private Boolean isdeprecated;
     private Boolean isbasetype;
     private JSONB typedef;
+    private Object fts;
     private Integer projectid;
 
     public Entitytype() {}
@@ -56,6 +58,7 @@ public class Entitytype implements IEntitytype {
         this.isdeprecated = value.getIsdeprecated();
         this.isbasetype = value.getIsbasetype();
         this.typedef = value.getTypedef();
+        this.fts = value.getFts();
         this.projectid = value.getProjectid();
     }
 
@@ -66,6 +69,7 @@ public class Entitytype implements IEntitytype {
         Boolean isdeprecated,
         Boolean isbasetype,
         JSONB typedef,
+        Object fts,
         Integer projectid
     ) {
         this.id = id;
@@ -74,6 +78,7 @@ public class Entitytype implements IEntitytype {
         this.isdeprecated = isdeprecated;
         this.isbasetype = isbasetype;
         this.typedef = typedef;
+        this.fts = fts;
         this.projectid = projectid;
     }
 
@@ -195,6 +200,36 @@ public class Entitytype implements IEntitytype {
     }
 
     /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Column(name = "fts")
+    @Override
+    public Object getFts() {
+        return this.fts;
+    }
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Override
+    public Entitytype setFts(Object fts) {
+        this.fts = fts;
+        return this;
+    }
+
+    /**
      * Getter for <code>public.entitytype.projectid</code>.
      */
     @Column(name = "projectid")
@@ -257,6 +292,12 @@ public class Entitytype implements IEntitytype {
         }
         else if (!this.typedef.equals(other.typedef))
             return false;
+        if (this.fts == null) {
+            if (other.fts != null)
+                return false;
+        }
+        else if (!this.fts.equals(other.fts))
+            return false;
         if (this.projectid == null) {
             if (other.projectid != null)
                 return false;
@@ -276,6 +317,7 @@ public class Entitytype implements IEntitytype {
         result = prime * result + ((this.isdeprecated == null) ? 0 : this.isdeprecated.hashCode());
         result = prime * result + ((this.isbasetype == null) ? 0 : this.isbasetype.hashCode());
         result = prime * result + ((this.typedef == null) ? 0 : this.typedef.hashCode());
+        result = prime * result + ((this.fts == null) ? 0 : this.fts.hashCode());
         result = prime * result + ((this.projectid == null) ? 0 : this.projectid.hashCode());
         return result;
     }
@@ -290,6 +332,7 @@ public class Entitytype implements IEntitytype {
         sb.append(", ").append(isdeprecated);
         sb.append(", ").append(isbasetype);
         sb.append(", ").append(typedef);
+        sb.append(", ").append(fts);
         sb.append(", ").append(projectid);
 
         sb.append(")");
@@ -308,6 +351,7 @@ public class Entitytype implements IEntitytype {
         setIsdeprecated(from.getIsdeprecated());
         setIsbasetype(from.getIsbasetype());
         setTypedef(from.getTypedef());
+        setFts(from.getFts());
         setProjectid(from.getProjectid());
     }
 

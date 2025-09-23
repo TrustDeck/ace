@@ -32,6 +32,7 @@ import org.jooq.JSONB;
         @UniqueConstraint(name = "entitytype_name_version_projectid_key", columnNames = { "name", "version", "projectid" })
     },
     indexes = {
+        @Index(name = "entitytype_fts_idx", columnList = "fts ASC"),
         @Index(name = "entitytype_name_idx", columnList = "name ASC"),
         @Index(name = "entitytype_typedef_gin_idx", columnList = "typedef ASC")
     }
@@ -112,6 +113,29 @@ public interface IEntitytype extends Serializable {
     @Column(name = "typedef", nullable = false)
     @NotNull
     public JSONB getTypedef();
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    public IEntitytype setFts(Object value);
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Column(name = "fts")
+    public Object getFts();
 
     /**
      * Setter for <code>public.entitytype.projectid</code>.

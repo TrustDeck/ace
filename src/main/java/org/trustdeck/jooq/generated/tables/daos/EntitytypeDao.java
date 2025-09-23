@@ -144,6 +144,32 @@ public class EntitytypeDao extends DAOImpl<EntitytypeRecord, org.trustdeck.jooq.
     }
 
     /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entitytype> fetchRangeOfFts(Object lowerInclusive, Object upperInclusive) {
+        return fetchRange(Entitytype.ENTITYTYPE.FTS, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entitytype> fetchByFts(Object... values) {
+        return fetch(Entitytype.ENTITYTYPE.FTS, values);
+    }
+
+    /**
      * Fetch records that have <code>projectid BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */
