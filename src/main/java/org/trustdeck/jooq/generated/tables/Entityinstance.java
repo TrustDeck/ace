@@ -10,14 +10,14 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function3;
+import org.jooq.Function5;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row3;
+import org.jooq.Row5;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -69,6 +69,22 @@ public class Entityinstance extends TableImpl<EntityinstanceRecord> {
      */
     public final TableField<EntityinstanceRecord, JSONB> DATA = createField(DSL.name("data"), SQLDataType.JSONB.nullable(false), this, "");
 
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    public final TableField<EntityinstanceRecord, Object> FTS = createField(DSL.name("fts"), org.jooq.impl.DefaultDataType.getDefaultDataType("\"pg_catalog\".\"tsvector\""), this, "");
+
+    /**
+     * The column <code>public.entityinstance.isdeleted</code>.
+     */
+    public final TableField<EntityinstanceRecord, Boolean> ISDELETED = createField(DSL.name("isdeleted"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "");
+
     private Entityinstance(Name alias, Table<EntityinstanceRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -109,7 +125,7 @@ public class Entityinstance extends TableImpl<EntityinstanceRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.ENTITYINSTANCE_DATA_GIN_IDX, Indexes.ENTITYINSTANCE_ENTITYTYPE_ID_IDX);
+        return Arrays.asList(Indexes.ENTITYINSTANCE_ENTITYTYPE_ID_IDX, Indexes.ENTITYINSTANCE_FTS_ACTIVE_GIN_IDX);
     }
 
     @Override
@@ -120,6 +136,23 @@ public class Entityinstance extends TableImpl<EntityinstanceRecord> {
     @Override
     public UniqueKey<EntityinstanceRecord> getPrimaryKey() {
         return Keys.ENTITYINSTANCE_PKEY;
+    }
+
+    @Override
+    public List<ForeignKey<EntityinstanceRecord, ?>> getReferences() {
+        return Arrays.asList(Keys.ENTITYINSTANCE__ENTITYINSTANCE_ENTITYTYPEID_FKEY);
+    }
+
+    private transient Entitytype _entitytype;
+
+    /**
+     * Get the implicit join path to the <code>public.entitytype</code> table.
+     */
+    public Entitytype entitytype() {
+        if (_entitytype == null)
+            _entitytype = new Entitytype(this, Keys.ENTITYINSTANCE__ENTITYINSTANCE_ENTITYTYPEID_FKEY);
+
+        return _entitytype;
     }
 
     @Override
@@ -162,18 +195,18 @@ public class Entityinstance extends TableImpl<EntityinstanceRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row3 type methods
+    // Row5 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row3<Long, Integer, JSONB> fieldsRow() {
-        return (Row3) super.fieldsRow();
+    public Row5<Long, Integer, JSONB, Object, Boolean> fieldsRow() {
+        return (Row5) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function3<? super Long, ? super Integer, ? super JSONB, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function5<? super Long, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -181,7 +214,7 @@ public class Entityinstance extends TableImpl<EntityinstanceRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function3<? super Long, ? super Integer, ? super JSONB, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function5<? super Long, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

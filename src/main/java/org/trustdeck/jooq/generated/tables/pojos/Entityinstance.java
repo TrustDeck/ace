@@ -26,8 +26,8 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
     name = "entityinstance",
     schema = "public",
     indexes = {
-        @Index(name = "entityinstance_data_gin_idx", columnList = "data ASC"),
-        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC")
+        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC"),
+        @Index(name = "entityinstance_fts_active_gin_idx", columnList = "fts ASC")
     }
 )
 public class Entityinstance implements IEntityinstance {
@@ -37,6 +37,8 @@ public class Entityinstance implements IEntityinstance {
     private Long id;
     private Integer entitytypeid;
     private JSONB data;
+    private Object fts;
+    private Boolean isdeleted;
 
     public Entityinstance() {}
 
@@ -44,16 +46,22 @@ public class Entityinstance implements IEntityinstance {
         this.id = value.getId();
         this.entitytypeid = value.getEntitytypeid();
         this.data = value.getData();
+        this.fts = value.getFts();
+        this.isdeleted = value.getIsdeleted();
     }
 
     public Entityinstance(
         Long id,
         Integer entitytypeid,
-        JSONB data
+        JSONB data,
+        Object fts,
+        Boolean isdeleted
     ) {
         this.id = id;
         this.entitytypeid = entitytypeid;
         this.data = data;
+        this.fts = fts;
+        this.isdeleted = isdeleted;
     }
 
     /**
@@ -114,6 +122,54 @@ public class Entityinstance implements IEntityinstance {
         return this;
     }
 
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Column(name = "fts")
+    @Override
+    public Object getFts() {
+        return this.fts;
+    }
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Override
+    public Entityinstance setFts(Object fts) {
+        this.fts = fts;
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entityinstance.isdeleted</code>.
+     */
+    @Column(name = "isdeleted")
+    @Override
+    public Boolean getIsdeleted() {
+        return this.isdeleted;
+    }
+
+    /**
+     * Setter for <code>public.entityinstance.isdeleted</code>.
+     */
+    @Override
+    public Entityinstance setIsdeleted(Boolean isdeleted) {
+        this.isdeleted = isdeleted;
+        return this;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -141,6 +197,18 @@ public class Entityinstance implements IEntityinstance {
         }
         else if (!this.data.equals(other.data))
             return false;
+        if (this.fts == null) {
+            if (other.fts != null)
+                return false;
+        }
+        else if (!this.fts.equals(other.fts))
+            return false;
+        if (this.isdeleted == null) {
+            if (other.isdeleted != null)
+                return false;
+        }
+        else if (!this.isdeleted.equals(other.isdeleted))
+            return false;
         return true;
     }
 
@@ -151,6 +219,8 @@ public class Entityinstance implements IEntityinstance {
         result = prime * result + ((this.id == null) ? 0 : this.id.hashCode());
         result = prime * result + ((this.entitytypeid == null) ? 0 : this.entitytypeid.hashCode());
         result = prime * result + ((this.data == null) ? 0 : this.data.hashCode());
+        result = prime * result + ((this.fts == null) ? 0 : this.fts.hashCode());
+        result = prime * result + ((this.isdeleted == null) ? 0 : this.isdeleted.hashCode());
         return result;
     }
 
@@ -161,6 +231,8 @@ public class Entityinstance implements IEntityinstance {
         sb.append(id);
         sb.append(", ").append(entitytypeid);
         sb.append(", ").append(data);
+        sb.append(", ").append(fts);
+        sb.append(", ").append(isdeleted);
 
         sb.append(")");
         return sb.toString();
@@ -175,6 +247,8 @@ public class Entityinstance implements IEntityinstance {
         setId(from.getId());
         setEntitytypeid(from.getEntitytypeid());
         setData(from.getData());
+        setFts(from.getFts());
+        setIsdeleted(from.getIsdeleted());
     }
 
     @Override

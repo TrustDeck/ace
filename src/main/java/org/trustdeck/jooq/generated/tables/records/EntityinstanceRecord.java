@@ -16,8 +16,8 @@ import jakarta.validation.constraints.NotNull;
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.Record1;
-import org.jooq.Record3;
-import org.jooq.Row3;
+import org.jooq.Record5;
+import org.jooq.Row5;
 import org.jooq.impl.UpdatableRecordImpl;
 import org.trustdeck.jooq.generated.tables.Entityinstance;
 import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
@@ -32,11 +32,11 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
     name = "entityinstance",
     schema = "public",
     indexes = {
-        @Index(name = "entityinstance_data_gin_idx", columnList = "data ASC"),
-        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC")
+        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC"),
+        @Index(name = "entityinstance_fts_active_gin_idx", columnList = "fts ASC")
     }
 )
-public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceRecord> implements Record3<Long, Integer, JSONB>, IEntityinstance {
+public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceRecord> implements Record5<Long, Integer, JSONB, Object, Boolean>, IEntityinstance {
 
     private static final long serialVersionUID = 1L;
 
@@ -98,6 +98,54 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
         return (JSONB) get(2);
     }
 
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Override
+    public EntityinstanceRecord setFts(Object value) {
+        set(3, value);
+        return this;
+    }
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Column(name = "fts")
+    @Override
+    public Object getFts() {
+        return get(3);
+    }
+
+    /**
+     * Setter for <code>public.entityinstance.isdeleted</code>.
+     */
+    @Override
+    public EntityinstanceRecord setIsdeleted(Boolean value) {
+        set(4, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entityinstance.isdeleted</code>.
+     */
+    @Column(name = "isdeleted")
+    @Override
+    public Boolean getIsdeleted() {
+        return (Boolean) get(4);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -108,17 +156,17 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     }
 
     // -------------------------------------------------------------------------
-    // Record3 type implementation
+    // Record5 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row3<Long, Integer, JSONB> fieldsRow() {
-        return (Row3) super.fieldsRow();
+    public Row5<Long, Integer, JSONB, Object, Boolean> fieldsRow() {
+        return (Row5) super.fieldsRow();
     }
 
     @Override
-    public Row3<Long, Integer, JSONB> valuesRow() {
-        return (Row3) super.valuesRow();
+    public Row5<Long, Integer, JSONB, Object, Boolean> valuesRow() {
+        return (Row5) super.valuesRow();
     }
 
     @Override
@@ -136,6 +184,25 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
         return Entityinstance.ENTITYINSTANCE.DATA;
     }
 
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Override
+    public Field<Object> field4() {
+        return Entityinstance.ENTITYINSTANCE.FTS;
+    }
+
+    @Override
+    public Field<Boolean> field5() {
+        return Entityinstance.ENTITYINSTANCE.ISDELETED;
+    }
+
     @Override
     public Long component1() {
         return getId();
@@ -151,6 +218,25 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
         return getData();
     }
 
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Override
+    public Object component4() {
+        return getFts();
+    }
+
+    @Override
+    public Boolean component5() {
+        return getIsdeleted();
+    }
+
     @Override
     public Long value1() {
         return getId();
@@ -164,6 +250,25 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     @Override
     public JSONB value3() {
         return getData();
+    }
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Override
+    public Object value4() {
+        return getFts();
+    }
+
+    @Override
+    public Boolean value5() {
+        return getIsdeleted();
     }
 
     @Override
@@ -184,11 +289,34 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
         return this;
     }
 
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
     @Override
-    public EntityinstanceRecord values(Long value1, Integer value2, JSONB value3) {
+    public EntityinstanceRecord value4(Object value) {
+        setFts(value);
+        return this;
+    }
+
+    @Override
+    public EntityinstanceRecord value5(Boolean value) {
+        setIsdeleted(value);
+        return this;
+    }
+
+    @Override
+    public EntityinstanceRecord values(Long value1, Integer value2, JSONB value3, Object value4, Boolean value5) {
         value1(value1);
         value2(value2);
         value3(value3);
+        value4(value4);
+        value5(value5);
         return this;
     }
 
@@ -201,6 +329,8 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
         setId(from.getId());
         setEntitytypeid(from.getEntitytypeid());
         setData(from.getData());
+        setFts(from.getFts());
+        setIsdeleted(from.getIsdeleted());
         resetChangedOnNotNull();
     }
 
@@ -224,12 +354,14 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     /**
      * Create a detached, initialised EntityinstanceRecord
      */
-    public EntityinstanceRecord(Long id, Integer entitytypeid, JSONB data) {
+    public EntityinstanceRecord(Long id, Integer entitytypeid, JSONB data, Object fts, Boolean isdeleted) {
         super(Entityinstance.ENTITYINSTANCE);
 
         setId(id);
         setEntitytypeid(entitytypeid);
         setData(data);
+        setFts(fts);
+        setIsdeleted(isdeleted);
         resetChangedOnNotNull();
     }
 
@@ -243,6 +375,8 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
             setId(value.getId());
             setEntitytypeid(value.getEntitytypeid());
             setData(value.getData());
+            setFts(value.getFts());
+            setIsdeleted(value.getIsdeleted());
             resetChangedOnNotNull();
         }
     }

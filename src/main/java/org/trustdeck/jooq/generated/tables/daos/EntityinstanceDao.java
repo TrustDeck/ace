@@ -97,4 +97,45 @@ public class EntityinstanceDao extends DAOImpl<EntityinstanceRecord, org.trustde
     public List<org.trustdeck.jooq.generated.tables.pojos.Entityinstance> fetchByData(JSONB... values) {
         return fetch(Entityinstance.ENTITYINSTANCE.DATA, values);
     }
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entityinstance> fetchRangeOfFts(Object lowerInclusive, Object upperInclusive) {
+        return fetchRange(Entityinstance.ENTITYINSTANCE.FTS, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entityinstance> fetchByFts(Object... values) {
+        return fetch(Entityinstance.ENTITYINSTANCE.FTS, values);
+    }
+
+    /**
+     * Fetch records that have <code>isdeleted BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entityinstance> fetchRangeOfIsdeleted(Boolean lowerInclusive, Boolean upperInclusive) {
+        return fetchRange(Entityinstance.ENTITYINSTANCE.ISDELETED, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>isdeleted IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entityinstance> fetchByIsdeleted(Boolean... values) {
+        return fetch(Entityinstance.ENTITYINSTANCE.ISDELETED, values);
+    }
 }

@@ -27,8 +27,8 @@ import org.jooq.JSONB;
     name = "entityinstance",
     schema = "public",
     indexes = {
-        @Index(name = "entityinstance_data_gin_idx", columnList = "data ASC"),
-        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC")
+        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC"),
+        @Index(name = "entityinstance_fts_active_gin_idx", columnList = "fts ASC")
     }
 )
 public interface IEntityinstance extends Serializable {
@@ -69,6 +69,40 @@ public interface IEntityinstance extends Serializable {
     @Column(name = "data", nullable = false)
     @NotNull
     public JSONB getData();
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    public IEntityinstance setFts(Object value);
+
+    /**
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
+     */
+    @Deprecated
+    @Column(name = "fts")
+    public Object getFts();
+
+    /**
+     * Setter for <code>public.entityinstance.isdeleted</code>.
+     */
+    public IEntityinstance setIsdeleted(Boolean value);
+
+    /**
+     * Getter for <code>public.entityinstance.isdeleted</code>.
+     */
+    @Column(name = "isdeleted")
+    public Boolean getIsdeleted();
 
     // -------------------------------------------------------------------------
     // FROM and INTO
