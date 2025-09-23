@@ -11,7 +11,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
+
+import java.util.UUID;
 
 import org.jooq.JSONB;
 import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
@@ -25,6 +28,9 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
 @Table(
     name = "entityinstance",
     schema = "public",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "entityinstance_uuid_unique", columnNames = { "uuid" })
+    },
     indexes = {
         @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC"),
         @Index(name = "entityinstance_fts_active_gin_idx", columnList = "fts ASC")
@@ -35,6 +41,7 @@ public class Entityinstance implements IEntityinstance {
     private static final long serialVersionUID = 1L;
 
     private Long id;
+    private UUID uuid;
     private Integer entitytypeid;
     private JSONB data;
     private Object fts;
@@ -44,6 +51,7 @@ public class Entityinstance implements IEntityinstance {
 
     public Entityinstance(IEntityinstance value) {
         this.id = value.getId();
+        this.uuid = value.getUuid();
         this.entitytypeid = value.getEntitytypeid();
         this.data = value.getData();
         this.fts = value.getFts();
@@ -52,12 +60,14 @@ public class Entityinstance implements IEntityinstance {
 
     public Entityinstance(
         Long id,
+        UUID uuid,
         Integer entitytypeid,
         JSONB data,
         Object fts,
         Boolean isdeleted
     ) {
         this.id = id;
+        this.uuid = uuid;
         this.entitytypeid = entitytypeid;
         this.data = data;
         this.fts = fts;
@@ -81,6 +91,24 @@ public class Entityinstance implements IEntityinstance {
     @Override
     public Entityinstance setId(Long id) {
         this.id = id;
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entityinstance.uuid</code>.
+     */
+    @Column(name = "uuid")
+    @Override
+    public UUID getUuid() {
+        return this.uuid;
+    }
+
+    /**
+     * Setter for <code>public.entityinstance.uuid</code>.
+     */
+    @Override
+    public Entityinstance setUuid(UUID uuid) {
+        this.uuid = uuid;
         return this;
     }
 
@@ -185,6 +213,12 @@ public class Entityinstance implements IEntityinstance {
         }
         else if (!this.id.equals(other.id))
             return false;
+        if (this.uuid == null) {
+            if (other.uuid != null)
+                return false;
+        }
+        else if (!this.uuid.equals(other.uuid))
+            return false;
         if (this.entitytypeid == null) {
             if (other.entitytypeid != null)
                 return false;
@@ -217,6 +251,7 @@ public class Entityinstance implements IEntityinstance {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((this.id == null) ? 0 : this.id.hashCode());
+        result = prime * result + ((this.uuid == null) ? 0 : this.uuid.hashCode());
         result = prime * result + ((this.entitytypeid == null) ? 0 : this.entitytypeid.hashCode());
         result = prime * result + ((this.data == null) ? 0 : this.data.hashCode());
         result = prime * result + ((this.fts == null) ? 0 : this.fts.hashCode());
@@ -229,6 +264,7 @@ public class Entityinstance implements IEntityinstance {
         StringBuilder sb = new StringBuilder("Entityinstance (");
 
         sb.append(id);
+        sb.append(", ").append(uuid);
         sb.append(", ").append(entitytypeid);
         sb.append(", ").append(data);
         sb.append(", ").append(fts);
@@ -245,6 +281,7 @@ public class Entityinstance implements IEntityinstance {
     @Override
     public void from(IEntityinstance from) {
         setId(from.getId());
+        setUuid(from.getUuid());
         setEntitytypeid(from.getEntitytypeid());
         setData(from.getData());
         setFts(from.getFts());

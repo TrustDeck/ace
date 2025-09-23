@@ -11,9 +11,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 import org.jooq.JSONB;
 
@@ -26,6 +28,9 @@ import org.jooq.JSONB;
 @Table(
     name = "entityinstance",
     schema = "public",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "entityinstance_uuid_unique", columnNames = { "uuid" })
+    },
     indexes = {
         @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC"),
         @Index(name = "entityinstance_fts_active_gin_idx", columnList = "fts ASC")
@@ -45,6 +50,17 @@ public interface IEntityinstance extends Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     public Long getId();
+
+    /**
+     * Setter for <code>public.entityinstance.uuid</code>.
+     */
+    public IEntityinstance setUuid(UUID value);
+
+    /**
+     * Getter for <code>public.entityinstance.uuid</code>.
+     */
+    @Column(name = "uuid")
+    public UUID getUuid();
 
     /**
      * Setter for <code>public.entityinstance.entitytypeid</code>.

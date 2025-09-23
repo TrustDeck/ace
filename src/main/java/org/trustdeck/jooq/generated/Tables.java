@@ -4,14 +4,19 @@
 package org.trustdeck.jooq.generated;
 
 
+import org.jooq.Configuration;
+import org.jooq.Field;
+import org.jooq.Result;
 import org.trustdeck.jooq.generated.tables.Algorithm;
 import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.Entityinstance;
 import org.trustdeck.jooq.generated.tables.Entitytype;
 import org.trustdeck.jooq.generated.tables.Person;
+import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
+import org.trustdeck.jooq.generated.tables.records.PgpArmorHeadersRecord;
 
 
 /**
@@ -49,6 +54,45 @@ public class Tables {
      * The table <code>public.person</code>.
      */
     public static final Person PERSON = Person.PERSON;
+
+    /**
+     * The table <code>public.pgp_armor_headers</code>.
+     */
+    public static final PgpArmorHeaders PGP_ARMOR_HEADERS = PgpArmorHeaders.PGP_ARMOR_HEADERS;
+
+    /**
+     * Call <code>public.pgp_armor_headers</code>.
+     */
+    public static Result<PgpArmorHeadersRecord> PGP_ARMOR_HEADERS(
+          Configuration configuration
+        , String __1
+    ) {
+        return configuration.dsl().selectFrom(org.trustdeck.jooq.generated.tables.PgpArmorHeaders.PGP_ARMOR_HEADERS.call(
+              __1
+        )).fetch();
+    }
+
+    /**
+     * Get <code>public.pgp_armor_headers</code> as a table.
+     */
+    public static PgpArmorHeaders PGP_ARMOR_HEADERS(
+          String __1
+    ) {
+        return org.trustdeck.jooq.generated.tables.PgpArmorHeaders.PGP_ARMOR_HEADERS.call(
+            __1
+        );
+    }
+
+    /**
+     * Get <code>public.pgp_armor_headers</code> as a table.
+     */
+    public static PgpArmorHeaders PGP_ARMOR_HEADERS(
+          Field<String> __1
+    ) {
+        return org.trustdeck.jooq.generated.tables.PgpArmorHeaders.PGP_ARMOR_HEADERS.call(
+            __1
+        );
+    }
 
     /**
      * The table <code>public.project</code>.

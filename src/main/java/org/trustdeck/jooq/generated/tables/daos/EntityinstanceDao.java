@@ -6,6 +6,7 @@ package org.trustdeck.jooq.generated.tables.daos;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.jooq.Configuration;
 import org.jooq.JSONB;
@@ -66,6 +67,35 @@ public class EntityinstanceDao extends DAOImpl<EntityinstanceRecord, org.trustde
      */
     public Optional<org.trustdeck.jooq.generated.tables.pojos.Entityinstance> fetchOptionalById(Long value) {
         return fetchOptional(Entityinstance.ENTITYINSTANCE.ID, value);
+    }
+
+    /**
+     * Fetch records that have <code>uuid BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entityinstance> fetchRangeOfUuid(UUID lowerInclusive, UUID upperInclusive) {
+        return fetchRange(Entityinstance.ENTITYINSTANCE.UUID, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>uuid IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.Entityinstance> fetchByUuid(UUID... values) {
+        return fetch(Entityinstance.ENTITYINSTANCE.UUID, values);
+    }
+
+    /**
+     * Fetch a unique record that has <code>uuid = value</code>
+     */
+    public org.trustdeck.jooq.generated.tables.pojos.Entityinstance fetchOneByUuid(UUID value) {
+        return fetchOne(Entityinstance.ENTITYINSTANCE.UUID, value);
+    }
+
+    /**
+     * Fetch a unique record that has <code>uuid = value</code>
+     */
+    public Optional<org.trustdeck.jooq.generated.tables.pojos.Entityinstance> fetchOptionalByUuid(UUID value) {
+        return fetchOptional(Entityinstance.ENTITYINSTANCE.UUID, value);
     }
 
     /**

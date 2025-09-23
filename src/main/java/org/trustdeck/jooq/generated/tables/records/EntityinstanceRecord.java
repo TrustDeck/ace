@@ -11,13 +11,16 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
+
+import java.util.UUID;
 
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.Record1;
-import org.jooq.Record5;
-import org.jooq.Row5;
+import org.jooq.Record6;
+import org.jooq.Row6;
 import org.jooq.impl.UpdatableRecordImpl;
 import org.trustdeck.jooq.generated.tables.Entityinstance;
 import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
@@ -31,12 +34,15 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
 @Table(
     name = "entityinstance",
     schema = "public",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "entityinstance_uuid_unique", columnNames = { "uuid" })
+    },
     indexes = {
         @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC"),
         @Index(name = "entityinstance_fts_active_gin_idx", columnList = "fts ASC")
     }
 )
-public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceRecord> implements Record5<Long, Integer, JSONB, Object, Boolean>, IEntityinstance {
+public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceRecord> implements Record6<Long, UUID, Integer, JSONB, Object, Boolean>, IEntityinstance {
 
     private static final long serialVersionUID = 1L;
 
@@ -61,11 +67,29 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     }
 
     /**
+     * Setter for <code>public.entityinstance.uuid</code>.
+     */
+    @Override
+    public EntityinstanceRecord setUuid(UUID value) {
+        set(1, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entityinstance.uuid</code>.
+     */
+    @Column(name = "uuid")
+    @Override
+    public UUID getUuid() {
+        return (UUID) get(1);
+    }
+
+    /**
      * Setter for <code>public.entityinstance.entitytypeid</code>.
      */
     @Override
     public EntityinstanceRecord setEntitytypeid(Integer value) {
-        set(1, value);
+        set(2, value);
         return this;
     }
 
@@ -76,7 +100,7 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     @NotNull
     @Override
     public Integer getEntitytypeid() {
-        return (Integer) get(1);
+        return (Integer) get(2);
     }
 
     /**
@@ -84,7 +108,7 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
      */
     @Override
     public EntityinstanceRecord setData(JSONB value) {
-        set(2, value);
+        set(3, value);
         return this;
     }
 
@@ -95,7 +119,7 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     @NotNull
     @Override
     public JSONB getData() {
-        return (JSONB) get(2);
+        return (JSONB) get(3);
     }
 
     /**
@@ -109,7 +133,7 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     @Deprecated
     @Override
     public EntityinstanceRecord setFts(Object value) {
-        set(3, value);
+        set(4, value);
         return this;
     }
 
@@ -125,7 +149,7 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     @Column(name = "fts")
     @Override
     public Object getFts() {
-        return get(3);
+        return get(4);
     }
 
     /**
@@ -133,7 +157,7 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
      */
     @Override
     public EntityinstanceRecord setIsdeleted(Boolean value) {
-        set(4, value);
+        set(5, value);
         return this;
     }
 
@@ -143,7 +167,7 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     @Column(name = "isdeleted")
     @Override
     public Boolean getIsdeleted() {
-        return (Boolean) get(4);
+        return (Boolean) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -156,17 +180,17 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     }
 
     // -------------------------------------------------------------------------
-    // Record5 type implementation
+    // Record6 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row5<Long, Integer, JSONB, Object, Boolean> fieldsRow() {
-        return (Row5) super.fieldsRow();
+    public Row6<Long, UUID, Integer, JSONB, Object, Boolean> fieldsRow() {
+        return (Row6) super.fieldsRow();
     }
 
     @Override
-    public Row5<Long, Integer, JSONB, Object, Boolean> valuesRow() {
-        return (Row5) super.valuesRow();
+    public Row6<Long, UUID, Integer, JSONB, Object, Boolean> valuesRow() {
+        return (Row6) super.valuesRow();
     }
 
     @Override
@@ -175,12 +199,17 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     }
 
     @Override
-    public Field<Integer> field2() {
+    public Field<UUID> field2() {
+        return Entityinstance.ENTITYINSTANCE.UUID;
+    }
+
+    @Override
+    public Field<Integer> field3() {
         return Entityinstance.ENTITYINSTANCE.ENTITYTYPEID;
     }
 
     @Override
-    public Field<JSONB> field3() {
+    public Field<JSONB> field4() {
         return Entityinstance.ENTITYINSTANCE.DATA;
     }
 
@@ -194,12 +223,12 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
      */
     @Deprecated
     @Override
-    public Field<Object> field4() {
+    public Field<Object> field5() {
         return Entityinstance.ENTITYINSTANCE.FTS;
     }
 
     @Override
-    public Field<Boolean> field5() {
+    public Field<Boolean> field6() {
         return Entityinstance.ENTITYINSTANCE.ISDELETED;
     }
 
@@ -209,12 +238,17 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     }
 
     @Override
-    public Integer component2() {
+    public UUID component2() {
+        return getUuid();
+    }
+
+    @Override
+    public Integer component3() {
         return getEntitytypeid();
     }
 
     @Override
-    public JSONB component3() {
+    public JSONB component4() {
         return getData();
     }
 
@@ -228,12 +262,12 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
      */
     @Deprecated
     @Override
-    public Object component4() {
+    public Object component5() {
         return getFts();
     }
 
     @Override
-    public Boolean component5() {
+    public Boolean component6() {
         return getIsdeleted();
     }
 
@@ -243,12 +277,17 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     }
 
     @Override
-    public Integer value2() {
+    public UUID value2() {
+        return getUuid();
+    }
+
+    @Override
+    public Integer value3() {
         return getEntitytypeid();
     }
 
     @Override
-    public JSONB value3() {
+    public JSONB value4() {
         return getData();
     }
 
@@ -262,12 +301,12 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
      */
     @Deprecated
     @Override
-    public Object value4() {
+    public Object value5() {
         return getFts();
     }
 
     @Override
-    public Boolean value5() {
+    public Boolean value6() {
         return getIsdeleted();
     }
 
@@ -278,13 +317,19 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     }
 
     @Override
-    public EntityinstanceRecord value2(Integer value) {
+    public EntityinstanceRecord value2(UUID value) {
+        setUuid(value);
+        return this;
+    }
+
+    @Override
+    public EntityinstanceRecord value3(Integer value) {
         setEntitytypeid(value);
         return this;
     }
 
     @Override
-    public EntityinstanceRecord value3(JSONB value) {
+    public EntityinstanceRecord value4(JSONB value) {
         setData(value);
         return this;
     }
@@ -299,24 +344,25 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
      */
     @Deprecated
     @Override
-    public EntityinstanceRecord value4(Object value) {
+    public EntityinstanceRecord value5(Object value) {
         setFts(value);
         return this;
     }
 
     @Override
-    public EntityinstanceRecord value5(Boolean value) {
+    public EntityinstanceRecord value6(Boolean value) {
         setIsdeleted(value);
         return this;
     }
 
     @Override
-    public EntityinstanceRecord values(Long value1, Integer value2, JSONB value3, Object value4, Boolean value5) {
+    public EntityinstanceRecord values(Long value1, UUID value2, Integer value3, JSONB value4, Object value5, Boolean value6) {
         value1(value1);
         value2(value2);
         value3(value3);
         value4(value4);
         value5(value5);
+        value6(value6);
         return this;
     }
 
@@ -327,6 +373,7 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     @Override
     public void from(IEntityinstance from) {
         setId(from.getId());
+        setUuid(from.getUuid());
         setEntitytypeid(from.getEntitytypeid());
         setData(from.getData());
         setFts(from.getFts());
@@ -354,10 +401,11 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     /**
      * Create a detached, initialised EntityinstanceRecord
      */
-    public EntityinstanceRecord(Long id, Integer entitytypeid, JSONB data, Object fts, Boolean isdeleted) {
+    public EntityinstanceRecord(Long id, UUID uuid, Integer entitytypeid, JSONB data, Object fts, Boolean isdeleted) {
         super(Entityinstance.ENTITYINSTANCE);
 
         setId(id);
+        setUuid(uuid);
         setEntitytypeid(entitytypeid);
         setData(data);
         setFts(fts);
@@ -373,6 +421,7 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
 
         if (value != null) {
             setId(value.getId());
+            setUuid(value.getUuid());
             setEntitytypeid(value.getEntitytypeid());
             setData(value.getData());
             setFts(value.getFts());

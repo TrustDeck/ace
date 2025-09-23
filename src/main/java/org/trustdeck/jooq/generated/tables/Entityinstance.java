@@ -10,14 +10,14 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function5;
+import org.jooq.Function6;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row5;
+import org.jooq.Row6;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -58,6 +58,11 @@ public class Entityinstance extends TableImpl<EntityinstanceRecord> {
      * The column <code>public.entityinstance.id</code>.
      */
     public final TableField<EntityinstanceRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+
+    /**
+     * The column <code>public.entityinstance.uuid</code>.
+     */
+    public final TableField<EntityinstanceRecord, java.util.UUID> UUID = createField(DSL.name("uuid"), SQLDataType.UUID.nullable(false).defaultValue(DSL.field(DSL.raw("gen_random_uuid()"), SQLDataType.UUID)), this, "");
 
     /**
      * The column <code>public.entityinstance.entitytypeid</code>.
@@ -139,6 +144,11 @@ public class Entityinstance extends TableImpl<EntityinstanceRecord> {
     }
 
     @Override
+    public List<UniqueKey<EntityinstanceRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.ENTITYINSTANCE_UUID_UNIQUE);
+    }
+
+    @Override
     public List<ForeignKey<EntityinstanceRecord, ?>> getReferences() {
         return Arrays.asList(Keys.ENTITYINSTANCE__ENTITYINSTANCE_ENTITYTYPEID_FKEY);
     }
@@ -195,18 +205,18 @@ public class Entityinstance extends TableImpl<EntityinstanceRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row5 type methods
+    // Row6 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row5<Long, Integer, JSONB, Object, Boolean> fieldsRow() {
-        return (Row5) super.fieldsRow();
+    public Row6<Long, java.util.UUID, Integer, JSONB, Object, Boolean> fieldsRow() {
+        return (Row6) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function5<? super Long, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function6<? super Long, ? super java.util.UUID, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -214,7 +224,7 @@ public class Entityinstance extends TableImpl<EntityinstanceRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function5<? super Long, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function6<? super Long, ? super java.util.UUID, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }
