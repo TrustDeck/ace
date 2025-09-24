@@ -48,6 +48,9 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	/** The unique UUID for this entity instance. */
 	private UUID trustdeckID;
 	
+	/** The ID of the project where this entity instance is scoped in. */
+	private Integer projectID;
+	
 	/** The ID of the type of this entity instance. */
 	private Integer entityTypeID;
 	
@@ -68,6 +71,7 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	    
 	    dto.setId(pojo.getId());
 	    dto.setTrustdeckID(pojo.getTrustdeckId());
+	    dto.setProjectID(pojo.getProjectId());
 	    dto.setEntityTypeID(pojo.getEntityTypeId());
 	    dto.setData(pojo.getData());
 	    dto.setIsDeleted(pojo.getIsDeleted());
@@ -95,7 +99,8 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 		String out = "";
 
 	    out += (this.getId() != null) ? "id: " + this.getId().toString() + ", " : "";
-	    out += (this.getTrustdeckID() != null) ? "UUID: " + this.getTrustdeckID().toString() + ", " : "";
+	    out += (this.getTrustdeckID() != null) ? "TrustDeckID: " + this.getTrustdeckID().toString() + ", " : "";
+	    out += (this.getProjectID() != null) ? "ProjectID: " + this.getProjectID().toString() + ", " : "";
 	    out += (this.getEntityTypeID() != null) ? "entityTypeID: " + this.getEntityTypeID().toString() + ", " : "";
 	    out += (this.getData() != null) ? "data: " + this.getData().toString() + ", " : "";
 	    out += (this.getIsDeleted() != null) ? "isDeleted: " + this.getIsDeleted().toString() + ", " : "";
@@ -106,6 +111,6 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	@JsonIgnore
 	@Override
 	public Boolean validate() {
-		return this.getEntityTypeID() != null && this.getData() != null && !this.getIsDeleted() && Assertion.isNotNullOrEmpty(this.getTrustdeckID().toString());
+		return this.getEntityTypeID() != null && this.getData() != null && !this.getIsDeleted() && Assertion.isNotNullOrEmpty(this.getTrustdeckID().toString()) && Assertion.isNotNullOrEmpty(this.getProjectID().toString());
 	}
 }

@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.dto.EntityTypeDTO;
+import org.trustdeck.exception.CreateEntityTypeException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.EntityType;
 import org.trustdeck.jooq.generated.tables.records.EntityTypeRecord;
@@ -61,9 +62,11 @@ public class EntityTypeDBService {
      * @return The newly inserted entity type object when the insertion was successful,
      * 		   the original entity type object if the given one was a duplicate, and
      * 		   {@code null} when the insertion failed.
+     * @throws CreateEntityTypeException when the creation of the entity type or the partition 
+     * 		   in the database failed to abort and roll back this transaction.
      */
     @Transactional
-    public EntityTypeDTO createEntityType(EntityTypeDTO entityTypeDTO, HttpServletRequest request) {
+    public EntityTypeDTO createEntityType(EntityTypeDTO entityTypeDTO, HttpServletRequest request) throws CreateEntityTypeException {
     	// Create the record and send it to the database
     	EntityTypeRecord createdEntityType;
     	try {
@@ -80,14 +83,22 @@ public class EntityTypeDBService {
 	        	log.debug("Inserting the entity type failed.");
 	        	return null;
 	        }
+    	
+	    	// Create new partition in the database for this type
+	    	// jOOQ doesn't model "PARTITION OF" yet, so use plain SQL
+	        dsl.query("CREATE TABLE {0} PARTITION OF {1} FOR VALUES IN ({2})", 
+	        		DSL.name("entityinstance_t" + createdEntityType.getId()), 
+	        		DSL.name("entity_instance"), 
+	        		DSL.inline(createdEntityType.getId()))
+	        .execute();
 	    } catch (DataAccessException e) {
 	    	if (e.getMessage().contains(" already exists.")) {
 	    		// Found duplicate, return the original
 	    		log.info("While creating an entity type, an identical one was found and will be used instead.");
 	    		return getEntityType(entityTypeDTO.getName(), entityTypeDTO.getVersion(), entityTypeDTO.getProjectID(), null);
 	    	} else {
-		    	log.error("Inserting the new entity type into the database failed.", e);
-		    	return null;
+		    	// Inserting the new entity type into the database failed; throw exception to abort
+		    	throw new CreateEntityTypeException(e.getMessage());
 	    	}
 	    }
 	    
@@ -99,6 +110,7 @@ public class EntityTypeDBService {
     /**
      * Method to retrieve an entity type from the database by explicitly providing the three variables
      * name, version, and projectID. Triplets of these are unique in the database.
+     * Base types will have no projectID, so it can be null.
      * 
      * @param name the entity type's name
      * @param version the entity type's version
@@ -109,7 +121,7 @@ public class EntityTypeDBService {
     @Transactional
     public EntityTypeDTO getEntityType(String name, String version, Integer projectID, HttpServletRequest request) {
     	// Check if all the necessary arguments are available
-    	if (Assertion.isNullOrEmpty(name) || Assertion.isNullOrEmpty(version) || projectID == null) {
+    	if (Assertion.isNullOrEmpty(name) || Assertion.isNullOrEmpty(version)) {
     		log.debug("For retrieving the entity type, there is an argument missing or empty.");
     		return null;
     	}
@@ -160,6 +172,7 @@ public class EntityTypeDBService {
     	if (entityTypeDTO == null) {
     		return null;
     	}
+    	
     	return getEntityType(entityTypeDTO.getName(), entityTypeDTO.getVersion(), entityTypeDTO.getProjectID(), request);
     }
     
@@ -250,7 +263,8 @@ public class EntityTypeDBService {
     				.where(ENTITY_INSTANCE.ENTITY_TYPE_ID.equal(oldType.getId()))
     				.fetchOne(0, int.class);
     	} catch (DataAccessException e) {
-    		log.debug("Searching for entity type refrences in the database failed.", e);
+    		log.debug("Searching for entity type references in the database failed.", e);
+    		return null;
     	}
     	
     	if (usedBy != 0) {
@@ -319,8 +333,8 @@ public class EntityTypeDBService {
                 .or(DSL.cast(ENTITY_TYPE.ID, String.class).likeIgnoreCase(pattern))
                 .or(DSL.cast(ENTITY_TYPE.PROJECT_ID, String.class).likeIgnoreCase(pattern))
                 .or(DSL.cast(ENTITY_TYPE.IS_BASE_TYPE, String.class).likeIgnoreCase(pattern))
-                // JSONB via full text search on the tsvector (uses the GIN index on the tsvector named 'fts')
-                .or(DSL.condition("fts @@ plainto_tsquery('simple', {0})", DSL.val(part)));
+                // JSONB via full text search on the tsvector (uses the GIN index on the tsvector named 'full_text_search_vector')
+                .or(DSL.condition("full_text_search_vector @@ plainto_tsquery('simple', {0})", DSL.val(part)));
 
             // AND-connect all search parts
             condition = condition.and(partCond);
