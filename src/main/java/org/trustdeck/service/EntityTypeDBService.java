@@ -30,15 +30,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.dto.EntityTypeDTO;
 import org.trustdeck.exception.UnexpectedResultSizeException;
-import org.trustdeck.jooq.generated.tables.pojos.Entitytype;
-import org.trustdeck.jooq.generated.tables.records.EntitytypeRecord;
+import org.trustdeck.jooq.generated.tables.pojos.EntityType;
+import org.trustdeck.jooq.generated.tables.records.EntityTypeRecord;
 import org.trustdeck.utils.Assertion;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
-import static org.trustdeck.jooq.generated.Tables.ENTITYTYPE;
-import static org.trustdeck.jooq.generated.Tables.ENTITYINSTANCE;
+import static org.trustdeck.jooq.generated.Tables.ENTITY_TYPE;
+import static org.trustdeck.jooq.generated.Tables.ENTITY_INSTANCE;
 
 /**
  * This class encapsulates the database access for entity types.
@@ -65,15 +65,15 @@ public class EntityTypeDBService {
     @Transactional
     public EntityTypeDTO createEntityType(EntityTypeDTO entityTypeDTO, HttpServletRequest request) {
     	// Create the record and send it to the database
-    	EntitytypeRecord createdEntityType;
+    	EntityTypeRecord createdEntityType;
     	try {
-    		createdEntityType = dsl.newRecord(ENTITYTYPE);
+    		createdEntityType = dsl.newRecord(ENTITY_TYPE);
 	    	createdEntityType.setName(entityTypeDTO.getName());
 	    	createdEntityType.setVersion(entityTypeDTO.getVersion());
-	    	createdEntityType.setIsdeprecated(entityTypeDTO.getIsDeprecated());
-	    	createdEntityType.setIsbasetype(entityTypeDTO.getIsBaseType());
-	    	createdEntityType.setTypedef(entityTypeDTO.getTypeDefinition());
-	    	createdEntityType.setProjectid(entityTypeDTO.getProjectID());
+	    	createdEntityType.setIsDeprecated(entityTypeDTO.getIsDeprecated());
+	    	createdEntityType.setIsBaseType(entityTypeDTO.getIsBaseType());
+	    	createdEntityType.setTypeDefinition(entityTypeDTO.getTypeDefinition());
+	    	createdEntityType.setProjectId(entityTypeDTO.getProjectID());
 	
 	        // Store and determine success
 	        if (createdEntityType.insert() != 1) {
@@ -93,7 +93,7 @@ public class EntityTypeDBService {
 	    
 	    // Return the entity type
         log.debug("Creating the entity type \"" + entityTypeDTO.getName() + "\" was successful.");
-	    return new EntityTypeDTO().assignPojoValues(new Entitytype(createdEntityType));
+	    return new EntityTypeDTO().assignPojoValues(new EntityType(createdEntityType));
     }
 
     /**
@@ -115,13 +115,13 @@ public class EntityTypeDBService {
     	}
     	
     	// Build and execute the query
-    	List<Entitytype> entityTypes = null;
+    	List<EntityType> entityTypes = null;
     	try {
-    		entityTypes = dsl.selectFrom(ENTITYTYPE)
-                .where(ENTITYTYPE.NAME.equalIgnoreCase(name))
-                .and(ENTITYTYPE.VERSION.equalIgnoreCase(version))
-                .and(ENTITYTYPE.PROJECTID.equal(projectID))
-                .fetchInto(Entitytype.class);
+    		entityTypes = dsl.selectFrom(ENTITY_TYPE)
+                .where(ENTITY_TYPE.NAME.equalIgnoreCase(name))
+                .and(ENTITY_TYPE.VERSION.equalIgnoreCase(version))
+                .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
+                .fetchInto(EntityType.class);
         } catch (MappingException e) {
         	log.debug("Could not map the entity type search result into the EntityType-POJO.", e);
         	return null;
@@ -137,7 +137,7 @@ public class EntityTypeDBService {
     	} else if (entityTypes.size() > 1) {
         	log.debug("Too many entity types were found.");
         	return null;
-        } else if (entityTypes.getFirst().getIsdeprecated()) {
+        } else if (entityTypes.getFirst().getIsDeprecated()) {
         	log.debug("The entity type is marked as deleted/deprecated.");
         	return null;
         }
@@ -186,8 +186,8 @@ public class EntityTypeDBService {
     	int usedBy = 0;
     	try {
     		usedBy = dsl.selectCount()
-    				.from(ENTITYINSTANCE)
-    				.where(ENTITYINSTANCE.ENTITYTYPEID.equal(id))
+    				.from(ENTITY_INSTANCE)
+    				.where(ENTITY_INSTANCE.ENTITY_TYPE_ID.equal(id))
     				.fetchOne(0, int.class);
     	} catch (DataAccessException e) {
     		log.debug("Searching for entity type refrences in the database failed.", e);
@@ -203,10 +203,10 @@ public class EntityTypeDBService {
     	int deletedEntityTypes = 0;
     	try {
     		// Build and execute the query
-    		deletedEntityTypes = dsl.deleteFrom(ENTITYTYPE)
-                .where(ENTITYTYPE.NAME.equalIgnoreCase(name))
-                .and(ENTITYTYPE.VERSION.equalIgnoreCase(version))
-                .and(ENTITYTYPE.PROJECTID.equal(projectID))
+    		deletedEntityTypes = dsl.deleteFrom(ENTITY_TYPE)
+                .where(ENTITY_TYPE.NAME.equalIgnoreCase(name))
+                .and(ENTITY_TYPE.VERSION.equalIgnoreCase(version))
+                .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
                 .execute();
         } catch (DataAccessException e) {
         	log.debug("Searching for the entity type in the database failed.", e);
@@ -246,8 +246,8 @@ public class EntityTypeDBService {
     	int usedBy = 0;
     	try {
     		usedBy = dsl.selectCount()
-    				.from(ENTITYINSTANCE)
-    				.where(ENTITYINSTANCE.ENTITYTYPEID.equal(oldType.getId()))
+    				.from(ENTITY_INSTANCE)
+    				.where(ENTITY_INSTANCE.ENTITY_TYPE_ID.equal(oldType.getId()))
     				.fetchOne(0, int.class);
     	} catch (DataAccessException e) {
     		log.debug("Searching for entity type refrences in the database failed.", e);
@@ -266,16 +266,16 @@ public class EntityTypeDBService {
         Integer projectId = (newEntityTypeDTO.getProjectID() != null && newEntityTypeDTO.getProjectID() > 0) ? newEntityTypeDTO.getProjectID() : oldType.getProjectID();
     	
     	// Create the update-record and send it to the database
-        EntitytypeRecord updatedRecord = null;
+        EntityTypeRecord updatedRecord = null;
     	try {
     		// Update and return the updated record
-    		updatedRecord = dsl.update(ENTITYTYPE)
-	                .set(ENTITYTYPE.NAME, name)
-	                .set(ENTITYTYPE.VERSION, version)
-	                .set(ENTITYTYPE.ISBASETYPE, isBaseType)
-	                .set(ENTITYTYPE.TYPEDEF, typeDef)
-	                .set(ENTITYTYPE.PROJECTID, projectId)
-	                .where(ENTITYTYPE.ID.eq(oldType.getId()))
+    		updatedRecord = dsl.update(ENTITY_TYPE)
+	                .set(ENTITY_TYPE.NAME, name)
+	                .set(ENTITY_TYPE.VERSION, version)
+	                .set(ENTITY_TYPE.IS_BASE_TYPE, isBaseType)
+	                .set(ENTITY_TYPE.TYPE_DEFINITION, typeDef)
+	                .set(ENTITY_TYPE.PROJECT_ID, projectId)
+	                .where(ENTITY_TYPE.ID.eq(oldType.getId()))
 	                .returning()
 	                .fetchOne();
 	    } catch (DataAccessException e) {
@@ -285,7 +285,7 @@ public class EntityTypeDBService {
 	    
 	    // Return the entity type
         log.debug("Updating the entity type \"" + updatedRecord.getName() + "\" was successful.");
-	    return new EntityTypeDTO().assignPojoValues(new Entitytype(updatedRecord));
+	    return new EntityTypeDTO().assignPojoValues(new EntityType(updatedRecord));
     }
     
     /**
@@ -313,12 +313,12 @@ public class EntityTypeDBService {
             String pattern = "%" + part + "%";
 
             // Search across columns
-            Condition partCond = ENTITYTYPE.NAME.likeIgnoreCase(pattern)
-                .or(ENTITYTYPE.VERSION.likeIgnoreCase(pattern))
+            Condition partCond = ENTITY_TYPE.NAME.likeIgnoreCase(pattern)
+                .or(ENTITY_TYPE.VERSION.likeIgnoreCase(pattern))
                 // Cast non-text columns to text for LIKE matching
-                .or(DSL.cast(ENTITYTYPE.ID, String.class).likeIgnoreCase(pattern))
-                .or(DSL.cast(ENTITYTYPE.PROJECTID, String.class).likeIgnoreCase(pattern))
-                .or(DSL.cast(ENTITYTYPE.ISBASETYPE, String.class).likeIgnoreCase(pattern))
+                .or(DSL.cast(ENTITY_TYPE.ID, String.class).likeIgnoreCase(pattern))
+                .or(DSL.cast(ENTITY_TYPE.PROJECT_ID, String.class).likeIgnoreCase(pattern))
+                .or(DSL.cast(ENTITY_TYPE.IS_BASE_TYPE, String.class).likeIgnoreCase(pattern))
                 // JSONB via full text search on the tsvector (uses the GIN index on the tsvector named 'fts')
                 .or(DSL.condition("fts @@ plainto_tsquery('simple', {0})", DSL.val(part)));
 
@@ -327,15 +327,15 @@ public class EntityTypeDBService {
         }
 
         // Exclude deprecated/deleted types
-        condition = condition.and(ENTITYTYPE.ISDEPRECATED.eq(false));
+        condition = condition.and(ENTITY_TYPE.IS_DEPRECATED.eq(false));
 
         // Execute the search
-        List<Entitytype> results;
+        List<EntityType> results;
         try {
-            results = dsl.selectFrom(ENTITYTYPE)
+            results = dsl.selectFrom(ENTITY_TYPE)
                       .where(condition)
-                      .orderBy(ENTITYTYPE.NAME.asc(), ENTITYTYPE.VERSION.asc())
-                      .fetchInto(Entitytype.class);
+                      .orderBy(ENTITY_TYPE.NAME.asc(), ENTITY_TYPE.VERSION.asc())
+                      .fetchInto(EntityType.class);
         } catch (MappingException e) {
             log.debug("Could not map entity type search result.", e);
             return null;

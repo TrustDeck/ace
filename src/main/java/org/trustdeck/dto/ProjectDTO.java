@@ -64,7 +64,7 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	private Boolean storeEntities;
 	
 	/** A flag determining whether or not pseudonyms are created in the project. */
-	private Boolean createPseudonyms;
+	private Boolean storePseudonyms;
 	
 	/** The project description. */
 	private String description;
@@ -92,17 +92,17 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	    dto.setId(pojo.getId());
 	    dto.setName(pojo.getName());
 	    dto.setAbbreviation(pojo.getAbbreviation());
-	    dto.setStartDate(pojo.getStartdate() != null ? pojo.getStartdate().format(dateFormatter) : null);
-	    dto.setEndDate(pojo.getEnddate() != null ? pojo.getEnddate().format(dateFormatter) : null);
-	    dto.setStoreEntities(pojo.getStoreentities());
-	    dto.setCreatePseudonyms(pojo.getCreatepseudonyms());
+	    dto.setStartDate(pojo.getStartDate() != null ? pojo.getStartDate().format(dateFormatter) : null);
+	    dto.setEndDate(pojo.getEndDate() != null ? pojo.getEndDate().format(dateFormatter) : null);
+	    dto.setStoreEntities(pojo.getStoreEntities());
+	    dto.setStorePseudonyms(pojo.getStorePseudonyms());
 	    dto.setDescription(pojo.getDescription());
 	    
 	    // Insert the object type names
 	    if (this.projectDBService == null) {
 	    	this.projectDBService = SpringBeanLocator.getBean(ProjectDBService.class);
 	    }
-    	dto.setAssociatedEntityTypes(projectDBService.getEntityTypeNames(pojo.getAssociatedEntitytypeIds()));
+    	dto.setAssociatedEntityTypes(projectDBService.getEntityTypeNames(pojo.getAssociatedEntityTypeIds()));
 
 	    return dto;
 	}
@@ -132,7 +132,7 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	    out += (this.getStartDate() != null) ? "startDate: " + this.getStartDate() + ", " : "";
 	    out += (this.getEndDate() != null) ? "endDate: " + this.getEndDate() + ", " : "";
 	    out += (this.getStoreEntities() != null) ? "storeEntities: " + this.getStoreEntities().toString() + ", " : "";
-	    out += (this.getCreatePseudonyms() != null) ? "createPseudonyms: " + this.getCreatePseudonyms().toString() + ", " : "";
+	    out += (this.getStorePseudonyms() != null) ? "createPseudonyms: " + this.getStorePseudonyms().toString() + ", " : "";
 	    out += (this.getDescription() != null) ? "description: " + this.getDescription() + ", " : "";
 	    if (this.getAssociatedEntityTypes() != null) {
 	    	out += "associatedEntityTypes: [";

@@ -17,9 +17,13 @@
 
 package org.trustdeck.dto;
 
+import java.util.UUID;
+
 import org.jooq.JSONB;
 import org.springframework.context.annotation.Scope;
-import org.trustdeck.jooq.generated.tables.pojos.Entityinstance;
+import org.trustdeck.jooq.generated.tables.pojos.EntityInstance;
+import org.trustdeck.utils.Assertion;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -35,21 +39,27 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request.
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class EntityInstanceDTO implements IObjectDTO<Entityinstance, EntityInstanceDTO> {
+public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInstanceDTO> {
 	
 	/** The (internal) ID of this entity instance. Do not expose it to users. */
 	@JsonIgnore
 	private Long id;
+	
+	/** The unique UUID for this entity instance. */
+	private UUID trustdeckID;
 	
 	/** The ID of the type of this entity instance. */
 	private Integer entityTypeID;
 	
 	/** This entity instance's data (i.e. the attributes and values). */
 	private JSONB data;
+	
+	/** Flag that determines if this type is marked as deleted. */
+	private Boolean isDeleted;
 
 	@JsonIgnore
 	@Override
-	public EntityInstanceDTO assignPojoValues(Entityinstance pojo) {
+	public EntityInstanceDTO assignPojoValues(EntityInstance pojo) {
 		if (pojo == null) {
 	        return null;
 	    }
@@ -57,8 +67,10 @@ public class EntityInstanceDTO implements IObjectDTO<Entityinstance, EntityInsta
 		EntityInstanceDTO dto = new EntityInstanceDTO();
 	    
 	    dto.setId(pojo.getId());
-	    dto.setEntityTypeID(pojo.getEntitytypeid());
+	    dto.setTrustdeckID(pojo.getTrustdeckId());
+	    dto.setEntityTypeID(pojo.getEntityTypeId());
 	    dto.setData(pojo.getData());
+	    dto.setIsDeleted(pojo.getIsDeleted());
 
 	    return dto;
 	}
@@ -83,8 +95,10 @@ public class EntityInstanceDTO implements IObjectDTO<Entityinstance, EntityInsta
 		String out = "";
 
 	    out += (this.getId() != null) ? "id: " + this.getId().toString() + ", " : "";
+	    out += (this.getTrustdeckID() != null) ? "UUID: " + this.getTrustdeckID().toString() + ", " : "";
 	    out += (this.getEntityTypeID() != null) ? "entityTypeID: " + this.getEntityTypeID().toString() + ", " : "";
 	    out += (this.getData() != null) ? "data: " + this.getData().toString() + ", " : "";
+	    out += (this.getIsDeleted() != null) ? "isDeleted: " + this.getIsDeleted().toString() + ", " : "";
 
 	    return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
 	}
@@ -92,6 +106,6 @@ public class EntityInstanceDTO implements IObjectDTO<Entityinstance, EntityInsta
 	@JsonIgnore
 	@Override
 	public Boolean validate() {
-		return this.getEntityTypeID() != null;
+		return this.getEntityTypeID() != null && this.getData() != null && !this.getIsDeleted() && Assertion.isNotNullOrEmpty(this.getTrustdeckID().toString());
 	}
 }

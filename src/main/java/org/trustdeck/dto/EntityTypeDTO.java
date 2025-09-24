@@ -19,7 +19,7 @@ package org.trustdeck.dto;
 
 import org.jooq.JSONB;
 import org.springframework.context.annotation.Scope;
-import org.trustdeck.jooq.generated.tables.pojos.Entitytype;
+import org.trustdeck.jooq.generated.tables.pojos.EntityType;
 import org.trustdeck.utils.Assertion;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -36,7 +36,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request.
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class EntityTypeDTO implements IObjectDTO<Entitytype, EntityTypeDTO> {
+public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	
 	/** The (internal) ID of this entity type. Do not expose it to users. */
 	@JsonIgnore
@@ -62,7 +62,7 @@ public class EntityTypeDTO implements IObjectDTO<Entitytype, EntityTypeDTO> {
 
 	@JsonIgnore
 	@Override
-	public EntityTypeDTO assignPojoValues(Entitytype pojo) {
+	public EntityTypeDTO assignPojoValues(EntityType pojo) {
 		if (pojo == null) {
 	        return null;
 	    }
@@ -72,10 +72,10 @@ public class EntityTypeDTO implements IObjectDTO<Entitytype, EntityTypeDTO> {
 	    dto.setId(pojo.getId());
 	    dto.setName(pojo.getName());
 	    dto.setVersion(pojo.getVersion());
-	    dto.setIsDeprecated(pojo.getIsdeprecated());
-	    dto.setIsBaseType(pojo.getIsbasetype());
-	    dto.setTypeDefinition(pojo.getTypedef());
-	    dto.setProjectID(pojo.getProjectid());
+	    dto.setIsDeprecated(pojo.getIsDeprecated());
+	    dto.setIsBaseType(pojo.getIsBaseType());
+	    dto.setTypeDefinition(pojo.getTypeDefinition());
+	    dto.setProjectID(pojo.getProjectId());
 
 	    return dto;
 	}
@@ -113,6 +113,6 @@ public class EntityTypeDTO implements IObjectDTO<Entitytype, EntityTypeDTO> {
 	@JsonIgnore
 	@Override
 	public Boolean validate() {
-		return Assertion.assertNotNullAll(this.getName(), this.getVersion());
+		return Assertion.assertNotNullAll(this.getName(), this.getVersion()) && !this.getIsDeprecated();
 	}
 }

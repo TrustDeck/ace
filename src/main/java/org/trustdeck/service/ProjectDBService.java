@@ -37,7 +37,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import static org.trustdeck.jooq.generated.Tables.ENTITYTYPE;
+import static org.trustdeck.jooq.generated.Tables.ENTITY_TYPE;
 import static org.trustdeck.jooq.generated.Tables.PROJECT;
 
 /**
@@ -66,12 +66,12 @@ public class ProjectDBService {
     		ProjectRecord projectRecord = dsl.newRecord(PROJECT);
     		projectRecord.setName(project.getName());
     		projectRecord.setAbbreviation(project.getAbbreviation());
-    		projectRecord.setStartdate(project.getStartdate());
-    		projectRecord.setEnddate(project.getEnddate());
-    		projectRecord.setStoreentities(project.getStoreentities());
-    		projectRecord.setCreatepseudonyms(project.getCreatepseudonyms());
+    		projectRecord.setStartDate(project.getStartDate());
+    		projectRecord.setEndDate(project.getEndDate());
+    		projectRecord.setStoreEntities(project.getStoreEntities());
+    		projectRecord.setStorePseudonyms(project.getStorePseudonyms());
     		projectRecord.setDescription(project.getDescription());
-    		projectRecord.setAssociatedEntitytypeIds(project.getAssociatedEntitytypeIds());
+    		projectRecord.setAssociatedEntityTypeIds(project.getAssociatedEntityTypeIds());
     		
     		// Store and determine success
 	        if(projectRecord.insert() == 0) {
@@ -273,12 +273,12 @@ public class ProjectDBService {
 		// Sanitize the given values and update the attributes
 		projectRecord.setName(updatedProject.getName() != null && !updatedProject.getName().isBlank() ? updatedProject.getName() : oldProject.getName());
 		projectRecord.setAbbreviation(updatedProject.getAbbreviation() != null && !updatedProject.getAbbreviation().isBlank() ? updatedProject.getAbbreviation() : oldProject.getAbbreviation());
-		projectRecord.setStartdate(updatedProject.getStartDate() != null && !updatedProject.getStartDate().isBlank() ? LocalDate.parse(updatedProject.getStartDate(), dateFormatter) : LocalDate.parse(oldProject.getStartDate(), dateFormatter));
-		projectRecord.setEnddate(updatedProject.getEndDate() != null && !updatedProject.getEndDate().isBlank() ? LocalDate.parse(updatedProject.getEndDate(), dateFormatter) : LocalDate.parse(oldProject.getEndDate(), dateFormatter));
-		projectRecord.setStoreentities(updatedProject.getStoreEntities() != null ? updatedProject.getStoreEntities() : oldProject.getStoreEntities());
-		projectRecord.setCreatepseudonyms(updatedProject.getCreatePseudonyms() != null ? updatedProject.getCreatePseudonyms() : oldProject.getCreatePseudonyms());
+		projectRecord.setStartDate(updatedProject.getStartDate() != null && !updatedProject.getStartDate().isBlank() ? LocalDate.parse(updatedProject.getStartDate(), dateFormatter) : LocalDate.parse(oldProject.getStartDate(), dateFormatter));
+		projectRecord.setEndDate(updatedProject.getEndDate() != null && !updatedProject.getEndDate().isBlank() ? LocalDate.parse(updatedProject.getEndDate(), dateFormatter) : LocalDate.parse(oldProject.getEndDate(), dateFormatter));
+		projectRecord.setStoreEntities(updatedProject.getStoreEntities() != null ? updatedProject.getStoreEntities() : oldProject.getStoreEntities());
+		projectRecord.setStorePseudonyms(updatedProject.getStorePseudonyms() != null ? updatedProject.getStorePseudonyms() : oldProject.getStorePseudonyms());
 		projectRecord.setDescription(updatedProject.getDescription() != null ? updatedProject.getDescription() : oldProject.getDescription());
-		projectRecord.setAssociatedEntitytypeIds(updatedProject.getAssociatedEntityTypes() != null && updatedProject.getAssociatedEntityTypes().length != 0 ? getEntityTypeIDs(updatedProject.getAssociatedEntityTypes()) : getEntityTypeIDs(oldProject.getAssociatedEntityTypes()));
+		projectRecord.setAssociatedEntityTypeIds(updatedProject.getAssociatedEntityTypes() != null && updatedProject.getAssociatedEntityTypes().length != 0 ? getEntityTypeIDs(updatedProject.getAssociatedEntityTypes()) : getEntityTypeIDs(oldProject.getAssociatedEntityTypes()));
         
         // Store and determine success
         int wasStored = projectRecord.update();
@@ -302,9 +302,9 @@ public class ProjectDBService {
     		String name = null;
     		
     		try {
-    			name = dsl.select(ENTITYTYPE.NAME)
-	    	                 .from(ENTITYTYPE)
-	    	                 .where(ENTITYTYPE.ID.eq(entityTypeIDs[i]))
+    			name = dsl.select(ENTITY_TYPE.NAME)
+	    	                 .from(ENTITY_TYPE)
+	    	                 .where(ENTITY_TYPE.ID.eq(entityTypeIDs[i]))
 	    	                 .fetchOneInto(String.class);
     		} catch (TooManyRowsException e) {
             	log.debug("Found more than one project.");
@@ -334,9 +334,9 @@ public class ProjectDBService {
     		Integer id = null;
     		
     		try {
-    			id = dsl.select(ENTITYTYPE.ID)
-	    	            .from(ENTITYTYPE)
-	    	            .where(ENTITYTYPE.NAME.equalIgnoreCase(entityTypeNames[i]))
+    			id = dsl.select(ENTITY_TYPE.ID)
+	    	            .from(ENTITY_TYPE)
+	    	            .where(ENTITY_TYPE.NAME.equalIgnoreCase(entityTypeNames[i]))
 	    	            .fetchOneInto(Integer.class);
     		} catch (TooManyRowsException e) {
             	log.debug("Found more than one project.");
