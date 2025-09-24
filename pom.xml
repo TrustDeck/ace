@@ -215,7 +215,7 @@
                         <database>
                             <name>org.jooq.meta.postgres.PostgresDatabase</name>
                             <includes>.*</includes>
-                            <excludes></excludes>
+                            <excludes>public\.regexp_matches|public\.regexp_split_to_table</excludes>
                             <inputSchema>public</inputSchema>
                         </database>
                         <target>
