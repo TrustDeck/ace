@@ -6,9 +6,6 @@ package org.trustdeck.jooq.generated.tables.pojos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -17,7 +14,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 import org.jooq.JSONB;
-import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
+import org.trustdeck.jooq.generated.tables.interfaces.IEntityInstance;
 
 
 /**
@@ -26,59 +23,61 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "entityinstance",
+    name = "entity_instance",
     schema = "public",
     uniqueConstraints = {
-        @UniqueConstraint(name = "entityinstance_uuid_unique", columnNames = { "uuid" })
+        @UniqueConstraint(name = "entity_instance_trustdeck_id_unique", columnNames = { "entity_type_id", "trustdeck_id" })
     },
     indexes = {
-        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC"),
-        @Index(name = "entityinstance_fts_active_gin_idx", columnList = "fts ASC")
+        @Index(name = "entity_instance_et_proj_id_idx", columnList = "entity_type_id ASC, project_id ASC, id ASC"),
+        @Index(name = "entity_instance_fts_active_gin_idx", columnList = "full_text_search_vector ASC")
     }
 )
-public class Entityinstance implements IEntityinstance {
+public class EntityInstance implements IEntityInstance {
 
     private static final long serialVersionUID = 1L;
 
     private Long id;
-    private UUID uuid;
-    private Integer entitytypeid;
+    private UUID trustdeckId;
+    private Integer projectId;
+    private Integer entityTypeId;
     private JSONB data;
-    private Object fts;
-    private Boolean isdeleted;
+    private Object fullTextSearchVector;
+    private Boolean isDeleted;
 
-    public Entityinstance() {}
+    public EntityInstance() {}
 
-    public Entityinstance(IEntityinstance value) {
+    public EntityInstance(IEntityInstance value) {
         this.id = value.getId();
-        this.uuid = value.getUuid();
-        this.entitytypeid = value.getEntitytypeid();
+        this.trustdeckId = value.getTrustdeckId();
+        this.projectId = value.getProjectId();
+        this.entityTypeId = value.getEntityTypeId();
         this.data = value.getData();
-        this.fts = value.getFts();
-        this.isdeleted = value.getIsdeleted();
+        this.fullTextSearchVector = value.getFullTextSearchVector();
+        this.isDeleted = value.getIsDeleted();
     }
 
-    public Entityinstance(
+    public EntityInstance(
         Long id,
-        UUID uuid,
-        Integer entitytypeid,
+        UUID trustdeckId,
+        Integer projectId,
+        Integer entityTypeId,
         JSONB data,
-        Object fts,
-        Boolean isdeleted
+        Object fullTextSearchVector,
+        Boolean isDeleted
     ) {
         this.id = id;
-        this.uuid = uuid;
-        this.entitytypeid = entitytypeid;
+        this.trustdeckId = trustdeckId;
+        this.projectId = projectId;
+        this.entityTypeId = entityTypeId;
         this.data = data;
-        this.fts = fts;
-        this.isdeleted = isdeleted;
+        this.fullTextSearchVector = fullTextSearchVector;
+        this.isDeleted = isDeleted;
     }
 
     /**
-     * Getter for <code>public.entityinstance.id</code>.
+     * Getter for <code>public.entity_instance.id</code>.
      */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     @Override
     public Long getId() {
@@ -86,53 +85,72 @@ public class Entityinstance implements IEntityinstance {
     }
 
     /**
-     * Setter for <code>public.entityinstance.id</code>.
+     * Setter for <code>public.entity_instance.id</code>.
      */
     @Override
-    public Entityinstance setId(Long id) {
+    public EntityInstance setId(Long id) {
         this.id = id;
         return this;
     }
 
     /**
-     * Getter for <code>public.entityinstance.uuid</code>.
+     * Getter for <code>public.entity_instance.trustdeck_id</code>.
      */
-    @Column(name = "uuid")
+    @Column(name = "trustdeck_id")
     @Override
-    public UUID getUuid() {
-        return this.uuid;
+    public UUID getTrustdeckId() {
+        return this.trustdeckId;
     }
 
     /**
-     * Setter for <code>public.entityinstance.uuid</code>.
+     * Setter for <code>public.entity_instance.trustdeck_id</code>.
      */
     @Override
-    public Entityinstance setUuid(UUID uuid) {
-        this.uuid = uuid;
+    public EntityInstance setTrustdeckId(UUID trustdeckId) {
+        this.trustdeckId = trustdeckId;
         return this;
     }
 
     /**
-     * Getter for <code>public.entityinstance.entitytypeid</code>.
+     * Getter for <code>public.entity_instance.project_id</code>.
      */
-    @Column(name = "entitytypeid", nullable = false)
+    @Column(name = "project_id", nullable = false)
     @NotNull
     @Override
-    public Integer getEntitytypeid() {
-        return this.entitytypeid;
+    public Integer getProjectId() {
+        return this.projectId;
     }
 
     /**
-     * Setter for <code>public.entityinstance.entitytypeid</code>.
+     * Setter for <code>public.entity_instance.project_id</code>.
      */
     @Override
-    public Entityinstance setEntitytypeid(Integer entitytypeid) {
-        this.entitytypeid = entitytypeid;
+    public EntityInstance setProjectId(Integer projectId) {
+        this.projectId = projectId;
         return this;
     }
 
     /**
-     * Getter for <code>public.entityinstance.data</code>.
+     * Getter for <code>public.entity_instance.entity_type_id</code>.
+     */
+    @Column(name = "entity_type_id", nullable = false)
+    @NotNull
+    @Override
+    public Integer getEntityTypeId() {
+        return this.entityTypeId;
+    }
+
+    /**
+     * Setter for <code>public.entity_instance.entity_type_id</code>.
+     */
+    @Override
+    public EntityInstance setEntityTypeId(Integer entityTypeId) {
+        this.entityTypeId = entityTypeId;
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entity_instance.data</code>.
      */
     @Column(name = "data", nullable = false)
     @NotNull
@@ -142,10 +160,10 @@ public class Entityinstance implements IEntityinstance {
     }
 
     /**
-     * Setter for <code>public.entityinstance.data</code>.
+     * Setter for <code>public.entity_instance.data</code>.
      */
     @Override
-    public Entityinstance setData(JSONB data) {
+    public EntityInstance setData(JSONB data) {
         this.data = data;
         return this;
     }
@@ -159,10 +177,10 @@ public class Entityinstance implements IEntityinstance {
      * configuration.
      */
     @Deprecated
-    @Column(name = "fts")
+    @Column(name = "full_text_search_vector")
     @Override
-    public Object getFts() {
-        return this.fts;
+    public Object getFullTextSearchVector() {
+        return this.fullTextSearchVector;
     }
 
     /**
@@ -175,26 +193,26 @@ public class Entityinstance implements IEntityinstance {
      */
     @Deprecated
     @Override
-    public Entityinstance setFts(Object fts) {
-        this.fts = fts;
+    public EntityInstance setFullTextSearchVector(Object fullTextSearchVector) {
+        this.fullTextSearchVector = fullTextSearchVector;
         return this;
     }
 
     /**
-     * Getter for <code>public.entityinstance.isdeleted</code>.
+     * Getter for <code>public.entity_instance.is_deleted</code>.
      */
-    @Column(name = "isdeleted")
+    @Column(name = "is_deleted")
     @Override
-    public Boolean getIsdeleted() {
-        return this.isdeleted;
+    public Boolean getIsDeleted() {
+        return this.isDeleted;
     }
 
     /**
-     * Setter for <code>public.entityinstance.isdeleted</code>.
+     * Setter for <code>public.entity_instance.is_deleted</code>.
      */
     @Override
-    public Entityinstance setIsdeleted(Boolean isdeleted) {
-        this.isdeleted = isdeleted;
+    public EntityInstance setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
         return this;
     }
 
@@ -206,24 +224,30 @@ public class Entityinstance implements IEntityinstance {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        final Entityinstance other = (Entityinstance) obj;
+        final EntityInstance other = (EntityInstance) obj;
         if (this.id == null) {
             if (other.id != null)
                 return false;
         }
         else if (!this.id.equals(other.id))
             return false;
-        if (this.uuid == null) {
-            if (other.uuid != null)
+        if (this.trustdeckId == null) {
+            if (other.trustdeckId != null)
                 return false;
         }
-        else if (!this.uuid.equals(other.uuid))
+        else if (!this.trustdeckId.equals(other.trustdeckId))
             return false;
-        if (this.entitytypeid == null) {
-            if (other.entitytypeid != null)
+        if (this.projectId == null) {
+            if (other.projectId != null)
                 return false;
         }
-        else if (!this.entitytypeid.equals(other.entitytypeid))
+        else if (!this.projectId.equals(other.projectId))
+            return false;
+        if (this.entityTypeId == null) {
+            if (other.entityTypeId != null)
+                return false;
+        }
+        else if (!this.entityTypeId.equals(other.entityTypeId))
             return false;
         if (this.data == null) {
             if (other.data != null)
@@ -231,17 +255,17 @@ public class Entityinstance implements IEntityinstance {
         }
         else if (!this.data.equals(other.data))
             return false;
-        if (this.fts == null) {
-            if (other.fts != null)
+        if (this.fullTextSearchVector == null) {
+            if (other.fullTextSearchVector != null)
                 return false;
         }
-        else if (!this.fts.equals(other.fts))
+        else if (!this.fullTextSearchVector.equals(other.fullTextSearchVector))
             return false;
-        if (this.isdeleted == null) {
-            if (other.isdeleted != null)
+        if (this.isDeleted == null) {
+            if (other.isDeleted != null)
                 return false;
         }
-        else if (!this.isdeleted.equals(other.isdeleted))
+        else if (!this.isDeleted.equals(other.isDeleted))
             return false;
         return true;
     }
@@ -251,24 +275,26 @@ public class Entityinstance implements IEntityinstance {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((this.id == null) ? 0 : this.id.hashCode());
-        result = prime * result + ((this.uuid == null) ? 0 : this.uuid.hashCode());
-        result = prime * result + ((this.entitytypeid == null) ? 0 : this.entitytypeid.hashCode());
+        result = prime * result + ((this.trustdeckId == null) ? 0 : this.trustdeckId.hashCode());
+        result = prime * result + ((this.projectId == null) ? 0 : this.projectId.hashCode());
+        result = prime * result + ((this.entityTypeId == null) ? 0 : this.entityTypeId.hashCode());
         result = prime * result + ((this.data == null) ? 0 : this.data.hashCode());
-        result = prime * result + ((this.fts == null) ? 0 : this.fts.hashCode());
-        result = prime * result + ((this.isdeleted == null) ? 0 : this.isdeleted.hashCode());
+        result = prime * result + ((this.fullTextSearchVector == null) ? 0 : this.fullTextSearchVector.hashCode());
+        result = prime * result + ((this.isDeleted == null) ? 0 : this.isDeleted.hashCode());
         return result;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("Entityinstance (");
+        StringBuilder sb = new StringBuilder("EntityInstance (");
 
         sb.append(id);
-        sb.append(", ").append(uuid);
-        sb.append(", ").append(entitytypeid);
+        sb.append(", ").append(trustdeckId);
+        sb.append(", ").append(projectId);
+        sb.append(", ").append(entityTypeId);
         sb.append(", ").append(data);
-        sb.append(", ").append(fts);
-        sb.append(", ").append(isdeleted);
+        sb.append(", ").append(fullTextSearchVector);
+        sb.append(", ").append(isDeleted);
 
         sb.append(")");
         return sb.toString();
@@ -279,17 +305,18 @@ public class Entityinstance implements IEntityinstance {
     // -------------------------------------------------------------------------
 
     @Override
-    public void from(IEntityinstance from) {
+    public void from(IEntityInstance from) {
         setId(from.getId());
-        setUuid(from.getUuid());
-        setEntitytypeid(from.getEntitytypeid());
+        setTrustdeckId(from.getTrustdeckId());
+        setProjectId(from.getProjectId());
+        setEntityTypeId(from.getEntityTypeId());
         setData(from.getData());
-        setFts(from.getFts());
-        setIsdeleted(from.getIsdeleted());
+        setFullTextSearchVector(from.getFullTextSearchVector());
+        setIsDeleted(from.getIsDeleted());
     }
 
     @Override
-    public <E extends IEntityinstance> E into(E into) {
+    public <E extends IEntityInstance> E into(E into) {
         into.from(this);
         return into;
     }

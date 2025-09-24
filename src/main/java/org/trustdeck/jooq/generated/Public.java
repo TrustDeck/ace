@@ -16,8 +16,8 @@ import org.jooq.impl.SchemaImpl;
 import org.trustdeck.jooq.generated.tables.Algorithm;
 import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
-import org.trustdeck.jooq.generated.tables.Entityinstance;
-import org.trustdeck.jooq.generated.tables.Entitytype;
+import org.trustdeck.jooq.generated.tables.EntityInstance;
+import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
@@ -54,14 +54,14 @@ public class Public extends SchemaImpl {
     public final Domain DOMAIN = Domain.DOMAIN;
 
     /**
-     * The table <code>public.entityinstance</code>.
+     * The table <code>public.entity_instance</code>.
      */
-    public final Entityinstance ENTITYINSTANCE = Entityinstance.ENTITYINSTANCE;
+    public final EntityInstance ENTITY_INSTANCE = EntityInstance.ENTITY_INSTANCE;
 
     /**
-     * The table <code>public.entitytype</code>.
+     * The table <code>public.entity_type</code>.
      */
-    public final Entitytype ENTITYTYPE = Entitytype.ENTITYTYPE;
+    public final EntityType ENTITY_TYPE = EntityType.ENTITY_TYPE;
 
     /**
      * The table <code>public.person</code>.
@@ -136,8 +136,8 @@ public class Public extends SchemaImpl {
             Algorithm.ALGORITHM,
             Auditevent.AUDITEVENT,
             Domain.DOMAIN,
-            Entityinstance.ENTITYINSTANCE,
-            Entitytype.ENTITYTYPE,
+            EntityInstance.ENTITY_INSTANCE,
+            EntityType.ENTITY_TYPE,
             Person.PERSON,
             PgpArmorHeaders.PGP_ARMOR_HEADERS,
             Project.PROJECT,

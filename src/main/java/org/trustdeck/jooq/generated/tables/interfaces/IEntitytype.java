@@ -11,7 +11,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -26,26 +25,23 @@ import org.jooq.JSONB;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "entitytype",
+    name = "entity_type",
     schema = "public",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "entitytype_name_version_projectid_key", columnNames = { "name", "version", "projectid" })
-    },
     indexes = {
-        @Index(name = "entitytype_fts_idx", columnList = "fts ASC"),
-        @Index(name = "entitytype_name_idx", columnList = "name ASC"),
-        @Index(name = "entitytype_typedef_gin_idx", columnList = "typedef ASC")
+        @Index(name = "entity_type_fts_idx", columnList = "full_text_search_vector ASC"),
+        @Index(name = "entity_type_name_idx", columnList = "name ASC"),
+        @Index(name = "entity_type_type_definition_gin_idx", columnList = "type_definition ASC")
     }
 )
-public interface IEntitytype extends Serializable {
+public interface IEntityType extends Serializable {
 
     /**
-     * Setter for <code>public.entitytype.id</code>.
+     * Setter for <code>public.entity_type.id</code>.
      */
-    public IEntitytype setId(Integer value);
+    public IEntityType setId(Integer value);
 
     /**
-     * Getter for <code>public.entitytype.id</code>.
+     * Getter for <code>public.entity_type.id</code>.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,12 +49,12 @@ public interface IEntitytype extends Serializable {
     public Integer getId();
 
     /**
-     * Setter for <code>public.entitytype.name</code>.
+     * Setter for <code>public.entity_type.name</code>.
      */
-    public IEntitytype setName(String value);
+    public IEntityType setName(String value);
 
     /**
-     * Getter for <code>public.entitytype.name</code>.
+     * Getter for <code>public.entity_type.name</code>.
      */
     @Column(name = "name", nullable = false, length = 255)
     @NotNull
@@ -66,12 +62,12 @@ public interface IEntitytype extends Serializable {
     public String getName();
 
     /**
-     * Setter for <code>public.entitytype.version</code>.
+     * Setter for <code>public.entity_type.version</code>.
      */
-    public IEntitytype setVersion(String value);
+    public IEntityType setVersion(String value);
 
     /**
-     * Getter for <code>public.entitytype.version</code>.
+     * Getter for <code>public.entity_type.version</code>.
      */
     @Column(name = "version", nullable = false, length = 255)
     @NotNull
@@ -79,40 +75,39 @@ public interface IEntitytype extends Serializable {
     public String getVersion();
 
     /**
-     * Setter for <code>public.entitytype.isdeprecated</code>.
+     * Setter for <code>public.entity_type.is_deprecated</code>.
      */
-    public IEntitytype setIsdeprecated(Boolean value);
+    public IEntityType setIsDeprecated(Boolean value);
 
     /**
-     * Getter for <code>public.entitytype.isdeprecated</code>.
+     * Getter for <code>public.entity_type.is_deprecated</code>.
      */
-    @Column(name = "isdeprecated", nullable = false)
+    @Column(name = "is_deprecated")
+    public Boolean getIsDeprecated();
+
+    /**
+     * Setter for <code>public.entity_type.is_base_type</code>.
+     */
+    public IEntityType setIsBaseType(Boolean value);
+
+    /**
+     * Getter for <code>public.entity_type.is_base_type</code>.
+     */
+    @Column(name = "is_base_type", nullable = false)
     @NotNull
-    public Boolean getIsdeprecated();
+    public Boolean getIsBaseType();
 
     /**
-     * Setter for <code>public.entitytype.isbasetype</code>.
+     * Setter for <code>public.entity_type.type_definition</code>.
      */
-    public IEntitytype setIsbasetype(Boolean value);
+    public IEntityType setTypeDefinition(JSONB value);
 
     /**
-     * Getter for <code>public.entitytype.isbasetype</code>.
+     * Getter for <code>public.entity_type.type_definition</code>.
      */
-    @Column(name = "isbasetype", nullable = false)
+    @Column(name = "type_definition", nullable = false)
     @NotNull
-    public Boolean getIsbasetype();
-
-    /**
-     * Setter for <code>public.entitytype.typedef</code>.
-     */
-    public IEntitytype setTypedef(JSONB value);
-
-    /**
-     * Getter for <code>public.entitytype.typedef</code>.
-     */
-    @Column(name = "typedef", nullable = false)
-    @NotNull
-    public JSONB getTypedef();
+    public JSONB getTypeDefinition();
 
     /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
@@ -123,7 +118,7 @@ public interface IEntitytype extends Serializable {
      * configuration.
      */
     @Deprecated
-    public IEntitytype setFts(Object value);
+    public IEntityType setFullTextSearchVector(Object value);
 
     /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
@@ -134,19 +129,19 @@ public interface IEntitytype extends Serializable {
      * configuration.
      */
     @Deprecated
-    @Column(name = "fts")
-    public Object getFts();
+    @Column(name = "full_text_search_vector")
+    public Object getFullTextSearchVector();
 
     /**
-     * Setter for <code>public.entitytype.projectid</code>.
+     * Setter for <code>public.entity_type.project_id</code>.
      */
-    public IEntitytype setProjectid(Integer value);
+    public IEntityType setProjectId(Integer value);
 
     /**
-     * Getter for <code>public.entitytype.projectid</code>.
+     * Getter for <code>public.entity_type.project_id</code>.
      */
-    @Column(name = "projectid")
-    public Integer getProjectid();
+    @Column(name = "project_id")
+    public Integer getProjectId();
 
     // -------------------------------------------------------------------------
     // FROM and INTO
@@ -154,13 +149,13 @@ public interface IEntitytype extends Serializable {
 
     /**
      * Load data from another generated Record/POJO implementing the common
-     * interface IEntitytype
+     * interface IEntityType
      */
-    public void from(IEntitytype from);
+    public void from(IEntityType from);
 
     /**
      * Copy data into another generated Record/POJO implementing the common
-     * interface IEntitytype
+     * interface IEntityType
      */
-    public <E extends IEntitytype> E into(E into);
+    public <E extends IEntityType> E into(E into);
 }

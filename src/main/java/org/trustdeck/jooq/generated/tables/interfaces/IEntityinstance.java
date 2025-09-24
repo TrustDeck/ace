@@ -6,9 +6,6 @@ package org.trustdeck.jooq.generated.tables.interfaces;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -26,61 +23,71 @@ import org.jooq.JSONB;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "entityinstance",
+    name = "entity_instance",
     schema = "public",
     uniqueConstraints = {
-        @UniqueConstraint(name = "entityinstance_uuid_unique", columnNames = { "uuid" })
+        @UniqueConstraint(name = "entity_instance_trustdeck_id_unique", columnNames = { "entity_type_id", "trustdeck_id" })
     },
     indexes = {
-        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC"),
-        @Index(name = "entityinstance_fts_active_gin_idx", columnList = "fts ASC")
+        @Index(name = "entity_instance_et_proj_id_idx", columnList = "entity_type_id ASC, project_id ASC, id ASC"),
+        @Index(name = "entity_instance_fts_active_gin_idx", columnList = "full_text_search_vector ASC")
     }
 )
-public interface IEntityinstance extends Serializable {
+public interface IEntityInstance extends Serializable {
 
     /**
-     * Setter for <code>public.entityinstance.id</code>.
+     * Setter for <code>public.entity_instance.id</code>.
      */
-    public IEntityinstance setId(Long value);
+    public IEntityInstance setId(Long value);
 
     /**
-     * Getter for <code>public.entityinstance.id</code>.
+     * Getter for <code>public.entity_instance.id</code>.
      */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     public Long getId();
 
     /**
-     * Setter for <code>public.entityinstance.uuid</code>.
+     * Setter for <code>public.entity_instance.trustdeck_id</code>.
      */
-    public IEntityinstance setUuid(UUID value);
+    public IEntityInstance setTrustdeckId(UUID value);
 
     /**
-     * Getter for <code>public.entityinstance.uuid</code>.
+     * Getter for <code>public.entity_instance.trustdeck_id</code>.
      */
-    @Column(name = "uuid")
-    public UUID getUuid();
+    @Column(name = "trustdeck_id")
+    public UUID getTrustdeckId();
 
     /**
-     * Setter for <code>public.entityinstance.entitytypeid</code>.
+     * Setter for <code>public.entity_instance.project_id</code>.
      */
-    public IEntityinstance setEntitytypeid(Integer value);
+    public IEntityInstance setProjectId(Integer value);
 
     /**
-     * Getter for <code>public.entityinstance.entitytypeid</code>.
+     * Getter for <code>public.entity_instance.project_id</code>.
      */
-    @Column(name = "entitytypeid", nullable = false)
+    @Column(name = "project_id", nullable = false)
     @NotNull
-    public Integer getEntitytypeid();
+    public Integer getProjectId();
 
     /**
-     * Setter for <code>public.entityinstance.data</code>.
+     * Setter for <code>public.entity_instance.entity_type_id</code>.
      */
-    public IEntityinstance setData(JSONB value);
+    public IEntityInstance setEntityTypeId(Integer value);
 
     /**
-     * Getter for <code>public.entityinstance.data</code>.
+     * Getter for <code>public.entity_instance.entity_type_id</code>.
+     */
+    @Column(name = "entity_type_id", nullable = false)
+    @NotNull
+    public Integer getEntityTypeId();
+
+    /**
+     * Setter for <code>public.entity_instance.data</code>.
+     */
+    public IEntityInstance setData(JSONB value);
+
+    /**
+     * Getter for <code>public.entity_instance.data</code>.
      */
     @Column(name = "data", nullable = false)
     @NotNull
@@ -95,7 +102,7 @@ public interface IEntityinstance extends Serializable {
      * configuration.
      */
     @Deprecated
-    public IEntityinstance setFts(Object value);
+    public IEntityInstance setFullTextSearchVector(Object value);
 
     /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
@@ -106,19 +113,19 @@ public interface IEntityinstance extends Serializable {
      * configuration.
      */
     @Deprecated
-    @Column(name = "fts")
-    public Object getFts();
+    @Column(name = "full_text_search_vector")
+    public Object getFullTextSearchVector();
 
     /**
-     * Setter for <code>public.entityinstance.isdeleted</code>.
+     * Setter for <code>public.entity_instance.is_deleted</code>.
      */
-    public IEntityinstance setIsdeleted(Boolean value);
+    public IEntityInstance setIsDeleted(Boolean value);
 
     /**
-     * Getter for <code>public.entityinstance.isdeleted</code>.
+     * Getter for <code>public.entity_instance.is_deleted</code>.
      */
-    @Column(name = "isdeleted")
-    public Boolean getIsdeleted();
+    @Column(name = "is_deleted")
+    public Boolean getIsDeleted();
 
     // -------------------------------------------------------------------------
     // FROM and INTO
@@ -126,13 +133,13 @@ public interface IEntityinstance extends Serializable {
 
     /**
      * Load data from another generated Record/POJO implementing the common
-     * interface IEntityinstance
+     * interface IEntityInstance
      */
-    public void from(IEntityinstance from);
+    public void from(IEntityInstance from);
 
     /**
      * Copy data into another generated Record/POJO implementing the common
-     * interface IEntityinstance
+     * interface IEntityInstance
      */
-    public <E extends IEntityinstance> E into(E into);
+    public <E extends IEntityInstance> E into(E into);
 }

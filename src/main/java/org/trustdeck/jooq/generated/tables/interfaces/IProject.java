@@ -32,7 +32,7 @@ import java.time.LocalDate;
         @UniqueConstraint(name = "project_abbreviation_key", columnNames = { "abbreviation" })
     },
     indexes = {
-        @Index(name = "project_associated_entitytype_ids_gin_idx", columnList = "associated_entitytype_ids ASC")
+        @Index(name = "project_associated_entity_type_ids_gin_idx", columnList = "associated_entity_type_ids ASC")
     }
 )
 public interface IProject extends Serializable {
@@ -77,50 +77,50 @@ public interface IProject extends Serializable {
     public String getAbbreviation();
 
     /**
-     * Setter for <code>public.project.startdate</code>.
+     * Setter for <code>public.project.start_date</code>.
      */
-    public IProject setStartdate(LocalDate value);
+    public IProject setStartDate(LocalDate value);
 
     /**
-     * Getter for <code>public.project.startdate</code>.
+     * Getter for <code>public.project.start_date</code>.
      */
-    @Column(name = "startdate")
-    public LocalDate getStartdate();
+    @Column(name = "start_date")
+    public LocalDate getStartDate();
 
     /**
-     * Setter for <code>public.project.enddate</code>.
+     * Setter for <code>public.project.end_date</code>.
      */
-    public IProject setEnddate(LocalDate value);
+    public IProject setEndDate(LocalDate value);
 
     /**
-     * Getter for <code>public.project.enddate</code>.
+     * Getter for <code>public.project.end_date</code>.
      */
-    @Column(name = "enddate")
-    public LocalDate getEnddate();
+    @Column(name = "end_date")
+    public LocalDate getEndDate();
 
     /**
-     * Setter for <code>public.project.storeentities</code>.
+     * Setter for <code>public.project.store_entities</code>.
      */
-    public IProject setStoreentities(Boolean value);
+    public IProject setStoreEntities(Boolean value);
 
     /**
-     * Getter for <code>public.project.storeentities</code>.
+     * Getter for <code>public.project.store_entities</code>.
      */
-    @Column(name = "storeentities", nullable = false)
+    @Column(name = "store_entities", nullable = false)
     @NotNull
-    public Boolean getStoreentities();
+    public Boolean getStoreEntities();
 
     /**
-     * Setter for <code>public.project.createpseudonyms</code>.
+     * Setter for <code>public.project.store_pseudonyms</code>.
      */
-    public IProject setCreatepseudonyms(Boolean value);
+    public IProject setStorePseudonyms(Boolean value);
 
     /**
-     * Getter for <code>public.project.createpseudonyms</code>.
+     * Getter for <code>public.project.store_pseudonyms</code>.
      */
-    @Column(name = "createpseudonyms", nullable = false)
+    @Column(name = "store_pseudonyms", nullable = false)
     @NotNull
-    public Boolean getCreatepseudonyms();
+    public Boolean getStorePseudonyms();
 
     /**
      * Setter for <code>public.project.description</code>.
@@ -134,15 +134,15 @@ public interface IProject extends Serializable {
     public String getDescription();
 
     /**
-     * Setter for <code>public.project.associated_entitytype_ids</code>.
+     * Setter for <code>public.project.associated_entity_type_ids</code>.
      */
-    public IProject setAssociatedEntitytypeIds(Integer[] value);
+    public IProject setAssociatedEntityTypeIds(Integer[] value);
 
     /**
-     * Getter for <code>public.project.associated_entitytype_ids</code>.
+     * Getter for <code>public.project.associated_entity_type_ids</code>.
      */
-    @Column(name = "associated_entitytype_ids")
-    public Integer[] getAssociatedEntitytypeIds();
+    @Column(name = "associated_entity_type_ids")
+    public Integer[] getAssociatedEntityTypeIds();
 
     // -------------------------------------------------------------------------
     // FROM and INTO

@@ -11,12 +11,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.jooq.JSONB;
-import org.trustdeck.jooq.generated.tables.interfaces.IEntitytype;
+import org.trustdeck.jooq.generated.tables.interfaces.IEntityType;
 
 
 /**
@@ -25,65 +24,62 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntitytype;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "entitytype",
+    name = "entity_type",
     schema = "public",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "entitytype_name_version_projectid_key", columnNames = { "name", "version", "projectid" })
-    },
     indexes = {
-        @Index(name = "entitytype_fts_idx", columnList = "fts ASC"),
-        @Index(name = "entitytype_name_idx", columnList = "name ASC"),
-        @Index(name = "entitytype_typedef_gin_idx", columnList = "typedef ASC")
+        @Index(name = "entity_type_fts_idx", columnList = "full_text_search_vector ASC"),
+        @Index(name = "entity_type_name_idx", columnList = "name ASC"),
+        @Index(name = "entity_type_type_definition_gin_idx", columnList = "type_definition ASC")
     }
 )
-public class Entitytype implements IEntitytype {
+public class EntityType implements IEntityType {
 
     private static final long serialVersionUID = 1L;
 
     private Integer id;
     private String name;
     private String version;
-    private Boolean isdeprecated;
-    private Boolean isbasetype;
-    private JSONB typedef;
-    private Object fts;
-    private Integer projectid;
+    private Boolean isDeprecated;
+    private Boolean isBaseType;
+    private JSONB typeDefinition;
+    private Object fullTextSearchVector;
+    private Integer projectId;
 
-    public Entitytype() {}
+    public EntityType() {}
 
-    public Entitytype(IEntitytype value) {
+    public EntityType(IEntityType value) {
         this.id = value.getId();
         this.name = value.getName();
         this.version = value.getVersion();
-        this.isdeprecated = value.getIsdeprecated();
-        this.isbasetype = value.getIsbasetype();
-        this.typedef = value.getTypedef();
-        this.fts = value.getFts();
-        this.projectid = value.getProjectid();
+        this.isDeprecated = value.getIsDeprecated();
+        this.isBaseType = value.getIsBaseType();
+        this.typeDefinition = value.getTypeDefinition();
+        this.fullTextSearchVector = value.getFullTextSearchVector();
+        this.projectId = value.getProjectId();
     }
 
-    public Entitytype(
+    public EntityType(
         Integer id,
         String name,
         String version,
-        Boolean isdeprecated,
-        Boolean isbasetype,
-        JSONB typedef,
-        Object fts,
-        Integer projectid
+        Boolean isDeprecated,
+        Boolean isBaseType,
+        JSONB typeDefinition,
+        Object fullTextSearchVector,
+        Integer projectId
     ) {
         this.id = id;
         this.name = name;
         this.version = version;
-        this.isdeprecated = isdeprecated;
-        this.isbasetype = isbasetype;
-        this.typedef = typedef;
-        this.fts = fts;
-        this.projectid = projectid;
+        this.isDeprecated = isDeprecated;
+        this.isBaseType = isBaseType;
+        this.typeDefinition = typeDefinition;
+        this.fullTextSearchVector = fullTextSearchVector;
+        this.projectId = projectId;
     }
 
     /**
-     * Getter for <code>public.entitytype.id</code>.
+     * Getter for <code>public.entity_type.id</code>.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -94,16 +90,16 @@ public class Entitytype implements IEntitytype {
     }
 
     /**
-     * Setter for <code>public.entitytype.id</code>.
+     * Setter for <code>public.entity_type.id</code>.
      */
     @Override
-    public Entitytype setId(Integer id) {
+    public EntityType setId(Integer id) {
         this.id = id;
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.name</code>.
+     * Getter for <code>public.entity_type.name</code>.
      */
     @Column(name = "name", nullable = false, length = 255)
     @NotNull
@@ -114,16 +110,16 @@ public class Entitytype implements IEntitytype {
     }
 
     /**
-     * Setter for <code>public.entitytype.name</code>.
+     * Setter for <code>public.entity_type.name</code>.
      */
     @Override
-    public Entitytype setName(String name) {
+    public EntityType setName(String name) {
         this.name = name;
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.version</code>.
+     * Getter for <code>public.entity_type.version</code>.
      */
     @Column(name = "version", nullable = false, length = 255)
     @NotNull
@@ -134,68 +130,67 @@ public class Entitytype implements IEntitytype {
     }
 
     /**
-     * Setter for <code>public.entitytype.version</code>.
+     * Setter for <code>public.entity_type.version</code>.
      */
     @Override
-    public Entitytype setVersion(String version) {
+    public EntityType setVersion(String version) {
         this.version = version;
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.isdeprecated</code>.
+     * Getter for <code>public.entity_type.is_deprecated</code>.
      */
-    @Column(name = "isdeprecated", nullable = false)
-    @NotNull
+    @Column(name = "is_deprecated")
     @Override
-    public Boolean getIsdeprecated() {
-        return this.isdeprecated;
+    public Boolean getIsDeprecated() {
+        return this.isDeprecated;
     }
 
     /**
-     * Setter for <code>public.entitytype.isdeprecated</code>.
+     * Setter for <code>public.entity_type.is_deprecated</code>.
      */
     @Override
-    public Entitytype setIsdeprecated(Boolean isdeprecated) {
-        this.isdeprecated = isdeprecated;
+    public EntityType setIsDeprecated(Boolean isDeprecated) {
+        this.isDeprecated = isDeprecated;
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.isbasetype</code>.
+     * Getter for <code>public.entity_type.is_base_type</code>.
      */
-    @Column(name = "isbasetype", nullable = false)
+    @Column(name = "is_base_type", nullable = false)
     @NotNull
     @Override
-    public Boolean getIsbasetype() {
-        return this.isbasetype;
+    public Boolean getIsBaseType() {
+        return this.isBaseType;
     }
 
     /**
-     * Setter for <code>public.entitytype.isbasetype</code>.
+     * Setter for <code>public.entity_type.is_base_type</code>.
      */
     @Override
-    public Entitytype setIsbasetype(Boolean isbasetype) {
-        this.isbasetype = isbasetype;
+    public EntityType setIsBaseType(Boolean isBaseType) {
+        this.isBaseType = isBaseType;
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.typedef</code>.
+     * Getter for <code>public.entity_type.type_definition</code>.
      */
-    @Column(name = "typedef", nullable = false)
+    @Column(name = "type_definition", nullable = false)
     @NotNull
     @Override
-    public JSONB getTypedef() {
-        return this.typedef;
+    public JSONB getTypeDefinition() {
+        return this.typeDefinition;
     }
 
     /**
-     * Setter for <code>public.entitytype.typedef</code>.
+     * Setter for <code>public.entity_type.type_definition</code>.
      */
     @Override
-    public Entitytype setTypedef(JSONB typedef) {
-        this.typedef = typedef;
+    public EntityType setTypeDefinition(JSONB typeDefinition) {
+        this.typeDefinition = typeDefinition;
         return this;
     }
 
@@ -208,10 +203,10 @@ public class Entitytype implements IEntitytype {
      * configuration.
      */
     @Deprecated
-    @Column(name = "fts")
+    @Column(name = "full_text_search_vector")
     @Override
-    public Object getFts() {
-        return this.fts;
+    public Object getFullTextSearchVector() {
+        return this.fullTextSearchVector;
     }
 
     /**
@@ -224,26 +219,26 @@ public class Entitytype implements IEntitytype {
      */
     @Deprecated
     @Override
-    public Entitytype setFts(Object fts) {
-        this.fts = fts;
+    public EntityType setFullTextSearchVector(Object fullTextSearchVector) {
+        this.fullTextSearchVector = fullTextSearchVector;
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.projectid</code>.
+     * Getter for <code>public.entity_type.project_id</code>.
      */
-    @Column(name = "projectid")
+    @Column(name = "project_id")
     @Override
-    public Integer getProjectid() {
-        return this.projectid;
+    public Integer getProjectId() {
+        return this.projectId;
     }
 
     /**
-     * Setter for <code>public.entitytype.projectid</code>.
+     * Setter for <code>public.entity_type.project_id</code>.
      */
     @Override
-    public Entitytype setProjectid(Integer projectid) {
-        this.projectid = projectid;
+    public EntityType setProjectId(Integer projectId) {
+        this.projectId = projectId;
         return this;
     }
 
@@ -255,7 +250,7 @@ public class Entitytype implements IEntitytype {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        final Entitytype other = (Entitytype) obj;
+        final EntityType other = (EntityType) obj;
         if (this.id == null) {
             if (other.id != null)
                 return false;
@@ -274,35 +269,35 @@ public class Entitytype implements IEntitytype {
         }
         else if (!this.version.equals(other.version))
             return false;
-        if (this.isdeprecated == null) {
-            if (other.isdeprecated != null)
+        if (this.isDeprecated == null) {
+            if (other.isDeprecated != null)
                 return false;
         }
-        else if (!this.isdeprecated.equals(other.isdeprecated))
+        else if (!this.isDeprecated.equals(other.isDeprecated))
             return false;
-        if (this.isbasetype == null) {
-            if (other.isbasetype != null)
+        if (this.isBaseType == null) {
+            if (other.isBaseType != null)
                 return false;
         }
-        else if (!this.isbasetype.equals(other.isbasetype))
+        else if (!this.isBaseType.equals(other.isBaseType))
             return false;
-        if (this.typedef == null) {
-            if (other.typedef != null)
+        if (this.typeDefinition == null) {
+            if (other.typeDefinition != null)
                 return false;
         }
-        else if (!this.typedef.equals(other.typedef))
+        else if (!this.typeDefinition.equals(other.typeDefinition))
             return false;
-        if (this.fts == null) {
-            if (other.fts != null)
+        if (this.fullTextSearchVector == null) {
+            if (other.fullTextSearchVector != null)
                 return false;
         }
-        else if (!this.fts.equals(other.fts))
+        else if (!this.fullTextSearchVector.equals(other.fullTextSearchVector))
             return false;
-        if (this.projectid == null) {
-            if (other.projectid != null)
+        if (this.projectId == null) {
+            if (other.projectId != null)
                 return false;
         }
-        else if (!this.projectid.equals(other.projectid))
+        else if (!this.projectId.equals(other.projectId))
             return false;
         return true;
     }
@@ -314,26 +309,26 @@ public class Entitytype implements IEntitytype {
         result = prime * result + ((this.id == null) ? 0 : this.id.hashCode());
         result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
         result = prime * result + ((this.version == null) ? 0 : this.version.hashCode());
-        result = prime * result + ((this.isdeprecated == null) ? 0 : this.isdeprecated.hashCode());
-        result = prime * result + ((this.isbasetype == null) ? 0 : this.isbasetype.hashCode());
-        result = prime * result + ((this.typedef == null) ? 0 : this.typedef.hashCode());
-        result = prime * result + ((this.fts == null) ? 0 : this.fts.hashCode());
-        result = prime * result + ((this.projectid == null) ? 0 : this.projectid.hashCode());
+        result = prime * result + ((this.isDeprecated == null) ? 0 : this.isDeprecated.hashCode());
+        result = prime * result + ((this.isBaseType == null) ? 0 : this.isBaseType.hashCode());
+        result = prime * result + ((this.typeDefinition == null) ? 0 : this.typeDefinition.hashCode());
+        result = prime * result + ((this.fullTextSearchVector == null) ? 0 : this.fullTextSearchVector.hashCode());
+        result = prime * result + ((this.projectId == null) ? 0 : this.projectId.hashCode());
         return result;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("Entitytype (");
+        StringBuilder sb = new StringBuilder("EntityType (");
 
         sb.append(id);
         sb.append(", ").append(name);
         sb.append(", ").append(version);
-        sb.append(", ").append(isdeprecated);
-        sb.append(", ").append(isbasetype);
-        sb.append(", ").append(typedef);
-        sb.append(", ").append(fts);
-        sb.append(", ").append(projectid);
+        sb.append(", ").append(isDeprecated);
+        sb.append(", ").append(isBaseType);
+        sb.append(", ").append(typeDefinition);
+        sb.append(", ").append(fullTextSearchVector);
+        sb.append(", ").append(projectId);
 
         sb.append(")");
         return sb.toString();
@@ -344,19 +339,19 @@ public class Entitytype implements IEntitytype {
     // -------------------------------------------------------------------------
 
     @Override
-    public void from(IEntitytype from) {
+    public void from(IEntityType from) {
         setId(from.getId());
         setName(from.getName());
         setVersion(from.getVersion());
-        setIsdeprecated(from.getIsdeprecated());
-        setIsbasetype(from.getIsbasetype());
-        setTypedef(from.getTypedef());
-        setFts(from.getFts());
-        setProjectid(from.getProjectid());
+        setIsDeprecated(from.getIsDeprecated());
+        setIsBaseType(from.getIsBaseType());
+        setTypeDefinition(from.getTypeDefinition());
+        setFullTextSearchVector(from.getFullTextSearchVector());
+        setProjectId(from.getProjectId());
     }
 
     @Override
-    public <E extends IEntitytype> E into(E into) {
+    public <E extends IEntityType> E into(E into) {
         into.from(this);
         return into;
     }

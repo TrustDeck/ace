@@ -72,24 +72,24 @@ public class Project extends TableImpl<ProjectRecord> {
     public final TableField<ProjectRecord, String> ABBREVIATION = createField(DSL.name("abbreviation"), SQLDataType.VARCHAR(50).nullable(false), this, "");
 
     /**
-     * The column <code>public.project.startdate</code>.
+     * The column <code>public.project.start_date</code>.
      */
-    public final TableField<ProjectRecord, LocalDate> STARTDATE = createField(DSL.name("startdate"), SQLDataType.LOCALDATE, this, "");
+    public final TableField<ProjectRecord, LocalDate> START_DATE = createField(DSL.name("start_date"), SQLDataType.LOCALDATE, this, "");
 
     /**
-     * The column <code>public.project.enddate</code>.
+     * The column <code>public.project.end_date</code>.
      */
-    public final TableField<ProjectRecord, LocalDate> ENDDATE = createField(DSL.name("enddate"), SQLDataType.LOCALDATE, this, "");
+    public final TableField<ProjectRecord, LocalDate> END_DATE = createField(DSL.name("end_date"), SQLDataType.LOCALDATE, this, "");
 
     /**
-     * The column <code>public.project.storeentities</code>.
+     * The column <code>public.project.store_entities</code>.
      */
-    public final TableField<ProjectRecord, Boolean> STOREENTITIES = createField(DSL.name("storeentities"), SQLDataType.BOOLEAN.nullable(false), this, "");
+    public final TableField<ProjectRecord, Boolean> STORE_ENTITIES = createField(DSL.name("store_entities"), SQLDataType.BOOLEAN.nullable(false), this, "");
 
     /**
-     * The column <code>public.project.createpseudonyms</code>.
+     * The column <code>public.project.store_pseudonyms</code>.
      */
-    public final TableField<ProjectRecord, Boolean> CREATEPSEUDONYMS = createField(DSL.name("createpseudonyms"), SQLDataType.BOOLEAN.nullable(false), this, "");
+    public final TableField<ProjectRecord, Boolean> STORE_PSEUDONYMS = createField(DSL.name("store_pseudonyms"), SQLDataType.BOOLEAN.nullable(false), this, "");
 
     /**
      * The column <code>public.project.description</code>.
@@ -97,9 +97,9 @@ public class Project extends TableImpl<ProjectRecord> {
     public final TableField<ProjectRecord, String> DESCRIPTION = createField(DSL.name("description"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>public.project.associated_entitytype_ids</code>.
+     * The column <code>public.project.associated_entity_type_ids</code>.
      */
-    public final TableField<ProjectRecord, Integer[]> ASSOCIATED_ENTITYTYPE_IDS = createField(DSL.name("associated_entitytype_ids"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("'{}'::integer[]"), SQLDataType.INTEGER)).array(), this, "");
+    public final TableField<ProjectRecord, Integer[]> ASSOCIATED_ENTITY_TYPE_IDS = createField(DSL.name("associated_entity_type_ids"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("'{}'::integer[]"), SQLDataType.INTEGER)).array(), this, "");
 
     private Project(Name alias, Table<ProjectRecord> aliased) {
         this(alias, aliased, null);
@@ -141,7 +141,7 @@ public class Project extends TableImpl<ProjectRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.PROJECT_ASSOCIATED_ENTITYTYPE_IDS_GIN_IDX);
+        return Arrays.asList(Indexes.PROJECT_ASSOCIATED_ENTITY_TYPE_IDS_GIN_IDX);
     }
 
     @Override
@@ -162,7 +162,7 @@ public class Project extends TableImpl<ProjectRecord> {
     @Override
     public List<Check<ProjectRecord>> getChecks() {
         return Arrays.asList(
-            Internal.createCheck(this, DSL.name("project_dates_check"), "(((enddate IS NULL) OR (startdate IS NULL) OR (enddate >= startdate)))", true)
+            Internal.createCheck(this, DSL.name("project_dates_check"), "(((end_date IS NULL) OR (end_date >= start_date)))", true)
         );
     }
 

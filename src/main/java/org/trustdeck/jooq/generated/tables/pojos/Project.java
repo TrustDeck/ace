@@ -34,7 +34,7 @@ import org.trustdeck.jooq.generated.tables.interfaces.IProject;
         @UniqueConstraint(name = "project_abbreviation_key", columnNames = { "abbreviation" })
     },
     indexes = {
-        @Index(name = "project_associated_entitytype_ids_gin_idx", columnList = "associated_entitytype_ids ASC")
+        @Index(name = "project_associated_entity_type_ids_gin_idx", columnList = "associated_entity_type_ids ASC")
     }
 )
 public class Project implements IProject {
@@ -44,12 +44,12 @@ public class Project implements IProject {
     private Integer id;
     private String name;
     private String abbreviation;
-    private LocalDate startdate;
-    private LocalDate enddate;
-    private Boolean storeentities;
-    private Boolean createpseudonyms;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private Boolean storeEntities;
+    private Boolean storePseudonyms;
     private String description;
-    private Integer[] associatedEntitytypeIds;
+    private Integer[] associatedEntityTypeIds;
 
     public Project() {}
 
@@ -57,34 +57,34 @@ public class Project implements IProject {
         this.id = value.getId();
         this.name = value.getName();
         this.abbreviation = value.getAbbreviation();
-        this.startdate = value.getStartdate();
-        this.enddate = value.getEnddate();
-        this.storeentities = value.getStoreentities();
-        this.createpseudonyms = value.getCreatepseudonyms();
+        this.startDate = value.getStartDate();
+        this.endDate = value.getEndDate();
+        this.storeEntities = value.getStoreEntities();
+        this.storePseudonyms = value.getStorePseudonyms();
         this.description = value.getDescription();
-        this.associatedEntitytypeIds = value.getAssociatedEntitytypeIds();
+        this.associatedEntityTypeIds = value.getAssociatedEntityTypeIds();
     }
 
     public Project(
         Integer id,
         String name,
         String abbreviation,
-        LocalDate startdate,
-        LocalDate enddate,
-        Boolean storeentities,
-        Boolean createpseudonyms,
+        LocalDate startDate,
+        LocalDate endDate,
+        Boolean storeEntities,
+        Boolean storePseudonyms,
         String description,
-        Integer[] associatedEntitytypeIds
+        Integer[] associatedEntityTypeIds
     ) {
         this.id = id;
         this.name = name;
         this.abbreviation = abbreviation;
-        this.startdate = startdate;
-        this.enddate = enddate;
-        this.storeentities = storeentities;
-        this.createpseudonyms = createpseudonyms;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.storeEntities = storeEntities;
+        this.storePseudonyms = storePseudonyms;
         this.description = description;
-        this.associatedEntitytypeIds = associatedEntitytypeIds;
+        this.associatedEntityTypeIds = associatedEntityTypeIds;
     }
 
     /**
@@ -148,76 +148,76 @@ public class Project implements IProject {
     }
 
     /**
-     * Getter for <code>public.project.startdate</code>.
+     * Getter for <code>public.project.start_date</code>.
      */
-    @Column(name = "startdate")
+    @Column(name = "start_date")
     @Override
-    public LocalDate getStartdate() {
-        return this.startdate;
+    public LocalDate getStartDate() {
+        return this.startDate;
     }
 
     /**
-     * Setter for <code>public.project.startdate</code>.
+     * Setter for <code>public.project.start_date</code>.
      */
     @Override
-    public Project setStartdate(LocalDate startdate) {
-        this.startdate = startdate;
+    public Project setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
         return this;
     }
 
     /**
-     * Getter for <code>public.project.enddate</code>.
+     * Getter for <code>public.project.end_date</code>.
      */
-    @Column(name = "enddate")
+    @Column(name = "end_date")
     @Override
-    public LocalDate getEnddate() {
-        return this.enddate;
+    public LocalDate getEndDate() {
+        return this.endDate;
     }
 
     /**
-     * Setter for <code>public.project.enddate</code>.
+     * Setter for <code>public.project.end_date</code>.
      */
     @Override
-    public Project setEnddate(LocalDate enddate) {
-        this.enddate = enddate;
+    public Project setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
         return this;
     }
 
     /**
-     * Getter for <code>public.project.storeentities</code>.
+     * Getter for <code>public.project.store_entities</code>.
      */
-    @Column(name = "storeentities", nullable = false)
+    @Column(name = "store_entities", nullable = false)
     @NotNull
     @Override
-    public Boolean getStoreentities() {
-        return this.storeentities;
+    public Boolean getStoreEntities() {
+        return this.storeEntities;
     }
 
     /**
-     * Setter for <code>public.project.storeentities</code>.
+     * Setter for <code>public.project.store_entities</code>.
      */
     @Override
-    public Project setStoreentities(Boolean storeentities) {
-        this.storeentities = storeentities;
+    public Project setStoreEntities(Boolean storeEntities) {
+        this.storeEntities = storeEntities;
         return this;
     }
 
     /**
-     * Getter for <code>public.project.createpseudonyms</code>.
+     * Getter for <code>public.project.store_pseudonyms</code>.
      */
-    @Column(name = "createpseudonyms", nullable = false)
+    @Column(name = "store_pseudonyms", nullable = false)
     @NotNull
     @Override
-    public Boolean getCreatepseudonyms() {
-        return this.createpseudonyms;
+    public Boolean getStorePseudonyms() {
+        return this.storePseudonyms;
     }
 
     /**
-     * Setter for <code>public.project.createpseudonyms</code>.
+     * Setter for <code>public.project.store_pseudonyms</code>.
      */
     @Override
-    public Project setCreatepseudonyms(Boolean createpseudonyms) {
-        this.createpseudonyms = createpseudonyms;
+    public Project setStorePseudonyms(Boolean storePseudonyms) {
+        this.storePseudonyms = storePseudonyms;
         return this;
     }
 
@@ -240,20 +240,20 @@ public class Project implements IProject {
     }
 
     /**
-     * Getter for <code>public.project.associated_entitytype_ids</code>.
+     * Getter for <code>public.project.associated_entity_type_ids</code>.
      */
-    @Column(name = "associated_entitytype_ids")
+    @Column(name = "associated_entity_type_ids")
     @Override
-    public Integer[] getAssociatedEntitytypeIds() {
-        return this.associatedEntitytypeIds;
+    public Integer[] getAssociatedEntityTypeIds() {
+        return this.associatedEntityTypeIds;
     }
 
     /**
-     * Setter for <code>public.project.associated_entitytype_ids</code>.
+     * Setter for <code>public.project.associated_entity_type_ids</code>.
      */
     @Override
-    public Project setAssociatedEntitytypeIds(Integer[] associatedEntitytypeIds) {
-        this.associatedEntitytypeIds = associatedEntitytypeIds;
+    public Project setAssociatedEntityTypeIds(Integer[] associatedEntityTypeIds) {
+        this.associatedEntityTypeIds = associatedEntityTypeIds;
         return this;
     }
 
@@ -284,29 +284,29 @@ public class Project implements IProject {
         }
         else if (!this.abbreviation.equals(other.abbreviation))
             return false;
-        if (this.startdate == null) {
-            if (other.startdate != null)
+        if (this.startDate == null) {
+            if (other.startDate != null)
                 return false;
         }
-        else if (!this.startdate.equals(other.startdate))
+        else if (!this.startDate.equals(other.startDate))
             return false;
-        if (this.enddate == null) {
-            if (other.enddate != null)
+        if (this.endDate == null) {
+            if (other.endDate != null)
                 return false;
         }
-        else if (!this.enddate.equals(other.enddate))
+        else if (!this.endDate.equals(other.endDate))
             return false;
-        if (this.storeentities == null) {
-            if (other.storeentities != null)
+        if (this.storeEntities == null) {
+            if (other.storeEntities != null)
                 return false;
         }
-        else if (!this.storeentities.equals(other.storeentities))
+        else if (!this.storeEntities.equals(other.storeEntities))
             return false;
-        if (this.createpseudonyms == null) {
-            if (other.createpseudonyms != null)
+        if (this.storePseudonyms == null) {
+            if (other.storePseudonyms != null)
                 return false;
         }
-        else if (!this.createpseudonyms.equals(other.createpseudonyms))
+        else if (!this.storePseudonyms.equals(other.storePseudonyms))
             return false;
         if (this.description == null) {
             if (other.description != null)
@@ -314,11 +314,11 @@ public class Project implements IProject {
         }
         else if (!this.description.equals(other.description))
             return false;
-        if (this.associatedEntitytypeIds == null) {
-            if (other.associatedEntitytypeIds != null)
+        if (this.associatedEntityTypeIds == null) {
+            if (other.associatedEntityTypeIds != null)
                 return false;
         }
-        else if (!Arrays.deepEquals(this.associatedEntitytypeIds, other.associatedEntitytypeIds))
+        else if (!Arrays.deepEquals(this.associatedEntityTypeIds, other.associatedEntityTypeIds))
             return false;
         return true;
     }
@@ -330,12 +330,12 @@ public class Project implements IProject {
         result = prime * result + ((this.id == null) ? 0 : this.id.hashCode());
         result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
         result = prime * result + ((this.abbreviation == null) ? 0 : this.abbreviation.hashCode());
-        result = prime * result + ((this.startdate == null) ? 0 : this.startdate.hashCode());
-        result = prime * result + ((this.enddate == null) ? 0 : this.enddate.hashCode());
-        result = prime * result + ((this.storeentities == null) ? 0 : this.storeentities.hashCode());
-        result = prime * result + ((this.createpseudonyms == null) ? 0 : this.createpseudonyms.hashCode());
+        result = prime * result + ((this.startDate == null) ? 0 : this.startDate.hashCode());
+        result = prime * result + ((this.endDate == null) ? 0 : this.endDate.hashCode());
+        result = prime * result + ((this.storeEntities == null) ? 0 : this.storeEntities.hashCode());
+        result = prime * result + ((this.storePseudonyms == null) ? 0 : this.storePseudonyms.hashCode());
         result = prime * result + ((this.description == null) ? 0 : this.description.hashCode());
-        result = prime * result + ((this.associatedEntitytypeIds == null) ? 0 : Arrays.deepHashCode(this.associatedEntitytypeIds));
+        result = prime * result + ((this.associatedEntityTypeIds == null) ? 0 : Arrays.deepHashCode(this.associatedEntityTypeIds));
         return result;
     }
 
@@ -346,12 +346,12 @@ public class Project implements IProject {
         sb.append(id);
         sb.append(", ").append(name);
         sb.append(", ").append(abbreviation);
-        sb.append(", ").append(startdate);
-        sb.append(", ").append(enddate);
-        sb.append(", ").append(storeentities);
-        sb.append(", ").append(createpseudonyms);
+        sb.append(", ").append(startDate);
+        sb.append(", ").append(endDate);
+        sb.append(", ").append(storeEntities);
+        sb.append(", ").append(storePseudonyms);
         sb.append(", ").append(description);
-        sb.append(", ").append(Arrays.deepToString(associatedEntitytypeIds));
+        sb.append(", ").append(Arrays.deepToString(associatedEntityTypeIds));
 
         sb.append(")");
         return sb.toString();
@@ -366,12 +366,12 @@ public class Project implements IProject {
         setId(from.getId());
         setName(from.getName());
         setAbbreviation(from.getAbbreviation());
-        setStartdate(from.getStartdate());
-        setEnddate(from.getEnddate());
-        setStoreentities(from.getStoreentities());
-        setCreatepseudonyms(from.getCreatepseudonyms());
+        setStartDate(from.getStartDate());
+        setEndDate(from.getEndDate());
+        setStoreEntities(from.getStoreEntities());
+        setStorePseudonyms(from.getStorePseudonyms());
         setDescription(from.getDescription());
-        setAssociatedEntitytypeIds(from.getAssociatedEntitytypeIds());
+        setAssociatedEntityTypeIds(from.getAssociatedEntityTypeIds());
     }
 
     @Override

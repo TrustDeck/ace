@@ -6,9 +6,6 @@ package org.trustdeck.jooq.generated.tables.records;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -18,12 +15,12 @@ import java.util.UUID;
 
 import org.jooq.Field;
 import org.jooq.JSONB;
-import org.jooq.Record1;
-import org.jooq.Record6;
-import org.jooq.Row6;
+import org.jooq.Record2;
+import org.jooq.Record7;
+import org.jooq.Row7;
 import org.jooq.impl.UpdatableRecordImpl;
-import org.trustdeck.jooq.generated.tables.Entityinstance;
-import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
+import org.trustdeck.jooq.generated.tables.EntityInstance;
+import org.trustdeck.jooq.generated.tables.interfaces.IEntityInstance;
 
 
 /**
@@ -32,34 +29,32 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntityinstance;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "entityinstance",
+    name = "entity_instance",
     schema = "public",
     uniqueConstraints = {
-        @UniqueConstraint(name = "entityinstance_uuid_unique", columnNames = { "uuid" })
+        @UniqueConstraint(name = "entity_instance_trustdeck_id_unique", columnNames = { "entity_type_id", "trustdeck_id" })
     },
     indexes = {
-        @Index(name = "entityinstance_entitytype_id_idx", columnList = "entitytypeid ASC"),
-        @Index(name = "entityinstance_fts_active_gin_idx", columnList = "fts ASC")
+        @Index(name = "entity_instance_et_proj_id_idx", columnList = "entity_type_id ASC, project_id ASC, id ASC"),
+        @Index(name = "entity_instance_fts_active_gin_idx", columnList = "full_text_search_vector ASC")
     }
 )
-public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceRecord> implements Record6<Long, UUID, Integer, JSONB, Object, Boolean>, IEntityinstance {
+public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceRecord> implements Record7<Long, UUID, Integer, Integer, JSONB, Object, Boolean>, IEntityInstance {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.entityinstance.id</code>.
+     * Setter for <code>public.entity_instance.id</code>.
      */
     @Override
-    public EntityinstanceRecord setId(Long value) {
+    public EntityInstanceRecord setId(Long value) {
         set(0, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entityinstance.id</code>.
+     * Getter for <code>public.entity_instance.id</code>.
      */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     @Override
     public Long getId() {
@@ -67,77 +62,81 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     }
 
     /**
-     * Setter for <code>public.entityinstance.uuid</code>.
+     * Setter for <code>public.entity_instance.trustdeck_id</code>.
      */
     @Override
-    public EntityinstanceRecord setUuid(UUID value) {
+    public EntityInstanceRecord setTrustdeckId(UUID value) {
         set(1, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entityinstance.uuid</code>.
+     * Getter for <code>public.entity_instance.trustdeck_id</code>.
      */
-    @Column(name = "uuid")
+    @Column(name = "trustdeck_id")
     @Override
-    public UUID getUuid() {
+    public UUID getTrustdeckId() {
         return (UUID) get(1);
     }
 
     /**
-     * Setter for <code>public.entityinstance.entitytypeid</code>.
+     * Setter for <code>public.entity_instance.project_id</code>.
      */
     @Override
-    public EntityinstanceRecord setEntitytypeid(Integer value) {
+    public EntityInstanceRecord setProjectId(Integer value) {
         set(2, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entityinstance.entitytypeid</code>.
+     * Getter for <code>public.entity_instance.project_id</code>.
      */
-    @Column(name = "entitytypeid", nullable = false)
+    @Column(name = "project_id", nullable = false)
     @NotNull
     @Override
-    public Integer getEntitytypeid() {
+    public Integer getProjectId() {
         return (Integer) get(2);
     }
 
     /**
-     * Setter for <code>public.entityinstance.data</code>.
+     * Setter for <code>public.entity_instance.entity_type_id</code>.
      */
     @Override
-    public EntityinstanceRecord setData(JSONB value) {
+    public EntityInstanceRecord setEntityTypeId(Integer value) {
         set(3, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entityinstance.data</code>.
+     * Getter for <code>public.entity_instance.entity_type_id</code>.
      */
-    @Column(name = "data", nullable = false)
+    @Column(name = "entity_type_id", nullable = false)
     @NotNull
     @Override
-    public JSONB getData() {
-        return (JSONB) get(3);
+    public Integer getEntityTypeId() {
+        return (Integer) get(3);
     }
 
     /**
-     * @deprecated Unknown data type. If this is a qualified, user-defined type,
-     * it may have been excluded from code generation. If this is a built-in
-     * type, you can define an explicit {@link org.jooq.Binding} to specify how
-     * this type should be handled. Deprecation can be turned off using
-     * {@literal <deprecationOnUnknownTypes/>} in your code generator
-     * configuration.
+     * Setter for <code>public.entity_instance.data</code>.
      */
-    @Deprecated
     @Override
-    public EntityinstanceRecord setFts(Object value) {
+    public EntityInstanceRecord setData(JSONB value) {
         set(4, value);
         return this;
     }
 
     /**
+     * Getter for <code>public.entity_instance.data</code>.
+     */
+    @Column(name = "data", nullable = false)
+    @NotNull
+    @Override
+    public JSONB getData() {
+        return (JSONB) get(4);
+    }
+
+    /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
      * it may have been excluded from code generation. If this is a built-in
      * type, you can define an explicit {@link org.jooq.Binding} to specify how
@@ -146,28 +145,43 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
      * configuration.
      */
     @Deprecated
-    @Column(name = "fts")
     @Override
-    public Object getFts() {
-        return get(4);
-    }
-
-    /**
-     * Setter for <code>public.entityinstance.isdeleted</code>.
-     */
-    @Override
-    public EntityinstanceRecord setIsdeleted(Boolean value) {
+    public EntityInstanceRecord setFullTextSearchVector(Object value) {
         set(5, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entityinstance.isdeleted</code>.
+     * @deprecated Unknown data type. If this is a qualified, user-defined type,
+     * it may have been excluded from code generation. If this is a built-in
+     * type, you can define an explicit {@link org.jooq.Binding} to specify how
+     * this type should be handled. Deprecation can be turned off using
+     * {@literal <deprecationOnUnknownTypes/>} in your code generator
+     * configuration.
      */
-    @Column(name = "isdeleted")
+    @Deprecated
+    @Column(name = "full_text_search_vector")
     @Override
-    public Boolean getIsdeleted() {
-        return (Boolean) get(5);
+    public Object getFullTextSearchVector() {
+        return get(5);
+    }
+
+    /**
+     * Setter for <code>public.entity_instance.is_deleted</code>.
+     */
+    @Override
+    public EntityInstanceRecord setIsDeleted(Boolean value) {
+        set(6, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entity_instance.is_deleted</code>.
+     */
+    @Column(name = "is_deleted")
+    @Override
+    public Boolean getIsDeleted() {
+        return (Boolean) get(6);
     }
 
     // -------------------------------------------------------------------------
@@ -175,42 +189,47 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     // -------------------------------------------------------------------------
 
     @Override
-    public Record1<Long> key() {
-        return (Record1) super.key();
+    public Record2<Integer, Long> key() {
+        return (Record2) super.key();
     }
 
     // -------------------------------------------------------------------------
-    // Record6 type implementation
+    // Record7 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row6<Long, UUID, Integer, JSONB, Object, Boolean> fieldsRow() {
-        return (Row6) super.fieldsRow();
+    public Row7<Long, UUID, Integer, Integer, JSONB, Object, Boolean> fieldsRow() {
+        return (Row7) super.fieldsRow();
     }
 
     @Override
-    public Row6<Long, UUID, Integer, JSONB, Object, Boolean> valuesRow() {
-        return (Row6) super.valuesRow();
+    public Row7<Long, UUID, Integer, Integer, JSONB, Object, Boolean> valuesRow() {
+        return (Row7) super.valuesRow();
     }
 
     @Override
     public Field<Long> field1() {
-        return Entityinstance.ENTITYINSTANCE.ID;
+        return EntityInstance.ENTITY_INSTANCE.ID;
     }
 
     @Override
     public Field<UUID> field2() {
-        return Entityinstance.ENTITYINSTANCE.UUID;
+        return EntityInstance.ENTITY_INSTANCE.TRUSTDECK_ID;
     }
 
     @Override
     public Field<Integer> field3() {
-        return Entityinstance.ENTITYINSTANCE.ENTITYTYPEID;
+        return EntityInstance.ENTITY_INSTANCE.PROJECT_ID;
     }
 
     @Override
-    public Field<JSONB> field4() {
-        return Entityinstance.ENTITYINSTANCE.DATA;
+    public Field<Integer> field4() {
+        return EntityInstance.ENTITY_INSTANCE.ENTITY_TYPE_ID;
+    }
+
+    @Override
+    public Field<JSONB> field5() {
+        return EntityInstance.ENTITY_INSTANCE.DATA;
     }
 
     /**
@@ -223,13 +242,13 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
      */
     @Deprecated
     @Override
-    public Field<Object> field5() {
-        return Entityinstance.ENTITYINSTANCE.FTS;
+    public Field<Object> field6() {
+        return EntityInstance.ENTITY_INSTANCE.FULL_TEXT_SEARCH_VECTOR;
     }
 
     @Override
-    public Field<Boolean> field6() {
-        return Entityinstance.ENTITYINSTANCE.ISDELETED;
+    public Field<Boolean> field7() {
+        return EntityInstance.ENTITY_INSTANCE.IS_DELETED;
     }
 
     @Override
@@ -239,16 +258,21 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
 
     @Override
     public UUID component2() {
-        return getUuid();
+        return getTrustdeckId();
     }
 
     @Override
     public Integer component3() {
-        return getEntitytypeid();
+        return getProjectId();
     }
 
     @Override
-    public JSONB component4() {
+    public Integer component4() {
+        return getEntityTypeId();
+    }
+
+    @Override
+    public JSONB component5() {
         return getData();
     }
 
@@ -262,13 +286,13 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
      */
     @Deprecated
     @Override
-    public Object component5() {
-        return getFts();
+    public Object component6() {
+        return getFullTextSearchVector();
     }
 
     @Override
-    public Boolean component6() {
-        return getIsdeleted();
+    public Boolean component7() {
+        return getIsDeleted();
     }
 
     @Override
@@ -278,16 +302,21 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
 
     @Override
     public UUID value2() {
-        return getUuid();
+        return getTrustdeckId();
     }
 
     @Override
     public Integer value3() {
-        return getEntitytypeid();
+        return getProjectId();
     }
 
     @Override
-    public JSONB value4() {
+    public Integer value4() {
+        return getEntityTypeId();
+    }
+
+    @Override
+    public JSONB value5() {
         return getData();
     }
 
@@ -301,35 +330,41 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
      */
     @Deprecated
     @Override
-    public Object value5() {
-        return getFts();
+    public Object value6() {
+        return getFullTextSearchVector();
     }
 
     @Override
-    public Boolean value6() {
-        return getIsdeleted();
+    public Boolean value7() {
+        return getIsDeleted();
     }
 
     @Override
-    public EntityinstanceRecord value1(Long value) {
+    public EntityInstanceRecord value1(Long value) {
         setId(value);
         return this;
     }
 
     @Override
-    public EntityinstanceRecord value2(UUID value) {
-        setUuid(value);
+    public EntityInstanceRecord value2(UUID value) {
+        setTrustdeckId(value);
         return this;
     }
 
     @Override
-    public EntityinstanceRecord value3(Integer value) {
-        setEntitytypeid(value);
+    public EntityInstanceRecord value3(Integer value) {
+        setProjectId(value);
         return this;
     }
 
     @Override
-    public EntityinstanceRecord value4(JSONB value) {
+    public EntityInstanceRecord value4(Integer value) {
+        setEntityTypeId(value);
+        return this;
+    }
+
+    @Override
+    public EntityInstanceRecord value5(JSONB value) {
         setData(value);
         return this;
     }
@@ -344,25 +379,26 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
      */
     @Deprecated
     @Override
-    public EntityinstanceRecord value5(Object value) {
-        setFts(value);
+    public EntityInstanceRecord value6(Object value) {
+        setFullTextSearchVector(value);
         return this;
     }
 
     @Override
-    public EntityinstanceRecord value6(Boolean value) {
-        setIsdeleted(value);
+    public EntityInstanceRecord value7(Boolean value) {
+        setIsDeleted(value);
         return this;
     }
 
     @Override
-    public EntityinstanceRecord values(Long value1, UUID value2, Integer value3, JSONB value4, Object value5, Boolean value6) {
+    public EntityInstanceRecord values(Long value1, UUID value2, Integer value3, Integer value4, JSONB value5, Object value6, Boolean value7) {
         value1(value1);
         value2(value2);
         value3(value3);
         value4(value4);
         value5(value5);
         value6(value6);
+        value7(value7);
         return this;
     }
 
@@ -371,18 +407,19 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     // -------------------------------------------------------------------------
 
     @Override
-    public void from(IEntityinstance from) {
+    public void from(IEntityInstance from) {
         setId(from.getId());
-        setUuid(from.getUuid());
-        setEntitytypeid(from.getEntitytypeid());
+        setTrustdeckId(from.getTrustdeckId());
+        setProjectId(from.getProjectId());
+        setEntityTypeId(from.getEntityTypeId());
         setData(from.getData());
-        setFts(from.getFts());
-        setIsdeleted(from.getIsdeleted());
+        setFullTextSearchVector(from.getFullTextSearchVector());
+        setIsDeleted(from.getIsDeleted());
         resetChangedOnNotNull();
     }
 
     @Override
-    public <E extends IEntityinstance> E into(E into) {
+    public <E extends IEntityInstance> E into(E into) {
         into.from(this);
         return into;
     }
@@ -392,40 +429,42 @@ public class EntityinstanceRecord extends UpdatableRecordImpl<EntityinstanceReco
     // -------------------------------------------------------------------------
 
     /**
-     * Create a detached EntityinstanceRecord
+     * Create a detached EntityInstanceRecord
      */
-    public EntityinstanceRecord() {
-        super(Entityinstance.ENTITYINSTANCE);
+    public EntityInstanceRecord() {
+        super(EntityInstance.ENTITY_INSTANCE);
     }
 
     /**
-     * Create a detached, initialised EntityinstanceRecord
+     * Create a detached, initialised EntityInstanceRecord
      */
-    public EntityinstanceRecord(Long id, UUID uuid, Integer entitytypeid, JSONB data, Object fts, Boolean isdeleted) {
-        super(Entityinstance.ENTITYINSTANCE);
+    public EntityInstanceRecord(Long id, UUID trustdeckId, Integer projectId, Integer entityTypeId, JSONB data, Object fullTextSearchVector, Boolean isDeleted) {
+        super(EntityInstance.ENTITY_INSTANCE);
 
         setId(id);
-        setUuid(uuid);
-        setEntitytypeid(entitytypeid);
+        setTrustdeckId(trustdeckId);
+        setProjectId(projectId);
+        setEntityTypeId(entityTypeId);
         setData(data);
-        setFts(fts);
-        setIsdeleted(isdeleted);
+        setFullTextSearchVector(fullTextSearchVector);
+        setIsDeleted(isDeleted);
         resetChangedOnNotNull();
     }
 
     /**
-     * Create a detached, initialised EntityinstanceRecord
+     * Create a detached, initialised EntityInstanceRecord
      */
-    public EntityinstanceRecord(org.trustdeck.jooq.generated.tables.pojos.Entityinstance value) {
-        super(Entityinstance.ENTITYINSTANCE);
+    public EntityInstanceRecord(org.trustdeck.jooq.generated.tables.pojos.EntityInstance value) {
+        super(EntityInstance.ENTITY_INSTANCE);
 
         if (value != null) {
             setId(value.getId());
-            setUuid(value.getUuid());
-            setEntitytypeid(value.getEntitytypeid());
+            setTrustdeckId(value.getTrustdeckId());
+            setProjectId(value.getProjectId());
+            setEntityTypeId(value.getEntityTypeId());
             setData(value.getData());
-            setFts(value.getFts());
-            setIsdeleted(value.getIsdeleted());
+            setFullTextSearchVector(value.getFullTextSearchVector());
+            setIsDeleted(value.getIsDeleted());
             resetChangedOnNotNull();
         }
     }

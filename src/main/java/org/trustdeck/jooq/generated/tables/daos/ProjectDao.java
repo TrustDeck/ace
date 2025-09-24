@@ -127,63 +127,63 @@ public class ProjectDao extends DAOImpl<ProjectRecord, org.trustdeck.jooq.genera
     }
 
     /**
-     * Fetch records that have <code>startdate BETWEEN lowerInclusive AND
+     * Fetch records that have <code>start_date BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfStartdate(LocalDate lowerInclusive, LocalDate upperInclusive) {
-        return fetchRange(Project.PROJECT.STARTDATE, lowerInclusive, upperInclusive);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfStartDate(LocalDate lowerInclusive, LocalDate upperInclusive) {
+        return fetchRange(Project.PROJECT.START_DATE, lowerInclusive, upperInclusive);
     }
 
     /**
-     * Fetch records that have <code>startdate IN (values)</code>
+     * Fetch records that have <code>start_date IN (values)</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByStartdate(LocalDate... values) {
-        return fetch(Project.PROJECT.STARTDATE, values);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByStartDate(LocalDate... values) {
+        return fetch(Project.PROJECT.START_DATE, values);
     }
 
     /**
-     * Fetch records that have <code>enddate BETWEEN lowerInclusive AND
+     * Fetch records that have <code>end_date BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfEnddate(LocalDate lowerInclusive, LocalDate upperInclusive) {
-        return fetchRange(Project.PROJECT.ENDDATE, lowerInclusive, upperInclusive);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfEndDate(LocalDate lowerInclusive, LocalDate upperInclusive) {
+        return fetchRange(Project.PROJECT.END_DATE, lowerInclusive, upperInclusive);
     }
 
     /**
-     * Fetch records that have <code>enddate IN (values)</code>
+     * Fetch records that have <code>end_date IN (values)</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByEnddate(LocalDate... values) {
-        return fetch(Project.PROJECT.ENDDATE, values);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByEndDate(LocalDate... values) {
+        return fetch(Project.PROJECT.END_DATE, values);
     }
 
     /**
-     * Fetch records that have <code>storeentities BETWEEN lowerInclusive AND
+     * Fetch records that have <code>store_entities BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfStoreentities(Boolean lowerInclusive, Boolean upperInclusive) {
-        return fetchRange(Project.PROJECT.STOREENTITIES, lowerInclusive, upperInclusive);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfStoreEntities(Boolean lowerInclusive, Boolean upperInclusive) {
+        return fetchRange(Project.PROJECT.STORE_ENTITIES, lowerInclusive, upperInclusive);
     }
 
     /**
-     * Fetch records that have <code>storeentities IN (values)</code>
+     * Fetch records that have <code>store_entities IN (values)</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByStoreentities(Boolean... values) {
-        return fetch(Project.PROJECT.STOREENTITIES, values);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByStoreEntities(Boolean... values) {
+        return fetch(Project.PROJECT.STORE_ENTITIES, values);
     }
 
     /**
-     * Fetch records that have <code>createpseudonyms BETWEEN lowerInclusive AND
+     * Fetch records that have <code>store_pseudonyms BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfCreatepseudonyms(Boolean lowerInclusive, Boolean upperInclusive) {
-        return fetchRange(Project.PROJECT.CREATEPSEUDONYMS, lowerInclusive, upperInclusive);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfStorePseudonyms(Boolean lowerInclusive, Boolean upperInclusive) {
+        return fetchRange(Project.PROJECT.STORE_PSEUDONYMS, lowerInclusive, upperInclusive);
     }
 
     /**
-     * Fetch records that have <code>createpseudonyms IN (values)</code>
+     * Fetch records that have <code>store_pseudonyms IN (values)</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByCreatepseudonyms(Boolean... values) {
-        return fetch(Project.PROJECT.CREATEPSEUDONYMS, values);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByStorePseudonyms(Boolean... values) {
+        return fetch(Project.PROJECT.STORE_PSEUDONYMS, values);
     }
 
     /**
@@ -202,18 +202,18 @@ public class ProjectDao extends DAOImpl<ProjectRecord, org.trustdeck.jooq.genera
     }
 
     /**
-     * Fetch records that have <code>associated_entitytype_ids BETWEEN
+     * Fetch records that have <code>associated_entity_type_ids BETWEEN
      * lowerInclusive AND upperInclusive</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfAssociatedEntitytypeIds(Integer[] lowerInclusive, Integer[] upperInclusive) {
-        return fetchRange(Project.PROJECT.ASSOCIATED_ENTITYTYPE_IDS, lowerInclusive, upperInclusive);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfAssociatedEntityTypeIds(Integer[] lowerInclusive, Integer[] upperInclusive) {
+        return fetchRange(Project.PROJECT.ASSOCIATED_ENTITY_TYPE_IDS, lowerInclusive, upperInclusive);
     }
 
     /**
-     * Fetch records that have <code>associated_entitytype_ids IN
+     * Fetch records that have <code>associated_entity_type_ids IN
      * (values)</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByAssociatedEntitytypeIds(Integer[]... values) {
-        return fetch(Project.PROJECT.ASSOCIATED_ENTITYTYPE_IDS, values);
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByAssociatedEntityTypeIds(Integer[]... values) {
+        return fetch(Project.PROJECT.ASSOCIATED_ENTITY_TYPE_IDS, values);
     }
 }

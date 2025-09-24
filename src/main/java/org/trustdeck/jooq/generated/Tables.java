@@ -10,8 +10,8 @@ import org.jooq.Result;
 import org.trustdeck.jooq.generated.tables.Algorithm;
 import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
-import org.trustdeck.jooq.generated.tables.Entityinstance;
-import org.trustdeck.jooq.generated.tables.Entitytype;
+import org.trustdeck.jooq.generated.tables.EntityInstance;
+import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
@@ -41,14 +41,14 @@ public class Tables {
     public static final Domain DOMAIN = Domain.DOMAIN;
 
     /**
-     * The table <code>public.entityinstance</code>.
+     * The table <code>public.entity_instance</code>.
      */
-    public static final Entityinstance ENTITYINSTANCE = Entityinstance.ENTITYINSTANCE;
+    public static final EntityInstance ENTITY_INSTANCE = EntityInstance.ENTITY_INSTANCE;
 
     /**
-     * The table <code>public.entitytype</code>.
+     * The table <code>public.entity_type</code>.
      */
-    public static final Entitytype ENTITYTYPE = Entitytype.ENTITYTYPE;
+    public static final EntityType ENTITY_TYPE = EntityType.ENTITY_TYPE;
 
     /**
      * The table <code>public.person</code>.

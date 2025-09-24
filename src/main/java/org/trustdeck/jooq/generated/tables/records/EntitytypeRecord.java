@@ -11,7 +11,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -21,8 +20,8 @@ import org.jooq.Record1;
 import org.jooq.Record8;
 import org.jooq.Row8;
 import org.jooq.impl.UpdatableRecordImpl;
-import org.trustdeck.jooq.generated.tables.Entitytype;
-import org.trustdeck.jooq.generated.tables.interfaces.IEntitytype;
+import org.trustdeck.jooq.generated.tables.EntityType;
+import org.trustdeck.jooq.generated.tables.interfaces.IEntityType;
 
 
 /**
@@ -31,32 +30,29 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntitytype;
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 @Entity
 @Table(
-    name = "entitytype",
+    name = "entity_type",
     schema = "public",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "entitytype_name_version_projectid_key", columnNames = { "name", "version", "projectid" })
-    },
     indexes = {
-        @Index(name = "entitytype_fts_idx", columnList = "fts ASC"),
-        @Index(name = "entitytype_name_idx", columnList = "name ASC"),
-        @Index(name = "entitytype_typedef_gin_idx", columnList = "typedef ASC")
+        @Index(name = "entity_type_fts_idx", columnList = "full_text_search_vector ASC"),
+        @Index(name = "entity_type_name_idx", columnList = "name ASC"),
+        @Index(name = "entity_type_type_definition_gin_idx", columnList = "type_definition ASC")
     }
 )
-public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> implements Record8<Integer, String, String, Boolean, Boolean, JSONB, Object, Integer>, IEntitytype {
+public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> implements Record8<Integer, String, String, Boolean, Boolean, JSONB, Object, Integer>, IEntityType {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.entitytype.id</code>.
+     * Setter for <code>public.entity_type.id</code>.
      */
     @Override
-    public EntitytypeRecord setId(Integer value) {
+    public EntityTypeRecord setId(Integer value) {
         set(0, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.id</code>.
+     * Getter for <code>public.entity_type.id</code>.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,16 +63,16 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     }
 
     /**
-     * Setter for <code>public.entitytype.name</code>.
+     * Setter for <code>public.entity_type.name</code>.
      */
     @Override
-    public EntitytypeRecord setName(String value) {
+    public EntityTypeRecord setName(String value) {
         set(1, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.name</code>.
+     * Getter for <code>public.entity_type.name</code>.
      */
     @Column(name = "name", nullable = false, length = 255)
     @NotNull
@@ -87,16 +83,16 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     }
 
     /**
-     * Setter for <code>public.entitytype.version</code>.
+     * Setter for <code>public.entity_type.version</code>.
      */
     @Override
-    public EntitytypeRecord setVersion(String value) {
+    public EntityTypeRecord setVersion(String value) {
         set(2, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.version</code>.
+     * Getter for <code>public.entity_type.version</code>.
      */
     @Column(name = "version", nullable = false, length = 255)
     @NotNull
@@ -107,59 +103,58 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     }
 
     /**
-     * Setter for <code>public.entitytype.isdeprecated</code>.
+     * Setter for <code>public.entity_type.is_deprecated</code>.
      */
     @Override
-    public EntitytypeRecord setIsdeprecated(Boolean value) {
+    public EntityTypeRecord setIsDeprecated(Boolean value) {
         set(3, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.isdeprecated</code>.
+     * Getter for <code>public.entity_type.is_deprecated</code>.
      */
-    @Column(name = "isdeprecated", nullable = false)
-    @NotNull
+    @Column(name = "is_deprecated")
     @Override
-    public Boolean getIsdeprecated() {
+    public Boolean getIsDeprecated() {
         return (Boolean) get(3);
     }
 
     /**
-     * Setter for <code>public.entitytype.isbasetype</code>.
+     * Setter for <code>public.entity_type.is_base_type</code>.
      */
     @Override
-    public EntitytypeRecord setIsbasetype(Boolean value) {
+    public EntityTypeRecord setIsBaseType(Boolean value) {
         set(4, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.isbasetype</code>.
+     * Getter for <code>public.entity_type.is_base_type</code>.
      */
-    @Column(name = "isbasetype", nullable = false)
+    @Column(name = "is_base_type", nullable = false)
     @NotNull
     @Override
-    public Boolean getIsbasetype() {
+    public Boolean getIsBaseType() {
         return (Boolean) get(4);
     }
 
     /**
-     * Setter for <code>public.entitytype.typedef</code>.
+     * Setter for <code>public.entity_type.type_definition</code>.
      */
     @Override
-    public EntitytypeRecord setTypedef(JSONB value) {
+    public EntityTypeRecord setTypeDefinition(JSONB value) {
         set(5, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.typedef</code>.
+     * Getter for <code>public.entity_type.type_definition</code>.
      */
-    @Column(name = "typedef", nullable = false)
+    @Column(name = "type_definition", nullable = false)
     @NotNull
     @Override
-    public JSONB getTypedef() {
+    public JSONB getTypeDefinition() {
         return (JSONB) get(5);
     }
 
@@ -173,7 +168,7 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
      */
     @Deprecated
     @Override
-    public EntitytypeRecord setFts(Object value) {
+    public EntityTypeRecord setFullTextSearchVector(Object value) {
         set(6, value);
         return this;
     }
@@ -187,27 +182,27 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
      * configuration.
      */
     @Deprecated
-    @Column(name = "fts")
+    @Column(name = "full_text_search_vector")
     @Override
-    public Object getFts() {
+    public Object getFullTextSearchVector() {
         return get(6);
     }
 
     /**
-     * Setter for <code>public.entitytype.projectid</code>.
+     * Setter for <code>public.entity_type.project_id</code>.
      */
     @Override
-    public EntitytypeRecord setProjectid(Integer value) {
+    public EntityTypeRecord setProjectId(Integer value) {
         set(7, value);
         return this;
     }
 
     /**
-     * Getter for <code>public.entitytype.projectid</code>.
+     * Getter for <code>public.entity_type.project_id</code>.
      */
-    @Column(name = "projectid")
+    @Column(name = "project_id")
     @Override
-    public Integer getProjectid() {
+    public Integer getProjectId() {
         return (Integer) get(7);
     }
 
@@ -236,32 +231,32 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
 
     @Override
     public Field<Integer> field1() {
-        return Entitytype.ENTITYTYPE.ID;
+        return EntityType.ENTITY_TYPE.ID;
     }
 
     @Override
     public Field<String> field2() {
-        return Entitytype.ENTITYTYPE.NAME;
+        return EntityType.ENTITY_TYPE.NAME;
     }
 
     @Override
     public Field<String> field3() {
-        return Entitytype.ENTITYTYPE.VERSION;
+        return EntityType.ENTITY_TYPE.VERSION;
     }
 
     @Override
     public Field<Boolean> field4() {
-        return Entitytype.ENTITYTYPE.ISDEPRECATED;
+        return EntityType.ENTITY_TYPE.IS_DEPRECATED;
     }
 
     @Override
     public Field<Boolean> field5() {
-        return Entitytype.ENTITYTYPE.ISBASETYPE;
+        return EntityType.ENTITY_TYPE.IS_BASE_TYPE;
     }
 
     @Override
     public Field<JSONB> field6() {
-        return Entitytype.ENTITYTYPE.TYPEDEF;
+        return EntityType.ENTITY_TYPE.TYPE_DEFINITION;
     }
 
     /**
@@ -275,12 +270,12 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     @Deprecated
     @Override
     public Field<Object> field7() {
-        return Entitytype.ENTITYTYPE.FTS;
+        return EntityType.ENTITY_TYPE.FULL_TEXT_SEARCH_VECTOR;
     }
 
     @Override
     public Field<Integer> field8() {
-        return Entitytype.ENTITYTYPE.PROJECTID;
+        return EntityType.ENTITY_TYPE.PROJECT_ID;
     }
 
     @Override
@@ -300,17 +295,17 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
 
     @Override
     public Boolean component4() {
-        return getIsdeprecated();
+        return getIsDeprecated();
     }
 
     @Override
     public Boolean component5() {
-        return getIsbasetype();
+        return getIsBaseType();
     }
 
     @Override
     public JSONB component6() {
-        return getTypedef();
+        return getTypeDefinition();
     }
 
     /**
@@ -324,12 +319,12 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     @Deprecated
     @Override
     public Object component7() {
-        return getFts();
+        return getFullTextSearchVector();
     }
 
     @Override
     public Integer component8() {
-        return getProjectid();
+        return getProjectId();
     }
 
     @Override
@@ -349,17 +344,17 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
 
     @Override
     public Boolean value4() {
-        return getIsdeprecated();
+        return getIsDeprecated();
     }
 
     @Override
     public Boolean value5() {
-        return getIsbasetype();
+        return getIsBaseType();
     }
 
     @Override
     public JSONB value6() {
-        return getTypedef();
+        return getTypeDefinition();
     }
 
     /**
@@ -373,47 +368,47 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     @Deprecated
     @Override
     public Object value7() {
-        return getFts();
+        return getFullTextSearchVector();
     }
 
     @Override
     public Integer value8() {
-        return getProjectid();
+        return getProjectId();
     }
 
     @Override
-    public EntitytypeRecord value1(Integer value) {
+    public EntityTypeRecord value1(Integer value) {
         setId(value);
         return this;
     }
 
     @Override
-    public EntitytypeRecord value2(String value) {
+    public EntityTypeRecord value2(String value) {
         setName(value);
         return this;
     }
 
     @Override
-    public EntitytypeRecord value3(String value) {
+    public EntityTypeRecord value3(String value) {
         setVersion(value);
         return this;
     }
 
     @Override
-    public EntitytypeRecord value4(Boolean value) {
-        setIsdeprecated(value);
+    public EntityTypeRecord value4(Boolean value) {
+        setIsDeprecated(value);
         return this;
     }
 
     @Override
-    public EntitytypeRecord value5(Boolean value) {
-        setIsbasetype(value);
+    public EntityTypeRecord value5(Boolean value) {
+        setIsBaseType(value);
         return this;
     }
 
     @Override
-    public EntitytypeRecord value6(JSONB value) {
-        setTypedef(value);
+    public EntityTypeRecord value6(JSONB value) {
+        setTypeDefinition(value);
         return this;
     }
 
@@ -427,19 +422,19 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
      */
     @Deprecated
     @Override
-    public EntitytypeRecord value7(Object value) {
-        setFts(value);
+    public EntityTypeRecord value7(Object value) {
+        setFullTextSearchVector(value);
         return this;
     }
 
     @Override
-    public EntitytypeRecord value8(Integer value) {
-        setProjectid(value);
+    public EntityTypeRecord value8(Integer value) {
+        setProjectId(value);
         return this;
     }
 
     @Override
-    public EntitytypeRecord values(Integer value1, String value2, String value3, Boolean value4, Boolean value5, JSONB value6, Object value7, Integer value8) {
+    public EntityTypeRecord values(Integer value1, String value2, String value3, Boolean value4, Boolean value5, JSONB value6, Object value7, Integer value8) {
         value1(value1);
         value2(value2);
         value3(value3);
@@ -456,20 +451,20 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     // -------------------------------------------------------------------------
 
     @Override
-    public void from(IEntitytype from) {
+    public void from(IEntityType from) {
         setId(from.getId());
         setName(from.getName());
         setVersion(from.getVersion());
-        setIsdeprecated(from.getIsdeprecated());
-        setIsbasetype(from.getIsbasetype());
-        setTypedef(from.getTypedef());
-        setFts(from.getFts());
-        setProjectid(from.getProjectid());
+        setIsDeprecated(from.getIsDeprecated());
+        setIsBaseType(from.getIsBaseType());
+        setTypeDefinition(from.getTypeDefinition());
+        setFullTextSearchVector(from.getFullTextSearchVector());
+        setProjectId(from.getProjectId());
         resetChangedOnNotNull();
     }
 
     @Override
-    public <E extends IEntitytype> E into(E into) {
+    public <E extends IEntityType> E into(E into) {
         into.from(this);
         return into;
     }
@@ -479,44 +474,44 @@ public class EntitytypeRecord extends UpdatableRecordImpl<EntitytypeRecord> impl
     // -------------------------------------------------------------------------
 
     /**
-     * Create a detached EntitytypeRecord
+     * Create a detached EntityTypeRecord
      */
-    public EntitytypeRecord() {
-        super(Entitytype.ENTITYTYPE);
+    public EntityTypeRecord() {
+        super(EntityType.ENTITY_TYPE);
     }
 
     /**
-     * Create a detached, initialised EntitytypeRecord
+     * Create a detached, initialised EntityTypeRecord
      */
-    public EntitytypeRecord(Integer id, String name, String version, Boolean isdeprecated, Boolean isbasetype, JSONB typedef, Object fts, Integer projectid) {
-        super(Entitytype.ENTITYTYPE);
+    public EntityTypeRecord(Integer id, String name, String version, Boolean isDeprecated, Boolean isBaseType, JSONB typeDefinition, Object fullTextSearchVector, Integer projectId) {
+        super(EntityType.ENTITY_TYPE);
 
         setId(id);
         setName(name);
         setVersion(version);
-        setIsdeprecated(isdeprecated);
-        setIsbasetype(isbasetype);
-        setTypedef(typedef);
-        setFts(fts);
-        setProjectid(projectid);
+        setIsDeprecated(isDeprecated);
+        setIsBaseType(isBaseType);
+        setTypeDefinition(typeDefinition);
+        setFullTextSearchVector(fullTextSearchVector);
+        setProjectId(projectId);
         resetChangedOnNotNull();
     }
 
     /**
-     * Create a detached, initialised EntitytypeRecord
+     * Create a detached, initialised EntityTypeRecord
      */
-    public EntitytypeRecord(org.trustdeck.jooq.generated.tables.pojos.Entitytype value) {
-        super(Entitytype.ENTITYTYPE);
+    public EntityTypeRecord(org.trustdeck.jooq.generated.tables.pojos.EntityType value) {
+        super(EntityType.ENTITY_TYPE);
 
         if (value != null) {
             setId(value.getId());
             setName(value.getName());
             setVersion(value.getVersion());
-            setIsdeprecated(value.getIsdeprecated());
-            setIsbasetype(value.getIsbasetype());
-            setTypedef(value.getTypedef());
-            setFts(value.getFts());
-            setProjectid(value.getProjectid());
+            setIsDeprecated(value.getIsDeprecated());
+            setIsBaseType(value.getIsBaseType());
+            setTypeDefinition(value.getTypeDefinition());
+            setFullTextSearchVector(value.getFullTextSearchVector());
+            setProjectId(value.getProjectId());
             resetChangedOnNotNull();
         }
     }
