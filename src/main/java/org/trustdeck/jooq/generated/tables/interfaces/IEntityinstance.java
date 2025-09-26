@@ -12,6 +12,7 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.jooq.JSONB;
@@ -126,6 +127,28 @@ public interface IEntityInstance extends Serializable {
      */
     @Column(name = "is_deleted")
     public Boolean getIsDeleted();
+
+    /**
+     * Setter for <code>public.entity_instance.created_at</code>.
+     */
+    public IEntityInstance setCreatedAt(OffsetDateTime value);
+
+    /**
+     * Getter for <code>public.entity_instance.created_at</code>.
+     */
+    @Column(name = "created_at", precision = 6)
+    public OffsetDateTime getCreatedAt();
+
+    /**
+     * Setter for <code>public.entity_instance.updated_at</code>.
+     */
+    public IEntityInstance setUpdatedAt(OffsetDateTime value);
+
+    /**
+     * Getter for <code>public.entity_instance.updated_at</code>.
+     */
+    @Column(name = "updated_at", precision = 6)
+    public OffsetDateTime getUpdatedAt();
 
     // -------------------------------------------------------------------------
     // FROM and INTO

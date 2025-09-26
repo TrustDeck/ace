@@ -4,6 +4,7 @@
 package org.trustdeck.jooq.generated.tables;
 
 
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -11,14 +12,14 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function7;
+import org.jooq.Function9;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row7;
+import org.jooq.Row9;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -96,6 +97,16 @@ public class EntityInstance extends TableImpl<EntityInstanceRecord> {
      */
     public final TableField<EntityInstanceRecord, Boolean> IS_DELETED = createField(DSL.name("is_deleted"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>public.entity_instance.created_at</code>.
+     */
+    public final TableField<EntityInstanceRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+
+    /**
+     * The column <code>public.entity_instance.updated_at</code>.
+     */
+    public final TableField<EntityInstanceRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+
     private EntityInstance(Name alias, Table<EntityInstanceRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -156,10 +167,11 @@ public class EntityInstance extends TableImpl<EntityInstanceRecord> {
 
     @Override
     public List<ForeignKey<EntityInstanceRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.ENTITY_INSTANCE__ENTITY_INSTANCE_PROJECT_ID_FKEY);
+        return Arrays.asList(Keys.ENTITY_INSTANCE__ENTITY_INSTANCE_PROJECT_ID_FKEY, Keys.ENTITY_INSTANCE__ENTITY_INSTANCE_ENTITY_TYPE_ID_FKEY);
     }
 
     private transient Project _project;
+    private transient EntityType _entityType;
 
     /**
      * Get the implicit join path to the <code>public.project</code> table.
@@ -169,6 +181,16 @@ public class EntityInstance extends TableImpl<EntityInstanceRecord> {
             _project = new Project(this, Keys.ENTITY_INSTANCE__ENTITY_INSTANCE_PROJECT_ID_FKEY);
 
         return _project;
+    }
+
+    /**
+     * Get the implicit join path to the <code>public.entity_type</code> table.
+     */
+    public EntityType entityType() {
+        if (_entityType == null)
+            _entityType = new EntityType(this, Keys.ENTITY_INSTANCE__ENTITY_INSTANCE_ENTITY_TYPE_ID_FKEY);
+
+        return _entityType;
     }
 
     @Override
@@ -211,18 +233,18 @@ public class EntityInstance extends TableImpl<EntityInstanceRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row7 type methods
+    // Row9 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<Long, UUID, Integer, Integer, JSONB, Object, Boolean> fieldsRow() {
-        return (Row7) super.fieldsRow();
+    public Row9<Long, UUID, Integer, Integer, JSONB, Object, Boolean, OffsetDateTime, OffsetDateTime> fieldsRow() {
+        return (Row9) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function7<? super Long, ? super UUID, ? super Integer, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function9<? super Long, ? super UUID, ? super Integer, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? super OffsetDateTime, ? super OffsetDateTime, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -230,7 +252,7 @@ public class EntityInstance extends TableImpl<EntityInstanceRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function7<? super Long, ? super UUID, ? super Integer, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function9<? super Long, ? super UUID, ? super Integer, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? super OffsetDateTime, ? super OffsetDateTime, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

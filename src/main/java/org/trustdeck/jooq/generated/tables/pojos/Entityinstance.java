@@ -11,6 +11,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.jooq.JSONB;
@@ -44,6 +45,8 @@ public class EntityInstance implements IEntityInstance {
     private JSONB data;
     private Object fullTextSearchVector;
     private Boolean isDeleted;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
 
     public EntityInstance() {}
 
@@ -55,6 +58,8 @@ public class EntityInstance implements IEntityInstance {
         this.data = value.getData();
         this.fullTextSearchVector = value.getFullTextSearchVector();
         this.isDeleted = value.getIsDeleted();
+        this.createdAt = value.getCreatedAt();
+        this.updatedAt = value.getUpdatedAt();
     }
 
     public EntityInstance(
@@ -64,7 +69,9 @@ public class EntityInstance implements IEntityInstance {
         Integer entityTypeId,
         JSONB data,
         Object fullTextSearchVector,
-        Boolean isDeleted
+        Boolean isDeleted,
+        OffsetDateTime createdAt,
+        OffsetDateTime updatedAt
     ) {
         this.id = id;
         this.trustdeckId = trustdeckId;
@@ -73,6 +80,8 @@ public class EntityInstance implements IEntityInstance {
         this.data = data;
         this.fullTextSearchVector = fullTextSearchVector;
         this.isDeleted = isDeleted;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     /**
@@ -216,6 +225,42 @@ public class EntityInstance implements IEntityInstance {
         return this;
     }
 
+    /**
+     * Getter for <code>public.entity_instance.created_at</code>.
+     */
+    @Column(name = "created_at", precision = 6)
+    @Override
+    public OffsetDateTime getCreatedAt() {
+        return this.createdAt;
+    }
+
+    /**
+     * Setter for <code>public.entity_instance.created_at</code>.
+     */
+    @Override
+    public EntityInstance setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entity_instance.updated_at</code>.
+     */
+    @Column(name = "updated_at", precision = 6)
+    @Override
+    public OffsetDateTime getUpdatedAt() {
+        return this.updatedAt;
+    }
+
+    /**
+     * Setter for <code>public.entity_instance.updated_at</code>.
+     */
+    @Override
+    public EntityInstance setUpdatedAt(OffsetDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+        return this;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -267,6 +312,18 @@ public class EntityInstance implements IEntityInstance {
         }
         else if (!this.isDeleted.equals(other.isDeleted))
             return false;
+        if (this.createdAt == null) {
+            if (other.createdAt != null)
+                return false;
+        }
+        else if (!this.createdAt.equals(other.createdAt))
+            return false;
+        if (this.updatedAt == null) {
+            if (other.updatedAt != null)
+                return false;
+        }
+        else if (!this.updatedAt.equals(other.updatedAt))
+            return false;
         return true;
     }
 
@@ -281,6 +338,8 @@ public class EntityInstance implements IEntityInstance {
         result = prime * result + ((this.data == null) ? 0 : this.data.hashCode());
         result = prime * result + ((this.fullTextSearchVector == null) ? 0 : this.fullTextSearchVector.hashCode());
         result = prime * result + ((this.isDeleted == null) ? 0 : this.isDeleted.hashCode());
+        result = prime * result + ((this.createdAt == null) ? 0 : this.createdAt.hashCode());
+        result = prime * result + ((this.updatedAt == null) ? 0 : this.updatedAt.hashCode());
         return result;
     }
 
@@ -295,6 +354,8 @@ public class EntityInstance implements IEntityInstance {
         sb.append(", ").append(data);
         sb.append(", ").append(fullTextSearchVector);
         sb.append(", ").append(isDeleted);
+        sb.append(", ").append(createdAt);
+        sb.append(", ").append(updatedAt);
 
         sb.append(")");
         return sb.toString();
@@ -313,6 +374,8 @@ public class EntityInstance implements IEntityInstance {
         setData(from.getData());
         setFullTextSearchVector(from.getFullTextSearchVector());
         setIsDeleted(from.getIsDeleted());
+        setCreatedAt(from.getCreatedAt());
+        setUpdatedAt(from.getUpdatedAt());
     }
 
     @Override

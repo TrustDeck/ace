@@ -4,6 +4,7 @@
 package org.trustdeck.jooq.generated.tables.daos;
 
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -154,5 +155,35 @@ public class EntityInstanceDao extends DAOImpl<EntityInstanceRecord, org.trustde
      */
     public List<org.trustdeck.jooq.generated.tables.pojos.EntityInstance> fetchByIsDeleted(Boolean... values) {
         return fetch(EntityInstance.ENTITY_INSTANCE.IS_DELETED, values);
+    }
+
+    /**
+     * Fetch records that have <code>created_at BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityInstance> fetchRangeOfCreatedAt(OffsetDateTime lowerInclusive, OffsetDateTime upperInclusive) {
+        return fetchRange(EntityInstance.ENTITY_INSTANCE.CREATED_AT, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>created_at IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityInstance> fetchByCreatedAt(OffsetDateTime... values) {
+        return fetch(EntityInstance.ENTITY_INSTANCE.CREATED_AT, values);
+    }
+
+    /**
+     * Fetch records that have <code>updated_at BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityInstance> fetchRangeOfUpdatedAt(OffsetDateTime lowerInclusive, OffsetDateTime upperInclusive) {
+        return fetchRange(EntityInstance.ENTITY_INSTANCE.UPDATED_AT, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>updated_at IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityInstance> fetchByUpdatedAt(OffsetDateTime... values) {
+        return fetch(EntityInstance.ENTITY_INSTANCE.UPDATED_AT, values);
     }
 }

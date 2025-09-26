@@ -11,13 +11,14 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.Record2;
-import org.jooq.Record7;
-import org.jooq.Row7;
+import org.jooq.Record9;
+import org.jooq.Row9;
 import org.jooq.impl.UpdatableRecordImpl;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.interfaces.IEntityInstance;
@@ -39,7 +40,7 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntityInstance;
         @Index(name = "entity_instance_fts_active_gin_idx", columnList = "full_text_search_vector ASC")
     }
 )
-public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceRecord> implements Record7<Long, UUID, Integer, Integer, JSONB, Object, Boolean>, IEntityInstance {
+public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceRecord> implements Record9<Long, UUID, Integer, Integer, JSONB, Object, Boolean, OffsetDateTime, OffsetDateTime>, IEntityInstance {
 
     private static final long serialVersionUID = 1L;
 
@@ -184,6 +185,42 @@ public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceReco
         return (Boolean) get(6);
     }
 
+    /**
+     * Setter for <code>public.entity_instance.created_at</code>.
+     */
+    @Override
+    public EntityInstanceRecord setCreatedAt(OffsetDateTime value) {
+        set(7, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entity_instance.created_at</code>.
+     */
+    @Column(name = "created_at", precision = 6)
+    @Override
+    public OffsetDateTime getCreatedAt() {
+        return (OffsetDateTime) get(7);
+    }
+
+    /**
+     * Setter for <code>public.entity_instance.updated_at</code>.
+     */
+    @Override
+    public EntityInstanceRecord setUpdatedAt(OffsetDateTime value) {
+        set(8, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entity_instance.updated_at</code>.
+     */
+    @Column(name = "updated_at", precision = 6)
+    @Override
+    public OffsetDateTime getUpdatedAt() {
+        return (OffsetDateTime) get(8);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -194,17 +231,17 @@ public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceReco
     }
 
     // -------------------------------------------------------------------------
-    // Record7 type implementation
+    // Record9 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row7<Long, UUID, Integer, Integer, JSONB, Object, Boolean> fieldsRow() {
-        return (Row7) super.fieldsRow();
+    public Row9<Long, UUID, Integer, Integer, JSONB, Object, Boolean, OffsetDateTime, OffsetDateTime> fieldsRow() {
+        return (Row9) super.fieldsRow();
     }
 
     @Override
-    public Row7<Long, UUID, Integer, Integer, JSONB, Object, Boolean> valuesRow() {
-        return (Row7) super.valuesRow();
+    public Row9<Long, UUID, Integer, Integer, JSONB, Object, Boolean, OffsetDateTime, OffsetDateTime> valuesRow() {
+        return (Row9) super.valuesRow();
     }
 
     @Override
@@ -252,6 +289,16 @@ public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceReco
     }
 
     @Override
+    public Field<OffsetDateTime> field8() {
+        return EntityInstance.ENTITY_INSTANCE.CREATED_AT;
+    }
+
+    @Override
+    public Field<OffsetDateTime> field9() {
+        return EntityInstance.ENTITY_INSTANCE.UPDATED_AT;
+    }
+
+    @Override
     public Long component1() {
         return getId();
     }
@@ -296,6 +343,16 @@ public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceReco
     }
 
     @Override
+    public OffsetDateTime component8() {
+        return getCreatedAt();
+    }
+
+    @Override
+    public OffsetDateTime component9() {
+        return getUpdatedAt();
+    }
+
+    @Override
     public Long value1() {
         return getId();
     }
@@ -337,6 +394,16 @@ public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceReco
     @Override
     public Boolean value7() {
         return getIsDeleted();
+    }
+
+    @Override
+    public OffsetDateTime value8() {
+        return getCreatedAt();
+    }
+
+    @Override
+    public OffsetDateTime value9() {
+        return getUpdatedAt();
     }
 
     @Override
@@ -391,7 +458,19 @@ public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceReco
     }
 
     @Override
-    public EntityInstanceRecord values(Long value1, UUID value2, Integer value3, Integer value4, JSONB value5, Object value6, Boolean value7) {
+    public EntityInstanceRecord value8(OffsetDateTime value) {
+        setCreatedAt(value);
+        return this;
+    }
+
+    @Override
+    public EntityInstanceRecord value9(OffsetDateTime value) {
+        setUpdatedAt(value);
+        return this;
+    }
+
+    @Override
+    public EntityInstanceRecord values(Long value1, UUID value2, Integer value3, Integer value4, JSONB value5, Object value6, Boolean value7, OffsetDateTime value8, OffsetDateTime value9) {
         value1(value1);
         value2(value2);
         value3(value3);
@@ -399,6 +478,8 @@ public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceReco
         value5(value5);
         value6(value6);
         value7(value7);
+        value8(value8);
+        value9(value9);
         return this;
     }
 
@@ -415,6 +496,8 @@ public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceReco
         setData(from.getData());
         setFullTextSearchVector(from.getFullTextSearchVector());
         setIsDeleted(from.getIsDeleted());
+        setCreatedAt(from.getCreatedAt());
+        setUpdatedAt(from.getUpdatedAt());
         resetChangedOnNotNull();
     }
 
@@ -438,7 +521,7 @@ public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceReco
     /**
      * Create a detached, initialised EntityInstanceRecord
      */
-    public EntityInstanceRecord(Long id, UUID trustdeckId, Integer projectId, Integer entityTypeId, JSONB data, Object fullTextSearchVector, Boolean isDeleted) {
+    public EntityInstanceRecord(Long id, UUID trustdeckId, Integer projectId, Integer entityTypeId, JSONB data, Object fullTextSearchVector, Boolean isDeleted, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
         super(EntityInstance.ENTITY_INSTANCE);
 
         setId(id);
@@ -448,6 +531,8 @@ public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceReco
         setData(data);
         setFullTextSearchVector(fullTextSearchVector);
         setIsDeleted(isDeleted);
+        setCreatedAt(createdAt);
+        setUpdatedAt(updatedAt);
         resetChangedOnNotNull();
     }
 
@@ -465,6 +550,8 @@ public class EntityInstanceRecord extends UpdatableRecordImpl<EntityInstanceReco
             setData(value.getData());
             setFullTextSearchVector(value.getFullTextSearchVector());
             setIsDeleted(value.getIsDeleted());
+            setCreatedAt(value.getCreatedAt());
+            setUpdatedAt(value.getUpdatedAt());
             resetChangedOnNotNull();
         }
     }
