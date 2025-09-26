@@ -4,7 +4,7 @@
 package org.trustdeck.jooq.generated.tables.daos;
 
 
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -130,14 +130,14 @@ public class ProjectDao extends DAOImpl<ProjectRecord, org.trustdeck.jooq.genera
      * Fetch records that have <code>start_date BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfStartDate(LocalDate lowerInclusive, LocalDate upperInclusive) {
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfStartDate(OffsetDateTime lowerInclusive, OffsetDateTime upperInclusive) {
         return fetchRange(Project.PROJECT.START_DATE, lowerInclusive, upperInclusive);
     }
 
     /**
      * Fetch records that have <code>start_date IN (values)</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByStartDate(LocalDate... values) {
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByStartDate(OffsetDateTime... values) {
         return fetch(Project.PROJECT.START_DATE, values);
     }
 
@@ -145,14 +145,14 @@ public class ProjectDao extends DAOImpl<ProjectRecord, org.trustdeck.jooq.genera
      * Fetch records that have <code>end_date BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfEndDate(LocalDate lowerInclusive, LocalDate upperInclusive) {
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfEndDate(OffsetDateTime lowerInclusive, OffsetDateTime upperInclusive) {
         return fetchRange(Project.PROJECT.END_DATE, lowerInclusive, upperInclusive);
     }
 
     /**
      * Fetch records that have <code>end_date IN (values)</code>
      */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByEndDate(LocalDate... values) {
+    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByEndDate(OffsetDateTime... values) {
         return fetch(Project.PROJECT.END_DATE, values);
     }
 

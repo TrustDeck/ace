@@ -4,7 +4,7 @@
 package org.trustdeck.jooq.generated.tables;
 
 
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -74,12 +74,12 @@ public class Project extends TableImpl<ProjectRecord> {
     /**
      * The column <code>public.project.start_date</code>.
      */
-    public final TableField<ProjectRecord, LocalDate> START_DATE = createField(DSL.name("start_date"), SQLDataType.LOCALDATE, this, "");
+    public final TableField<ProjectRecord, OffsetDateTime> START_DATE = createField(DSL.name("start_date"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
 
     /**
      * The column <code>public.project.end_date</code>.
      */
-    public final TableField<ProjectRecord, LocalDate> END_DATE = createField(DSL.name("end_date"), SQLDataType.LOCALDATE, this, "");
+    public final TableField<ProjectRecord, OffsetDateTime> END_DATE = createField(DSL.name("end_date"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false), this, "");
 
     /**
      * The column <code>public.project.store_entities</code>.
@@ -210,14 +210,14 @@ public class Project extends TableImpl<ProjectRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Integer, String, String, LocalDate, LocalDate, Boolean, Boolean, String, Integer[]> fieldsRow() {
+    public Row9<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String, Integer[]> fieldsRow() {
         return (Row9) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function9<? super Integer, ? super String, ? super String, ? super LocalDate, ? super LocalDate, ? super Boolean, ? super Boolean, ? super String, ? super Integer[], ? extends U> from) {
+    public <U> SelectField<U> mapping(Function9<? super Integer, ? super String, ? super String, ? super OffsetDateTime, ? super OffsetDateTime, ? super Boolean, ? super Boolean, ? super String, ? super Integer[], ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -225,7 +225,7 @@ public class Project extends TableImpl<ProjectRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function9<? super Integer, ? super String, ? super String, ? super LocalDate, ? super LocalDate, ? super Boolean, ? super Boolean, ? super String, ? super Integer[], ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function9<? super Integer, ? super String, ? super String, ? super OffsetDateTime, ? super OffsetDateTime, ? super Boolean, ? super Boolean, ? super String, ? super Integer[], ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

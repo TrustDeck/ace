@@ -16,7 +16,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 
 /**
@@ -79,24 +79,25 @@ public interface IProject extends Serializable {
     /**
      * Setter for <code>public.project.start_date</code>.
      */
-    public IProject setStartDate(LocalDate value);
+    public IProject setStartDate(OffsetDateTime value);
 
     /**
      * Getter for <code>public.project.start_date</code>.
      */
-    @Column(name = "start_date")
-    public LocalDate getStartDate();
+    @Column(name = "start_date", precision = 6)
+    public OffsetDateTime getStartDate();
 
     /**
      * Setter for <code>public.project.end_date</code>.
      */
-    public IProject setEndDate(LocalDate value);
+    public IProject setEndDate(OffsetDateTime value);
 
     /**
      * Getter for <code>public.project.end_date</code>.
      */
-    @Column(name = "end_date")
-    public LocalDate getEndDate();
+    @Column(name = "end_date", nullable = false, precision = 6)
+    @NotNull
+    public OffsetDateTime getEndDate();
 
     /**
      * Setter for <code>public.project.store_entities</code>.

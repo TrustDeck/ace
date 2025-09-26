@@ -15,7 +15,7 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 
 import org.trustdeck.jooq.generated.tables.interfaces.IProject;
@@ -44,8 +44,8 @@ public class Project implements IProject {
     private Integer id;
     private String name;
     private String abbreviation;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private OffsetDateTime startDate;
+    private OffsetDateTime endDate;
     private Boolean storeEntities;
     private Boolean storePseudonyms;
     private String description;
@@ -69,8 +69,8 @@ public class Project implements IProject {
         Integer id,
         String name,
         String abbreviation,
-        LocalDate startDate,
-        LocalDate endDate,
+        OffsetDateTime startDate,
+        OffsetDateTime endDate,
         Boolean storeEntities,
         Boolean storePseudonyms,
         String description,
@@ -150,9 +150,9 @@ public class Project implements IProject {
     /**
      * Getter for <code>public.project.start_date</code>.
      */
-    @Column(name = "start_date")
+    @Column(name = "start_date", precision = 6)
     @Override
-    public LocalDate getStartDate() {
+    public OffsetDateTime getStartDate() {
         return this.startDate;
     }
 
@@ -160,7 +160,7 @@ public class Project implements IProject {
      * Setter for <code>public.project.start_date</code>.
      */
     @Override
-    public Project setStartDate(LocalDate startDate) {
+    public Project setStartDate(OffsetDateTime startDate) {
         this.startDate = startDate;
         return this;
     }
@@ -168,9 +168,10 @@ public class Project implements IProject {
     /**
      * Getter for <code>public.project.end_date</code>.
      */
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false, precision = 6)
+    @NotNull
     @Override
-    public LocalDate getEndDate() {
+    public OffsetDateTime getEndDate() {
         return this.endDate;
     }
 
@@ -178,7 +179,7 @@ public class Project implements IProject {
      * Setter for <code>public.project.end_date</code>.
      */
     @Override
-    public Project setEndDate(LocalDate endDate) {
+    public Project setEndDate(OffsetDateTime endDate) {
         this.endDate = endDate;
         return this;
     }

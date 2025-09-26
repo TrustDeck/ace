@@ -15,7 +15,7 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 import org.jooq.Field;
 import org.jooq.Record1;
@@ -42,7 +42,7 @@ import org.trustdeck.jooq.generated.tables.interfaces.IProject;
         @Index(name = "project_associated_entity_type_ids_gin_idx", columnList = "associated_entity_type_ids ASC")
     }
 )
-public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements Record9<Integer, String, String, LocalDate, LocalDate, Boolean, Boolean, String, Integer[]>, IProject {
+public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements Record9<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String, Integer[]>, IProject {
 
     private static final long serialVersionUID = 1L;
 
@@ -110,7 +110,7 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
      * Setter for <code>public.project.start_date</code>.
      */
     @Override
-    public ProjectRecord setStartDate(LocalDate value) {
+    public ProjectRecord setStartDate(OffsetDateTime value) {
         set(3, value);
         return this;
     }
@@ -118,17 +118,17 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     /**
      * Getter for <code>public.project.start_date</code>.
      */
-    @Column(name = "start_date")
+    @Column(name = "start_date", precision = 6)
     @Override
-    public LocalDate getStartDate() {
-        return (LocalDate) get(3);
+    public OffsetDateTime getStartDate() {
+        return (OffsetDateTime) get(3);
     }
 
     /**
      * Setter for <code>public.project.end_date</code>.
      */
     @Override
-    public ProjectRecord setEndDate(LocalDate value) {
+    public ProjectRecord setEndDate(OffsetDateTime value) {
         set(4, value);
         return this;
     }
@@ -136,10 +136,11 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     /**
      * Getter for <code>public.project.end_date</code>.
      */
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false, precision = 6)
+    @NotNull
     @Override
-    public LocalDate getEndDate() {
-        return (LocalDate) get(4);
+    public OffsetDateTime getEndDate() {
+        return (OffsetDateTime) get(4);
     }
 
     /**
@@ -230,12 +231,12 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Integer, String, String, LocalDate, LocalDate, Boolean, Boolean, String, Integer[]> fieldsRow() {
+    public Row9<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String, Integer[]> fieldsRow() {
         return (Row9) super.fieldsRow();
     }
 
     @Override
-    public Row9<Integer, String, String, LocalDate, LocalDate, Boolean, Boolean, String, Integer[]> valuesRow() {
+    public Row9<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String, Integer[]> valuesRow() {
         return (Row9) super.valuesRow();
     }
 
@@ -255,12 +256,12 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public Field<LocalDate> field4() {
+    public Field<OffsetDateTime> field4() {
         return Project.PROJECT.START_DATE;
     }
 
     @Override
-    public Field<LocalDate> field5() {
+    public Field<OffsetDateTime> field5() {
         return Project.PROJECT.END_DATE;
     }
 
@@ -300,12 +301,12 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public LocalDate component4() {
+    public OffsetDateTime component4() {
         return getStartDate();
     }
 
     @Override
-    public LocalDate component5() {
+    public OffsetDateTime component5() {
         return getEndDate();
     }
 
@@ -345,12 +346,12 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public LocalDate value4() {
+    public OffsetDateTime value4() {
         return getStartDate();
     }
 
     @Override
-    public LocalDate value5() {
+    public OffsetDateTime value5() {
         return getEndDate();
     }
 
@@ -393,13 +394,13 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public ProjectRecord value4(LocalDate value) {
+    public ProjectRecord value4(OffsetDateTime value) {
         setStartDate(value);
         return this;
     }
 
     @Override
-    public ProjectRecord value5(LocalDate value) {
+    public ProjectRecord value5(OffsetDateTime value) {
         setEndDate(value);
         return this;
     }
@@ -429,7 +430,7 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public ProjectRecord values(Integer value1, String value2, String value3, LocalDate value4, LocalDate value5, Boolean value6, Boolean value7, String value8, Integer[] value9) {
+    public ProjectRecord values(Integer value1, String value2, String value3, OffsetDateTime value4, OffsetDateTime value5, Boolean value6, Boolean value7, String value8, Integer[] value9) {
         value1(value1);
         value2(value2);
         value3(value3);
@@ -480,7 +481,7 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     /**
      * Create a detached, initialised ProjectRecord
      */
-    public ProjectRecord(Integer id, String name, String abbreviation, LocalDate startDate, LocalDate endDate, Boolean storeEntities, Boolean storePseudonyms, String description, Integer[] associatedEntityTypeIds) {
+    public ProjectRecord(Integer id, String name, String abbreviation, OffsetDateTime startDate, OffsetDateTime endDate, Boolean storeEntities, Boolean storePseudonyms, String description, Integer[] associatedEntityTypeIds) {
         super(Project.PROJECT);
 
         setId(id);
