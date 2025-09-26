@@ -144,7 +144,7 @@ public class EntityTypeDBService {
     	
     	// Check if the search was successful
     	if (entityTypes == null || entityTypes.size() == 0) {
-    		log.debug("No entity type for was found.");
+    		log.debug("No entity type was found.");
             return null;
     	} else if (entityTypes.size() > 1) {
         	log.debug("Too many entity types were found.");
@@ -222,11 +222,11 @@ public class EntityTypeDBService {
                 .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
                 .execute();
         } catch (DataAccessException e) {
-        	log.debug("Searching for the entity type in the database failed.", e);
+        	log.debug("Deleting the entity type in the database failed.", e);
         	return false;
         }
     	
-    	// Check if the search was successful
+    	// Check if the deletion was successful
     	if (deletedEntityTypes != 1) {
     		// An unexpected number of records was affected. Log it and abort by throwing
             // an exception (which will rollback everything from the transaction).
@@ -242,7 +242,7 @@ public class EntityTypeDBService {
      * Method to update an entity type. Only works when the entity type is not used anywhere.
      * 
      * @param oldEntityTypeDTO the entity type data transfer object containing the necessary data to identify the type that should be updated
-     * @param newEntityTypeDTO the entity type object containing the data that should be updated; null-values lead to keeping the old values
+     * @param newEntityTypeDTO the entity type object containing the data to use for the update; null-values lead to keeping the old values
      * @param request the http request object containing information necessary for the audit trail
      * @return the updated entity type object when successful, {@code null} when anything went wrong
      */
@@ -304,7 +304,7 @@ public class EntityTypeDBService {
     
     /**
      * Method to search for entity types.
-     * This search supports full-text-searching over all attributes of a entity type,
+     * This search supports full-text-searching over all attributes of an entity type,
      * as well as multiple words.
      * 
      * @param query the (multi-word) search query

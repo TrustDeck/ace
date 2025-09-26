@@ -17,6 +17,7 @@
 
 package org.trustdeck.dto;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.jooq.JSONB;
@@ -45,7 +46,7 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	@JsonIgnore
 	private Long id;
 	
-	/** The unique UUID for this entity instance. */
+	/** The unique UUID for this entity instance, used for publicly accessing this instance. */
 	private UUID trustdeckID;
 	
 	/** The ID of the project where this entity instance is scoped in. */
@@ -59,6 +60,12 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	
 	/** Flag that determines if this type is marked as deleted. */
 	private Boolean isDeleted;
+	
+	/** The date and time when this entity instance was created. */
+	private OffsetDateTime createdAt;
+	
+	/** The date and time when this entity instance was last updated. */
+	private OffsetDateTime updatedAt;
 
 	@JsonIgnore
 	@Override
@@ -75,6 +82,8 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	    dto.setEntityTypeID(pojo.getEntityTypeId());
 	    dto.setData(pojo.getData());
 	    dto.setIsDeleted(pojo.getIsDeleted());
+	    dto.setCreatedAt(pojo.getCreatedAt());
+	    dto.setUpdatedAt(pojo.getUpdatedAt());
 
 	    return dto;
 	}
@@ -99,11 +108,13 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 		String out = "";
 
 	    out += (this.getId() != null) ? "id: " + this.getId().toString() + ", " : "";
-	    out += (this.getTrustdeckID() != null) ? "TrustDeckID: " + this.getTrustdeckID().toString() + ", " : "";
-	    out += (this.getProjectID() != null) ? "ProjectID: " + this.getProjectID().toString() + ", " : "";
+	    out += (this.getTrustdeckID() != null) ? "trustDeckID: " + this.getTrustdeckID().toString() + ", " : "";
+	    out += (this.getProjectID() != null) ? "projectID: " + this.getProjectID().toString() + ", " : "";
 	    out += (this.getEntityTypeID() != null) ? "entityTypeID: " + this.getEntityTypeID().toString() + ", " : "";
 	    out += (this.getData() != null) ? "data: " + this.getData().toString() + ", " : "";
 	    out += (this.getIsDeleted() != null) ? "isDeleted: " + this.getIsDeleted().toString() + ", " : "";
+	    out += (this.getCreatedAt() != null) ? "createdAt: " + this.getCreatedAt().toString() + ", " : "";
+	    out += (this.getUpdatedAt() != null) ? "updatedAt: " + this.getUpdatedAt().toString() + ", " : "";
 
 	    return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
 	}
