@@ -17,11 +17,11 @@
 
 package org.trustdeck.dto;
 
-import java.time.format.DateTimeFormatter;
+import java.time.OffsetDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.pojos.Project;
-import org.trustdeck.service.ProjectDBService;
+import org.trustdeck.service.EntityTypeDBService;
 import org.trustdeck.utils.SpringBeanLocator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -55,10 +55,10 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	private String abbreviation;
 	
 	/** The project's start date. */
-	private String startDate;
+	private OffsetDateTime startDate;
 	
 	/** The project's end date. */
-	private String endDate;
+	private OffsetDateTime endDate;
 	
 	/** A flag determining whether or not entities are stored in the project. */
 	private Boolean storeEntities;
@@ -77,7 +77,7 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
     @Setter(value=AccessLevel.NONE)
 	@JsonIgnore
 	@Autowired
-	private ProjectDBService projectDBService;
+	private EntityTypeDBService entityTypeDBService;
 
 	@JsonIgnore
 	@Override
@@ -86,23 +86,21 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	        return null;
 	    }
 		
-	    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	    ProjectDTO dto = new ProjectDTO();
-	    
 	    dto.setId(pojo.getId());
 	    dto.setName(pojo.getName());
 	    dto.setAbbreviation(pojo.getAbbreviation());
-	    dto.setStartDate(pojo.getStartDate() != null ? pojo.getStartDate().format(dateFormatter) : null);
-	    dto.setEndDate(pojo.getEndDate() != null ? pojo.getEndDate().format(dateFormatter) : null);
+	    dto.setStartDate(pojo.getStartDate());
+	    dto.setEndDate(pojo.getEndDate());
 	    dto.setStoreEntities(pojo.getStoreEntities());
 	    dto.setStorePseudonyms(pojo.getStorePseudonyms());
 	    dto.setDescription(pojo.getDescription());
 	    
 	    // Insert the object type names
-	    if (this.projectDBService == null) {
-	    	this.projectDBService = SpringBeanLocator.getBean(ProjectDBService.class);
+	    if (this.entityTypeDBService == null) {
+	    	this.entityTypeDBService = SpringBeanLocator.getBean(EntityTypeDBService.class);
 	    }
-    	dto.setAssociatedEntityTypes(projectDBService.getEntityTypeNames(pojo.getAssociatedEntityTypeIds()));
+    	dto.setAssociatedEntityTypes(entityTypeDBService.getEntityTypeNames(pojo.getAssociatedEntityTypeIds()));
 
 	    return dto;
 	}
@@ -129,8 +127,8 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	    out += (this.getId() != null) ? "id: " + this.getId().toString() + ", " : "";
 	    out += (this.getName() != null) ? "name: " + this.getName() + ", " : "";
 	    out += (this.getAbbreviation() != null) ? "abbreviation: " + this.getAbbreviation() + ", " : "";
-	    out += (this.getStartDate() != null) ? "startDate: " + this.getStartDate() + ", " : "";
-	    out += (this.getEndDate() != null) ? "endDate: " + this.getEndDate() + ", " : "";
+	    out += (this.getStartDate() != null) ? "startDate: " + this.getStartDate().toString() + ", " : "";
+	    out += (this.getEndDate() != null) ? "endDate: " + this.getEndDate().toString() + ", " : "";
 	    out += (this.getStoreEntities() != null) ? "storeEntities: " + this.getStoreEntities().toString() + ", " : "";
 	    out += (this.getStorePseudonyms() != null) ? "createPseudonyms: " + this.getStorePseudonyms().toString() + ", " : "";
 	    out += (this.getDescription() != null) ? "description: " + this.getDescription() + ", " : "";
