@@ -17,7 +17,9 @@
 
 package org.trustdeck.service;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
@@ -84,7 +86,7 @@ public class EntityTypeDBService {
 	        	return null;
 	        }
     	
-	    	// Create new partition in the database for this type
+	    	// Create a new partition in the database for this type
 	    	// jOOQ doesn't model "PARTITION OF" yet, so use plain SQL
 	        dsl.query("CREATE TABLE {0} PARTITION OF {1} FOR VALUES IN ({2})", 
 	        		DSL.name("entityinstance_t" + createdEntityType.getId()), 
@@ -95,7 +97,7 @@ public class EntityTypeDBService {
 	    	if (e.getMessage().contains(" already exists.")) {
 	    		// Found duplicate, return the original
 	    		log.info("While creating an entity type, an identical one was found and will be used instead.");
-	    		return getEntityType(entityTypeDTO.getName(), entityTypeDTO.getVersion(), entityTypeDTO.getProjectID(), null);
+	    		return getEntityType(entityTypeDTO.getName(), entityTypeDTO.getProjectID(), null);
 	    	} else {
 		    	// Inserting the new entity type into the database failed; throw exception to abort
 		    	throw new CreateEntityTypeException(e.getMessage());
@@ -108,20 +110,19 @@ public class EntityTypeDBService {
     }
 
     /**
-     * Method to retrieve an entity type from the database by explicitly providing the three variables
-     * name, version, and projectID. Triplets of these are unique in the database.
+     * Method to retrieve an entity type from the database by explicitly providing the two variables
+     * name and projectID. Tuples of these are unique in the database.
      * Base types will have no projectID, so it can be null.
      * 
      * @param name the entity type's name
-     * @param version the entity type's version
      * @param projectID the project to which the entity type is assigned to
      * @param request the http request object containing information necessary for the audit trail
      * @return the retrieved entity type when successfully found, or {@code null} when nothing was found.
      */
     @Transactional
-    public EntityTypeDTO getEntityType(String name, String version, Integer projectID, HttpServletRequest request) {
+    public EntityTypeDTO getEntityType(String name, Integer projectID, HttpServletRequest request) {
     	// Check if all the necessary arguments are available
-    	if (Assertion.isNullOrEmpty(name) || Assertion.isNullOrEmpty(version)) {
+    	if (Assertion.isNullOrEmpty(name)) {
     		log.debug("For retrieving the entity type, there is an argument missing or empty.");
     		return null;
     	}
@@ -131,8 +132,8 @@ public class EntityTypeDBService {
     	try {
     		entityTypes = dsl.selectFrom(ENTITY_TYPE)
                 .where(ENTITY_TYPE.NAME.equalIgnoreCase(name))
-                .and(ENTITY_TYPE.VERSION.equalIgnoreCase(version))
                 .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
+                .and(ENTITY_TYPE.IS_DEPRECATED.equal(false))
                 .fetchInto(EntityType.class);
         } catch (MappingException e) {
         	log.debug("Could not map the entity type search result into the EntityType-POJO.", e);
@@ -159,10 +160,11 @@ public class EntityTypeDBService {
     }
     
     /**
-     * Method to retrieve an entity type from the database by providing an EntityTypeDTO containing at least
-     * name, version, and projectID. Triplets of these are unique in the database.
+     * Method to retrieve an entity type from the database by providing an 
+     * EntityTypeDTO containing at least name and projectID. Tuples of 
+     * these are unique in the database.
      * 
-     * @param entityTypeDTO the entity type data transfer object containing the necessary data (at least name, version, and projectID)
+     * @param entityTypeDTO the entity type data transfer object containing the necessary data (at least name and projectID)
      * @param request the http request object containing information necessary for the audit trail
      * @return
      */
@@ -173,34 +175,42 @@ public class EntityTypeDBService {
     		return null;
     	}
     	
-    	return getEntityType(entityTypeDTO.getName(), entityTypeDTO.getVersion(), entityTypeDTO.getProjectID(), request);
+    	return getEntityType(entityTypeDTO.getName(), entityTypeDTO.getProjectID(), request);
     }
     
     /**
      * Method to delete an entity type. Only possible if the entity type is not used anywhere.
      * 
      * @param name the entity type's name
-     * @param version the entity type's version
      * @param projectID the project to which the entity type is assigned to
      * @param request the http request object containing information necessary for the audit trail
      * @return {@code true} when deletion was successful, {@code false} when anything went wrong during the deletion
      * @throws UnexpectedResultSizeException when the deletion would have affected an unexpected number of database entries
      */
     @Transactional
-    public boolean deleteEntityType(String name, String version, Integer projectID, HttpServletRequest request) throws UnexpectedResultSizeException {
+    public boolean deleteEntityType(String name, Integer projectID, HttpServletRequest request) throws UnexpectedResultSizeException {
     	// Check if all the necessary arguments are available
-    	if (Assertion.isNullOrEmpty(name) || Assertion.isNullOrEmpty(version) || projectID == null) {
+    	if (Assertion.isNullOrEmpty(name) || projectID == null) {
     		log.debug("For retrieving the entity type, there is an argument missing or empty.");
     		return false;
     	}
     	
     	// Check if the entity type is used anywhere --> only delete it if it's not used
-    	int id = getEntityType(name, version, projectID, null).getId();
+    	EntityTypeDTO type = getEntityType(name, projectID, null);
+    	
+    	if (type == null) {
+    		log.debug("Entity type that should be deleted was not found.");
+    		return false;
+    	} else if (type.getIsBaseType()) {
+    		log.info("Cannot delete base type.");
+    		return false;
+    	}
+    	
     	int usedBy = 0;
     	try {
     		usedBy = dsl.selectCount()
     				.from(ENTITY_INSTANCE)
-    				.where(ENTITY_INSTANCE.ENTITY_TYPE_ID.equal(id))
+    				.where(ENTITY_INSTANCE.ENTITY_TYPE_ID.equal(type.getId()))
     				.fetchOne(0, int.class);
     	} catch (DataAccessException e) {
     		log.debug("Searching for entity type refrences in the database failed.", e);
@@ -218,8 +228,8 @@ public class EntityTypeDBService {
     		// Build and execute the query
     		deletedEntityTypes = dsl.deleteFrom(ENTITY_TYPE)
                 .where(ENTITY_TYPE.NAME.equalIgnoreCase(name))
-                .and(ENTITY_TYPE.VERSION.equalIgnoreCase(version))
                 .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
+                .and(ENTITY_TYPE.IS_BASE_TYPE.equal(false))
                 .execute();
         } catch (DataAccessException e) {
         	log.debug("Deleting the entity type in the database failed.", e);
@@ -290,6 +300,7 @@ public class EntityTypeDBService {
 	                .set(ENTITY_TYPE.TYPE_DEFINITION, typeDef)
 	                .set(ENTITY_TYPE.PROJECT_ID, projectId)
 	                .where(ENTITY_TYPE.ID.eq(oldType.getId()))
+	                .and(ENTITY_TYPE.IS_DEPRECATED.equal(false))
 	                .returning()
 	                .fetchOne();
 	    } catch (DataAccessException e) {
@@ -318,7 +329,7 @@ public class EntityTypeDBService {
             return null;
         }
 
-        // Split query-parts on whitespace; every part should match at least one column
+        // Split query-parts on whitespaces; every part should match at least one column
         String[] parts = query.trim().split("\\s+");
         
         // Built the search conditions statement
@@ -366,5 +377,88 @@ public class EntityTypeDBService {
 
         // Return the found types
         return results.stream().map(row -> new EntityTypeDTO().assignPojoValues(row)).toList();
+    }
+    
+    /**
+     * This method retrieves the names for the given entity type IDs from a project.
+     * 
+     * @param entityTypeIDs the array of entity type IDs stored in a project
+     * @return an array of the names of the entity types in the same order as the IDs were given.
+     */
+    @Transactional(readOnly = true)
+    public String[] getEntityTypeNames(Integer[] entityTypeIDs) {
+    	if (entityTypeIDs == null || entityTypeIDs.length == 0) {
+    		log.debug("The given list of entity type IDs was empty.");
+            return null;
+        }
+
+        // Retrieve all matching entries with id and name
+        Map<Integer, String> namesById;
+		try {
+			namesById = dsl
+			    .select(ENTITY_TYPE.ID, ENTITY_TYPE.NAME)
+			    .from(ENTITY_TYPE)
+			    .where(ENTITY_TYPE.ID.in(Arrays.asList(entityTypeIDs)))
+			    .fetchMap(ENTITY_TYPE.ID, ENTITY_TYPE.NAME);
+		} catch (DataAccessException e) {
+			log.debug("Resolving an entity type ID to it's name failed.", e);
+			return null;
+		}
+
+        // Create the resulting output array in the same order as the input
+        String[] result = new String[entityTypeIDs.length];
+        for (int i = 0; i < entityTypeIDs.length; i++) {
+            Integer id = entityTypeIDs[i];
+            result[i] = namesById.get(id); // will be null if id not found
+        }
+        
+        return result;
+    }
+
+    /**
+     * This method retrieves the IDs for the given entity type names from a project.
+     * 
+     * @param projectId the ID of the project where the entity types are scoped in
+     * @param entityTypeNames the array of entity type names stored in a project
+     * @return an array of the IDs of the entity types in the same order as the names were given,
+     * 		   or {@code null} when something went wrong
+     */
+    @Transactional(readOnly = true)
+    public Integer[] getEntityTypeIDs(Integer projectId, String[] entityTypeNames) {
+        // Ensure the given attributes are not null or similar
+    	if (entityTypeNames == null || entityTypeNames.length == 0 || projectId == null || projectId <= 0) {
+    		log.debug("Either the projectID or the list of entity type names was not as expected.");
+            return null;
+        }
+
+        // Create lowercased inputs for case-insensitive matching
+        List<String> loweredEntityNames = Arrays.stream(entityTypeNames).map(s -> s == null ? null : s.toLowerCase()).toList();
+
+        // Query the database: (name, projectID) are unique tuples --> search for name scoped to projectID
+        Map<String, Integer> idByName;
+		try {
+			idByName = dsl
+			    .select(ENTITY_TYPE.NAME, ENTITY_TYPE.ID)
+			    .from(ENTITY_TYPE)
+			    .where(ENTITY_TYPE.PROJECT_ID.eq(projectId))
+			    .and(DSL.lower(ENTITY_TYPE.NAME).in(loweredEntityNames))
+			    .fetchMap(r -> r.get(ENTITY_TYPE.NAME).toLowerCase(),
+			              r -> r.get(ENTITY_TYPE.ID));
+		} catch (MappingException e) {
+			log.debug("Failed to map the query result into the designated type.", e);
+			return null;
+		} catch (DataAccessException f) {
+			log.debug("Failed to query the database while resolving entity type names to IDs.", f);
+			return null;
+		}
+
+        // Preserve input order
+        Integer[] result = new Integer[entityTypeNames.length];
+        for (int i = 0; i < entityTypeNames.length; i++) {
+            String key = entityTypeNames[i] != null ? entityTypeNames[i].toLowerCase() : null;
+            result[i] = key != null ? idByName.get(key) : null;
+        }
+        
+        return result;
     }
 }
