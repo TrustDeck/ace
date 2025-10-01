@@ -9,7 +9,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
@@ -30,9 +29,6 @@ import java.time.OffsetDateTime;
     uniqueConstraints = {
         @UniqueConstraint(name = "project_name_key", columnNames = { "name" }),
         @UniqueConstraint(name = "project_abbreviation_key", columnNames = { "abbreviation" })
-    },
-    indexes = {
-        @Index(name = "project_associated_entity_type_ids_gin_idx", columnList = "associated_entity_type_ids ASC")
     }
 )
 public interface IProject extends Serializable {
@@ -133,17 +129,6 @@ public interface IProject extends Serializable {
      */
     @Column(name = "description")
     public String getDescription();
-
-    /**
-     * Setter for <code>public.project.associated_entity_type_ids</code>.
-     */
-    public IProject setAssociatedEntityTypeIds(Integer[] value);
-
-    /**
-     * Getter for <code>public.project.associated_entity_type_ids</code>.
-     */
-    @Column(name = "associated_entity_type_ids")
-    public Integer[] getAssociatedEntityTypeIds();
 
     // -------------------------------------------------------------------------
     // FROM and INTO

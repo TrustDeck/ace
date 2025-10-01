@@ -12,13 +12,12 @@ import java.util.function.Function;
 import org.jooq.Check;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function9;
+import org.jooq.Function8;
 import org.jooq.Identity;
-import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row9;
+import org.jooq.Row8;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -29,7 +28,6 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
-import org.trustdeck.jooq.generated.Indexes;
 import org.trustdeck.jooq.generated.Keys;
 import org.trustdeck.jooq.generated.Public;
 import org.trustdeck.jooq.generated.tables.records.ProjectRecord;
@@ -96,11 +94,6 @@ public class Project extends TableImpl<ProjectRecord> {
      */
     public final TableField<ProjectRecord, String> DESCRIPTION = createField(DSL.name("description"), SQLDataType.CLOB, this, "");
 
-    /**
-     * The column <code>public.project.associated_entity_type_ids</code>.
-     */
-    public final TableField<ProjectRecord, Integer[]> ASSOCIATED_ENTITY_TYPE_IDS = createField(DSL.name("associated_entity_type_ids"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("'{}'::integer[]"), SQLDataType.INTEGER)).array(), this, "");
-
     private Project(Name alias, Table<ProjectRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -137,11 +130,6 @@ public class Project extends TableImpl<ProjectRecord> {
     @Override
     public Schema getSchema() {
         return aliased() ? null : Public.PUBLIC;
-    }
-
-    @Override
-    public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.PROJECT_ASSOCIATED_ENTITY_TYPE_IDS_GIN_IDX);
     }
 
     @Override
@@ -206,18 +194,18 @@ public class Project extends TableImpl<ProjectRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row9 type methods
+    // Row8 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String, Integer[]> fieldsRow() {
-        return (Row9) super.fieldsRow();
+    public Row8<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String> fieldsRow() {
+        return (Row8) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function9<? super Integer, ? super String, ? super String, ? super OffsetDateTime, ? super OffsetDateTime, ? super Boolean, ? super Boolean, ? super String, ? super Integer[], ? extends U> from) {
+    public <U> SelectField<U> mapping(Function8<? super Integer, ? super String, ? super String, ? super OffsetDateTime, ? super OffsetDateTime, ? super Boolean, ? super Boolean, ? super String, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -225,7 +213,7 @@ public class Project extends TableImpl<ProjectRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function9<? super Integer, ? super String, ? super String, ? super OffsetDateTime, ? super OffsetDateTime, ? super Boolean, ? super Boolean, ? super String, ? super Integer[], ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function8<? super Integer, ? super String, ? super String, ? super OffsetDateTime, ? super OffsetDateTime, ? super Boolean, ? super Boolean, ? super String, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

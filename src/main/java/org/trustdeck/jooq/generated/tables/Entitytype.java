@@ -154,23 +154,6 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
     }
 
     @Override
-    public List<ForeignKey<EntityTypeRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.ENTITY_TYPE__ENTITY_TYPE_PROJECT_ID_FKEY);
-    }
-
-    private transient Project _project;
-
-    /**
-     * Get the implicit join path to the <code>public.project</code> table.
-     */
-    public Project project() {
-        if (_project == null)
-            _project = new Project(this, Keys.ENTITY_TYPE__ENTITY_TYPE_PROJECT_ID_FKEY);
-
-        return _project;
-    }
-
-    @Override
     public EntityType as(String alias) {
         return new EntityType(DSL.name(alias), this);
     }

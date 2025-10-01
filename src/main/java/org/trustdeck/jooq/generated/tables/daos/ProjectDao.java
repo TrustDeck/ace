@@ -200,20 +200,4 @@ public class ProjectDao extends DAOImpl<ProjectRecord, org.trustdeck.jooq.genera
     public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByDescription(String... values) {
         return fetch(Project.PROJECT.DESCRIPTION, values);
     }
-
-    /**
-     * Fetch records that have <code>associated_entity_type_ids BETWEEN
-     * lowerInclusive AND upperInclusive</code>
-     */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchRangeOfAssociatedEntityTypeIds(Integer[] lowerInclusive, Integer[] upperInclusive) {
-        return fetchRange(Project.PROJECT.ASSOCIATED_ENTITY_TYPE_IDS, lowerInclusive, upperInclusive);
-    }
-
-    /**
-     * Fetch records that have <code>associated_entity_type_ids IN
-     * (values)</code>
-     */
-    public List<org.trustdeck.jooq.generated.tables.pojos.Project> fetchByAssociatedEntityTypeIds(Integer[]... values) {
-        return fetch(Project.PROJECT.ASSOCIATED_ENTITY_TYPE_IDS, values);
-    }
 }

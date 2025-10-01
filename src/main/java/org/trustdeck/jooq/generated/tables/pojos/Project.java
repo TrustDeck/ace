@@ -9,14 +9,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 
 import org.trustdeck.jooq.generated.tables.interfaces.IProject;
 
@@ -32,9 +30,6 @@ import org.trustdeck.jooq.generated.tables.interfaces.IProject;
     uniqueConstraints = {
         @UniqueConstraint(name = "project_name_key", columnNames = { "name" }),
         @UniqueConstraint(name = "project_abbreviation_key", columnNames = { "abbreviation" })
-    },
-    indexes = {
-        @Index(name = "project_associated_entity_type_ids_gin_idx", columnList = "associated_entity_type_ids ASC")
     }
 )
 public class Project implements IProject {
@@ -49,7 +44,6 @@ public class Project implements IProject {
     private Boolean storeEntities;
     private Boolean storePseudonyms;
     private String description;
-    private Integer[] associatedEntityTypeIds;
 
     public Project() {}
 
@@ -62,7 +56,6 @@ public class Project implements IProject {
         this.storeEntities = value.getStoreEntities();
         this.storePseudonyms = value.getStorePseudonyms();
         this.description = value.getDescription();
-        this.associatedEntityTypeIds = value.getAssociatedEntityTypeIds();
     }
 
     public Project(
@@ -73,8 +66,7 @@ public class Project implements IProject {
         OffsetDateTime endDate,
         Boolean storeEntities,
         Boolean storePseudonyms,
-        String description,
-        Integer[] associatedEntityTypeIds
+        String description
     ) {
         this.id = id;
         this.name = name;
@@ -84,7 +76,6 @@ public class Project implements IProject {
         this.storeEntities = storeEntities;
         this.storePseudonyms = storePseudonyms;
         this.description = description;
-        this.associatedEntityTypeIds = associatedEntityTypeIds;
     }
 
     /**
@@ -240,24 +231,6 @@ public class Project implements IProject {
         return this;
     }
 
-    /**
-     * Getter for <code>public.project.associated_entity_type_ids</code>.
-     */
-    @Column(name = "associated_entity_type_ids")
-    @Override
-    public Integer[] getAssociatedEntityTypeIds() {
-        return this.associatedEntityTypeIds;
-    }
-
-    /**
-     * Setter for <code>public.project.associated_entity_type_ids</code>.
-     */
-    @Override
-    public Project setAssociatedEntityTypeIds(Integer[] associatedEntityTypeIds) {
-        this.associatedEntityTypeIds = associatedEntityTypeIds;
-        return this;
-    }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -315,12 +288,6 @@ public class Project implements IProject {
         }
         else if (!this.description.equals(other.description))
             return false;
-        if (this.associatedEntityTypeIds == null) {
-            if (other.associatedEntityTypeIds != null)
-                return false;
-        }
-        else if (!Arrays.deepEquals(this.associatedEntityTypeIds, other.associatedEntityTypeIds))
-            return false;
         return true;
     }
 
@@ -336,7 +303,6 @@ public class Project implements IProject {
         result = prime * result + ((this.storeEntities == null) ? 0 : this.storeEntities.hashCode());
         result = prime * result + ((this.storePseudonyms == null) ? 0 : this.storePseudonyms.hashCode());
         result = prime * result + ((this.description == null) ? 0 : this.description.hashCode());
-        result = prime * result + ((this.associatedEntityTypeIds == null) ? 0 : Arrays.deepHashCode(this.associatedEntityTypeIds));
         return result;
     }
 
@@ -352,7 +318,6 @@ public class Project implements IProject {
         sb.append(", ").append(storeEntities);
         sb.append(", ").append(storePseudonyms);
         sb.append(", ").append(description);
-        sb.append(", ").append(Arrays.deepToString(associatedEntityTypeIds));
 
         sb.append(")");
         return sb.toString();
@@ -372,7 +337,6 @@ public class Project implements IProject {
         setStoreEntities(from.getStoreEntities());
         setStorePseudonyms(from.getStorePseudonyms());
         setDescription(from.getDescription());
-        setAssociatedEntityTypeIds(from.getAssociatedEntityTypeIds());
     }
 
     @Override

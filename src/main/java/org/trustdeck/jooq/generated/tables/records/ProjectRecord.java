@@ -9,7 +9,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
@@ -19,8 +18,8 @@ import java.time.OffsetDateTime;
 
 import org.jooq.Field;
 import org.jooq.Record1;
-import org.jooq.Record9;
-import org.jooq.Row9;
+import org.jooq.Record8;
+import org.jooq.Row8;
 import org.jooq.impl.UpdatableRecordImpl;
 import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.interfaces.IProject;
@@ -37,12 +36,9 @@ import org.trustdeck.jooq.generated.tables.interfaces.IProject;
     uniqueConstraints = {
         @UniqueConstraint(name = "project_name_key", columnNames = { "name" }),
         @UniqueConstraint(name = "project_abbreviation_key", columnNames = { "abbreviation" })
-    },
-    indexes = {
-        @Index(name = "project_associated_entity_type_ids_gin_idx", columnList = "associated_entity_type_ids ASC")
     }
 )
-public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements Record9<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String, Integer[]>, IProject {
+public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements Record8<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String>, IProject {
 
     private static final long serialVersionUID = 1L;
 
@@ -199,24 +195,6 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
         return (String) get(7);
     }
 
-    /**
-     * Setter for <code>public.project.associated_entity_type_ids</code>.
-     */
-    @Override
-    public ProjectRecord setAssociatedEntityTypeIds(Integer[] value) {
-        set(8, value);
-        return this;
-    }
-
-    /**
-     * Getter for <code>public.project.associated_entity_type_ids</code>.
-     */
-    @Column(name = "associated_entity_type_ids")
-    @Override
-    public Integer[] getAssociatedEntityTypeIds() {
-        return (Integer[]) get(8);
-    }
-
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -227,17 +205,17 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     // -------------------------------------------------------------------------
-    // Record9 type implementation
+    // Record8 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String, Integer[]> fieldsRow() {
-        return (Row9) super.fieldsRow();
+    public Row8<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String> fieldsRow() {
+        return (Row8) super.fieldsRow();
     }
 
     @Override
-    public Row9<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String, Integer[]> valuesRow() {
-        return (Row9) super.valuesRow();
+    public Row8<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String> valuesRow() {
+        return (Row8) super.valuesRow();
     }
 
     @Override
@@ -281,11 +259,6 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public Field<Integer[]> field9() {
-        return Project.PROJECT.ASSOCIATED_ENTITY_TYPE_IDS;
-    }
-
-    @Override
     public Integer component1() {
         return getId();
     }
@@ -326,11 +299,6 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public Integer[] component9() {
-        return getAssociatedEntityTypeIds();
-    }
-
-    @Override
     public Integer value1() {
         return getId();
     }
@@ -368,11 +336,6 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     @Override
     public String value8() {
         return getDescription();
-    }
-
-    @Override
-    public Integer[] value9() {
-        return getAssociatedEntityTypeIds();
     }
 
     @Override
@@ -424,13 +387,7 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     }
 
     @Override
-    public ProjectRecord value9(Integer[] value) {
-        setAssociatedEntityTypeIds(value);
-        return this;
-    }
-
-    @Override
-    public ProjectRecord values(Integer value1, String value2, String value3, OffsetDateTime value4, OffsetDateTime value5, Boolean value6, Boolean value7, String value8, Integer[] value9) {
+    public ProjectRecord values(Integer value1, String value2, String value3, OffsetDateTime value4, OffsetDateTime value5, Boolean value6, Boolean value7, String value8) {
         value1(value1);
         value2(value2);
         value3(value3);
@@ -439,7 +396,6 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
         value6(value6);
         value7(value7);
         value8(value8);
-        value9(value9);
         return this;
     }
 
@@ -457,7 +413,6 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
         setStoreEntities(from.getStoreEntities());
         setStorePseudonyms(from.getStorePseudonyms());
         setDescription(from.getDescription());
-        setAssociatedEntityTypeIds(from.getAssociatedEntityTypeIds());
         resetChangedOnNotNull();
     }
 
@@ -481,7 +436,7 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     /**
      * Create a detached, initialised ProjectRecord
      */
-    public ProjectRecord(Integer id, String name, String abbreviation, OffsetDateTime startDate, OffsetDateTime endDate, Boolean storeEntities, Boolean storePseudonyms, String description, Integer[] associatedEntityTypeIds) {
+    public ProjectRecord(Integer id, String name, String abbreviation, OffsetDateTime startDate, OffsetDateTime endDate, Boolean storeEntities, Boolean storePseudonyms, String description) {
         super(Project.PROJECT);
 
         setId(id);
@@ -492,7 +447,6 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
         setStoreEntities(storeEntities);
         setStorePseudonyms(storePseudonyms);
         setDescription(description);
-        setAssociatedEntityTypeIds(associatedEntityTypeIds);
         resetChangedOnNotNull();
     }
 
@@ -511,7 +465,6 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
             setStoreEntities(value.getStoreEntities());
             setStorePseudonyms(value.getStorePseudonyms());
             setDescription(value.getDescription());
-            setAssociatedEntityTypeIds(value.getAssociatedEntityTypeIds());
             resetChangedOnNotNull();
         }
     }

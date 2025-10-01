@@ -14,7 +14,6 @@ import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.Person;
-import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
 
 
@@ -46,5 +45,4 @@ public class Indexes {
     public static final Index PERSON_IDENTIFIER_UINDEX = Internal.createIndex(DSL.name("person_identifier_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.IDENTIFIER }, false);
     public static final Index PERSON_LASTNAME_UINDEX = Internal.createIndex(DSL.name("person_lastname_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.LASTNAME }, false);
     public static final Index PERSON_STREET_POSTALCODE_CITY_COUNTRY_UINDEX = Internal.createIndex(DSL.name("person_street_postalcode_city_country_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.STREET, Person.PERSON.POSTALCODE, Person.PERSON.CITY, Person.PERSON.COUNTRY }, false);
-    public static final Index PROJECT_ASSOCIATED_ENTITY_TYPE_IDS_GIN_IDX = Internal.createIndex(DSL.name("project_associated_entity_type_ids_gin_idx"), Project.PROJECT, new OrderField[] { Project.PROJECT.ASSOCIATED_ENTITY_TYPE_IDS }, false);
 }
