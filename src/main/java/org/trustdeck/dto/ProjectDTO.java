@@ -18,20 +18,13 @@
 package org.trustdeck.dto;
 
 import java.time.OffsetDateTime;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.pojos.Project;
-import org.trustdeck.service.EntityTypeDBService;
-import org.trustdeck.utils.SpringBeanLocator;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * This class represents a Data Transfer Object (DTO) for a project.
@@ -68,16 +61,6 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	
 	/** The project description. */
 	private String description;
-	
-	/** A list of the names of the associated object types. */
-	private String[] associatedEntityTypes;
-	
-	/** Allows interaction with the project objects in the database. */
-	@Getter(value=AccessLevel.NONE)
-    @Setter(value=AccessLevel.NONE)
-	@JsonIgnore
-	@Autowired
-	private EntityTypeDBService entityTypeDBService;
 
 	@JsonIgnore
 	@Override
@@ -95,12 +78,6 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	    dto.setStoreEntities(pojo.getStoreEntities());
 	    dto.setStorePseudonyms(pojo.getStorePseudonyms());
 	    dto.setDescription(pojo.getDescription());
-	    
-	    // Insert the object type names
-	    if (this.entityTypeDBService == null) {
-	    	this.entityTypeDBService = SpringBeanLocator.getBean(EntityTypeDBService.class);
-	    }
-    	dto.setAssociatedEntityTypes(entityTypeDBService.getEntityTypeNames(pojo.getAssociatedEntityTypeIds()));
 
 	    return dto;
 	}
@@ -132,14 +109,6 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	    out += (this.getStoreEntities() != null) ? "storeEntities: " + this.getStoreEntities().toString() + ", " : "";
 	    out += (this.getStorePseudonyms() != null) ? "createPseudonyms: " + this.getStorePseudonyms().toString() + ", " : "";
 	    out += (this.getDescription() != null) ? "description: " + this.getDescription() + ", " : "";
-	    if (this.getAssociatedEntityTypes() != null) {
-	    	out += "associatedEntityTypes: [";
-	    	
-	    	for (int i = 0; i < this.getAssociatedEntityTypes().length; i++) {
-	    		out += this.getAssociatedEntityTypes()[i] + ((i == this.getAssociatedEntityTypes().length-1) ? "" : ", ");
-	    	}
-	    	out += "]";
-	    }
 	    
 	    return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
 	}

@@ -34,11 +34,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
 import static org.trustdeck.jooq.generated.Tables.ENTITY_INSTANCE;
 import static org.trustdeck.jooq.generated.Tables.ENTITY_TYPE;
 import static org.trustdeck.jooq.generated.Tables.PROJECT;
@@ -53,10 +49,6 @@ public class ProjectDBService {
 	/** References a jOOQ configuration object that configures jOOQ's behavior when executing queries. */
     @Autowired
 	private DSLContext dsl;
-    
-    /** Enables access to the entity type database service. */
-    @Autowired
-    private EntityTypeDBService ets;
 
     /**
      * Method to insert a new project into the database table.
@@ -68,8 +60,9 @@ public class ProjectDBService {
      * 		   {@code null} when the insertion failed or would create a duplicate.
      */
     @Transactional
-    public Project createProject(Project project, HttpServletRequest request) throws DuplicateProjectException {
+    public ProjectDTO createProject(ProjectDTO project, HttpServletRequest request) throws DuplicateProjectException {
     	try {
+    		// Insert project
     		ProjectRecord projectRecord = dsl.newRecord(PROJECT);
     		projectRecord.setName(project.getName());
     		projectRecord.setAbbreviation(project.getAbbreviation());
@@ -78,7 +71,6 @@ public class ProjectDBService {
     		projectRecord.setStoreEntities(project.getStoreEntities());
     		projectRecord.setStorePseudonyms(project.getStorePseudonyms());
     		projectRecord.setDescription(project.getDescription());
-    		projectRecord.setAssociatedEntityTypeIds(project.getAssociatedEntityTypeIds());
     		
     		// Store and determine success
 	        if(projectRecord.insert() == 0) {
@@ -214,20 +206,20 @@ public class ProjectDBService {
      * The deletion is a tombstoning operation where the 
      * end_date is set and no real deletion is performed. 
      * 
-     * @param name the name of the project that should be deleted
+     * @param abbreviation the name of the project that should be deleted
      * @param request the http request object containing information necessary for the audit trail
      * @return {@code true} when the deletion was successful, {@code false} when the project object 
      * 			that should be deleted was not found
      * @throws UnexpectedResultSizeException whenever the deletion would not exactly affect one project entry
      */
     @Transactional
-    public boolean deleteProject(String name, HttpServletRequest request) throws UnexpectedResultSizeException {
+    public boolean deleteProject(String abbreviation, OffsetDateTime deleteDate, HttpServletRequest request) throws UnexpectedResultSizeException {
     	// Fetch the project to check if it exists
-    	ProjectDTO project = getProjectByName(name, null);
+    	ProjectDTO project = getProjectByAbbreviation(abbreviation, null);
         
     	if (project != null) {
     		// Check if project is still active
-    		if (project.getEndDate().isBefore(OffsetDateTime.now())) {
+    		if (project.getEndDate().isBefore(deleteDate)) {
     			log.debug("The project's end date is already in the past. Deleting (tombstoning) not necessary.");
     			return true;
     		}
@@ -236,18 +228,18 @@ public class ProjectDBService {
         	int deletedRecords = 0;
 			try {
 				deletedRecords = dsl.update(PROJECT)
-						.set(PROJECT.END_DATE, OffsetDateTime.now())
-						.where(PROJECT.NAME.equalIgnoreCase(project.getName()))
+						.set(PROJECT.END_DATE, deleteDate)
+						.where(PROJECT.ABBREVIATION.equalIgnoreCase(project.getAbbreviation()))
 						.execute();
 			} catch (DataAccessException e) {
-				log.error("Failed to delete the project \"" + project.getName() + "\".", e);
+				log.error("Failed to delete the project \"" + project.getAbbreviation() + "\".", e);
 				return false;
 			}
         	
         	// Determine success
             if (deletedRecords != 1) {
             	// Throw exception to terminate the transaction
-                log.debug("Deleting the project with name \"" + project.getName() + "\" would not affect exactly one entry. Aborting.");
+                log.debug("Deleting the project with abbreviation \"" + project.getAbbreviation() + "\" would not affect exactly one entry. Aborting.");
                 throw new UnexpectedResultSizeException(1, deletedRecords);
             }
             
@@ -257,22 +249,22 @@ public class ProjectDBService {
         }
         
         // At this point, no project with the given name was found
-        log.debug("No project with the given name found. Nothing to delete.");
+        log.debug("No project with the given abbreviation found. Nothing to delete.");
         return false;
     }
 
     /**
      * This method updates a project identified by its name.
      * 
-     * @param name the name of the project that should be updated
+     * @param abbreviation the abbreviation of the project that should be updated
      * @param updatedProject the project object containing the updated information
      * @param request the http request object containing information necessary for the audit trail
      * @return the ID of the updated project, or {@code null} if an error occurred
      */
     @Transactional
-    public Integer updateProject(String name, ProjectDTO updatedProject, HttpServletRequest request) {
+    public Integer updateProject(String abbreviation, ProjectDTO updatedProject, HttpServletRequest request) {
     	// Get data needed for the update
-    	ProjectDTO oldProject = getProjectByName(name, null);
+    	ProjectDTO oldProject = getProjectByAbbreviation(abbreviation, null);
 		
 		// Check if the old record was found
 		if (oldProject == null) {
@@ -280,7 +272,7 @@ public class ProjectDBService {
 			return null;
 		}
 		
-		// Check if the project is in use
+		// Check if the project is in use (find project_id mentions in the type table and in the instance table)
 		int usedBy = 0;
     	try {
     		usedBy = dsl.select(
@@ -309,13 +301,6 @@ public class ProjectDBService {
 			projectRecord.setEndDate(newEnd.isAfter(newStart) ? newEnd : oldProject.getEndDate());
     		
 			projectRecord.setDescription(updatedProject.getDescription() != null ? updatedProject.getDescription() : oldProject.getDescription());
-			
-			// Merge the new types with the old types --> no removal of old types in the partial update allowed
-			String[] newTypes = updatedProject.getAssociatedEntityTypes() != null && updatedProject.getAssociatedEntityTypes().length != 0 ? updatedProject.getAssociatedEntityTypes() : oldProject.getAssociatedEntityTypes();
-			Set<String> merged = new HashSet<>();
-			merged.addAll(Arrays.asList(oldProject.getAssociatedEntityTypes()));
-			merged.addAll(Arrays.asList(newTypes));
-			projectRecord.setAssociatedEntityTypeIds(ets.getEntityTypeIDs(oldProject.getId(), merged.toArray(new String[0])));
     	} else {
 			// Sanitize the given values and update the attributes
 			projectRecord.setName(updatedProject.getName() != null && !updatedProject.getName().isBlank() ? updatedProject.getName() : oldProject.getName());
@@ -325,7 +310,6 @@ public class ProjectDBService {
 			projectRecord.setStoreEntities(updatedProject.getStoreEntities() != null ? updatedProject.getStoreEntities() : oldProject.getStoreEntities());
 			projectRecord.setStorePseudonyms(updatedProject.getStorePseudonyms() != null ? updatedProject.getStorePseudonyms() : oldProject.getStorePseudonyms());
 			projectRecord.setDescription(updatedProject.getDescription() != null ? updatedProject.getDescription() : oldProject.getDescription());
-			projectRecord.setAssociatedEntityTypeIds(updatedProject.getAssociatedEntityTypes() != null && updatedProject.getAssociatedEntityTypes().length != 0 ? ets.getEntityTypeIDs(oldProject.getId(), updatedProject.getAssociatedEntityTypes()) : ets.getEntityTypeIDs(oldProject.getId(), oldProject.getAssociatedEntityTypes()));
     	}
 			
         // Store and determine success
