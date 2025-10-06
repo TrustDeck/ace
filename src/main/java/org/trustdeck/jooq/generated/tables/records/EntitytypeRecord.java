@@ -17,8 +17,8 @@ import jakarta.validation.constraints.Size;
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.Record1;
-import org.jooq.Record8;
-import org.jooq.Row8;
+import org.jooq.Record10;
+import org.jooq.Row10;
 import org.jooq.impl.UpdatableRecordImpl;
 import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.interfaces.IEntityType;
@@ -38,7 +38,7 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntityType;
         @Index(name = "entity_type_type_definition_gin_idx", columnList = "type_definition ASC")
     }
 )
-public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> implements Record8<Integer, String, String, Boolean, Boolean, JSONB, Object, Integer>, IEntityType {
+public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> implements Record10<Integer, String, String, Boolean, Boolean, JSONB, Boolean, Integer, Integer, Object>, IEntityType {
 
     private static final long serialVersionUID = 1L;
 
@@ -159,6 +159,62 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     }
 
     /**
+     * Setter for
+     * <code>public.entity_type.automatic_pseudonym_generation</code>.
+     */
+    @Override
+    public EntityTypeRecord setAutomaticPseudonymGeneration(Boolean value) {
+        set(6, value);
+        return this;
+    }
+
+    /**
+     * Getter for
+     * <code>public.entity_type.automatic_pseudonym_generation</code>.
+     */
+    @Column(name = "automatic_pseudonym_generation")
+    @Override
+    public Boolean getAutomaticPseudonymGeneration() {
+        return (Boolean) get(6);
+    }
+
+    /**
+     * Setter for <code>public.entity_type.associated_domain_id</code>.
+     */
+    @Override
+    public EntityTypeRecord setAssociatedDomainId(Integer value) {
+        set(7, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entity_type.associated_domain_id</code>.
+     */
+    @Column(name = "associated_domain_id")
+    @Override
+    public Integer getAssociatedDomainId() {
+        return (Integer) get(7);
+    }
+
+    /**
+     * Setter for <code>public.entity_type.project_id</code>.
+     */
+    @Override
+    public EntityTypeRecord setProjectId(Integer value) {
+        set(8, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entity_type.project_id</code>.
+     */
+    @Column(name = "project_id")
+    @Override
+    public Integer getProjectId() {
+        return (Integer) get(8);
+    }
+
+    /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
      * it may have been excluded from code generation. If this is a built-in
      * type, you can define an explicit {@link org.jooq.Binding} to specify how
@@ -169,7 +225,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     @Deprecated
     @Override
     public EntityTypeRecord setFullTextSearchVector(Object value) {
-        set(6, value);
+        set(9, value);
         return this;
     }
 
@@ -185,25 +241,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     @Column(name = "full_text_search_vector")
     @Override
     public Object getFullTextSearchVector() {
-        return get(6);
-    }
-
-    /**
-     * Setter for <code>public.entity_type.project_id</code>.
-     */
-    @Override
-    public EntityTypeRecord setProjectId(Integer value) {
-        set(7, value);
-        return this;
-    }
-
-    /**
-     * Getter for <code>public.entity_type.project_id</code>.
-     */
-    @Column(name = "project_id")
-    @Override
-    public Integer getProjectId() {
-        return (Integer) get(7);
+        return get(9);
     }
 
     // -------------------------------------------------------------------------
@@ -216,17 +254,17 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     }
 
     // -------------------------------------------------------------------------
-    // Record8 type implementation
+    // Record10 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Integer, String, String, Boolean, Boolean, JSONB, Object, Integer> fieldsRow() {
-        return (Row8) super.fieldsRow();
+    public Row10<Integer, String, String, Boolean, Boolean, JSONB, Boolean, Integer, Integer, Object> fieldsRow() {
+        return (Row10) super.fieldsRow();
     }
 
     @Override
-    public Row8<Integer, String, String, Boolean, Boolean, JSONB, Object, Integer> valuesRow() {
-        return (Row8) super.valuesRow();
+    public Row10<Integer, String, String, Boolean, Boolean, JSONB, Boolean, Integer, Integer, Object> valuesRow() {
+        return (Row10) super.valuesRow();
     }
 
     @Override
@@ -259,6 +297,21 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
         return EntityType.ENTITY_TYPE.TYPE_DEFINITION;
     }
 
+    @Override
+    public Field<Boolean> field7() {
+        return EntityType.ENTITY_TYPE.AUTOMATIC_PSEUDONYM_GENERATION;
+    }
+
+    @Override
+    public Field<Integer> field8() {
+        return EntityType.ENTITY_TYPE.ASSOCIATED_DOMAIN_ID;
+    }
+
+    @Override
+    public Field<Integer> field9() {
+        return EntityType.ENTITY_TYPE.PROJECT_ID;
+    }
+
     /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
      * it may have been excluded from code generation. If this is a built-in
@@ -269,13 +322,8 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
      */
     @Deprecated
     @Override
-    public Field<Object> field7() {
+    public Field<Object> field10() {
         return EntityType.ENTITY_TYPE.FULL_TEXT_SEARCH_VECTOR;
-    }
-
-    @Override
-    public Field<Integer> field8() {
-        return EntityType.ENTITY_TYPE.PROJECT_ID;
     }
 
     @Override
@@ -308,6 +356,21 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
         return getTypeDefinition();
     }
 
+    @Override
+    public Boolean component7() {
+        return getAutomaticPseudonymGeneration();
+    }
+
+    @Override
+    public Integer component8() {
+        return getAssociatedDomainId();
+    }
+
+    @Override
+    public Integer component9() {
+        return getProjectId();
+    }
+
     /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
      * it may have been excluded from code generation. If this is a built-in
@@ -318,13 +381,8 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
      */
     @Deprecated
     @Override
-    public Object component7() {
+    public Object component10() {
         return getFullTextSearchVector();
-    }
-
-    @Override
-    public Integer component8() {
-        return getProjectId();
     }
 
     @Override
@@ -357,6 +415,21 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
         return getTypeDefinition();
     }
 
+    @Override
+    public Boolean value7() {
+        return getAutomaticPseudonymGeneration();
+    }
+
+    @Override
+    public Integer value8() {
+        return getAssociatedDomainId();
+    }
+
+    @Override
+    public Integer value9() {
+        return getProjectId();
+    }
+
     /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
      * it may have been excluded from code generation. If this is a built-in
@@ -367,13 +440,8 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
      */
     @Deprecated
     @Override
-    public Object value7() {
+    public Object value10() {
         return getFullTextSearchVector();
-    }
-
-    @Override
-    public Integer value8() {
-        return getProjectId();
     }
 
     @Override
@@ -412,6 +480,24 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
         return this;
     }
 
+    @Override
+    public EntityTypeRecord value7(Boolean value) {
+        setAutomaticPseudonymGeneration(value);
+        return this;
+    }
+
+    @Override
+    public EntityTypeRecord value8(Integer value) {
+        setAssociatedDomainId(value);
+        return this;
+    }
+
+    @Override
+    public EntityTypeRecord value9(Integer value) {
+        setProjectId(value);
+        return this;
+    }
+
     /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
      * it may have been excluded from code generation. If this is a built-in
@@ -422,19 +508,13 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
      */
     @Deprecated
     @Override
-    public EntityTypeRecord value7(Object value) {
+    public EntityTypeRecord value10(Object value) {
         setFullTextSearchVector(value);
         return this;
     }
 
     @Override
-    public EntityTypeRecord value8(Integer value) {
-        setProjectId(value);
-        return this;
-    }
-
-    @Override
-    public EntityTypeRecord values(Integer value1, String value2, String value3, Boolean value4, Boolean value5, JSONB value6, Object value7, Integer value8) {
+    public EntityTypeRecord values(Integer value1, String value2, String value3, Boolean value4, Boolean value5, JSONB value6, Boolean value7, Integer value8, Integer value9, Object value10) {
         value1(value1);
         value2(value2);
         value3(value3);
@@ -443,6 +523,8 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
         value6(value6);
         value7(value7);
         value8(value8);
+        value9(value9);
+        value10(value10);
         return this;
     }
 
@@ -458,8 +540,10 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
         setIsDeprecated(from.getIsDeprecated());
         setIsBaseType(from.getIsBaseType());
         setTypeDefinition(from.getTypeDefinition());
-        setFullTextSearchVector(from.getFullTextSearchVector());
+        setAutomaticPseudonymGeneration(from.getAutomaticPseudonymGeneration());
+        setAssociatedDomainId(from.getAssociatedDomainId());
         setProjectId(from.getProjectId());
+        setFullTextSearchVector(from.getFullTextSearchVector());
         resetChangedOnNotNull();
     }
 
@@ -483,7 +567,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     /**
      * Create a detached, initialised EntityTypeRecord
      */
-    public EntityTypeRecord(Integer id, String name, String version, Boolean isDeprecated, Boolean isBaseType, JSONB typeDefinition, Object fullTextSearchVector, Integer projectId) {
+    public EntityTypeRecord(Integer id, String name, String version, Boolean isDeprecated, Boolean isBaseType, JSONB typeDefinition, Boolean automaticPseudonymGeneration, Integer associatedDomainId, Integer projectId, Object fullTextSearchVector) {
         super(EntityType.ENTITY_TYPE);
 
         setId(id);
@@ -492,8 +576,10 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
         setIsDeprecated(isDeprecated);
         setIsBaseType(isBaseType);
         setTypeDefinition(typeDefinition);
-        setFullTextSearchVector(fullTextSearchVector);
+        setAutomaticPseudonymGeneration(automaticPseudonymGeneration);
+        setAssociatedDomainId(associatedDomainId);
         setProjectId(projectId);
+        setFullTextSearchVector(fullTextSearchVector);
         resetChangedOnNotNull();
     }
 
@@ -510,8 +596,10 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
             setIsDeprecated(value.getIsDeprecated());
             setIsBaseType(value.getIsBaseType());
             setTypeDefinition(value.getTypeDefinition());
-            setFullTextSearchVector(value.getFullTextSearchVector());
+            setAutomaticPseudonymGeneration(value.getAutomaticPseudonymGeneration());
+            setAssociatedDomainId(value.getAssociatedDomainId());
             setProjectId(value.getProjectId());
+            setFullTextSearchVector(value.getFullTextSearchVector());
             resetChangedOnNotNull();
         }
     }

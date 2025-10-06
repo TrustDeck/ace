@@ -42,8 +42,10 @@ public class EntityType implements IEntityType {
     private Boolean isDeprecated;
     private Boolean isBaseType;
     private JSONB typeDefinition;
-    private Object fullTextSearchVector;
+    private Boolean automaticPseudonymGeneration;
+    private Integer associatedDomainId;
     private Integer projectId;
+    private Object fullTextSearchVector;
 
     public EntityType() {}
 
@@ -54,8 +56,10 @@ public class EntityType implements IEntityType {
         this.isDeprecated = value.getIsDeprecated();
         this.isBaseType = value.getIsBaseType();
         this.typeDefinition = value.getTypeDefinition();
-        this.fullTextSearchVector = value.getFullTextSearchVector();
+        this.automaticPseudonymGeneration = value.getAutomaticPseudonymGeneration();
+        this.associatedDomainId = value.getAssociatedDomainId();
         this.projectId = value.getProjectId();
+        this.fullTextSearchVector = value.getFullTextSearchVector();
     }
 
     public EntityType(
@@ -65,8 +69,10 @@ public class EntityType implements IEntityType {
         Boolean isDeprecated,
         Boolean isBaseType,
         JSONB typeDefinition,
-        Object fullTextSearchVector,
-        Integer projectId
+        Boolean automaticPseudonymGeneration,
+        Integer associatedDomainId,
+        Integer projectId,
+        Object fullTextSearchVector
     ) {
         this.id = id;
         this.name = name;
@@ -74,8 +80,10 @@ public class EntityType implements IEntityType {
         this.isDeprecated = isDeprecated;
         this.isBaseType = isBaseType;
         this.typeDefinition = typeDefinition;
-        this.fullTextSearchVector = fullTextSearchVector;
+        this.automaticPseudonymGeneration = automaticPseudonymGeneration;
+        this.associatedDomainId = associatedDomainId;
         this.projectId = projectId;
+        this.fullTextSearchVector = fullTextSearchVector;
     }
 
     /**
@@ -195,6 +203,62 @@ public class EntityType implements IEntityType {
     }
 
     /**
+     * Getter for
+     * <code>public.entity_type.automatic_pseudonym_generation</code>.
+     */
+    @Column(name = "automatic_pseudonym_generation")
+    @Override
+    public Boolean getAutomaticPseudonymGeneration() {
+        return this.automaticPseudonymGeneration;
+    }
+
+    /**
+     * Setter for
+     * <code>public.entity_type.automatic_pseudonym_generation</code>.
+     */
+    @Override
+    public EntityType setAutomaticPseudonymGeneration(Boolean automaticPseudonymGeneration) {
+        this.automaticPseudonymGeneration = automaticPseudonymGeneration;
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entity_type.associated_domain_id</code>.
+     */
+    @Column(name = "associated_domain_id")
+    @Override
+    public Integer getAssociatedDomainId() {
+        return this.associatedDomainId;
+    }
+
+    /**
+     * Setter for <code>public.entity_type.associated_domain_id</code>.
+     */
+    @Override
+    public EntityType setAssociatedDomainId(Integer associatedDomainId) {
+        this.associatedDomainId = associatedDomainId;
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entity_type.project_id</code>.
+     */
+    @Column(name = "project_id")
+    @Override
+    public Integer getProjectId() {
+        return this.projectId;
+    }
+
+    /**
+     * Setter for <code>public.entity_type.project_id</code>.
+     */
+    @Override
+    public EntityType setProjectId(Integer projectId) {
+        this.projectId = projectId;
+        return this;
+    }
+
+    /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
      * it may have been excluded from code generation. If this is a built-in
      * type, you can define an explicit {@link org.jooq.Binding} to specify how
@@ -221,24 +285,6 @@ public class EntityType implements IEntityType {
     @Override
     public EntityType setFullTextSearchVector(Object fullTextSearchVector) {
         this.fullTextSearchVector = fullTextSearchVector;
-        return this;
-    }
-
-    /**
-     * Getter for <code>public.entity_type.project_id</code>.
-     */
-    @Column(name = "project_id")
-    @Override
-    public Integer getProjectId() {
-        return this.projectId;
-    }
-
-    /**
-     * Setter for <code>public.entity_type.project_id</code>.
-     */
-    @Override
-    public EntityType setProjectId(Integer projectId) {
-        this.projectId = projectId;
         return this;
     }
 
@@ -287,17 +333,29 @@ public class EntityType implements IEntityType {
         }
         else if (!this.typeDefinition.equals(other.typeDefinition))
             return false;
-        if (this.fullTextSearchVector == null) {
-            if (other.fullTextSearchVector != null)
+        if (this.automaticPseudonymGeneration == null) {
+            if (other.automaticPseudonymGeneration != null)
                 return false;
         }
-        else if (!this.fullTextSearchVector.equals(other.fullTextSearchVector))
+        else if (!this.automaticPseudonymGeneration.equals(other.automaticPseudonymGeneration))
+            return false;
+        if (this.associatedDomainId == null) {
+            if (other.associatedDomainId != null)
+                return false;
+        }
+        else if (!this.associatedDomainId.equals(other.associatedDomainId))
             return false;
         if (this.projectId == null) {
             if (other.projectId != null)
                 return false;
         }
         else if (!this.projectId.equals(other.projectId))
+            return false;
+        if (this.fullTextSearchVector == null) {
+            if (other.fullTextSearchVector != null)
+                return false;
+        }
+        else if (!this.fullTextSearchVector.equals(other.fullTextSearchVector))
             return false;
         return true;
     }
@@ -312,8 +370,10 @@ public class EntityType implements IEntityType {
         result = prime * result + ((this.isDeprecated == null) ? 0 : this.isDeprecated.hashCode());
         result = prime * result + ((this.isBaseType == null) ? 0 : this.isBaseType.hashCode());
         result = prime * result + ((this.typeDefinition == null) ? 0 : this.typeDefinition.hashCode());
-        result = prime * result + ((this.fullTextSearchVector == null) ? 0 : this.fullTextSearchVector.hashCode());
+        result = prime * result + ((this.automaticPseudonymGeneration == null) ? 0 : this.automaticPseudonymGeneration.hashCode());
+        result = prime * result + ((this.associatedDomainId == null) ? 0 : this.associatedDomainId.hashCode());
         result = prime * result + ((this.projectId == null) ? 0 : this.projectId.hashCode());
+        result = prime * result + ((this.fullTextSearchVector == null) ? 0 : this.fullTextSearchVector.hashCode());
         return result;
     }
 
@@ -327,8 +387,10 @@ public class EntityType implements IEntityType {
         sb.append(", ").append(isDeprecated);
         sb.append(", ").append(isBaseType);
         sb.append(", ").append(typeDefinition);
-        sb.append(", ").append(fullTextSearchVector);
+        sb.append(", ").append(automaticPseudonymGeneration);
+        sb.append(", ").append(associatedDomainId);
         sb.append(", ").append(projectId);
+        sb.append(", ").append(fullTextSearchVector);
 
         sb.append(")");
         return sb.toString();
@@ -346,8 +408,10 @@ public class EntityType implements IEntityType {
         setIsDeprecated(from.getIsDeprecated());
         setIsBaseType(from.getIsBaseType());
         setTypeDefinition(from.getTypeDefinition());
-        setFullTextSearchVector(from.getFullTextSearchVector());
+        setAutomaticPseudonymGeneration(from.getAutomaticPseudonymGeneration());
+        setAssociatedDomainId(from.getAssociatedDomainId());
         setProjectId(from.getProjectId());
+        setFullTextSearchVector(from.getFullTextSearchVector());
     }
 
     @Override

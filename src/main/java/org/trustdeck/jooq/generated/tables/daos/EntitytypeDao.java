@@ -144,6 +144,52 @@ public class EntityTypeDao extends DAOImpl<EntityTypeRecord, org.trustdeck.jooq.
     }
 
     /**
+     * Fetch records that have <code>automatic_pseudonym_generation BETWEEN
+     * lowerInclusive AND upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchRangeOfAutomaticPseudonymGeneration(Boolean lowerInclusive, Boolean upperInclusive) {
+        return fetchRange(EntityType.ENTITY_TYPE.AUTOMATIC_PSEUDONYM_GENERATION, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>automatic_pseudonym_generation IN
+     * (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchByAutomaticPseudonymGeneration(Boolean... values) {
+        return fetch(EntityType.ENTITY_TYPE.AUTOMATIC_PSEUDONYM_GENERATION, values);
+    }
+
+    /**
+     * Fetch records that have <code>associated_domain_id BETWEEN lowerInclusive
+     * AND upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchRangeOfAssociatedDomainId(Integer lowerInclusive, Integer upperInclusive) {
+        return fetchRange(EntityType.ENTITY_TYPE.ASSOCIATED_DOMAIN_ID, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>associated_domain_id IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchByAssociatedDomainId(Integer... values) {
+        return fetch(EntityType.ENTITY_TYPE.ASSOCIATED_DOMAIN_ID, values);
+    }
+
+    /**
+     * Fetch records that have <code>project_id BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchRangeOfProjectId(Integer lowerInclusive, Integer upperInclusive) {
+        return fetchRange(EntityType.ENTITY_TYPE.PROJECT_ID, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>project_id IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchByProjectId(Integer... values) {
+        return fetch(EntityType.ENTITY_TYPE.PROJECT_ID, values);
+    }
+
+    /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
      * it may have been excluded from code generation. If this is a built-in
      * type, you can define an explicit {@link org.jooq.Binding} to specify how
@@ -167,20 +213,5 @@ public class EntityTypeDao extends DAOImpl<EntityTypeRecord, org.trustdeck.jooq.
     @Deprecated
     public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchByFullTextSearchVector(Object... values) {
         return fetch(EntityType.ENTITY_TYPE.FULL_TEXT_SEARCH_VECTOR, values);
-    }
-
-    /**
-     * Fetch records that have <code>project_id BETWEEN lowerInclusive AND
-     * upperInclusive</code>
-     */
-    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchRangeOfProjectId(Integer lowerInclusive, Integer upperInclusive) {
-        return fetchRange(EntityType.ENTITY_TYPE.PROJECT_ID, lowerInclusive, upperInclusive);
-    }
-
-    /**
-     * Fetch records that have <code>project_id IN (values)</code>
-     */
-    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchByProjectId(Integer... values) {
-        return fetch(EntityType.ENTITY_TYPE.PROJECT_ID, values);
     }
 }

@@ -167,10 +167,21 @@ public class EntityInstance extends TableImpl<EntityInstanceRecord> {
 
     @Override
     public List<ForeignKey<EntityInstanceRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.ENTITY_INSTANCE__ENTITY_INSTANCE_ENTITY_TYPE_ID_FKEY);
+        return Arrays.asList(Keys.ENTITY_INSTANCE__ENTITY_INSTANCE_PROJECT_ID_FKEY, Keys.ENTITY_INSTANCE__ENTITY_INSTANCE_ENTITY_TYPE_ID_FKEY);
     }
 
+    private transient Project _project;
     private transient EntityType _entityType;
+
+    /**
+     * Get the implicit join path to the <code>public.project</code> table.
+     */
+    public Project project() {
+        if (_project == null)
+            _project = new Project(this, Keys.ENTITY_INSTANCE__ENTITY_INSTANCE_PROJECT_ID_FKEY);
+
+        return _project;
+    }
 
     /**
      * Get the implicit join path to the <code>public.entity_type</code> table.

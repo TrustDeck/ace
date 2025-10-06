@@ -10,14 +10,14 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function8;
+import org.jooq.Function10;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row8;
+import org.jooq.Row10;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -85,6 +85,22 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
     public final TableField<EntityTypeRecord, JSONB> TYPE_DEFINITION = createField(DSL.name("type_definition"), SQLDataType.JSONB.nullable(false), this, "");
 
     /**
+     * The column
+     * <code>public.entity_type.automatic_pseudonym_generation</code>.
+     */
+    public final TableField<EntityTypeRecord, Boolean> AUTOMATIC_PSEUDONYM_GENERATION = createField(DSL.name("automatic_pseudonym_generation"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "");
+
+    /**
+     * The column <code>public.entity_type.associated_domain_id</code>.
+     */
+    public final TableField<EntityTypeRecord, Integer> ASSOCIATED_DOMAIN_ID = createField(DSL.name("associated_domain_id"), SQLDataType.INTEGER, this, "");
+
+    /**
+     * The column <code>public.entity_type.project_id</code>.
+     */
+    public final TableField<EntityTypeRecord, Integer> PROJECT_ID = createField(DSL.name("project_id"), SQLDataType.INTEGER, this, "");
+
+    /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
      * it may have been excluded from code generation. If this is a built-in
      * type, you can define an explicit {@link org.jooq.Binding} to specify how
@@ -94,11 +110,6 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
      */
     @Deprecated
     public final TableField<EntityTypeRecord, Object> FULL_TEXT_SEARCH_VECTOR = createField(DSL.name("full_text_search_vector"), org.jooq.impl.DefaultDataType.getDefaultDataType("\"pg_catalog\".\"tsvector\""), this, "");
-
-    /**
-     * The column <code>public.entity_type.project_id</code>.
-     */
-    public final TableField<EntityTypeRecord, Integer> PROJECT_ID = createField(DSL.name("project_id"), SQLDataType.INTEGER, this, "");
 
     private EntityType(Name alias, Table<EntityTypeRecord> aliased) {
         this(alias, aliased, null);
@@ -154,6 +165,34 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
     }
 
     @Override
+    public List<ForeignKey<EntityTypeRecord, ?>> getReferences() {
+        return Arrays.asList(Keys.ENTITY_TYPE__ENTITY_TYPE_ASSOCIATED_DOMAIN_ID_FKEY, Keys.ENTITY_TYPE__ENTITY_TYPE_PROJECT_ID_FKEY);
+    }
+
+    private transient Domain _domain;
+    private transient Project _project;
+
+    /**
+     * Get the implicit join path to the <code>public.domain</code> table.
+     */
+    public Domain domain() {
+        if (_domain == null)
+            _domain = new Domain(this, Keys.ENTITY_TYPE__ENTITY_TYPE_ASSOCIATED_DOMAIN_ID_FKEY);
+
+        return _domain;
+    }
+
+    /**
+     * Get the implicit join path to the <code>public.project</code> table.
+     */
+    public Project project() {
+        if (_project == null)
+            _project = new Project(this, Keys.ENTITY_TYPE__ENTITY_TYPE_PROJECT_ID_FKEY);
+
+        return _project;
+    }
+
+    @Override
     public EntityType as(String alias) {
         return new EntityType(DSL.name(alias), this);
     }
@@ -193,18 +232,18 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row8 type methods
+    // Row10 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Integer, String, String, Boolean, Boolean, JSONB, Object, Integer> fieldsRow() {
-        return (Row8) super.fieldsRow();
+    public Row10<Integer, String, String, Boolean, Boolean, JSONB, Boolean, Integer, Integer, Object> fieldsRow() {
+        return (Row10) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function8<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Object, ? super Integer, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function10<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Boolean, ? super Integer, ? super Integer, ? super Object, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -212,7 +251,7 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function8<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Object, ? super Integer, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function10<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Boolean, ? super Integer, ? super Integer, ? super Object, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

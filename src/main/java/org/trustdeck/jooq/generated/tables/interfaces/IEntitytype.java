@@ -110,6 +110,41 @@ public interface IEntityType extends Serializable {
     public JSONB getTypeDefinition();
 
     /**
+     * Setter for
+     * <code>public.entity_type.automatic_pseudonym_generation</code>.
+     */
+    public IEntityType setAutomaticPseudonymGeneration(Boolean value);
+
+    /**
+     * Getter for
+     * <code>public.entity_type.automatic_pseudonym_generation</code>.
+     */
+    @Column(name = "automatic_pseudonym_generation")
+    public Boolean getAutomaticPseudonymGeneration();
+
+    /**
+     * Setter for <code>public.entity_type.associated_domain_id</code>.
+     */
+    public IEntityType setAssociatedDomainId(Integer value);
+
+    /**
+     * Getter for <code>public.entity_type.associated_domain_id</code>.
+     */
+    @Column(name = "associated_domain_id")
+    public Integer getAssociatedDomainId();
+
+    /**
+     * Setter for <code>public.entity_type.project_id</code>.
+     */
+    public IEntityType setProjectId(Integer value);
+
+    /**
+     * Getter for <code>public.entity_type.project_id</code>.
+     */
+    @Column(name = "project_id")
+    public Integer getProjectId();
+
+    /**
      * @deprecated Unknown data type. If this is a qualified, user-defined type,
      * it may have been excluded from code generation. If this is a built-in
      * type, you can define an explicit {@link org.jooq.Binding} to specify how
@@ -131,17 +166,6 @@ public interface IEntityType extends Serializable {
     @Deprecated
     @Column(name = "full_text_search_vector")
     public Object getFullTextSearchVector();
-
-    /**
-     * Setter for <code>public.entity_type.project_id</code>.
-     */
-    public IEntityType setProjectId(Integer value);
-
-    /**
-     * Getter for <code>public.entity_type.project_id</code>.
-     */
-    @Column(name = "project_id")
-    public Integer getProjectId();
 
     // -------------------------------------------------------------------------
     // FROM and INTO
