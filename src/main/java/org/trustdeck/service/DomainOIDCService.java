@@ -116,7 +116,7 @@ public class DomainOIDCService {
 
             boolean canCreate = true;
             //make sure root operation are not related to non root domains
-            if(!isSuperDomain && oidcService.getRootOperationGroupIDs().contains(operationGroupId)){
+            if(!isSuperDomain && oidcService.getAdministrativeOperationGroupIDs().contains(operationGroupId)){
               canCreate = false;
             }
 

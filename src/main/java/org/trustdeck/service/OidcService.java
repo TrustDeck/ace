@@ -49,7 +49,7 @@ import org.trustdeck.utils.Utility;
  * within a Keycloak realm. It uses the Keycloak Admin Client to interact with the server and
  * offers various operations, such as creating roles, groups, and assigning roles to groups.
  *
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch, Armin Müller
  */
 @Slf4j
 @Service
@@ -75,9 +75,9 @@ public class OidcService implements InitializingBean {
     @Getter
     private List<String> operationGroupIDs;
 
-
+    /** List of group IDs representing the keycloak operation groups needed for administrative purposes such as managing other roles. */
     @Getter
-    private List<String> rootOperationGroupIDs;
+    private List<String> administrativeOperationGroupIDs;
 
     /**
      * Initializes the Keycloak client and sets up the necessary roles and groups.
@@ -251,7 +251,8 @@ public class OidcService implements InitializingBean {
 
         // List to store the group IDs for each role
         List<String> groupIds = new ArrayList<>();
-        List<String> rootGroupIds = new ArrayList<>();
+        List<String> adminGroupIds = new ArrayList<>();
+        
         // Match the created roles to their group IDs based on paths
         for (String role : roleConfig.getOperations()) {
             Map.Entry<String, String> groupEntry = Utility.findGroupEntryByPath(finalGroupPaths, "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role);
@@ -259,10 +260,9 @@ public class OidcService implements InitializingBean {
             if (groupEntry != null) {
                 groupIds.add(groupEntry.getKey());
 
-                if(roleConfig.getRootOperations().contains(role)){
-                    rootGroupIds.add(groupEntry.getKey());
+                if(roleConfig.getAdministrationOperations().contains(role)){
+                    adminGroupIds.add(groupEntry.getKey());
                 }
-
             }
         }
 
@@ -271,16 +271,16 @@ public class OidcService implements InitializingBean {
             throw new OIDCException("Could not find all groups and roles that should have been added.");
         }
 
-        // Ensure that the number of root groups matches the number of roles
-        if (rootGroupIds.size() != roleConfig.getRootOperations().size()) {
-            throw new OIDCException("Could not find all groups and roles that should have been added.");
+        // Ensure that the number of administrative groups matches the number of roles
+        if (adminGroupIds.size() != roleConfig.getAdministrationOperations().size()) {
+            throw new OIDCException("Could not find all administrative groups and roles that should have been added.");
         }
 
         // Cache the standard group IDs for future use
         this.operationGroupIDs = groupIds;
 
         // Cache the root group IDs for future use
-        this.rootOperationGroupIDs = rootGroupIds;
+        this.administrativeOperationGroupIDs = adminGroupIds;
     }
 
     /**
@@ -649,37 +649,22 @@ public class OidcService implements InitializingBean {
     }
 
     /**
-     * Retrieves a map of user federations.
-     * <p>
-     * This method uses the Keycloak Admin API to fetch all federations of the type
-     * `org.keycloak.storage.UserStorageProvider`. The federations are represented as
-     * `ComponentRepresentation` objects and converted into a map, where the IDs of the federations
-     * are used as keys and the names of the federations as values.
-     * </p>
+     * Retrieves a map of all configured user storage providers 
+     * (e.g. LDAP, Kerberos, etc.) aka federation providers.
      *
-     * @return A map that associates the IDs of the federations with their names.
+     * @return a map that associates the IDs of the federation providers with their names.
      */
-    public Map<String, String> getFederations() {
-        List<ComponentRepresentation> federations = this.getKeycloakRealm().components()
-            .query(null, "org.keycloak.storage.UserStorageProvider");
+    public Map<String, String> getFederationProviderMap() {
+        List<ComponentRepresentation> federations = this.getKeycloakRealm().components().query(null, "org.keycloak.storage.UserStorageProvider");
 
-        Map<String, String> fedMap = federations.stream()
-            .collect(Collectors.toMap(ComponentRepresentation::getId,
-                ComponentRepresentation::getName));
-
-        return fedMap;
+        return federations.stream().collect(Collectors.toMap(ComponentRepresentation::getId, ComponentRepresentation::getName));
     }
 
     /**
      * Searches for users based on a search term.
-     * <p>
-     * This method uses the Keycloak Admin API to search for users whose attributes match the
-     * specified search term. The search is not limited to a specific number of results and returns
-     * all matching users.
-     * </p>
      *
      * @param query The search term used to find users.
-     * @return A list of `UserRepresentation` objects representing the found users.
+     * @return a list of the found users.
      */
     public List<UserRepresentation> searchUsers(String query) {
         return this.getKeycloakRealm().users().search(query, 0, Integer.MAX_VALUE);
