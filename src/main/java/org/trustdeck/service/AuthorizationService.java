@@ -193,7 +193,7 @@ public class AuthorizationService {
      * @return {@code true} only if given role and domain have a relationship, {@code false} if not
      */
     private boolean isRootDomain(String domainName, String role){
-        if(!roleConfig.getRootOperations().contains(role)){
+        if(!roleConfig.getOperations().contains(role)){
             return false;
         }
 
