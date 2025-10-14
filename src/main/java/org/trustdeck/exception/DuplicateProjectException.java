@@ -21,36 +21,29 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * This class represents an exception when a duplicate of a person was found.
+ * This class represents an exception when a duplicate of a project was found.
  * 
  * @author Armin Müller
  *
  */
-public class DuplicatePersonException extends RuntimeException {
+public class DuplicateProjectException extends Exception {
 
 	/** Exception UID. */
-	private static final long serialVersionUID = -5879079573152206083L;
+	private static final long serialVersionUID = 2462959206804675954L;
 	
-	/** The identifier of the person that was duplicated. */
+	/** The name of the project that was duplicated. */
 	@Getter
 	@Setter
-	private String identifier;
-	
-	/** The idType of the person that was duplicated. */
-	@Getter
-	@Setter
-	private String idType;
+	private String name;
 	
 	/** 
-	 * Constructor that also defines information of the person causing the exception.
+	 * Constructor that also defines information of the project causing the exception.
 	 * 
-	 * @param identifier the identifier of the exception-causing person
-	 * @param idType the idType of the exception-causing person
+	 * @param name the name of the exception-causing project
 	 */
-	public DuplicatePersonException(String identifier, String idType) {
-		super("A duplicate of the person was found.");
+	public DuplicateProjectException(String name) {
+		super("A duplicate of the project was found.");
 		
-		this.identifier = identifier;
-		this.idType = idType;
+		this.name = name;
 	}
 }

@@ -34,12 +34,12 @@ import org.trustdeck.dto.PersonDTO;
 import org.trustdeck.exception.DuplicatePersonException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.exception.UpdateException;
+import org.trustdeck.jooq.generated.tables.daos.PersonDao;
 import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.pojos.Person;
 import org.trustdeck.jooq.generated.tables.records.PersonRecord;
 
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import static org.trustdeck.jooq.generated.Tables.PERSON;
@@ -60,10 +60,6 @@ public class PersonDBService {
 	/** Enables the access to the algorithm specific database access methods. */
     @Autowired
 	private AlgorithmDBService algorithmDBService;
-    
-    /** The default number of maximum allowed query results. If a query would result in more records, the surplus is omitted. */
-    @Getter
-    private static final int DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS = 20;
 	
 	/**
      * Method to insert a new person into the database table.
@@ -72,11 +68,11 @@ public class PersonDBService {
      * @param algorithm the algorithm object containing information about how the person identifier was generated
      * @param request the http request object containing information necessary for the audit trail
      * @throws DuplicatePersonException when the identifier & idType combination are already in the database
-     * @return The inserted person object including the ID when the insertion was successful,
+     * @return The newly inserted person object when the insertion was successful,
      * 		   {@code null} when the insertion failed or would create a duplicate.
      */
     @Transactional
-    public Person createPerson(Person person, Algorithm algorithm, HttpServletRequest request) throws DuplicatePersonException {
+    public PersonDTO createPerson(Person person, Algorithm algorithm, HttpServletRequest request) throws DuplicatePersonException {
     	// Retrieve the proper ID for the algorithm
     	Integer algorithmID = algorithm.getId() != null && algorithm.getId() > 0 ? algorithm.getId() : algorithmDBService.createOrGetAlgorithm(algorithm);
     	
@@ -102,7 +98,7 @@ public class PersonDBService {
 	        personRecord.setIdentifieralgorithm(algorithmID);
 	
 	        // Store and determine success
-	        if(personRecord.insert() == 0) {
+	        if (personRecord.insert() == 0) {
 	        	log.debug("Inserting the person with identifier \"" + personRecord.getIdentifier() + "\" failed due to an equal record already being in the database.");
 	        	return null;
 	        }
@@ -124,7 +120,7 @@ public class PersonDBService {
 	    
 	    // Return the person object
         log.debug("Creating the person with identifier \"" + person.getIdentifier() + "\" was successful.");
-	    return person;
+	    return new PersonDTO().assignPojoValues(getPersonDAO().fetchOneById(person.getId()));
     }
 
     /**
@@ -233,7 +229,8 @@ public class PersonDBService {
         	
         	// Determine success
             if (deletedRecords > 1) {
-                log.debug("Deleting the person with identifier \"" + person.getIdentifier() + "\" and idType \"" + idType + "\" would not affect exactly one entry. Aborting.");
+            	// Throw exception to terminate the transaction
+                log.debug("Deleting the person with identifier \"" + person.getIdentifierItem().getIdentifier() + "\" and idType \"" + idType + "\" would not affect exactly one entry. Aborting.");
                 throw new UnexpectedResultSizeException(1, deletedRecords);
             } else if (deletedRecords == 0) {
             	log.debug("Nothing found to delete.");
@@ -250,13 +247,13 @@ public class PersonDBService {
             } catch (UnexpectedResultSizeException e) {
             	log.debug("Deleting the algorithm would affect other algorithm objects, so it will not be deleted.");
             	
-            	// Re-throw the exception to break the transaction
+            	// Re-throw the exception to terminate the transaction
             	throw e;
             }
             
             // If the deletion of the algorithm object failed, then probably because it is not orphaned, which is totally fine
             if (!deletedAlgo) {
-            	log.debug("While deleting the person object with identifier \"" + person.getIdentifier() + "\": the algorithm object was not deleted.");
+            	log.debug("While deleting the person object with identifier \"" + person.getIdentifierItem().getIdentifier() + "\": the algorithm object was not deleted.");
             } else {
             	log.debug("Successfully deleted the orphaned algorithm.");
             }
@@ -265,7 +262,7 @@ public class PersonDBService {
         }
         
         // At this point, no person with the given identifier and idType was found
-        log.debug("Nothing to delete.");
+        log.debug("No person with the given identifier and idType found. Nothing to delete.");
         return false;
     }
 
@@ -280,7 +277,7 @@ public class PersonDBService {
     public List<Person> searchPersons(String query, HttpServletRequest request) {
         List<Person> persons = null;
         
-        // Split so that multi-word searches are possible
+        // Split, so that multi-word searches are possible
         String[] queryParts = query.split(" ");
         
         // Build query, start with a neutral condition
@@ -302,10 +299,10 @@ public class PersonDBService {
             condition = condition.and(partCondition);
         }
 
+        // Execute query
         try {
             persons = dsl.selectFrom(PERSON)
                          .where(condition)
-                         .limit(DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS)
                          .fetchInto(Person.class);
         } catch (MappingException e) {
         	log.debug("Could not map the person search result into the Person-POJO.");
@@ -329,10 +326,10 @@ public class PersonDBService {
      * @param idType the idType of the person that should be updated
      * @param updatedPerson the person object containing the updated information
      * @param request the http request object containing information necessary for the audit trail
-     * @return the ID of the updated person, or {@code null} if an error occurred
+     * @return the updated person, or {@code null} if an error occurred
      */
     @Transactional
-    public Integer updatePerson(String identifier, String idType, PersonDTO updatedPerson, HttpServletRequest request) {
+    public PersonDTO updatePerson(String identifier, String idType, PersonDTO updatedPerson, HttpServletRequest request) {
     	DateTimeFormatter dobFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     	
     	// Get data needed for the update
@@ -418,15 +415,25 @@ public class PersonDBService {
         personRecord.setPostalcode(updatedPerson.getPostalCode() != null && !updatedPerson.getPostalCode().isBlank() ? updatedPerson.getPostalCode() : oldPerson.getPostalCode());
         personRecord.setCity(updatedPerson.getCity() != null && !updatedPerson.getCity().isBlank() ? updatedPerson.getCity() : oldPerson.getCity());
         personRecord.setCountry(updatedPerson.getCountry() != null && !updatedPerson.getCountry().isBlank() ? updatedPerson.getCountry() : oldPerson.getCountry());
-        personRecord.setIdentifier(updatedPerson.getIdentifier() != null && !updatedPerson.getIdentifier().isBlank() ? updatedPerson.getIdentifier() : oldPerson.getIdentifier());
-        personRecord.setIdtype(updatedPerson.getIdType() != null && !updatedPerson.getIdType().isBlank() ? updatedPerson.getIdType() : oldPerson.getIdType());
+        personRecord.setIdentifier(updatedPerson.getIdentifierItem().getIdentifier() != null && !updatedPerson.getIdentifierItem().getIdentifier().isBlank() ? updatedPerson.getIdentifierItem().getIdentifier() : oldPerson.getIdentifierItem().getIdentifier());
+        personRecord.setIdtype(updatedPerson.getIdentifierItem().getIdType() != null && !updatedPerson.getIdentifierItem().getIdType().isBlank() ? updatedPerson.getIdentifierItem().getIdType() : oldPerson.getIdentifierItem().getIdType());
         personRecord.setIdentifieralgorithm(newAlgoID);
         
         // Store and determine success
         int wasStored = personRecord.update();
         log.debug("Updating the person object \"" + personRecord.getIdentifier() + "\" " + ((wasStored == 1) ? "succeeded." : "failed."));
         
-        // Return the algorithm ID when successful
-        return wasStored == 1 ? personRecord.getId() : null;
+        // Return the person ID when successful
+        return wasStored == 1 ? new PersonDTO().assignPojoValues(getPersonDAO().fetchOneById(personRecord.getId())) : null;
+    }
+    
+    /**
+     * Method to retrieve the person data access object.
+     *
+     * @return the audit event DAO
+     */
+    private PersonDao getPersonDAO() {
+    	// Attaches DAO to the current transactional context
+    	return new PersonDao(dsl.configuration());
     }
 }

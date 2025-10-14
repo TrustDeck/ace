@@ -152,7 +152,7 @@ public class DomainRESTController {
      */
     @PostMapping("/domain/complete")
     @PreAuthorize("hasRole('domain-create-complete')")
-    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
+    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> createDomainComplete(@RequestBody DomainDTO domainDTO,
                                                   @RequestHeader(name = "accept", required = false) String responseContentType,
                                                   HttpServletRequest request) {
@@ -461,12 +461,22 @@ public class DomainRESTController {
         
         if (result.equals(DomainDBAccessService.INSERTION_SUCCESS)) {
             // Return a 201-CREATED status and the location to the domain inside the response header.
+        	DomainDTO createdDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	createdDomDTO = createdDomDTO.toReducedStandardView();
+            }
+            
             log.info("Successfully created the domain \"" + domainName + "\".");
-            return responseService.created(responseContentType, location);
+            return responseService.created(responseContentType, location, createdDomDTO);
         } else if (result.equals(DomainDBAccessService.INSERTION_DUPLICATE)) {
             // Nothing added since the entry is a duplicate. Return an 200-OK status.
+        	DomainDTO existingDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	existingDomDTO = existingDomDTO.toReducedStandardView();
+            }
+            
             log.info("The domain requested to be inserted was skipped because it is already in the database.");
-            return responseService.ok(responseContentType);
+            return responseService.ok(responseContentType, existingDomDTO);
         } else {
             // Creating the domain failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Adding the domain \"" + domainName + "\" was unsuccessful.");
@@ -490,17 +500,17 @@ public class DomainRESTController {
      * 			<li>a <b>406-NOT_ACCEPTABLE</b> status when the domain
      * 				name is violating the URI-validity</li>
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the addition
-     * 				of the domain failed</li>
+     * 				of the domain failed or when the DTO was invalid</li>
      */
     @PostMapping("/domain")
     @PreAuthorize("hasRole('domain-create')")
-    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL, message = "Wants to create a new domain.")
+    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> createDomain(@RequestBody DomainDTO domainDTO,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
                                           HttpServletRequest request) {
 
         if (!domainDTO.validate() || !domainDTO.isValidStandardView()) {
-        	log.warn("422, because: " + (!domainDTO.validate() ? "invalid - missing mandatory fields" : !domainDTO.isValidStandardView() ? "non-standard view" : "IDK"));
+        	log.debug("The given domain DTO is invalid, due to " + (!domainDTO.validate() ? "missing mandatory fields." : "having non-standard information."));
         	return responseService.unprocessableEntity(responseContentType);
         }
 
@@ -514,12 +524,18 @@ public class DomainRESTController {
         Boolean multiplePsnAllowed = domainDTO.getMultiplePsnAllowed();
         String description = domainDTO.getDescription();
         String superDomainName = domainDTO.getSuperDomainName();
-
+        
         if (Assertion.assertNullAll(domainName, domainPrefix, validFrom, validTo, validityTime, algorithm, 
         		multiplePsnAllowed, description, superDomainName)) {
             // An empty object was passed, so there is nothing to create.
             log.debug("The domain DTO passed by the user was empty. Nothing to create.");
             return responseService.unprocessableEntity(responseContentType);
+        }
+
+        if (domainName == null || domainPrefix == null) {
+        	// These two attributes must be given
+        	log.debug("No name and/or no prefix were provided for the domain.");
+        	return responseService.unprocessableEntity(responseContentType);
         }
 
         // Check if the name is valid in an URI. If not, tell the user and abort
@@ -705,12 +721,22 @@ public class DomainRESTController {
         
         if (result.equals(DomainDBAccessService.INSERTION_SUCCESS)) {
             // Return a 201-CREATED status and the location to the domain inside the response header.
+            DomainDTO createdDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	createdDomDTO = createdDomDTO.toReducedStandardView();
+            }
+            
             log.info("Successfully created the domain \"" + domainName + "\".");
-            return responseService.created(responseContentType, location);
+            return responseService.created(responseContentType, location, createdDomDTO);
         } else if (result.equals(DomainDBAccessService.INSERTION_DUPLICATE)) {
             // Nothing added since the entry is a duplicate. Return an 200-OK status.
+        	DomainDTO existingDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	existingDomDTO = existingDomDTO.toReducedStandardView();
+            }
+            
             log.info("The domain requested to be inserted was skipped because it is already in the database.");
-            return responseService.ok(responseContentType);
+            return responseService.ok(responseContentType, existingDomDTO);
         } else {
             // Creating the domain failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Adding the domain \"" + domainName + "\" was unsuccessful.");
@@ -733,7 +759,7 @@ public class DomainRESTController {
      */
     @DeleteMapping("/domain")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-delete')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL, message = "Wants to delete a domain.")
+    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> deleteDomain(@RequestParam(name = "name", required = true) String domainName,
                                           @RequestParam(name = "recursive", required = false) Boolean performRecursiveChanges,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -781,13 +807,21 @@ public class DomainRESTController {
      */
     @GetMapping("/domains/{domain}/{attribute}")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read a specific attribute from a domain.")
+    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getDomainAttribute(@PathVariable("domain") String domainName,
     											@PathVariable("attribute") String attributeName,
     		                                    @RequestHeader(name = "accept", required = false) String responseContentType,
     		                                    HttpServletRequest request) {
+    	// Check if the user has the rights to access the requested attribute
+    	boolean canSeeComplete = authorizationService.currentRequestHasRole("complete-view");
+    	
+    	if (!"name, prefix, validfrom, validto, multiplepsnallowed, description".contains(attributeName.trim().toLowerCase()) && !canSeeComplete) {
+    		log.debug("The user is trying to read protected attributes without the necessary permission.");
+    		return responseService.forbidden(responseContentType);
+    	}
+    	
+    	String attribute;
     	Domain domain = domainDBAccessService.getDomainByName(domainName, request);
-    	Domain temp = new Domain();
     	
     	// Check if the domain was found
     	if (domain == null) {
@@ -797,121 +831,113 @@ public class DomainRESTController {
     	// Get required attribute
     	switch (attributeName.trim().toLowerCase()) {
 		case "id": {
-			temp.setId(domain.getId());
+			attribute = domain.getId().toString();
 			break;
 		} case "name": {
-			temp.setName(domain.getName());
+			attribute = domain.getName();
 			break;
 		} case "prefix": {
-			temp.setPrefix(domain.getPrefix());
+			attribute = domain.getPrefix();
 			break;
 		} case "validfrom": {
-			temp.setValidfrom(domain.getValidfrom());
+			attribute = domain.getValidfrom().toString();
 			break;
 		} case "validfrominherited": {
-			temp.setValidfrominherited(domain.getValidfrominherited());
+			attribute = domain.getValidfrominherited().toString();
 			break;
 		} case "validto": {
-			temp.setValidto(domain.getValidto());
+			attribute = domain.getValidto().toString();
 			break;
 		} case "validtoinherited": {
-			temp.setValidtoinherited(domain.getValidtoinherited());
+			attribute = domain.getValidtoinherited().toString();
 			break;
 		} case "enforcestartdatevalidity": {
-			temp.setEnforcestartdatevalidity(domain.getEnforcestartdatevalidity());
+			attribute = domain.getEnforcestartdatevalidity().toString();
 			break;
 		} case "enforcestartdatevalidityinherited": {
-			temp.setEnforcestartdatevalidityinherited(domain.getEnforcestartdatevalidityinherited());
+			attribute = domain.getEnforcestartdatevalidityinherited().toString();
 			break;
 		} case "enforceenddatevalidity": {
-			temp.setEnforceenddatevalidity(domain.getEnforceenddatevalidity());
+			attribute = domain.getEnforceenddatevalidity().toString();
 			break;
 		} case "enforceenddatevalidityinherited": {
-			temp.setEnforceenddatevalidityinherited(domain.getEnforceenddatevalidityinherited());
+			attribute = domain.getEnforceenddatevalidityinherited().toString();
 			break;
 		} case "algorithm": {
-			temp.setAlgorithm(domain.getAlgorithm());
+			attribute = domain.getAlgorithm();
 			break;
 		} case "algorithminherited": {
-			temp.setAlgorithminherited(domain.getAlgorithminherited());
+			attribute = domain.getAlgorithminherited().toString();
 			break;
 		} case "alphabet": {
-			temp.setAlphabet(domain.getAlphabet());
+			attribute = domain.getAlphabet();
 			break;
 		} case "alphabetinherited": {
-			temp.setAlphabetinherited(domain.getAlphabetinherited());
+			attribute = domain.getAlphabetinherited().toString();
 			break;
 		} case "randomalgorithmdesiredsize": {
-			temp.setRandomalgorithmdesiredsize(domain.getRandomalgorithmdesiredsize());
+			attribute = domain.getRandomalgorithmdesiredsize().toString();
 			break;
 		} case "randomalgorithmdesiredsizeinherited": {
-			temp.setRandomalgorithmdesiredsizeinherited(domain.getRandomalgorithmdesiredsizeinherited());
+			attribute = domain.getRandomalgorithmdesiredsizeinherited().toString();
 			break;
 		} case "randomalgorithmdesiredsuccessprobability": {
-			temp.setRandomalgorithmdesiredsuccessprobability(domain.getRandomalgorithmdesiredsuccessprobability());
+			attribute = domain.getRandomalgorithmdesiredsuccessprobability().toString();
 			break;
 		} case "randomalgorithmdesiredsuccessprobabilityinherited": {
-			temp.setRandomalgorithmdesiredsuccessprobabilityinherited(domain.getRandomalgorithmdesiredsuccessprobabilityinherited());
+			attribute = domain.getRandomalgorithmdesiredsuccessprobabilityinherited().toString();
 			break;
 		} case "multiplepsnallowed": {
-			temp.setMultiplepsnallowed(domain.getMultiplepsnallowed());
+			attribute = domain.getMultiplepsnallowed().toString();
 			break;
 		} case "multiplepsnallowedinherited": {
-			temp.setMultiplepsnallowedinherited(domain.getMultiplepsnallowedinherited());
+			attribute = domain.getMultiplepsnallowedinherited().toString();
 			break;
 		} case "consecutivevaluecounter": {
-			temp.setConsecutivevaluecounter(domain.getConsecutivevaluecounter());
+			attribute = domain.getConsecutivevaluecounter().toString();
 			break;
 		} case "pseudonymlength": {
-			temp.setPseudonymlength(domain.getPseudonymlength());
+			attribute = domain.getPseudonymlength().toString();
 			break;
 		} case "pseudonymlengthinherited": {
-			temp.setPseudonymlengthinherited(domain.getPseudonymlengthinherited());
+			attribute = domain.getPseudonymlengthinherited().toString();
 			break;
 		} case "paddingcharacter": {
-			temp.setPaddingcharacter(domain.getPaddingcharacter());
+			attribute = domain.getPaddingcharacter();
 			break;
 		} case "paddingcharacterinherited": {
-			temp.setPaddingcharacterinherited(domain.getPaddingcharacterinherited());
+			attribute = domain.getPaddingcharacterinherited().toString();
 			break;
 		} case "addcheckdigit": {
-			temp.setAddcheckdigit(domain.getAddcheckdigit());
+			attribute = domain.getAddcheckdigit().toString();
 			break;
 		} case "addcheckdigitinherited": {
-			temp.setAddcheckdigitinherited(domain.getAddcheckdigitinherited());
+			attribute = domain.getAddcheckdigitinherited().toString();
 			break;
 		} case "lengthincludescheckdigit": {
-			temp.setLengthincludescheckdigit(domain.getLengthincludescheckdigit());
+			attribute = domain.getLengthincludescheckdigit().toString();
 			break;
 		} case "lengthincludescheckdigitinherited": {
-			temp.setLengthincludescheckdigitinherited(domain.getLengthincludescheckdigitinherited());
+			attribute = domain.getLengthincludescheckdigitinherited().toString();
 			break;
 		} case "salt": {
-			temp.setSalt(domain.getSalt());
+			attribute = domain.getSalt();
 			break;
 		} case "saltlength": {
-			temp.setSaltlength(domain.getSaltlength());
+			attribute = domain.getSaltlength().toString();
 			break;
 		} case "description": {
-			temp.setDescription(domain.getDescription());
+			attribute = domain.getDescription();
 			break;
 		} case "superdomainid": {
-			temp.setSuperdomainid(domain.getSuperdomainid());
+			attribute = domain.getSuperdomainid().toString();
 			break;
 		} default:
 			log.debug("The requested attribute was not found.");
 			return responseService.notFound(responseContentType);
 		}
     	
-    	// Check if the user has the rights to access the requested attribute
-    	boolean canSeeComplete = authorizationService.currentRequestHasRole("complete-view");
-    	
-    	if (!"name, prefix, validfrom, validto, multiplepsnallowed, description".contains(attributeName.trim().toLowerCase()) && !canSeeComplete) {
-    		log.debug("The user is trying to read protected attributes without the necessary permission.");
-    		return responseService.forbidden(responseContentType);
-    	}
-    	
-    	return responseService.ok(responseContentType, new DomainDTO().assignPojoValues(temp));
+    	return responseService.ok(responseContentType, attribute);
     }
 
     /**
@@ -927,7 +953,7 @@ public class DomainRESTController {
      */
     @GetMapping("/domain")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read a domain.")
+    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getDomain(@RequestParam(name = "name", required = true) String domainName,
                                        @RequestHeader(name = "accept", required = false) String responseContentType,
                                        HttpServletRequest request) {
@@ -954,16 +980,15 @@ public class DomainRESTController {
 
     /**
      * This method returns all domains from the database in a minimal version.
-     * This endpoint is marked as experimental.
      *
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the <b>list of minimal
      * 				domains</b> when the query was successful</li>
      */
-    @GetMapping(value = "/experimental/domains/hierarchy")
+    @GetMapping(value = "/domains/hierarchy")
     @PreAuthorize("hasRole('domain-list-all')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Wants to read all domains in a minimal representation.")
+    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> listDomainHierarchy(@RequestHeader(name = "accept", required = false) String responseContentType,
                                                  HttpServletRequest request) {
         List<Domain> domains = domainDBAccessService.listDomains(request);
@@ -1004,8 +1029,8 @@ public class DomainRESTController {
      */
     @PutMapping("/domain/complete")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update-complete')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a complete domain.")
-    public ResponseEntity<String> updateDomainComplete(@RequestParam(name = "name", required = true) String oldDomainName,
+    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    public ResponseEntity<?> updateDomainComplete(@RequestParam(name = "name", required = true) String oldDomainName,
                                                        @RequestParam(name = "recursive", required = true) Boolean performRecursiveChanges,
                                                        @RequestBody DomainDTO domainDTO,
                                                        @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -1127,10 +1152,16 @@ public class DomainRESTController {
         updated.setDescription(description);
 
         // Execute update
-        if (domainDBAccessService.updateDomain(old, updated, performRecursiveChanges, request)) {
+        Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, performRecursiveChanges, request);
+        if (updatedDomain != null) {
             // Success. Return a 200-OK status.
+        	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	updatedDomDTO = updatedDomDTO.toReducedStandardView();
+            }
+            
             log.info("Successfully updated the domain \"" + domainName + "\".");
-            return responseService.ok(responseContentType);
+            return responseService.ok(responseContentType, updatedDomDTO);
         } else {
             // Updating the meta-information failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Updating the domain \"" + domainName + "\" was unsuccessful.");
@@ -1155,11 +1186,11 @@ public class DomainRESTController {
      */
     @PutMapping("/domain")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update a domain.")
-    public ResponseEntity<String> updateDomain(@RequestParam(name = "name", required = true) String oldDomainName,
-                                               @RequestBody DomainDTO domainDTO,
-                                               @RequestHeader(name = "accept", required = false) String responseContentType,
-                                               HttpServletRequest request) {
+    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    public ResponseEntity<?> updateDomain(@RequestParam(name = "name", required = true) String oldDomainName,
+                                          @RequestBody DomainDTO domainDTO,
+                                          @RequestHeader(name = "accept", required = false) String responseContentType,
+                                          HttpServletRequest request) {
         // Get old domain object
         Domain old = domainDBAccessService.getDomainByName(oldDomainName, null);
 
@@ -1208,10 +1239,16 @@ public class DomainRESTController {
         // All other domain attributes are null and are therefore correctly left as they are
 
         // Execute update
-        if (domainDBAccessService.updateDomain(old, updated, DEFAULT_PERFORM_RECURSIVE_CHANGES, request)) {
+        Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, DEFAULT_PERFORM_RECURSIVE_CHANGES, request);
+        if (updatedDomain != null) {
             // Success. Return a 200-OK status.
+        	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	updatedDomDTO = updatedDomDTO.toReducedStandardView();
+            }
+            
             log.info("Successfully updated the domain \"" + newName + "\".");
-            return responseService.ok(responseContentType);
+            return responseService.ok(responseContentType, updatedDomDTO);
         } else {
             // Updating the meta-information failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Updating the domain \"" + newName + "\" was unsuccessful.");
@@ -1237,7 +1274,7 @@ public class DomainRESTController {
      */
     @PutMapping("/domains/{domain}/salt")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-update-salt')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL, message = "Wants to update the salt from a domain.")
+    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> updateSalt(@PathVariable("domain") String domainName,
                                         @RequestParam(name = "salt", required = true) String newSalt,
                                         @RequestParam(name = "allowEmpty", required = false, defaultValue = "false") Boolean allowEmpty,
@@ -1266,10 +1303,16 @@ public class DomainRESTController {
         updated.setSaltlength((allowEmpty && newSalt.isBlank()) ? 0 : newSalt.length());
 
         // Execute update
-        if (domainDBAccessService.updateDomain(old, updated, false, request)) {
+        Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, false, request);
+        if (updatedDomain != null) {
             // Success. Return a 200-OK status.
+        	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
+            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            	updatedDomDTO = updatedDomDTO.toReducedStandardView();
+            }
+            
             log.info("Successfully updated the salt for the domain \"" + domainName + "\". It is now \"" + newSalt + "\".");
-            return responseService.ok(responseContentType);
+            return responseService.ok(responseContentType, updatedDomDTO);
         } else {
             // Updating the salt failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Updating the salt for the domain \"" + domainName + "\" was unsuccessful.");

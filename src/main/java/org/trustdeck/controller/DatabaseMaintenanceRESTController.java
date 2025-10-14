@@ -126,18 +126,18 @@ public class DatabaseMaintenanceRESTController {
     @PreAuthorize("@auth.currentRequestHasRole('delete-roles')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL, message = "Delete all roles from database.")
     public ResponseEntity<?> deleteDomainRightsAndRoles(@PathVariable("domain") String domainName) {
-	try {
-	    // Remove all roles from table
-            domainOidcService.leaveAndDeleteDomainGroupsAndRoles(domainName);
-	} catch (NotFoundException e) {
-	    // Domain does not exist. Nothing to do.
-	} catch (Exception f) {
-	    log.error("Deleting the roles for domain " + domainName + " from the database was unsuccessfull.\n\t" + f);
-	    return responseService.internalServerError(MediaType.TEXT_PLAIN_VALUE);
-	}
+		try {
+		    // Remove all roles from table
+	        domainOidcService.leaveAndDeleteDomainGroupsAndRoles(domainName);
+		} catch (NotFoundException e) {
+		    // Domain does not exist. Nothing to do.
+		} catch (Exception f) {
+		    log.error("Deleting the roles for domain " + domainName + " from the database was unsuccessfull.\n\t" + f);
+		    return responseService.internalServerError(MediaType.TEXT_PLAIN_VALUE);
+		}
 
         log.debug("Removed roles for domain \"" + domainName + "\".");
-	return responseService.ok(MediaType.TEXT_PLAIN_VALUE);
+        return responseService.ok(MediaType.TEXT_PLAIN_VALUE);
     }
 
     /**

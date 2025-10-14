@@ -47,6 +47,7 @@ import org.trustdeck.exception.DuplicatePersonException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Algorithm;
 import org.trustdeck.jooq.generated.tables.pojos.Person;
+import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.service.AlgorithmDBService;
@@ -77,6 +78,9 @@ public class PersonRESTContoller {
     /** Enables services for better working with responses. */
     @Autowired
     private ResponseService responseService;
+    
+    /** The default number of maximum allowed query results. If a query would result in more records, the surplus is omitted. */
+    private static final int DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS = 20;
 
     /**
      * Endpoint to create a new person object.
@@ -91,6 +95,8 @@ public class PersonRESTContoller {
      * 				information from the person object is missing 
      * 				(such as the first and last names or the 
      * 				administrative gender)</li>
+     * 			<li>a <b>409-CONFLICT</b> when the data entered was an 
+     * 				exact match to already existing data </li>
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when an algorithm 
      * 				object could not be created or when the person 
      * 				creation step itself failed</li>
@@ -106,7 +112,7 @@ public class PersonRESTContoller {
     	
     	// Create and sanitize algorithm object, if necessary
     	Algorithm algorithm = null;
-    	if (algorithmDTO.getId() != null && algorithmDTO.getId() >= 1) {
+    	if (algorithmDTO != null && algorithmDTO.getId() != null && algorithmDTO.getId() >= 1) {
     		// Valid algorithm ID given, retrieve the algorithm
     		algorithm = algorithmDBService.getAlgorithmByID(algorithmDTO.getId());
     		if (algorithm == null) {
@@ -117,8 +123,10 @@ public class PersonRESTContoller {
     	if (algorithm == null) {
     		// There either was no (valid) ID given, or the given ID was not found in the database
     		// Try finding the algorithm object
-			algorithm = algorithmDBService.getAlgorithmByValues(algorithmDTO.getName(), algorithmDTO.getAlphabet(), algorithmDTO.getRandomAlgorithmDesiredSize(), algorithmDTO.getRandomAlgorithmDesiredSuccessProbability(), algorithmDTO.getPseudonymLength(), algorithmDTO.getPaddingCharacter(), algorithmDTO.isAddCheckDigit(), algorithmDTO.isLengthIncludesCheckDigit(), algorithmDTO.getSalt(), algorithmDTO.getSaltLength());
-			
+    		if (algorithmDTO != null) {
+    			algorithm = algorithmDBService.getAlgorithmByValues(algorithmDTO.getName(), algorithmDTO.getAlphabet(), algorithmDTO.getRandomAlgorithmDesiredSize(), algorithmDTO.getRandomAlgorithmDesiredSuccessProbability(), algorithmDTO.getPseudonymLength(), algorithmDTO.getPaddingCharacter(), algorithmDTO.isAddCheckDigit(), algorithmDTO.isLengthIncludesCheckDigit(), algorithmDTO.getSalt(), algorithmDTO.getSaltLength());
+    		}
+    			
 			// Check if something was found
 			if (algorithm == null) {
 				log.debug("The algorithm information provided did not lead to a known algorithm in the database. A new algorithm object will be created.");
@@ -126,6 +134,7 @@ public class PersonRESTContoller {
     		
     		// Check if there's still no algorithm object found
     		if (algorithm == null) {
+    			//TODO: handle case where no algorithm info at all is given
     			// There was nothing found in the database that fits the given algorithm information, create a new algorithm object
     			Integer algoID = algorithmDBService.createAlgorithm(algorithmDTO.convertToPOJO());
     			
@@ -174,31 +183,35 @@ public class PersonRESTContoller {
     	if (Assertion.isNullOrEmpty(personDTO.getCountry())) {
     		personDTO.setCountry(null);
     	}
-    	if (Assertion.isNullOrEmpty(personDTO.getIdentifier())) {
+    	
+    	// Set identifier item
+    	String identifier, idType;
+    	if (personDTO.getIdentifierItem() == null || Assertion.isNullOrEmpty(personDTO.getIdentifierItem().getIdentifier())) {
     		// Create new pseudonym-identifier
-    		String psnIdentifier = pseudonymize(personDTO.getFirstName() + personDTO.getLastName() + personDTO.getBirthName() + personDTO.getDateOfBirth(), "generatedFromPersonData", algorithm);
-    		personDTO.setIdentifier(psnIdentifier);
+    		identifier = pseudonymize(personDTO.getFirstName() + personDTO.getLastName() + personDTO.getBirthName() + personDTO.getDateOfBirth(), "generatedFromPersonData", algorithm);
     		pseudonymCreated = true;
     	} else {
     		// Store a given identifier
-    		personDTO.setIdentifier(personDTO.getIdentifier().trim());
+    		identifier = personDTO.getIdentifierItem().getIdentifier().trim();
     		pseudonymCreated = false;
     	}
-    	if (Assertion.isNullOrEmpty(personDTO.getIdType())) {
-    		// Set idType
-    		if (!pseudonymCreated && Assertion.isNullOrEmpty(personDTO.getIdType())) {
-    			// The user provided an identifier but no idType
-    			personDTO.setIdType("userProvidedIdentifier");
-    		} else if (!pseudonymCreated && Assertion.isNotNullOrEmpty(personDTO.getIdType())) {
-    			// The user provided an identifier and an idType; nothing to do
-    		} else {
-    			// The user did not provide an identifier, so one was generated --> overwrite everything currently in idType
-    			personDTO.setIdType("generatedFromPersonData");
-    		}
-    	}
+    	
+		// Set idType
+		if (!pseudonymCreated && (personDTO.getIdentifierItem() == null || Assertion.isNullOrEmpty(personDTO.getIdentifierItem().getIdType()))) {
+			// The user provided an identifier but no idType
+			idType = "userProvidedIdentifier";
+		} else if (!pseudonymCreated && Assertion.isNotNullOrEmpty(personDTO.getIdentifierItem().getIdType())) {
+			// The user provided an identifier and an idType
+			idType = personDTO.getIdentifierItem().getIdType();
+		} else {
+			// The user did not provide an identifier, so one was generated --> overwrites everything currently in idType
+			idType = "generatedFromPersonData";
+		}
+		personDTO.setIdentifierItem(IdentifierItem.builder().identifier(identifier).idType(idType).build());
+
 
     	// Create the object in the database
-    	Person p = null;
+    	PersonDTO p = null;
     	try {
     		p = personDBService.createPerson(personDTO.convertToPOJO(), algorithm, request);
     	} catch (DuplicatePersonException e) {
@@ -210,7 +223,7 @@ public class PersonRESTContoller {
     	if (p != null) {
     		// Creation was successful
     		log.debug("Successfully created person object with ID: " + p.getId());
-    		return responseService.created(responseContentType);
+    		return responseService.created(responseContentType, p);
     	} else {
     		// Creation failed
     		log.info("Creating person object failed: " + personDTO.toRepresentationString());
@@ -345,12 +358,13 @@ public class PersonRESTContoller {
     	updatePersonDTO.setAlgorithm(oldPerson.getAlgorithm());
     	
     	// Update person object
-    	if (personDBService.updatePerson(identifier, idType, updatePersonDTO, request) == null) {
+    	PersonDTO p = personDBService.updatePerson(identifier, idType, updatePersonDTO, request);
+    	if (p != null) {
+    		log.debug("Successfully updated the person object with ID: " + oldPerson.getId());
+    		return responseService.ok(responseContentType, p);
+    	} else {
     		log.debug("Updating the person object with ID " + oldPerson.getId() + " failed.");
     		return responseService.unprocessableEntity(responseContentType);
-    	} else {
-    		log.debug("Successfully updated the person object with ID: " + oldPerson.getId());
-    		return responseService.ok(responseContentType);
     	}
     }
 
@@ -421,19 +435,28 @@ public class PersonRESTContoller {
     		log.debug("No results were found for the given query string (" + query + ").");
     		return responseService.notFound(responseContentType);
     	} else {
+    		// Check if we found too many results
+    		boolean wasTruncated = false;
+    		if (results.size() > DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS) {
+    			log.trace("The query returned " + results.size() + " results. This is more than the allowed maxmimum (" + DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS + ") so that the results are truncated to the allowed maximum.");
+    			results = results.subList(0, DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS - 1);
+    			wasTruncated = true;
+    		}
+    		
     		// Transform POJOs to DTOs and return
     		List<PersonDTO> resultDTOs = new ArrayList<PersonDTO>();
     		for (Person p : results) {
     			resultDTOs.add(new PersonDTO().assignPojoValues(p));
     		}
     		
-    		// Notify, that we allow a maximum of PersonDBService.getDEFAULT_MAX_NUMBER_OF_QUERY_RESULTS() results
-    		if (resultDTOs.size() == PersonDBService.getDEFAULT_MAX_NUMBER_OF_QUERY_RESULTS()) {
-    			log.debug("The query returned " + PersonDBService.getDEFAULT_MAX_NUMBER_OF_QUERY_RESULTS() + " results. If there are further matching records in the database, these were deliberately omitted.");
+    		// If we truncated the list due to it being too long, return a partial content response code
+    		if (wasTruncated) {
+    			log.debug("The search for persons with query \"" + query + "\" returned more than " + DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS + " results and was therefore truncated.");
+    			return responseService.partialContent(responseContentType, resultDTOs);
+    		} else {
+	    		log.debug("The search for persons with query \"" + query + "\" returned " + resultDTOs.size() + (resultDTOs.size() == 1 ? " result." : " results."));
+	    		return responseService.ok(responseContentType, resultDTOs);
     		}
-    		
-    		log.debug("The search for persons with query \"" + query + "\" returned " + resultDTOs.size() + (resultDTOs.size() == 1 ? " result." : " results."));
-    		return responseService.ok(responseContentType, resultDTOs);
     	}
     }
 
@@ -445,10 +468,11 @@ public class PersonRESTContoller {
      * @param idType the idType of the person you want to delete
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
-     * @return	<li>a <b>200-OK</b> status when no person object was 
-     * 				found and therefore, nothing needed to be deleted</li>
-     * 			<li>a <b>204-NO_CONTENT</b> status when the person was 
+     * @return	<li>a <b>204-NO_CONTENT</b> status when the person was 
      * 				successfully deleted</li>
+     * 			<li>a <b>404-NOT_FOUND</b> status when no person object was 
+     * 				found for the given identifier and idType and therefore,
+     * 				nothing could be deleted</li>
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the deletion
      * 				would affect more than one person object</li>
      */

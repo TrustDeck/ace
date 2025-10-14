@@ -521,9 +521,11 @@ public class PseudonymDBAccessService {
      * auditing should be performed, you can pass {@code null}.
      * @return {@code true} when the batch update was successful, {@code false} otherwise
      */
-    public boolean updatePseudonymBatch(List<Pseudonym> pseudonyms, HttpServletRequest request) {
+    public List<Boolean> updatePseudonymBatch(List<Pseudonym> pseudonyms, HttpServletRequest request) {
         try {
-            int up = dslCtx.transactionResult(configuration -> {
+        	List<Boolean> updateSuccess = new ArrayList<>();
+            
+        	int up = dslCtx.transactionResult(configuration -> {
                 // Update by creating multiple update statements and executing them as a batch.
                 DSLContext ctx = DSL.using(configuration);
 
@@ -550,14 +552,16 @@ public class PseudonymDBAccessService {
                 // Process the result
                 int updated = 0;
                 int ignored = 0;
-
+                
                 for (int i = 0; i < result.length; i++) {
                     if (result[i] == 1) {
                         // Successful update of exactly one record
                         updated++;
+                        updateSuccess.add(true);
                     } else if (result[i] == 0) {
                         // Update didn't affect any record (e.g. because the record to be updated wasn't found)
                         ignored++;
+                        updateSuccess.add(false);
                     } else {
                         // Unexpected result, abort the complete transaction by throwing an exception
                         throw new UnexpectedResultSizeException(1, result[i]);
@@ -575,15 +579,15 @@ public class PseudonymDBAccessService {
             });
 
             log.debug("Successfully updated a batch of " + up + " pseudonyms in the database.");
-            return true;
+            return updateSuccess;
         } catch (UnexpectedResultSizeException e) {
             log.error("The update would have affected an unexpected number of records (" + e.getActualSize() + ") "
                     + "when it should have only affected " + e.getExpectedSize() + " record(s). The complete update "
                     + "was therefore rolled back.\n" + e.getMessage());
-            return false;
+            return null;
         } catch (Exception f) {
             log.error("Couldn't update the batch of " + pseudonyms.size() + " pseudonyms in the database: " + f.getMessage() + "\n");
-            return false;
+            return null;
         }
     }
 

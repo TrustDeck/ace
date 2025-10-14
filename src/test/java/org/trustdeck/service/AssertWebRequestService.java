@@ -70,6 +70,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.trustdeck.dto.DomainDTO;
 import org.trustdeck.dto.PseudonymDTO;
+import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.utils.Assertion;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -194,8 +195,7 @@ public class AssertWebRequestService {
 	        
 	        // Create test record DTO
 	        PseudonymDTO pseudonymDTO = new PseudonymDTO();
-	        pseudonymDTO.setId("10000008912");
-	        pseudonymDTO.setIdType("ANY-ID");
+	        pseudonymDTO.setIdentifierItem(IdentifierItem.builder().identifier("10000008912").idType("ANY-ID").build());
 	        pseudonymDTO.setPsn("TS-9EEEE39F0D5C03507CB9388609E925F9");
 	        pseudonymDTO.setValidFrom(LocalDateTime.of(2022, 2, 26, 19, 15, 20, 885853000));
 	        pseudonymDTO.setValidTo(LocalDateTime.of(2052, 2, 19, 19, 15, 20, 885853000));

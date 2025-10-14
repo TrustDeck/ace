@@ -199,9 +199,9 @@ public class OidcService implements InitializingBean {
         }
 
         // Retrieve a flat map of all existing groups in the realm
-        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(this.getRealmGroups(), true);
-
-        // List to store group names that need to be created
+        Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(this.getRealmGroupsWithSubGroups(), true);
+        
+		// List to store group names that need to be created
         List<String> newGroups = new ArrayList<>();
 
         // Check for each operation role if a corresponding group path exists
@@ -247,8 +247,9 @@ public class OidcService implements InitializingBean {
         }
 
         // Re-fetch the list of all groups after creation to ensure consistency
-        Map<String, String> finalGroupPaths = Utility.flattenGroupIDToPathMapping(this.getRealmGroups(), true);
-
+        Map<String, String> finalGroupPaths = Utility.flattenGroupIDToPathMapping(this.getRealmGroupsWithSubGroups(), true);
+        log.trace("After group creation: group paths {" + finalGroupPaths + "}");
+        
         // List to store the group IDs for each role
         List<String> groupIds = new ArrayList<>();
         List<String> adminGroupIds = new ArrayList<>();
@@ -387,7 +388,7 @@ public class OidcService implements InitializingBean {
     }
 
     /**
-     * Retrieves a list of all groups within the configured Keycloak realm.
+     * Retrieves a list of all (top-level) groups within the configured Keycloak realm.
      *
      * @return {@link List} of {@link GroupRepresentation} containing all groups in the current realm.
      */
@@ -395,6 +396,60 @@ public class OidcService implements InitializingBean {
         // search query: "" (empty string) to retrieve all groups
         // briefRepresentation: false, to include detailed group information
         return this.getKeycloakRealm().groups().groups("", false, 0, Integer.MAX_VALUE, false);
+    }
+
+    /**
+     * This method first fetches all top-level groups and then recursively retrieves
+     * all their subgroups to build a complete group hierarchy.
+     *
+     * @return A list of all GroupRepresentation objects including top-level groups
+     *         and all their nested subgroups
+     */
+    public List<GroupRepresentation> getRealmGroupsWithSubGroups() {
+        // Fetch all top-level groups from the Keycloak realm
+        // search query: "" (empty string) to retrieve all groups
+        // briefRepresentation: false, to include detailed group information
+        // Exact matching: false, to enable partial matching
+        List<GroupRepresentation> topGroups = this.getKeycloakRealm().groups().groups("", false, 0, Integer.MAX_VALUE, false);
+
+        // Process these groups recursively to get all subgroups
+        return fetchSubGroupsRecursively(topGroups);
+    }
+
+    /**
+     * Helper method that recursively fetches all subgroups for a given list of groups.
+     * For each group, it retrieves its direct subgroups and then recursively processes
+     * those subgroups to build a complete hierarchy.
+     *
+     * @param groups a list of parent groups whose subgroups need to be fetched
+     * @return A flat list containing all groups and their nested subgroups
+     */
+    private List<GroupRepresentation> fetchSubGroupsRecursively(List<GroupRepresentation> groups) {
+        // Initialize result list with parent groups
+        List<GroupRepresentation> allGroups = new ArrayList<>(groups);
+
+        // Create a new ArrayList to avoid ConcurrentModificationException during iteration
+        for (GroupRepresentation group : new ArrayList<>(groups)) {
+            try {
+                // Fetch direct subgroups for current group using Keycloak API
+                // Parameters: no pagination, include all subgroups, full representation
+                List<GroupRepresentation> subGroups = this.getKeycloakRealm().groups().group(group.getId())
+                        .getSubGroups(0, Integer.MAX_VALUE, true);
+
+                // Add direct subgroups to result list
+                allGroups.addAll(subGroups);
+
+                // Recursively process subgroups if any exist
+                if (!subGroups.isEmpty()) {
+                    allGroups.addAll(fetchSubGroupsRecursively(subGroups));
+                }
+            } catch (Exception e) {
+                // Log warning if fetching subgroups fails for a particular group
+                log.warn("Failed to fetch subgroups for group \"" + group.getPath() + "\": " + e.getMessage());
+            }
+        }
+        
+        return allGroups;
     }
 
     /**
