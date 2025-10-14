@@ -30,10 +30,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
-import org.trustdeck.configuration.RoleConfig;
 import org.trustdeck.security.authentication.configuration.JwtProperties;
 import org.trustdeck.utils.Assertion;
-import org.trustdeck.jooq.generated.tables.pojos.Domain;
 
 /**
  * This class encapsulates utility functionalities to check roles and relationships within a given OIDC token.
@@ -51,14 +49,6 @@ public class AuthorizationService {
     /** Caching service for group paths. */
     @Autowired
     private CachingService cachingService;
-
-    /** Role configuration for the application. */
-    @Autowired
-    private RoleConfig roleConfig;
-
-    /** Domain database access service for retrieving domain information. */
-    @Autowired
-    private DomainDBAccessService domainDBAccessService;
 
     /**
      * Returns the authentication object from the SecurityContextHolder.
