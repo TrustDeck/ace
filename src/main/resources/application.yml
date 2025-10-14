@@ -100,5 +100,5 @@ app:
     - person-delete
     - person-search
   administration-operations:
-	# Roles that are needed to manage other roles and rights
-	- permission-manager
+    # Roles that are needed to manage other roles and rights
+    - permission-manager
