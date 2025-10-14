@@ -393,7 +393,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         this.assertBadRequestRequest("deleteRecordBadRequest", delete("/api/pseudonymization/domains/" + goodDomain + "/pseudonym"), null, null, this.getAccessToken());
 
         // Trigger a "not found" if permission for a domain is given but the domain is not yet created
-        domainOidcService.createDomainGroupsAndRolesAndJoin(goodDomainButNotFound, "3dfb6717-3def-493b-a237-b7345fc42718", false);
+        domainOidcService.createDomainGroupsAndRolesAndJoin(goodDomainButNotFound, "3dfb6717-3def-493b-a237-b7345fc42718");
         this.assertNotFoundRequest("createRecordNotFound", post("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonym"), null, createRecordDto, this.getAccessToken());
         this.assertNotFoundRequest("readRecordNotFound", get("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonym"), getParameter, null, this.getAccessToken());
         this.assertNotFoundRequest("updateRecordNotFound", put("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonym/complete"), updateParameter, updateRecordDto, this.getAccessToken());
@@ -471,7 +471,7 @@ public class TestsRecordServiceIT extends AssertWebRequestService {
         this.assertCreatedRequest("createNewRecordBatch", post("/api/pseudonymization/domains/" + goodDomain + "/pseudonyms"), null, recordDtoList, this.getAccessToken());
 
         // Domain wrong
-        domainOidcService.createDomainGroupsAndRolesAndJoin(goodDomainButNotFound, "3dfb6717-3def-493b-a237-b7345fc42718", false);
+        domainOidcService.createDomainGroupsAndRolesAndJoin(goodDomainButNotFound, "3dfb6717-3def-493b-a237-b7345fc42718");
         this.assertNotFoundRequest("createNewRecordBatchDomainNotFound", post("/api/pseudonymization/domains/" + goodDomainButNotFound + "/pseudonyms"), null, recordDtoList, this.getAccessToken());
 
         // Trigger too many records

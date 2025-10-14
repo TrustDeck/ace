@@ -130,7 +130,7 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
             put("name", domainName);
         }};
         
-        domainOidcService.createDomainGroupsAndRolesAndJoin(domainName, "3dfb6717-3def-493b-a237-b7345fc42718", false);
+        domainOidcService.createDomainGroupsAndRolesAndJoin(domainName, "3dfb6717-3def-493b-a237-b7345fc42718");
         this.assertNotFoundRequest("getDomainNotFoundDomainName", get("/api/pseudonymization/domain"), getParameter, null, this.getAccessToken());
 
         // Get salt without creating a domain first
