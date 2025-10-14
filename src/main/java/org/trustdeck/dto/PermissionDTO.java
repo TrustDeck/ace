@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,19 @@ package org.trustdeck.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.Objects;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.configuration.RoleConfig;
+import org.trustdeck.jooq.generated.tables.daos.DomainDao;
 import org.trustdeck.security.authentication.configuration.JwtProperties;
-import org.trustdeck.service.DomainDBAccessService;
+import org.trustdeck.utils.Assertion;
 import org.trustdeck.utils.SpringBeanLocator;
 
 /**
- * Data Transfer Object (DTO) for permissions. This class represents the permissions of a user for a
- * specific domain and operation.
+ * Data Transfer Object (DTO) for permissions. This class represents the
+ * permissions of a user for a specific domain and operation.
  *
  * @author Eric Wündisch
  */
@@ -41,163 +41,156 @@ import org.trustdeck.utils.SpringBeanLocator;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
 
-  /**
-   * The domain for which the permission applies.
-   */
-  String domain;
+	/** The domain for which the permission applies. */
+	private String domainName;
 
-  /**
-   * The operation associated with the permission.
-   */
-  String operation;
+	/** The operation associated with the permission. */
+	private String operation;
 
-  /**
-   * The user ID associated with the permission.
-   */
-  String userId;
+	/** The user ID associated with the permission. */
+	private String userId;
 
-  /**
-   * Properties for the JWT configuration. Retrieved via SpringBeanLocator.
-   */
-  @JsonIgnore
-  @Autowired
-  private JwtProperties jwtProperties = SpringBeanLocator.getBean(JwtProperties.class);
+	/** Properties for the JWT configuration. */
+	@JsonIgnore
+	@Autowired
+	private JwtProperties jwtProperties;
 
-  /**
-   * Configuration of roles and operations. Retrieved via SpringBeanLocator.
-   */
-  @JsonIgnore
-  @Autowired
-  private RoleConfig roleConfig = SpringBeanLocator.getBean(RoleConfig.class);
+	/** Configuration of roles and operations. */
+	@JsonIgnore
+	@Autowired
+	private RoleConfig roleConfig;
 
-  /**
-   * Service for accessing domain database methods. Retrieved via SpringBeanLocator.
-   */
-  @JsonIgnore
-  DomainDBAccessService domainDBAccessService = SpringBeanLocator.getBean(
-      DomainDBAccessService.class);
+	/** Service for accessing domain database methods. */
+	@JsonIgnore
+	@Autowired
+	private DomainDao domainDao;
 
-  /**
-   * Assigns values from a path string. The path is analyzed, and the values for domain and
-   * operation are extracted.
-   *
-   * @param pojo The path string to be analyzed.
-   * @return The updated PermissionDTO object or null if the path is invalid.
-   */
-  @Override
-  public PermissionDTO assignPojoValues(String pojo) {
+	/**
+	 * Constructor that creates the DTO from a given group path.
+	 * 
+	 * @param groupPath the flat path including the domain name and the permitted operation
+	 */
+	@JsonIgnore
+	public PermissionDTO(String groupPath) {
+		if (Assertion.isNullOrEmpty(groupPath)) {
+			// Empty group path
+			return;
+		}
+		
+		// Ensure that we have access to the JWT properties
+		if (jwtProperties == null) {
+			jwtProperties = SpringBeanLocator.getBean(JwtProperties.class);
+		}
+		
+		// Remove the name of the role-bucket from the path
+		String path;
+		if (groupPath.startsWith("/" + jwtProperties.getDomainRoleGroupContextName())) {
+			path = groupPath.substring(("/" + jwtProperties.getDomainRoleGroupContextName()).length());
+		} else {
+			path = groupPath;
+		}
+		
+		// Remove leading slashes
+		path = path.startsWith("/") ? path.substring(1) : path;
+		
+		// Now only one slash should be in the path which divides operation and domain; extract these
+		String[] splitedPath = path.split("/");
+		if (splitedPath.length == 2) {
+			this.setOperation(splitedPath[0]);
+			this.setDomainName(splitedPath[1]);
+		} else {
+			return;
+		}
+	}
+	
+	/**
+	 * Unused.
+	 */
+	@Override
+	public PermissionDTO assignPojoValues(String pojo) {
+		// Unused
+		return null;
+	}
 
-    if (pojo == null) {
-      return null;
-    }
+	/**
+	 * Checks whether the default view of the object is valid.
+	 *
+	 * @return {@code true} if the default view is valid, otherwise {@code false}
+	 */
+	@Override
+	@JsonIgnore
+	public Boolean isValidStandardView() {
+		return this.validate();
+	}
 
-    String path = pojo;
-    if (pojo.startsWith("/" + jwtProperties.getDomainRoleGroupContextName())) {
-      path = pojo.substring(("/" + jwtProperties.getDomainRoleGroupContextName()).length());
-    }
+	/**
+	 * Reduces the object to its standard view.
+	 *
+	 * @return the reduced PermissionDTO object
+	 */
+	@Override
+	@JsonIgnore
+	public PermissionDTO toReducedStandardView() {
+		return this;
+	}
 
-    if (path.startsWith("/")) {
-      path = path.substring(1);
-    }
+	/**
+	 * Returns a string representation of the object. The representation includes
+	 * the values for operation, domain, and user ID.
+	 *
+	 * @return a string representation of the object
+	 */
+	@Override
+	@JsonIgnore
+	public String toRepresentationString() {
+		String out = "";
 
-    String[] splitedPath = path.split("/");
+		out += (this.getOperation() != null) ? "operation: " + this.getOperation() + ", " : "";
+		out += (this.getDomainName() != null) ? "domainName: " + this.getDomainName() + ", " : "";
+		out += (this.getDomainName() != null) ? "userId: " + this.getUserId() + ", " : "";
 
-    if (splitedPath.length == 2) {
-      this.setOperation(splitedPath[0]);
-      this.setDomain(splitedPath[1]);
-    }
-    return this;
-  }
+		return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
+	}
 
-  /**
-   * Checks whether the default view of the object is valid.
-   *
-   * @return true if the default view is valid, otherwise false.
-   */
-  @Override
-  @JsonIgnore
-  public Boolean isValidStandardView() {
-    return this.validate();
-  }
+	/**
+	 * Validates the permission. Checks whether the operation is valid and whether
+	 * the domain exists.
+	 *
+	 * @return {@code true} if the permission is valid, otherwise {@code false}
+	 */
+	@Override
+	@JsonIgnore
+	public Boolean validate() {
+		// Ensure that we have access to the role configuration
+		if (roleConfig == null) {
+			roleConfig = SpringBeanLocator.getBean(RoleConfig.class);
+		}
+		
+		// Ensure that we have access to the domain database service
+		if (domainDao == null) {
+			domainDao = SpringBeanLocator.getBean(DomainDao.class);
+		}
+		
+		return roleConfig.getOperations().contains(this.getOperation()) && domainDao.fetchOneByName(this.getDomainName()) != null;
+	}
 
-  /**
-   * Reduces the object to its standard view.
-   *
-   * @return The reduced PermissionDTO object.
-   */
-  @Override
-  @JsonIgnore
-  public PermissionDTO toReducedStandardView() {
-    return this;
-  }
+	/**
+	 * Returns the partial path for the operation.
+	 *
+	 * @return the path up until the operation
+	 */
+	@JsonIgnore
+	public String getOperationPath() {
+		return "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + this.getOperation();
+	}
 
-  /**
-   * Returns a string representation of the object. The representation includes the values for
-   * operation, domain, and user ID.
-   *
-   * @return A string representation of the object.
-   */
-  @Override
-  @JsonIgnore
-  public String toRepresentationString() {
-    String out = "";
-
-    out += (this.getOperation() != null) ? "operation: " + this.getOperation() + ", " : "";
-    out += (this.getDomain() != null) ? "domain: " + this.getDomain() + ", " : "";
-    out += (this.getDomain() != null) ? "userId: " + this.getUserId() + ", " : "";
-
-    return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
-  }
-
-  /**
-   * Validates the permission. Checks whether the operation is valid and whether the domain exists.
-   *
-   * @return true if the permission is valid, otherwise false.
-   */
-  @Override
-  @JsonIgnore
-  public Boolean validate() {
-    return roleConfig.getOperations().contains(this.getOperation())
-        && domainDBAccessService.getDomainByName(this.getDomain(), null) != null;
-  }
-
-  /**
-   * Checks if the current object is equal to another object.
-   *
-   * @param o The object to compare with.
-   * @return true if the objects are equal, otherwise false.
-   */
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof PermissionDTO that)) {
-      return false;
-    }
-    return Objects.equals(getDomain(), that.getDomain()) && Objects.equals(
-        getOperation(), that.getOperation()) && Objects.equals(getUserId(),
-        that.getUserId());
-  }
-
-  /**
-   * Returns the hash code of the object based on its domain, operation, and user ID.
-   *
-   * @return The hash code of the object.
-   */
-  @JsonIgnore
-  public String getOperationPath() {
-    return "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + this.getOperation();
-  }
-
-  /**
-   * Returns the full path for the domain, which includes the operation path and the domain name.
-   *
-   * @return The full domain path as a string.
-   */
-  @JsonIgnore
-  public String getDomainPath() {
-    return this.getOperationPath() + "/"
-        + this.getDomain();
-  }
+	/**
+	 * Returns the path for the domain. Includes the operation.
+	 *
+	 * @return the path including the operation and the domain name
+	 */
+	@JsonIgnore
+	public String getDomainPath() {
+		return this.getOperationPath() + "/" + this.getDomainName();
+	}
 }
