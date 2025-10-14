@@ -21,8 +21,8 @@ echo "Replacing ENV in configurations ..."
 
 sed -i 's|TRUSTDECK_LOG_LEVEL|'"${TRUSTDECK_LOG_LEVEL:-INFO}"'|g' run.yml
 sed -i 's|KEYCLOAK_SERVER_URI|'"${KEYCLOAK_SERVER_URI}"'|g' run.yml
-sed -i 's|TRUSTSTORE_PATH|'"${TRUSTSTORE_PATH:-classpath:pki_chain.truststore}"'|g' run.yml
-sed -i 's|TRUSTSTORE_PASSWORD|'"${TRUSTSTORE_PASSWORD:-l129VwykBVwp5FlfdPe7qQ9GOaq2rckC}"'|g' run.yml
+sed -i 's|TRUSTSTORE_PATH|'"${TRUSTSTORE_PATH}"'|g' run.yml
+sed -i 's|TRUSTSTORE_PASSWORD|'"${TRUSTSTORE_PASSWORD}"'|g' run.yml
 sed -i 's|KEYCLOAK_CLIENT_ID|'"${KEYCLOAK_CLIENT_ID}"'|g' run.yml
 sed -i 's|KEYCLOAK_CLIENT_SECRET|'"${KEYCLOAK_CLIENT_SECRET}"'|g' run.yml
 sed -i 's|KEYCLOAK_REALM_NAME|'"${KEYCLOAK_REALM_NAME}"'|g' run.yml
