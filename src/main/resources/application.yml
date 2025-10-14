@@ -99,4 +99,6 @@ app:
     - person-update
     - person-delete
     - person-search
-    - permission-manager
+  administration-operations:
+	# Roles that are needed to manage other roles and rights
+	- permission-manager

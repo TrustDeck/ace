@@ -52,4 +52,11 @@ public class RoleConfig {
      * will use to define roles and permissions in the Keycloak server.
      */
     private List<String> operations;
+    
+    /**
+     * List of operations defined for the application under `app.administration-operations` in the yml-file.
+     * It represents the names of rights and roles that are needed to manage other rights and roles, e.g. when 
+     * adding a role to a user via the frontend.
+     */
+    private List<String> administrationOperations;
 }
