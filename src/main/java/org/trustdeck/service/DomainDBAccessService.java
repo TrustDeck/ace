@@ -17,12 +17,6 @@
 
 package org.trustdeck.service;
 
-import static org.jooq.impl.DSL.field;
-import static org.jooq.impl.DSL.name;
-import static org.jooq.impl.DSL.select;
-import static org.trustdeck.jooq.generated.Tables.DOMAIN;
-import static org.trustdeck.jooq.generated.Tables.PSEUDONYM;
-
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,10 +24,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.jooq.CommonTableExpression;
 import org.jooq.DSLContext;
 import org.jooq.DeleteConditionStep;
+import org.jooq.impl.DSL;
 import org.jooq.JoinType;
 import org.jooq.Record;
 import org.jooq.SelectQuery;
-import org.jooq.impl.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.util.Pair;
@@ -53,6 +47,12 @@ import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.jooq.generated.tables.records.PseudonymRecord;
 import org.trustdeck.utils.Assertion;
+
+import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.name;
+import static org.jooq.impl.DSL.select;
+import static org.trustdeck.jooq.generated.Tables.DOMAIN;
+import static org.trustdeck.jooq.generated.Tables.PSEUDONYM;
 
 /**
  * This class is used to encapsulate all methods needed to access the database for handling domains.
@@ -232,26 +232,29 @@ public class DomainDBAccessService {
         return result;
     }
 
-
-    /**
-     * Retrieves the root domain from a list of domain nodes.
-     * <p>
-     * This method iterates through the provided list of domains and identifies the root domain. A
-     * root domain is defined as a domain with a `superdomainid` that is either `null` or less than or
-     * equal to 0.
-     *
-     * @param nodes A list of `Domain` objects representing the nodes in the domain tree.
-     * @return The root `Domain` object if found.
-     * @throws NullPointerException If no root domain is found in the provided list.
-     */
-    public Domain getRootDomainFromTree(List<Domain> nodes) throws NullPointerException {
-      for (Domain domain : nodes) {
-        if (domain.getSuperdomainid() == null || domain.getSuperdomainid() <= 0) {
-          return domain;
-        }
-      }
-      throw new NullPointerException("Tree does not have a root");
-    }
+	/**
+	 * Retrieves the root domain from a list of domain nodes.
+	 * The list of nodes need to be in a tree and connected via the super-domain 
+	 * properties, otherwise a random parent-less domain is returned.
+	 *
+	 * @param nodes a list of domain objects representing the nodes in the domain tree
+	 * @return the root domain object if found, or {@code null} if anything went wrong
+	 */
+	public Domain getRootDomainFromTree(List<Domain> nodes) {
+		if (nodes == null || nodes.size() == 0) {
+			return null;
+		}
+		
+		for (Domain domain : nodes) {
+			if (domain.getSuperdomainid() == null) {
+				return domain;
+			}
+		}
+		
+		// If we reach this point, no root domain was found
+		log.trace("Could not find root of the given tree.");
+		return null;
+	}
 
     /**
      * Method to find pseudonym(s) linked to the given one in the provided domain.
@@ -670,7 +673,7 @@ public class DomainDBAccessService {
                     }
 
                     // Create domain groups and roles and add the user that made this request to the new groups and roles
-                    domainOidcService.createDomainGroupsAndRolesAndJoin(domain.getName(), token.getToken().getSubject(), (domain.getSuperdomainid() != null && domain.getSuperdomainid() <= 0));
+                    domainOidcService.createDomainGroupsAndRolesAndJoin(domain.getName(), token.getToken().getSubject());
                 }
 
                 // Implicit transaction commit here
@@ -907,7 +910,7 @@ public class DomainDBAccessService {
                         
                         if (token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()) {
                             try {
-                                domainOidcService.updateDomainGroups(oldDomain.getName(), newDomain.getName(), token.getToken().getSubject(),  (newDomain.getSuperdomainid() != null && newDomain.getSuperdomainid() <= 0));
+                                domainOidcService.updateDomainGroups(oldDomain.getName(), newDomain.getName(), token.getToken().getSubject());
                             } catch (Exception e) {
                                 log.error("Updating OIDC rights and roles failed: " + e.getMessage());
                                 throw new DomainOIDCException("oldName: " + oldDomain.getName() + ", newName: " + newDomain.getName());

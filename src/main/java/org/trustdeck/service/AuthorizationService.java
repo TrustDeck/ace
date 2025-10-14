@@ -46,15 +46,15 @@ public class AuthorizationService {
 
     /** JWT properties. */
     @Autowired
-    JwtProperties jwtProperties;
+    private JwtProperties jwtProperties;
 
     /** Caching service for group paths. */
     @Autowired
-    CachingService cachingService;
+    private CachingService cachingService;
 
     /** Role configuration for the application. */
     @Autowired
-    RoleConfig roleConfig;
+    private RoleConfig roleConfig;
 
     /** Domain database access service for retrieving domain information. */
     @Autowired
@@ -180,61 +180,6 @@ public class AuthorizationService {
         }
 
         return hasAssignedGroupPaths(groupPaths, domain, role);
-    }
-
-    /**
-     * Method that checks whether the user has the specified domain and role
-     * as a role in the OIDC token and a relationship between them.
-     * For security reasons, this method is only used for new requests and
-     * always contains the token of the new request.
-     *
-     * @param domainName the domain name as a string
-     * @param role the role as a string
-     * @return {@code true} only if given role and domain have a relationship, {@code false} if not
-     */
-    private boolean isRootDomain(String domainName, String role){
-        if(!roleConfig.getOperations().contains(role)){
-            return false;
-        }
-
-        Domain domain = domainDBAccessService.getDomainByName(domainName, null);
-
-        List<Domain> domains = domainDBAccessService.getDomainTreeStructure(domain);
-        Domain rootDomain = domainDBAccessService.getRootDomainFromTree(domains);
-
-        if(!rootDomain.getId().equals(domain.getId())){
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Method that checks whether the user has the specified domain and role
-     * as a role in the OIDC token and a relationship between them.
-     * For security reasons, this method is only used for new requests and
-     * always contains the token of the new request.
-     *
-     * @param root method-level security control context object that includes information about the authenticated user
-     * @param domainName the domain name as a string
-     * @param role the role as a string
-     * @return {@code true} only if given role and domain have a relationship, {@code false} if not
-     */
-    public boolean hasDomainRootRoleRelationship(MethodSecurityExpressionOperations root, String domainName, String role){
-        return this.isRootDomain(domainName, role) && this.hasDomainRoleRelationship(root, domainName, role);
-    }
-
-    /**
-     * Method that checks whether the user has the specified domain and role
-     * as a role in the OIDC token and a relationship between them.
-     * For security reasons, this method is only used for new requests and
-     * always contains the token of the new request.
-     *
-     * @param domainName the domain name as a string
-     * @param role the role as a string
-     * @return {@code true} only if given role and domain have a relationship, {@code false} if not
-     */
-    public boolean hasDomainRootRoleRelationship(String domainName, String role){
-        return this.isRootDomain(domainName, role) &&  this.hasDomainRoleRelationship(domainName, role);
     }
 
     /**

@@ -145,7 +145,7 @@ public class PermissionRestController {
      *         or <i>userId</i> is missing or empty</li>
 	 */
 	@GetMapping("/{domainName}")
-	@PreAuthorize("@auth.hasDomainRootRoleRelationship(#root, #domainName, 'permission-manager')")
+	@PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'permission-manager')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> getPermissions(@PathVariable("domainName") String domainName,
 											@RequestParam(name = "userId", required = true) String userId,
@@ -175,7 +175,7 @@ public class PermissionRestController {
      *         not exist or cannot be resolved</li>
 	 */
 	@PutMapping("/{domainName}")
-	@PreAuthorize("@auth.hasDomainRootRoleRelationship(#root, #domainName, 'permission-manager')")
+	@PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'permission-manager')")
 	public ResponseEntity<?> updatePermission(@PathVariable("domain") String domainName,
 											  @RequestParam(name = "userId", required = true) String userId,
 											  @RequestBody List<PermissionDTO> permissions,

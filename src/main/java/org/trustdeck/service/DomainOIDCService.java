@@ -96,10 +96,8 @@ public class DomainOIDCService {
      *
      * @param domainName the name of the domain to be created
      * @param userId the unique identifier of the user to be added to the groups
-     * @param isSuperDomain indicates if the domain is a superdomain
-     * @throws NullPointerException if any group or role creation fails, or the user cannot be added to the groups
      */
-    public void createDomainGroupsAndRolesAndJoin(String domainName, String userId, boolean isSuperDomain) {
+    public void createDomainGroupsAndRolesAndJoin(String domainName, String userId) {
         // Create a new role for the specified domain name
         RoleRepresentation roleRepresentation = oidcService.createClientRole(domainName);
 
@@ -112,32 +110,28 @@ public class DomainOIDCService {
         List<String> domainGroupIds = new ArrayList<>();
 
         // Iterate over each operation group and create a subgroup for the domain
-        for (String operationGroupId : oidcService.getOperationGroupIDs()) {
+		for (String operationGroupId : oidcService.getOperationGroupIDs()) {
 
-            boolean canCreate = true;
-            //make sure root operation are not related to non root domains
-            if(!isSuperDomain && oidcService.getAdministrativeOperationGroupIDs().contains(operationGroupId)){
-              canCreate = false;
-            }
+			// Ensure that the operation is not a administrative one
+			if (oidcService.getAdministrativeOperationGroupIDs().contains(operationGroupId)) {
+				continue;
+			}
 
-            if(canCreate){
-              // Create a subgroup for the domain name under the current operation group
-              GroupRepresentation groupRepresentation = oidcService.createSubGroup(operationGroupId, domainName);
+			// Create a subgroup for the domain name under the current operation group
+			GroupRepresentation groupRepresentation = oidcService.createSubGroup(operationGroupId, domainName);
 
-              // Ensure the subgroup was successfully created
-              if (groupRepresentation == null) {
-                log.debug("Group for domain \"" + domainName + "\" could not be created.");
-                throw new DomainOIDCException(domainName);
-              }
+			// Ensure the subgroup was successfully created
+			if (groupRepresentation == null) {
+				log.debug("Group for domain \"" + domainName + "\" could not be created.");
+				throw new DomainOIDCException(domainName);
+			}
 
-              // Assign the new role to the created subgroup
-              oidcService.assignRoleToGroup(groupRepresentation.getId(), roleRepresentation);
+			// Assign the new role to the created subgroup
+			oidcService.assignRoleToGroup(groupRepresentation.getId(), roleRepresentation);
 
-              // Add the newly created group's ID to the list
-              domainGroupIds.add(groupRepresentation.getId());
-            }
-
-        }
+			// Add the newly created group's ID to the list
+			domainGroupIds.add(groupRepresentation.getId());
+		}
 
         // Ensure that the user is added to all operation-groups
         // Note: adding a user to a group he/she is already part of should not return any errors
@@ -267,12 +261,10 @@ public class DomainOIDCService {
      *
      * @param oldDomainName the name of the domain to be updated
      * @param newDomainName the new name to be assigned to the domain-related roles and groups
-     * @param isSuperDomain indicates if the domain is a superdomain
-     * @throws NullPointerException if the new role cannot be created, or the old role cannot be deleted, or a group name update fails
      */
-    public void updateDomainGroups(String oldDomainName, String newDomainName, String userId, boolean isSuperDomain) {
+    public void updateDomainGroups(String oldDomainName, String newDomainName, String userId) {
         this.leaveAndDeleteDomainGroupsAndRoles(oldDomainName);
-        this.createDomainGroupsAndRolesAndJoin(newDomainName, userId, isSuperDomain);
+        this.createDomainGroupsAndRolesAndJoin(newDomainName, userId);
     }
     
     /**
