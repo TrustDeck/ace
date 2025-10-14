@@ -234,7 +234,7 @@
                             <immutablePojos>false</immutablePojos>
                             <interfaces>true</interfaces>
                             <daos>true</daos>
-                            <jpaAnnotations>true</jpaAnnotations>
+                            <jpaAnnotations>false</jpaAnnotations>
                             <validationAnnotations>true</validationAnnotations>
                             <globalObjectReferences>true</globalObjectReferences>
                             <fluentSetters>true</fluentSetters>
