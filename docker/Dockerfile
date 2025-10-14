@@ -25,7 +25,7 @@ WORKDIR /home/spring
 COPY ../src/main/resources/scripts/prepare.sh prepare.sh
 COPY ../src/main/resources/scripts/entrypoint.sh entrypoint.sh
 COPY ../src/main/resources/application.yml.template .
-ADD ../target/ace*.jar ace.jar
+ADD ../target/trustdeck*.jar trustdeck.jar
 
 USER root
 # permissions
@@ -36,7 +36,7 @@ RUN curl -Lso wait-for-it.sh ${WAIT_FOR_IT_DOWNLOAD_URL} || (>&2 echo -e "\ndown
     chmod +x prepare.sh && \
     chmod +x entrypoint.sh && \
     chmod +x wait-for-it.sh && \
-    chmod 775 ace.jar && \
+    chmod 775 trustdeck.jar && \
     chown -R spring:spring *
 
 USER spring

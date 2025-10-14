@@ -160,6 +160,7 @@ public class CachingService {
                 groups = Utility.extractGroupPaths(oidcService.getGroupsByUserId(userId), true);
 
                 // Store the group paths in the cache with a 10-minute expiration time
+                //TODO make cache-time configurable
                 resourceCache.put(userId, groups, 10, TimeUnit.MINUTES);
                 log.trace("Insert into cache: USER-ID: " + userId + ", GROUPS: " + groups);
             }

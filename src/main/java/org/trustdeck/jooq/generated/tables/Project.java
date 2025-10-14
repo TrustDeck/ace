@@ -4,7 +4,7 @@
 package org.trustdeck.jooq.generated.tables;
 
 
-import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -12,13 +12,12 @@ import java.util.function.Function;
 import org.jooq.Check;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function6;
+import org.jooq.Function8;
 import org.jooq.Identity;
-import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row6;
+import org.jooq.Row8;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -29,7 +28,6 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
-import org.trustdeck.jooq.generated.Indexes;
 import org.trustdeck.jooq.generated.Keys;
 import org.trustdeck.jooq.generated.Public;
 import org.trustdeck.jooq.generated.tables.records.ProjectRecord;
@@ -67,24 +65,34 @@ public class Project extends TableImpl<ProjectRecord> {
     public final TableField<ProjectRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>public.project.startdate</code>.
+     * The column <code>public.project.abbreviation</code>.
      */
-    public final TableField<ProjectRecord, LocalDate> STARTDATE = createField(DSL.name("startdate"), SQLDataType.LOCALDATE, this, "");
+    public final TableField<ProjectRecord, String> ABBREVIATION = createField(DSL.name("abbreviation"), SQLDataType.VARCHAR(50).nullable(false), this, "");
 
     /**
-     * The column <code>public.project.enddate</code>.
+     * The column <code>public.project.start_date</code>.
      */
-    public final TableField<ProjectRecord, LocalDate> ENDDATE = createField(DSL.name("enddate"), SQLDataType.LOCALDATE, this, "");
+    public final TableField<ProjectRecord, OffsetDateTime> START_DATE = createField(DSL.name("start_date"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
 
     /**
-     * The column <code>public.project.main_contact</code>.
+     * The column <code>public.project.end_date</code>.
      */
-    public final TableField<ProjectRecord, String> MAIN_CONTACT = createField(DSL.name("main_contact"), SQLDataType.CLOB, this, "");
+    public final TableField<ProjectRecord, OffsetDateTime> END_DATE = createField(DSL.name("end_date"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
 
     /**
-     * The column <code>public.project.associated_objecttype_ids</code>.
+     * The column <code>public.project.store_entities</code>.
      */
-    public final TableField<ProjectRecord, Integer[]> ASSOCIATED_OBJECTTYPE_IDS = createField(DSL.name("associated_objecttype_ids"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("'{}'::integer[]"), SQLDataType.INTEGER)).array(), this, "");
+    public final TableField<ProjectRecord, Boolean> STORE_ENTITIES = createField(DSL.name("store_entities"), SQLDataType.BOOLEAN.nullable(false), this, "");
+
+    /**
+     * The column <code>public.project.store_pseudonyms</code>.
+     */
+    public final TableField<ProjectRecord, Boolean> STORE_PSEUDONYMS = createField(DSL.name("store_pseudonyms"), SQLDataType.BOOLEAN.nullable(false), this, "");
+
+    /**
+     * The column <code>public.project.description</code>.
+     */
+    public final TableField<ProjectRecord, String> DESCRIPTION = createField(DSL.name("description"), SQLDataType.CLOB, this, "");
 
     private Project(Name alias, Table<ProjectRecord> aliased) {
         this(alias, aliased, null);
@@ -125,11 +133,6 @@ public class Project extends TableImpl<ProjectRecord> {
     }
 
     @Override
-    public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.PROJECT_ASSOCIATED_OBJECTTYPE_IDS_GIN_IDX);
-    }
-
-    @Override
     public Identity<ProjectRecord, Integer> getIdentity() {
         return (Identity<ProjectRecord, Integer>) super.getIdentity();
     }
@@ -141,13 +144,13 @@ public class Project extends TableImpl<ProjectRecord> {
 
     @Override
     public List<UniqueKey<ProjectRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.PROJECT_NAME_KEY);
+        return Arrays.asList(Keys.PROJECT_NAME_KEY, Keys.PROJECT_ABBREVIATION_KEY);
     }
 
     @Override
     public List<Check<ProjectRecord>> getChecks() {
         return Arrays.asList(
-            Internal.createCheck(this, DSL.name("project_dates_check"), "(((enddate IS NULL) OR (startdate IS NULL) OR (enddate >= startdate)))", true)
+            Internal.createCheck(this, DSL.name("project_check"), "(((end_date IS NULL) OR (end_date >= start_date)))", true)
         );
     }
 
@@ -191,18 +194,18 @@ public class Project extends TableImpl<ProjectRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row6 type methods
+    // Row8 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row6<Integer, String, LocalDate, LocalDate, String, Integer[]> fieldsRow() {
-        return (Row6) super.fieldsRow();
+    public Row8<Integer, String, String, OffsetDateTime, OffsetDateTime, Boolean, Boolean, String> fieldsRow() {
+        return (Row8) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function6<? super Integer, ? super String, ? super LocalDate, ? super LocalDate, ? super String, ? super Integer[], ? extends U> from) {
+    public <U> SelectField<U> mapping(Function8<? super Integer, ? super String, ? super String, ? super OffsetDateTime, ? super OffsetDateTime, ? super Boolean, ? super Boolean, ? super String, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -210,7 +213,7 @@ public class Project extends TableImpl<ProjectRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function6<? super Integer, ? super String, ? super LocalDate, ? super LocalDate, ? super String, ? super Integer[], ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function8<? super Integer, ? super String, ? super String, ? super OffsetDateTime, ? super OffsetDateTime, ? super Boolean, ? super Boolean, ? super String, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }
