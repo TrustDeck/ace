@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2024-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,141 +21,99 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.context.annotation.Scope;
 
 /**
- * Data Transfer Object (DTO) for an employee. This class represents the employee's details such as
- * user ID, username, first name, last name, email, federation, and federation ID. It implements the
- * IObjectDTO interface to provide methods for assigning values from a POJO, checking validity, and
- * converting to a reduced view.
- *
- * @author Eric Wündisch
+ * Data Transfer Object (DTO) for an user. This class represents the user's
+ * details such as user ID, username, first name, last name, email, federation,
+ * and federation ID.
+ * 
+ * @author Eric Wündisch, Armin Müller
  */
 @Data
 @NoArgsConstructor
 @Scope("prototype")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class OperatorDTO implements IObjectDTO<UserRepresentation, OperatorDTO> {
+public class UserDTO implements IObjectDTO<UserRepresentation, UserDTO> {
 
-  /**
-   * The unique identifier of the operator. This field is used to store the user ID for
-   * identification purposes.
-   */
-  private String userId;
+	/** A unique identifier of the user. */
+	@JsonIgnore
+	private String userId;
 
-  /**
-   * The username of the operator. This field is used to store the operator's username for
-   * identification purposes.
-   */
-  private String username;
+	/** The username of the user. */
+	private String username;
 
-  /**
-   * The first name of the operator. This field is used to store the operator's first name for
-   * identification purposes.
-   */
-  private String firstName;
+	/** The first name of the user. */
+	private String firstName;
 
-  /**
-   * The last name of the operator. This field is used to store the operator's last name for
-   * identification purposes.
-   */
-  private String lastName;
+	/** The last name of the user. */
+	private String lastName;
 
-  /**
-   * The email address of the operator. This field is used to store the operator's email for
-   * communication purposes.
-   */
-  private String email;
+	/** The email address of the user. */
+	private String email;
 
-  /**
-   * The federation associated with the operator. This field is used to indicate the federation to
-   * which the operator belongs.
-   */
-  private String federation;
+	/** The name of the federation provider associated with the user. */
+	private String federationProviderName;
 
-  /**
-   * The federation ID associated with the operator. This field is used to link the operator to a
-   * specific federation.
-   */
-  private String federationId;
+	/** The ID of the user storage provider (federation provider) that the user is linked to e.g., an LDAP provider. */
+	@JsonIgnore
+	private String federationProviderId;
 
-  /**
-   * Assigns values from the given UserRepresentation POJO to the OperatorDTO object. This method
-   * sets the userId, username, firstName, lastName, email, and federationId fields based on the
-   * provided UserRepresentation.
-   *
-   * @param pojo the UserRepresentation object containing user details
-   * @return null, as this method does not return any value
-   */
-  @Override
-  @JsonIgnore
-  public OperatorDTO assignPojoValues(UserRepresentation pojo) {
+	@Override
+	@JsonIgnore
+	public UserDTO assignPojoValues(UserRepresentation pojo) {
+		
+		this.setUserId(pojo.getId());
+		this.setUsername(pojo.getUsername());
+		this.setFirstName(pojo.getFirstName());
+		this.setLastName(pojo.getLastName());
+		this.setEmail(pojo.getEmail());
+		this.setFederationProviderId(pojo.getFederationLink());
 
-    this.setUserId(pojo.getId());
-    this.setUsername(pojo.getUsername());
-    this.setFirstName(pojo.getFirstName());
-    this.setLastName(pojo.getLastName());
-    this.setEmail(pojo.getEmail());
-    this.setFederationId(pojo.getFederationLink());
+		return this;
+	}
+	
+	@Override
+	@JsonIgnore
+	public Boolean isValidStandardView() {
+		// Unused
+		return null;
+	}
 
-    return null;
-  }
+	@Override
+	@JsonIgnore
+	public UserDTO toReducedStandardView() {
+		// Unused
+		return null;
+	}
 
-  /**
-   * Checks if the OperatorDTO object is valid for the standard view. This method currently returns
-   * true, indicating that the object is valid.
-   *
-   * @return true, indicating that the object is valid for the standard view.
-   */
-  @Override
-  @JsonIgnore
-  public Boolean isValidStandardView() {
-    return true;
-  }
+	/**
+	 * Converts the UserDTO into a string representation.
+	 *
+	 * @return the string representation of this DTO
+	 */
+	@Override
+	@JsonIgnore
+	public String toRepresentationString() {
+		String out = "";
 
-  /**
-   * Reduces the OperatorDTO object to its minimal view.
-   *
-   * @return this, indicating that the object itself is returned
-   */
-  @Override
-  @JsonIgnore
-  public OperatorDTO toReducedStandardView() {
-    return this;
-  }
+		out += (this.getUserId() != null) ? "userId: " + this.getUserId() + ", " : "";
+		out += (this.getUsername() != null) ? "username: " + this.getUsername() + ", " : "";
+		out += (this.getFirstName() != null) ? "firstName: " + this.getFirstName() + ", " : "";
+		out += (this.getLastName() != null) ? "lastName: " + this.getLastName() + ", " : "";
+		out += (this.getEmail() != null) ? "email: " + this.getEmail() + ", " : "";
+		out += (this.getFederationProviderName() != null) ? "federationProviderName: " + this.getFederationProviderName() + ", " : "";
+		out += (this.getFederationProviderId() != null) ? "federationProviderId: " + this.getFederationProviderId() + ", " : "";
 
-  /**
-   * Converts the OperatorDTO object to a string representation. This method currently returns null
-   * as no specific representation is defined.
-   *
-   * @return null, indicating no string representation is provided.
-   */
-  @Override
-  @JsonIgnore
-  public String toRepresentationString() {
-    String out = "";
+		return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
+	}
 
-    out += (this.getUserId() != null) ? "userId: " + this.getUserId() + ", " : "";
-    out += (this.getUsername() != null) ? "username: " + this.getUsername() + ", " : "";
-    out += (this.getFirstName() != null) ? "firstName: " + this.getFirstName() + ", " : "";
-    out += (this.getLastName() != null) ? "lastName: " + this.getLastName() + ", " : "";
-    out += (this.getEmail() != null) ? "email: " + this.getEmail() + ", " : "";
-    out += (this.getFederationId() != null) ? "federationId: " + this.getFederationId() + ", " : "";
-    out += (this.getFederation() != null) ? "federation: " + this.getFederation() + ", " : "";
-
-    return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
-  }
-
-  /**
-   * Validates the OperatorDTO object. This method is currently a placeholder and does not perform
-   * any validation.
-   *
-   * @return null, indicating no validation is performed.
-   */
-  @Override
-  @JsonIgnore
-  public Boolean validate() {
-    return true;
-  }
+	@Override
+	@JsonIgnore
+	public Boolean validate() {
+		// Unused
+		return null;
+	}
 }

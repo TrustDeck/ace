@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2025 Armin Müller & Eric Wündisch
+ * Copyright 2024-2025 Armin Müller & Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.configuration.RoleConfig;
@@ -33,7 +36,7 @@ import org.trustdeck.utils.SpringBeanLocator;
  * Data Transfer Object (DTO) for permissions. This class represents the
  * permissions of a user for a specific domain and operation.
  *
- * @author Eric Wündisch
+ * @author Eric Wündisch, Armin Müller
  */
 @Data
 @NoArgsConstructor
@@ -69,9 +72,10 @@ public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
 	 * Constructor that creates the DTO from a given group path.
 	 * 
 	 * @param groupPath the flat path including the domain name and the permitted operation
+	 * @param userId the user ID associated with the permission
 	 */
 	@JsonIgnore
-	public PermissionDTO(String groupPath) {
+	public PermissionDTO(String groupPath, String userId) {
 		if (Assertion.isNullOrEmpty(groupPath)) {
 			// Empty group path
 			return;
@@ -101,6 +105,9 @@ public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
 		} else {
 			return;
 		}
+		
+		// Set userId
+		this.userId = Assertion.isNotNullOrEmpty(userId) ? userId.trim() : "";
 	}
 	
 	/**
@@ -192,5 +199,22 @@ public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
 	@JsonIgnore
 	public String getDomainPath() {
 		return this.getOperationPath() + "/" + this.getDomainName();
+	}
+	
+	/**
+	 * Checks if a given permission is already present in the list of permissions.
+	 *
+	 * @param permissions the list of permissions to check against
+	 * @return {@code true} if the permission is found in the list, {@code false} otherwise
+	 */
+	@JsonIgnore
+	public boolean isPermissionInList(List<PermissionDTO> permissions) {
+		for (PermissionDTO permission : permissions) {
+			if (permission.equals(this)) {
+				return true;
+			}
+		}
+		
+		return false;
 	}
 }
