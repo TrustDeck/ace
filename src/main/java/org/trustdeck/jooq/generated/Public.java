@@ -8,13 +8,22 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.jooq.Catalog;
+import org.jooq.Configuration;
+import org.jooq.Field;
+import org.jooq.Result;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 import org.trustdeck.jooq.generated.tables.Algorithm;
 import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
+import org.trustdeck.jooq.generated.tables.EntityInstance;
+import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.Person;
+import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
+import org.trustdeck.jooq.generated.tables.Project;
+import org.trustdeck.jooq.generated.tables.ProjectImage;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
+import org.trustdeck.jooq.generated.tables.records.PgpArmorHeadersRecord;
 
 
 /**
@@ -46,9 +55,68 @@ public class Public extends SchemaImpl {
     public final Domain DOMAIN = Domain.DOMAIN;
 
     /**
+     * The table <code>public.entity_instance</code>.
+     */
+    public final EntityInstance ENTITY_INSTANCE = EntityInstance.ENTITY_INSTANCE;
+
+    /**
+     * The table <code>public.entity_type</code>.
+     */
+    public final EntityType ENTITY_TYPE = EntityType.ENTITY_TYPE;
+
+    /**
      * The table <code>public.person</code>.
      */
     public final Person PERSON = Person.PERSON;
+
+    /**
+     * The table <code>public.pgp_armor_headers</code>.
+     */
+    public final PgpArmorHeaders PGP_ARMOR_HEADERS = PgpArmorHeaders.PGP_ARMOR_HEADERS;
+
+    /**
+     * Call <code>public.pgp_armor_headers</code>.
+     */
+    public static Result<PgpArmorHeadersRecord> PGP_ARMOR_HEADERS(
+          Configuration configuration
+        , String __1
+    ) {
+        return configuration.dsl().selectFrom(org.trustdeck.jooq.generated.tables.PgpArmorHeaders.PGP_ARMOR_HEADERS.call(
+              __1
+        )).fetch();
+    }
+
+    /**
+     * Get <code>public.pgp_armor_headers</code> as a table.
+     */
+    public static PgpArmorHeaders PGP_ARMOR_HEADERS(
+          String __1
+    ) {
+        return org.trustdeck.jooq.generated.tables.PgpArmorHeaders.PGP_ARMOR_HEADERS.call(
+            __1
+        );
+    }
+
+    /**
+     * Get <code>public.pgp_armor_headers</code> as a table.
+     */
+    public static PgpArmorHeaders PGP_ARMOR_HEADERS(
+          Field<String> __1
+    ) {
+        return org.trustdeck.jooq.generated.tables.PgpArmorHeaders.PGP_ARMOR_HEADERS.call(
+            __1
+        );
+    }
+
+    /**
+     * The table <code>public.project</code>.
+     */
+    public final Project PROJECT = Project.PROJECT;
+
+    /**
+     * The table <code>public.project_image</code>.
+     */
+    public final ProjectImage PROJECT_IMAGE = ProjectImage.PROJECT_IMAGE;
 
     /**
      * The table <code>public.pseudonym</code>.
@@ -74,7 +142,12 @@ public class Public extends SchemaImpl {
             Algorithm.ALGORITHM,
             Auditevent.AUDITEVENT,
             Domain.DOMAIN,
+            EntityInstance.ENTITY_INSTANCE,
+            EntityType.ENTITY_TYPE,
             Person.PERSON,
+            PgpArmorHeaders.PGP_ARMOR_HEADERS,
+            Project.PROJECT,
+            ProjectImage.PROJECT_IMAGE,
             Pseudonym.PSEUDONYM
         );
     }
