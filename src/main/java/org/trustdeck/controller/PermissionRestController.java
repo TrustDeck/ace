@@ -176,6 +176,7 @@ public class PermissionRestController {
 	 */
 	@PutMapping("/{domainName}")
 	@PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'permission-manager')")
+	@Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> updatePermission(@PathVariable("domain") String domainName,
 											  @RequestParam(name = "userId", required = true) String userId,
 											  @RequestBody List<PermissionDTO> permissions,
