@@ -21,6 +21,7 @@ import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
+import org.trustdeck.jooq.generated.tables.ProjectImage;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
 import org.trustdeck.jooq.generated.tables.records.PgpArmorHeadersRecord;
 
@@ -113,6 +114,11 @@ public class Public extends SchemaImpl {
     public final Project PROJECT = Project.PROJECT;
 
     /**
+     * The table <code>public.project_image</code>.
+     */
+    public final ProjectImage PROJECT_IMAGE = ProjectImage.PROJECT_IMAGE;
+
+    /**
      * The table <code>public.pseudonym</code>.
      */
     public final Pseudonym PSEUDONYM = Pseudonym.PSEUDONYM;
@@ -141,6 +147,7 @@ public class Public extends SchemaImpl {
             Person.PERSON,
             PgpArmorHeaders.PGP_ARMOR_HEADERS,
             Project.PROJECT,
+            ProjectImage.PROJECT_IMAGE,
             Pseudonym.PSEUDONYM
         );
     }

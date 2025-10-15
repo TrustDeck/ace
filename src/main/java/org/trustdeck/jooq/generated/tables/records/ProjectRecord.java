@@ -132,8 +132,7 @@ public class ProjectRecord extends UpdatableRecordImpl<ProjectRecord> implements
     /**
      * Getter for <code>public.project.end_date</code>.
      */
-    @Column(name = "end_date", nullable = false, precision = 6)
-    @NotNull
+    @Column(name = "end_date", precision = 6)
     @Override
     public OffsetDateTime getEndDate() {
         return (OffsetDateTime) get(4);

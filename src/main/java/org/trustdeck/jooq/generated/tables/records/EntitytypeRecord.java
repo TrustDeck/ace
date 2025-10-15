@@ -17,8 +17,8 @@ import jakarta.validation.constraints.Size;
 import org.jooq.Field;
 import org.jooq.JSONB;
 import org.jooq.Record1;
-import org.jooq.Record10;
-import org.jooq.Row10;
+import org.jooq.Record9;
+import org.jooq.Row9;
 import org.jooq.impl.UpdatableRecordImpl;
 import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.interfaces.IEntityType;
@@ -38,7 +38,7 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntityType;
         @Index(name = "entity_type_type_definition_gin_idx", columnList = "type_definition ASC")
     }
 )
-public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> implements Record10<Integer, String, String, Boolean, Boolean, JSONB, Boolean, Integer, Integer, Object>, IEntityType {
+public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> implements Record9<Integer, String, String, Boolean, Boolean, JSONB, Integer, Integer, Object>, IEntityType {
 
     private static final long serialVersionUID = 1L;
 
@@ -159,31 +159,11 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     }
 
     /**
-     * Setter for
-     * <code>public.entity_type.automatic_pseudonym_generation</code>.
-     */
-    @Override
-    public EntityTypeRecord setAutomaticPseudonymGeneration(Boolean value) {
-        set(6, value);
-        return this;
-    }
-
-    /**
-     * Getter for
-     * <code>public.entity_type.automatic_pseudonym_generation</code>.
-     */
-    @Column(name = "automatic_pseudonym_generation")
-    @Override
-    public Boolean getAutomaticPseudonymGeneration() {
-        return (Boolean) get(6);
-    }
-
-    /**
      * Setter for <code>public.entity_type.associated_domain_id</code>.
      */
     @Override
     public EntityTypeRecord setAssociatedDomainId(Integer value) {
-        set(7, value);
+        set(6, value);
         return this;
     }
 
@@ -193,7 +173,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     @Column(name = "associated_domain_id")
     @Override
     public Integer getAssociatedDomainId() {
-        return (Integer) get(7);
+        return (Integer) get(6);
     }
 
     /**
@@ -201,7 +181,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
      */
     @Override
     public EntityTypeRecord setProjectId(Integer value) {
-        set(8, value);
+        set(7, value);
         return this;
     }
 
@@ -211,7 +191,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     @Column(name = "project_id")
     @Override
     public Integer getProjectId() {
-        return (Integer) get(8);
+        return (Integer) get(7);
     }
 
     /**
@@ -225,7 +205,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     @Deprecated
     @Override
     public EntityTypeRecord setFullTextSearchVector(Object value) {
-        set(9, value);
+        set(8, value);
         return this;
     }
 
@@ -241,7 +221,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     @Column(name = "full_text_search_vector")
     @Override
     public Object getFullTextSearchVector() {
-        return get(9);
+        return get(8);
     }
 
     // -------------------------------------------------------------------------
@@ -254,17 +234,17 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     }
 
     // -------------------------------------------------------------------------
-    // Record10 type implementation
+    // Record9 type implementation
     // -------------------------------------------------------------------------
 
     @Override
-    public Row10<Integer, String, String, Boolean, Boolean, JSONB, Boolean, Integer, Integer, Object> fieldsRow() {
-        return (Row10) super.fieldsRow();
+    public Row9<Integer, String, String, Boolean, Boolean, JSONB, Integer, Integer, Object> fieldsRow() {
+        return (Row9) super.fieldsRow();
     }
 
     @Override
-    public Row10<Integer, String, String, Boolean, Boolean, JSONB, Boolean, Integer, Integer, Object> valuesRow() {
-        return (Row10) super.valuesRow();
+    public Row9<Integer, String, String, Boolean, Boolean, JSONB, Integer, Integer, Object> valuesRow() {
+        return (Row9) super.valuesRow();
     }
 
     @Override
@@ -298,17 +278,12 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     }
 
     @Override
-    public Field<Boolean> field7() {
-        return EntityType.ENTITY_TYPE.AUTOMATIC_PSEUDONYM_GENERATION;
-    }
-
-    @Override
-    public Field<Integer> field8() {
+    public Field<Integer> field7() {
         return EntityType.ENTITY_TYPE.ASSOCIATED_DOMAIN_ID;
     }
 
     @Override
-    public Field<Integer> field9() {
+    public Field<Integer> field8() {
         return EntityType.ENTITY_TYPE.PROJECT_ID;
     }
 
@@ -322,7 +297,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
      */
     @Deprecated
     @Override
-    public Field<Object> field10() {
+    public Field<Object> field9() {
         return EntityType.ENTITY_TYPE.FULL_TEXT_SEARCH_VECTOR;
     }
 
@@ -357,17 +332,12 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     }
 
     @Override
-    public Boolean component7() {
-        return getAutomaticPseudonymGeneration();
-    }
-
-    @Override
-    public Integer component8() {
+    public Integer component7() {
         return getAssociatedDomainId();
     }
 
     @Override
-    public Integer component9() {
+    public Integer component8() {
         return getProjectId();
     }
 
@@ -381,7 +351,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
      */
     @Deprecated
     @Override
-    public Object component10() {
+    public Object component9() {
         return getFullTextSearchVector();
     }
 
@@ -416,17 +386,12 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     }
 
     @Override
-    public Boolean value7() {
-        return getAutomaticPseudonymGeneration();
-    }
-
-    @Override
-    public Integer value8() {
+    public Integer value7() {
         return getAssociatedDomainId();
     }
 
     @Override
-    public Integer value9() {
+    public Integer value8() {
         return getProjectId();
     }
 
@@ -440,7 +405,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
      */
     @Deprecated
     @Override
-    public Object value10() {
+    public Object value9() {
         return getFullTextSearchVector();
     }
 
@@ -481,19 +446,13 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     }
 
     @Override
-    public EntityTypeRecord value7(Boolean value) {
-        setAutomaticPseudonymGeneration(value);
-        return this;
-    }
-
-    @Override
-    public EntityTypeRecord value8(Integer value) {
+    public EntityTypeRecord value7(Integer value) {
         setAssociatedDomainId(value);
         return this;
     }
 
     @Override
-    public EntityTypeRecord value9(Integer value) {
+    public EntityTypeRecord value8(Integer value) {
         setProjectId(value);
         return this;
     }
@@ -508,13 +467,13 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
      */
     @Deprecated
     @Override
-    public EntityTypeRecord value10(Object value) {
+    public EntityTypeRecord value9(Object value) {
         setFullTextSearchVector(value);
         return this;
     }
 
     @Override
-    public EntityTypeRecord values(Integer value1, String value2, String value3, Boolean value4, Boolean value5, JSONB value6, Boolean value7, Integer value8, Integer value9, Object value10) {
+    public EntityTypeRecord values(Integer value1, String value2, String value3, Boolean value4, Boolean value5, JSONB value6, Integer value7, Integer value8, Object value9) {
         value1(value1);
         value2(value2);
         value3(value3);
@@ -524,7 +483,6 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
         value7(value7);
         value8(value8);
         value9(value9);
-        value10(value10);
         return this;
     }
 
@@ -540,7 +498,6 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
         setIsDeprecated(from.getIsDeprecated());
         setIsBaseType(from.getIsBaseType());
         setTypeDefinition(from.getTypeDefinition());
-        setAutomaticPseudonymGeneration(from.getAutomaticPseudonymGeneration());
         setAssociatedDomainId(from.getAssociatedDomainId());
         setProjectId(from.getProjectId());
         setFullTextSearchVector(from.getFullTextSearchVector());
@@ -567,7 +524,7 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
     /**
      * Create a detached, initialised EntityTypeRecord
      */
-    public EntityTypeRecord(Integer id, String name, String version, Boolean isDeprecated, Boolean isBaseType, JSONB typeDefinition, Boolean automaticPseudonymGeneration, Integer associatedDomainId, Integer projectId, Object fullTextSearchVector) {
+    public EntityTypeRecord(Integer id, String name, String version, Boolean isDeprecated, Boolean isBaseType, JSONB typeDefinition, Integer associatedDomainId, Integer projectId, Object fullTextSearchVector) {
         super(EntityType.ENTITY_TYPE);
 
         setId(id);
@@ -576,7 +533,6 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
         setIsDeprecated(isDeprecated);
         setIsBaseType(isBaseType);
         setTypeDefinition(typeDefinition);
-        setAutomaticPseudonymGeneration(automaticPseudonymGeneration);
         setAssociatedDomainId(associatedDomainId);
         setProjectId(projectId);
         setFullTextSearchVector(fullTextSearchVector);
@@ -596,7 +552,6 @@ public class EntityTypeRecord extends UpdatableRecordImpl<EntityTypeRecord> impl
             setIsDeprecated(value.getIsDeprecated());
             setIsBaseType(value.getIsBaseType());
             setTypeDefinition(value.getTypeDefinition());
-            setAutomaticPseudonymGeneration(value.getAutomaticPseudonymGeneration());
             setAssociatedDomainId(value.getAssociatedDomainId());
             setProjectId(value.getProjectId());
             setFullTextSearchVector(value.getFullTextSearchVector());

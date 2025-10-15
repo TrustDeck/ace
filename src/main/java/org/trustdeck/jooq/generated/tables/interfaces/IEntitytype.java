@@ -110,19 +110,6 @@ public interface IEntityType extends Serializable {
     public JSONB getTypeDefinition();
 
     /**
-     * Setter for
-     * <code>public.entity_type.automatic_pseudonym_generation</code>.
-     */
-    public IEntityType setAutomaticPseudonymGeneration(Boolean value);
-
-    /**
-     * Getter for
-     * <code>public.entity_type.automatic_pseudonym_generation</code>.
-     */
-    @Column(name = "automatic_pseudonym_generation")
-    public Boolean getAutomaticPseudonymGeneration();
-
-    /**
      * Setter for <code>public.entity_type.associated_domain_id</code>.
      */
     public IEntityType setAssociatedDomainId(Integer value);

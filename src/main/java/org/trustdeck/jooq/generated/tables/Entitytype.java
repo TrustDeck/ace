@@ -10,14 +10,14 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function10;
+import org.jooq.Function9;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row10;
+import org.jooq.Row9;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -83,12 +83,6 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
      * The column <code>public.entity_type.type_definition</code>.
      */
     public final TableField<EntityTypeRecord, JSONB> TYPE_DEFINITION = createField(DSL.name("type_definition"), SQLDataType.JSONB.nullable(false), this, "");
-
-    /**
-     * The column
-     * <code>public.entity_type.automatic_pseudonym_generation</code>.
-     */
-    public final TableField<EntityTypeRecord, Boolean> AUTOMATIC_PSEUDONYM_GENERATION = createField(DSL.name("automatic_pseudonym_generation"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>public.entity_type.associated_domain_id</code>.
@@ -232,18 +226,18 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row10 type methods
+    // Row9 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row10<Integer, String, String, Boolean, Boolean, JSONB, Boolean, Integer, Integer, Object> fieldsRow() {
-        return (Row10) super.fieldsRow();
+    public Row9<Integer, String, String, Boolean, Boolean, JSONB, Integer, Integer, Object> fieldsRow() {
+        return (Row9) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function10<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Boolean, ? super Integer, ? super Integer, ? super Object, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function9<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Integer, ? super Integer, ? super Object, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -251,7 +245,7 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function10<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Boolean, ? super Integer, ? super Integer, ? super Object, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function9<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Integer, ? super Integer, ? super Object, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

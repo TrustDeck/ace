@@ -91,8 +91,7 @@ public interface IProject extends Serializable {
     /**
      * Getter for <code>public.project.end_date</code>.
      */
-    @Column(name = "end_date", nullable = false, precision = 6)
-    @NotNull
+    @Column(name = "end_date", precision = 6)
     public OffsetDateTime getEndDate();
 
     /**

@@ -144,22 +144,6 @@ public class EntityTypeDao extends DAOImpl<EntityTypeRecord, org.trustdeck.jooq.
     }
 
     /**
-     * Fetch records that have <code>automatic_pseudonym_generation BETWEEN
-     * lowerInclusive AND upperInclusive</code>
-     */
-    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchRangeOfAutomaticPseudonymGeneration(Boolean lowerInclusive, Boolean upperInclusive) {
-        return fetchRange(EntityType.ENTITY_TYPE.AUTOMATIC_PSEUDONYM_GENERATION, lowerInclusive, upperInclusive);
-    }
-
-    /**
-     * Fetch records that have <code>automatic_pseudonym_generation IN
-     * (values)</code>
-     */
-    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchByAutomaticPseudonymGeneration(Boolean... values) {
-        return fetch(EntityType.ENTITY_TYPE.AUTOMATIC_PSEUDONYM_GENERATION, values);
-    }
-
-    /**
      * Fetch records that have <code>associated_domain_id BETWEEN lowerInclusive
      * AND upperInclusive</code>
      */

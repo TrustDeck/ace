@@ -16,6 +16,7 @@ import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.Project;
+import org.trustdeck.jooq.generated.tables.ProjectImage;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
 import org.trustdeck.jooq.generated.tables.records.AlgorithmRecord;
 import org.trustdeck.jooq.generated.tables.records.AuditeventRecord;
@@ -23,6 +24,7 @@ import org.trustdeck.jooq.generated.tables.records.DomainRecord;
 import org.trustdeck.jooq.generated.tables.records.EntityInstanceRecord;
 import org.trustdeck.jooq.generated.tables.records.EntityTypeRecord;
 import org.trustdeck.jooq.generated.tables.records.PersonRecord;
+import org.trustdeck.jooq.generated.tables.records.ProjectImageRecord;
 import org.trustdeck.jooq.generated.tables.records.ProjectRecord;
 import org.trustdeck.jooq.generated.tables.records.PseudonymRecord;
 
@@ -43,8 +45,8 @@ public class Keys {
     public static final UniqueKey<AuditeventRecord> AUDITEVENT_PKEY = Internal.createUniqueKey(Auditevent.AUDITEVENT, DSL.name("auditevent_pkey"), new TableField[] { Auditevent.AUDITEVENT.ID }, true);
     public static final UniqueKey<DomainRecord> DOMAIN_NAME_KEY = Internal.createUniqueKey(Domain.DOMAIN, DSL.name("domain_name_key"), new TableField[] { Domain.DOMAIN.NAME }, true);
     public static final UniqueKey<DomainRecord> DOMAIN_PKEY = Internal.createUniqueKey(Domain.DOMAIN, DSL.name("domain_pkey"), new TableField[] { Domain.DOMAIN.ID }, true);
+    public static final UniqueKey<EntityInstanceRecord> ENTITY_INSTANCE_ENTITY_TYPE_ID_TRUSTDECK_ID_KEY = Internal.createUniqueKey(EntityInstance.ENTITY_INSTANCE, DSL.name("entity_instance_entity_type_id_trustdeck_id_key"), new TableField[] { EntityInstance.ENTITY_INSTANCE.ENTITY_TYPE_ID, EntityInstance.ENTITY_INSTANCE.TRUSTDECK_ID }, true);
     public static final UniqueKey<EntityInstanceRecord> ENTITY_INSTANCE_PKEY = Internal.createUniqueKey(EntityInstance.ENTITY_INSTANCE, DSL.name("entity_instance_pkey"), new TableField[] { EntityInstance.ENTITY_INSTANCE.ENTITY_TYPE_ID, EntityInstance.ENTITY_INSTANCE.ID }, true);
-    public static final UniqueKey<EntityInstanceRecord> ENTITY_INSTANCE_TRUSTDECK_ID_UNIQUE = Internal.createUniqueKey(EntityInstance.ENTITY_INSTANCE, DSL.name("entity_instance_trustdeck_id_unique"), new TableField[] { EntityInstance.ENTITY_INSTANCE.ENTITY_TYPE_ID, EntityInstance.ENTITY_INSTANCE.TRUSTDECK_ID }, true);
     public static final UniqueKey<EntityTypeRecord> ENTITY_TYPE_PKEY = Internal.createUniqueKey(EntityType.ENTITY_TYPE, DSL.name("entity_type_pkey"), new TableField[] { EntityType.ENTITY_TYPE.ID }, true);
     public static final UniqueKey<PersonRecord> PERSON_FIRSTNAME_LASTNAME_ADMINISTRATIVEGENDER_DATEOFBIRTH__KEY = Internal.createUniqueKey(Person.PERSON, DSL.name("person_firstname_lastname_administrativegender_dateofbirth__key"), new TableField[] { Person.PERSON.FIRSTNAME, Person.PERSON.LASTNAME, Person.PERSON.ADMINISTRATIVEGENDER, Person.PERSON.DATEOFBIRTH, Person.PERSON.STREET, Person.PERSON.POSTALCODE, Person.PERSON.CITY, Person.PERSON.COUNTRY }, true);
     public static final UniqueKey<PersonRecord> PERSON_IDENTIFIER_IDTYPE_KEY = Internal.createUniqueKey(Person.PERSON, DSL.name("person_identifier_idtype_key"), new TableField[] { Person.PERSON.IDENTIFIER, Person.PERSON.IDTYPE }, true);
@@ -52,6 +54,8 @@ public class Keys {
     public static final UniqueKey<ProjectRecord> PROJECT_ABBREVIATION_KEY = Internal.createUniqueKey(Project.PROJECT, DSL.name("project_abbreviation_key"), new TableField[] { Project.PROJECT.ABBREVIATION }, true);
     public static final UniqueKey<ProjectRecord> PROJECT_NAME_KEY = Internal.createUniqueKey(Project.PROJECT, DSL.name("project_name_key"), new TableField[] { Project.PROJECT.NAME }, true);
     public static final UniqueKey<ProjectRecord> PROJECT_PKEY = Internal.createUniqueKey(Project.PROJECT, DSL.name("project_pkey"), new TableField[] { Project.PROJECT.ID }, true);
+    public static final UniqueKey<ProjectImageRecord> PROJECT_IMAGE_PKEY = Internal.createUniqueKey(ProjectImage.PROJECT_IMAGE, DSL.name("project_image_pkey"), new TableField[] { ProjectImage.PROJECT_IMAGE.ID }, true);
+    public static final UniqueKey<ProjectImageRecord> PROJECT_IMAGE_PROJECT_ID_KEY = Internal.createUniqueKey(ProjectImage.PROJECT_IMAGE, DSL.name("project_image_project_id_key"), new TableField[] { ProjectImage.PROJECT_IMAGE.PROJECT_ID }, true);
     public static final UniqueKey<PseudonymRecord> PSEUDONYM_IDENTIFIER_IDTYPE_DOMAINID_PSEUDONYM_KEY = Internal.createUniqueKey(Pseudonym.PSEUDONYM, DSL.name("pseudonym_identifier_idtype_domainid_pseudonym_key"), new TableField[] { Pseudonym.PSEUDONYM.IDENTIFIER, Pseudonym.PSEUDONYM.IDTYPE, Pseudonym.PSEUDONYM.DOMAINID, Pseudonym.PSEUDONYM.PSEUDONYM_ }, true);
     public static final UniqueKey<PseudonymRecord> PSEUDONYM_PKEY = Internal.createUniqueKey(Pseudonym.PSEUDONYM, DSL.name("pseudonym_pkey"), new TableField[] { Pseudonym.PSEUDONYM.ID }, true);
     public static final UniqueKey<PseudonymRecord> PSEUDONYM_PSN_DOMAINID_KEY = Internal.createUniqueKey(Pseudonym.PSEUDONYM, DSL.name("pseudonym_psn_domainid_key"), new TableField[] { Pseudonym.PSEUDONYM.DOMAINID, Pseudonym.PSEUDONYM.PSEUDONYM_ }, true);
@@ -66,5 +70,6 @@ public class Keys {
     public static final ForeignKey<EntityTypeRecord, DomainRecord> ENTITY_TYPE__ENTITY_TYPE_ASSOCIATED_DOMAIN_ID_FKEY = Internal.createForeignKey(EntityType.ENTITY_TYPE, DSL.name("entity_type_associated_domain_id_fkey"), new TableField[] { EntityType.ENTITY_TYPE.ASSOCIATED_DOMAIN_ID }, Keys.DOMAIN_PKEY, new TableField[] { Domain.DOMAIN.ID }, true);
     public static final ForeignKey<EntityTypeRecord, ProjectRecord> ENTITY_TYPE__ENTITY_TYPE_PROJECT_ID_FKEY = Internal.createForeignKey(EntityType.ENTITY_TYPE, DSL.name("entity_type_project_id_fkey"), new TableField[] { EntityType.ENTITY_TYPE.PROJECT_ID }, Keys.PROJECT_PKEY, new TableField[] { Project.PROJECT.ID }, true);
     public static final ForeignKey<PersonRecord, AlgorithmRecord> PERSON__PERSON_IDENTIFIERALGORITHM_FKEY = Internal.createForeignKey(Person.PERSON, DSL.name("person_identifieralgorithm_fkey"), new TableField[] { Person.PERSON.IDENTIFIERALGORITHM }, Keys.ALGORITHM_PKEY, new TableField[] { Algorithm.ALGORITHM.ID }, true);
+    public static final ForeignKey<ProjectImageRecord, ProjectRecord> PROJECT_IMAGE__PROJECT_IMAGE_PROJECT_ID_FKEY = Internal.createForeignKey(ProjectImage.PROJECT_IMAGE, DSL.name("project_image_project_id_fkey"), new TableField[] { ProjectImage.PROJECT_IMAGE.PROJECT_ID }, Keys.PROJECT_PKEY, new TableField[] { Project.PROJECT.ID }, true);
     public static final ForeignKey<PseudonymRecord, DomainRecord> PSEUDONYM__PSEUDONYM_DOMAINID_FKEY = Internal.createForeignKey(Pseudonym.PSEUDONYM, DSL.name("pseudonym_domainid_fkey"), new TableField[] { Pseudonym.PSEUDONYM.DOMAINID }, Keys.DOMAIN_PKEY, new TableField[] { Domain.DOMAIN.ID }, true);
 }

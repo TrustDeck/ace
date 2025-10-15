@@ -15,6 +15,7 @@ import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
+import org.trustdeck.jooq.generated.tables.ProjectImage;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
 import org.trustdeck.jooq.generated.tables.records.PgpArmorHeadersRecord;
 
@@ -98,6 +99,11 @@ public class Tables {
      * The table <code>public.project</code>.
      */
     public static final Project PROJECT = Project.PROJECT;
+
+    /**
+     * The table <code>public.project_image</code>.
+     */
+    public static final ProjectImage PROJECT_IMAGE = ProjectImage.PROJECT_IMAGE;
 
     /**
      * The table <code>public.pseudonym</code>.

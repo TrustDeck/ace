@@ -77,7 +77,7 @@ public class Project extends TableImpl<ProjectRecord> {
     /**
      * The column <code>public.project.end_date</code>.
      */
-    public final TableField<ProjectRecord, OffsetDateTime> END_DATE = createField(DSL.name("end_date"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false), this, "");
+    public final TableField<ProjectRecord, OffsetDateTime> END_DATE = createField(DSL.name("end_date"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
 
     /**
      * The column <code>public.project.store_entities</code>.
@@ -150,7 +150,7 @@ public class Project extends TableImpl<ProjectRecord> {
     @Override
     public List<Check<ProjectRecord>> getChecks() {
         return Arrays.asList(
-            Internal.createCheck(this, DSL.name("project_dates_check"), "(((end_date IS NULL) OR (end_date >= start_date)))", true)
+            Internal.createCheck(this, DSL.name("project_check"), "(((end_date IS NULL) OR (end_date >= start_date)))", true)
         );
     }
 

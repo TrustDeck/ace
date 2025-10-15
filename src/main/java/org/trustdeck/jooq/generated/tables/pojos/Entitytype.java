@@ -42,7 +42,6 @@ public class EntityType implements IEntityType {
     private Boolean isDeprecated;
     private Boolean isBaseType;
     private JSONB typeDefinition;
-    private Boolean automaticPseudonymGeneration;
     private Integer associatedDomainId;
     private Integer projectId;
     private Object fullTextSearchVector;
@@ -56,7 +55,6 @@ public class EntityType implements IEntityType {
         this.isDeprecated = value.getIsDeprecated();
         this.isBaseType = value.getIsBaseType();
         this.typeDefinition = value.getTypeDefinition();
-        this.automaticPseudonymGeneration = value.getAutomaticPseudonymGeneration();
         this.associatedDomainId = value.getAssociatedDomainId();
         this.projectId = value.getProjectId();
         this.fullTextSearchVector = value.getFullTextSearchVector();
@@ -69,7 +67,6 @@ public class EntityType implements IEntityType {
         Boolean isDeprecated,
         Boolean isBaseType,
         JSONB typeDefinition,
-        Boolean automaticPseudonymGeneration,
         Integer associatedDomainId,
         Integer projectId,
         Object fullTextSearchVector
@@ -80,7 +77,6 @@ public class EntityType implements IEntityType {
         this.isDeprecated = isDeprecated;
         this.isBaseType = isBaseType;
         this.typeDefinition = typeDefinition;
-        this.automaticPseudonymGeneration = automaticPseudonymGeneration;
         this.associatedDomainId = associatedDomainId;
         this.projectId = projectId;
         this.fullTextSearchVector = fullTextSearchVector;
@@ -203,26 +199,6 @@ public class EntityType implements IEntityType {
     }
 
     /**
-     * Getter for
-     * <code>public.entity_type.automatic_pseudonym_generation</code>.
-     */
-    @Column(name = "automatic_pseudonym_generation")
-    @Override
-    public Boolean getAutomaticPseudonymGeneration() {
-        return this.automaticPseudonymGeneration;
-    }
-
-    /**
-     * Setter for
-     * <code>public.entity_type.automatic_pseudonym_generation</code>.
-     */
-    @Override
-    public EntityType setAutomaticPseudonymGeneration(Boolean automaticPseudonymGeneration) {
-        this.automaticPseudonymGeneration = automaticPseudonymGeneration;
-        return this;
-    }
-
-    /**
      * Getter for <code>public.entity_type.associated_domain_id</code>.
      */
     @Column(name = "associated_domain_id")
@@ -333,12 +309,6 @@ public class EntityType implements IEntityType {
         }
         else if (!this.typeDefinition.equals(other.typeDefinition))
             return false;
-        if (this.automaticPseudonymGeneration == null) {
-            if (other.automaticPseudonymGeneration != null)
-                return false;
-        }
-        else if (!this.automaticPseudonymGeneration.equals(other.automaticPseudonymGeneration))
-            return false;
         if (this.associatedDomainId == null) {
             if (other.associatedDomainId != null)
                 return false;
@@ -370,7 +340,6 @@ public class EntityType implements IEntityType {
         result = prime * result + ((this.isDeprecated == null) ? 0 : this.isDeprecated.hashCode());
         result = prime * result + ((this.isBaseType == null) ? 0 : this.isBaseType.hashCode());
         result = prime * result + ((this.typeDefinition == null) ? 0 : this.typeDefinition.hashCode());
-        result = prime * result + ((this.automaticPseudonymGeneration == null) ? 0 : this.automaticPseudonymGeneration.hashCode());
         result = prime * result + ((this.associatedDomainId == null) ? 0 : this.associatedDomainId.hashCode());
         result = prime * result + ((this.projectId == null) ? 0 : this.projectId.hashCode());
         result = prime * result + ((this.fullTextSearchVector == null) ? 0 : this.fullTextSearchVector.hashCode());
@@ -387,7 +356,6 @@ public class EntityType implements IEntityType {
         sb.append(", ").append(isDeprecated);
         sb.append(", ").append(isBaseType);
         sb.append(", ").append(typeDefinition);
-        sb.append(", ").append(automaticPseudonymGeneration);
         sb.append(", ").append(associatedDomainId);
         sb.append(", ").append(projectId);
         sb.append(", ").append(fullTextSearchVector);
@@ -408,7 +376,6 @@ public class EntityType implements IEntityType {
         setIsDeprecated(from.getIsDeprecated());
         setIsBaseType(from.getIsBaseType());
         setTypeDefinition(from.getTypeDefinition());
-        setAutomaticPseudonymGeneration(from.getAutomaticPseudonymGeneration());
         setAssociatedDomainId(from.getAssociatedDomainId());
         setProjectId(from.getProjectId());
         setFullTextSearchVector(from.getFullTextSearchVector());

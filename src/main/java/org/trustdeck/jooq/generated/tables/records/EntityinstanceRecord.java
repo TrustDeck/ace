@@ -33,7 +33,7 @@ import org.trustdeck.jooq.generated.tables.interfaces.IEntityInstance;
     name = "entity_instance",
     schema = "public",
     uniqueConstraints = {
-        @UniqueConstraint(name = "entity_instance_trustdeck_id_unique", columnNames = { "entity_type_id", "trustdeck_id" })
+        @UniqueConstraint(name = "entity_instance_entity_type_id_trustdeck_id_key", columnNames = { "entity_type_id", "trustdeck_id" })
     },
     indexes = {
         @Index(name = "entity_instance_et_proj_id_idx", columnList = "entity_type_id ASC, project_id ASC, id ASC"),

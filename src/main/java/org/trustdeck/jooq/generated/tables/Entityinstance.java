@@ -162,7 +162,7 @@ public class EntityInstance extends TableImpl<EntityInstanceRecord> {
 
     @Override
     public List<UniqueKey<EntityInstanceRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.ENTITY_INSTANCE_TRUSTDECK_ID_UNIQUE);
+        return Arrays.asList(Keys.ENTITY_INSTANCE_ENTITY_TYPE_ID_TRUSTDECK_ID_KEY);
     }
 
     @Override
