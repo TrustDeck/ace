@@ -120,7 +120,7 @@ public class ProjectRESTController {
     	// Ensure that only whitelisted characters are in the abbreviation, so that they do not break endpoints when used in an URI
     	if (!VALID_ABBREVIATION_CHAR_PATTERN.matcher(abbr).matches()) {
     		log.debug("Invalid project abbreviation. Must only contain letters, digits, underscores, or hyphens.");
-    	    return responseService.notAcceptable(responseContentType);
+    	    return responseService.badRequest(responseContentType);
     	}
         	
         URI location = URI.create("/api/projects/" + abbr);
