@@ -75,6 +75,25 @@ public class Assertion {
     }
 
     /**
+     * Method that checks whether a list of given Strings <b>is</b> null or empty.
+     *
+     * @param values the String to check
+     * @return {@code true} only if the passed objects are strings and null or empty, {@code false} otherwise.
+     */
+    public static boolean isNullOrEmpty(String... values) {
+    	if (values == null || values.length == 0) {
+            return true;
+        }
+    	
+    	boolean result = true;
+    	for (String value : values) {
+        	result &= isNullOrEmpty(value);
+        }
+    	
+    	return result;
+    }
+
+    /**
      * Method that checks whether the given String is <b>not</b> null nor empty.
      *
      * @param value the String to check
@@ -82,5 +101,24 @@ public class Assertion {
      */
     public static Boolean isNotNullOrEmpty(String value) {
         return value != null && !value.isBlank();
+    }
+
+    /**
+     * Method that checks whether a list of given Strings <b>is not</b> null nor empty.
+     *
+     * @param values the String to check
+     * @return {@code true} only if the passed objects are strings and neither null nor empty, {@code false} otherwise.
+     */
+    public static boolean isNotNullOrEmpty(String... values) {
+    	if (values == null || values.length == 0) {
+            return false;
+        }
+    	
+    	boolean result = true;
+    	for (String value : values) {
+        	result &= isNotNullOrEmpty(value);
+        }
+    	
+    	return result;
     }
 }
