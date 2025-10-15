@@ -17,6 +17,7 @@
 
 package org.trustdeck.service;
 
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.dto.EntityTypeDTO;
 import org.trustdeck.exception.CreateEntityTypeException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
+import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.EntityType;
 import org.trustdeck.jooq.generated.tables.records.EntityTypeRecord;
 import org.trustdeck.utils.Assertion;
@@ -55,6 +57,14 @@ public class EntityTypeDBService {
 	/** References a jOOQ configuration object that configures jOOQ's behavior when executing queries. */
     @Autowired
 	private DSLContext dsl;
+    
+    /** Enables access to the data base interaction methods for project objects. */
+    @Autowired
+    private ProjectDBService projectDBService;
+	
+	/** Enables access to domain database functions. */
+	@Autowired
+	private DomainDBAccessService ddba;
 	
 	/**
      * Method to insert a new entity type into the database.
@@ -78,6 +88,7 @@ public class EntityTypeDBService {
 	    	createdEntityType.setIsDeprecated(entityTypeDTO.getIsDeprecated());
 	    	createdEntityType.setIsBaseType(entityTypeDTO.getIsBaseType());
 	    	createdEntityType.setTypeDefinition(entityTypeDTO.getTypeDefinition());
+	    	createdEntityType.setAssociatedDomainId(getDomainIdFromName(entityTypeDTO.getAssociatedDomainName()));
 	    	createdEntityType.setProjectId(entityTypeDTO.getProjectID());
 	
 	        // Store and determine success
@@ -109,7 +120,7 @@ public class EntityTypeDBService {
 	    return new EntityTypeDTO().assignPojoValues(new EntityType(createdEntityType));
     }
 
-    /**
+	/**
      * Method to retrieve an entity type from the database by explicitly providing the two variables
      * name and projectID. Tuples of these are unique in the database.
      * Base types will have no projectID, so it can be null.
@@ -188,6 +199,8 @@ public class EntityTypeDBService {
      * @throws UnexpectedResultSizeException when the deletion would have affected an unexpected number of database entries
      */
     @Transactional
+    // TODO: Set is_deprecated (and use it as a safeguard in other methods) instead of removing it from the DB
+    // TODO: What about instances using the type? what about the domain that is referenced?
     public boolean deleteEntityType(String name, Integer projectID, HttpServletRequest request) throws UnexpectedResultSizeException {
     	// Check if all the necessary arguments are available
     	if (Assertion.isNullOrEmpty(name) || projectID == null) {
@@ -265,6 +278,12 @@ public class EntityTypeDBService {
     		return null;
     	}
     	
+    	// Check that the project in which this type is defined is not yet deleted
+    	if (projectDBService.getProjectByID(oldType.getProjectID(), null).getEndDate().isBefore(OffsetDateTime.now())) {
+    		log.debug("The project, in which this type is defined, is already deleted. No updates to the type are allowed.");
+    		return null;
+    	}
+    	
     	// Check if the entity type is used anywhere --> only update it if it's not used
     	int usedBy = 0;
     	try {
@@ -287,6 +306,7 @@ public class EntityTypeDBService {
         String version = Assertion.isNotNullOrEmpty(newEntityTypeDTO.getVersion()) ? newEntityTypeDTO.getVersion() : oldType.getVersion();
         Boolean isBaseType = newEntityTypeDTO.getIsBaseType() != null ? newEntityTypeDTO.getIsBaseType() : oldType.getIsBaseType();
         JSONB typeDef = newEntityTypeDTO.getTypeDefinition() != null ? newEntityTypeDTO.getTypeDefinition() : oldType.getTypeDefinition();
+        Integer domainID = Assertion.isNotNullOrEmpty(newEntityTypeDTO.getAssociatedDomainName()) ? getDomainIdFromName(newEntityTypeDTO.getAssociatedDomainName()) : getDomainIdFromName(oldEntityTypeDTO.getAssociatedDomainName());
         Integer projectId = (newEntityTypeDTO.getProjectID() != null && newEntityTypeDTO.getProjectID() > 0) ? newEntityTypeDTO.getProjectID() : oldType.getProjectID();
     	
     	// Create the update-record and send it to the database
@@ -298,6 +318,7 @@ public class EntityTypeDBService {
 	                .set(ENTITY_TYPE.VERSION, version)
 	                .set(ENTITY_TYPE.IS_BASE_TYPE, isBaseType)
 	                .set(ENTITY_TYPE.TYPE_DEFINITION, typeDef)
+	                .set(ENTITY_TYPE.ASSOCIATED_DOMAIN_ID, domainID)
 	                .set(ENTITY_TYPE.PROJECT_ID, projectId)
 	                .where(ENTITY_TYPE.ID.eq(oldType.getId()))
 	                .and(ENTITY_TYPE.IS_DEPRECATED.equal(false))
@@ -461,4 +482,16 @@ public class EntityTypeDBService {
         
         return result;
     }
+
+    /**
+     * Helper method to retrieve the database internal ID of a domain
+     * specified by its name. Also handles null-cases.
+     * 
+     * @param domainName the name of the domain
+     * @return the ID of the domain or {@code null} when the name was empty or not found
+     */
+    private Integer getDomainIdFromName(String domainName) {
+    	Domain d = Assertion.isNotNullOrEmpty(domainName) ? null : ddba.getDomainByName(domainName, null);
+    	return d == null ? null : d.getId();
+	}
 }
