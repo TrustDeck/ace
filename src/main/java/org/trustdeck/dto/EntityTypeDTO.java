@@ -37,7 +37,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-@Scope("prototype") // Ensures that an instance is deleted after a request.
+@Scope("prototype")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	
@@ -70,10 +70,14 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	@JsonIgnore
 	private Integer projectID;
 	
+	/** Enables access to domain database functions. */
 	@Autowired
+	@JsonIgnore
 	private DomainDBAccessService ddba;
 	
+	/** Enables access to the project specific database functions. */
 	@Autowired
+	@JsonIgnore
 	private ProjectDBService pdbs;
 
 	@JsonIgnore
