@@ -18,8 +18,11 @@
 package org.trustdeck.dto;
 
 import org.jooq.JSONB;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.pojos.EntityType;
+import org.trustdeck.service.DomainDBAccessService;
+import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.utils.Assertion;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -57,8 +60,21 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	/** The type definition of this entity. */
 	private JSONB typeDefinition;
 	
+	/* The name of the domain that is used to generate pseudonyms in. */
+	private String associatedDomainName;
+	
+	/** The name of the project where this type is defined in. */
+	private String projectName;
+	
 	/** The ID of the project where this type is defined in. */
+	@JsonIgnore
 	private Integer projectID;
+	
+	@Autowired
+	private DomainDBAccessService ddba;
+	
+	@Autowired
+	private ProjectDBService pdbs;
 
 	@JsonIgnore
 	@Override
@@ -75,6 +91,8 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	    dto.setIsDeprecated(pojo.getIsDeprecated());
 	    dto.setIsBaseType(pojo.getIsBaseType());
 	    dto.setTypeDefinition(pojo.getTypeDefinition());
+	    dto.setAssociatedDomainName(ddba.getDomainByID(pojo.getAssociatedDomainId(), null).getName());
+	    dto.setProjectName(pdbs.getProjectByID(pojo.getProjectId(), null).getName());
 	    dto.setProjectID(pojo.getProjectId());
 
 	    return dto;
