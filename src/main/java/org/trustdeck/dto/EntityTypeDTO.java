@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.pojos.EntityType;
 import org.trustdeck.service.DomainDBAccessService;
+import org.trustdeck.service.EntityTypeDBService;
 import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.utils.Assertion;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -60,6 +61,13 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	/** The type definition of this entity. */
 	private JSONB typeDefinition;
 	
+	/** The name of the base type if this type is not a base type itself. */
+	private String baseTypeName;
+	
+	/** The ID of the base type if this type is not a base type itself. */
+	@JsonIgnore
+	private Integer baseTypeId;
+	
 	/* The name of the domain that is used to generate pseudonyms in. */
 	private String associatedDomainName;
 	
@@ -68,7 +76,7 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	
 	/** The ID of the project where this type is defined in. */
 	@JsonIgnore
-	private Integer projectID;
+	private Integer projectId;
 	
 	/** Enables access to domain database functions. */
 	@Autowired
@@ -79,6 +87,11 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	@Autowired
 	@JsonIgnore
 	private ProjectDBService pdbs;
+	
+	/** Enables access to the entity type database functions. */
+	@Autowired
+	@JsonIgnore
+	private EntityTypeDBService etdbs;
 
 	@JsonIgnore
 	@Override
@@ -95,9 +108,11 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	    dto.setIsDeprecated(pojo.getIsDeprecated());
 	    dto.setIsBaseType(pojo.getIsBaseType());
 	    dto.setTypeDefinition(pojo.getTypeDefinition());
+	    dto.setBaseTypeName(etdbs.getEntityTypeById(pojo.getBaseTypeId(), pojo.getProjectId(), null).getName());
+	    dto.setBaseTypeId(pojo.getBaseTypeId());
 	    dto.setAssociatedDomainName(ddba.getDomainByID(pojo.getAssociatedDomainId(), null).getName());
 	    dto.setProjectName(pdbs.getProjectByID(pojo.getProjectId(), null).getName());
-	    dto.setProjectID(pojo.getProjectId());
+	    dto.setProjectId(pojo.getProjectId());
 
 	    return dto;
 	}
@@ -127,7 +142,11 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	    out += (this.getIsDeprecated() != null) ? "isDeprecated: " + this.getIsDeprecated() + ", " : "";
 	    out += (this.getIsBaseType() != null) ? "isBaseType: " + this.getIsBaseType() + ", " : "";
 	    out += (this.getTypeDefinition() != null) ? "typeDefinition: " + this.getTypeDefinition().toString() + ", " : "";
-	    out += (this.getProjectID() != null) ? "projectID: " + this.getProjectID() + ", " : "";
+	    out += (this.getBaseTypeName() != null) ? "baseTypeName: " + this.getBaseTypeName() + ", " : "";
+	    out += (this.getBaseTypeId() != null) ? "baseTypeId: " + this.getBaseTypeId() + ", " : "";
+	    out += (this.getAssociatedDomainName() != null) ? "associatedDomainName: " + this.getAssociatedDomainName() + ", " : "";
+	    out += (this.getProjectName() != null) ? "projectName: " + this.getProjectName() + ", " : "";
+	    out += (this.getProjectId() != null) ? "projectID: " + this.getProjectId() + ", " : "";
 	    
 	    return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
 	}
