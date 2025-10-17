@@ -386,4 +386,15 @@ public class ResponseService {
     public <T> ResponseEntity<T> partialContent(String mediaType, T body) {
         return this.createResponseEntityFromBody(HttpStatus.PARTIAL_CONTENT, mediaType, body, null);
     }
+
+    /**
+     * Gone (410) response entity.
+     *
+     * @param <T> the type parameter
+     * @param mediaType the media type
+     * @return the response entity
+     */
+    public <T> ResponseEntity<T> gone(String mediaType) {
+        return this.createResponseEntityFromHttpStatus(mediaType, HttpStatus.GONE, null);
+    }
 }

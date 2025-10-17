@@ -213,6 +213,7 @@ public class ProjectDBService {
      * @throws UnexpectedResultSizeException whenever the deletion would not exactly affect one project entry
      */
     @Transactional
+    // TODO: When deleting a project, should the types defined in it also be considered deleted? What about the instances using the type?
     public boolean deleteProject(String abbreviation, OffsetDateTime deleteDate, HttpServletRequest request) throws UnexpectedResultSizeException {
     	// Fetch the project to check if it exists
     	ProjectDTO project = getProjectByAbbreviation(abbreviation, null);
@@ -269,6 +270,12 @@ public class ProjectDBService {
 		// Check if the old record was found
 		if (oldProject == null) {
 			log.debug("The project object that should be updated was not found.");
+			return null;
+		}
+		
+		// Check if the project is deleted/tombstoned
+		if (oldProject.getEndDate().isBefore(OffsetDateTime.now())) {
+			log.debug("The project cannot be updated because it is deleted/tombstoned.");
 			return null;
 		}
 		
