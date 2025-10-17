@@ -144,6 +144,21 @@ public class EntityTypeDao extends DAOImpl<EntityTypeRecord, org.trustdeck.jooq.
     }
 
     /**
+     * Fetch records that have <code>base_type_id BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchRangeOfBaseTypeId(Integer lowerInclusive, Integer upperInclusive) {
+        return fetchRange(EntityType.ENTITY_TYPE.BASE_TYPE_ID, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>base_type_id IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityType> fetchByBaseTypeId(Integer... values) {
+        return fetch(EntityType.ENTITY_TYPE.BASE_TYPE_ID, values);
+    }
+
+    /**
      * Fetch records that have <code>associated_domain_id BETWEEN lowerInclusive
      * AND upperInclusive</code>
      */

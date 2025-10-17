@@ -8,16 +8,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
+import org.jooq.Check;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function9;
+import org.jooq.Function10;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row9;
+import org.jooq.Row10;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -25,6 +26,7 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 import org.trustdeck.jooq.generated.Indexes;
@@ -83,6 +85,11 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
      * The column <code>public.entity_type.type_definition</code>.
      */
     public final TableField<EntityTypeRecord, JSONB> TYPE_DEFINITION = createField(DSL.name("type_definition"), SQLDataType.JSONB.nullable(false), this, "");
+
+    /**
+     * The column <code>public.entity_type.base_type_id</code>.
+     */
+    public final TableField<EntityTypeRecord, Integer> BASE_TYPE_ID = createField(DSL.name("base_type_id"), SQLDataType.INTEGER, this, "");
 
     /**
      * The column <code>public.entity_type.associated_domain_id</code>.
@@ -160,11 +167,22 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
 
     @Override
     public List<ForeignKey<EntityTypeRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.ENTITY_TYPE__ENTITY_TYPE_ASSOCIATED_DOMAIN_ID_FKEY, Keys.ENTITY_TYPE__ENTITY_TYPE_PROJECT_ID_FKEY);
+        return Arrays.asList(Keys.ENTITY_TYPE__ENTITY_TYPE_BASE_TYPE_ID_FKEY, Keys.ENTITY_TYPE__ENTITY_TYPE_ASSOCIATED_DOMAIN_ID_FKEY, Keys.ENTITY_TYPE__ENTITY_TYPE_PROJECT_ID_FKEY);
     }
 
+    private transient EntityType _entityType;
     private transient Domain _domain;
     private transient Project _project;
+
+    /**
+     * Get the implicit join path to the <code>public.entity_type</code> table.
+     */
+    public EntityType entityType() {
+        if (_entityType == null)
+            _entityType = new EntityType(this, Keys.ENTITY_TYPE__ENTITY_TYPE_BASE_TYPE_ID_FKEY);
+
+        return _entityType;
+    }
 
     /**
      * Get the implicit join path to the <code>public.domain</code> table.
@@ -184,6 +202,14 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
             _project = new Project(this, Keys.ENTITY_TYPE__ENTITY_TYPE_PROJECT_ID_FKEY);
 
         return _project;
+    }
+
+    @Override
+    public List<Check<EntityTypeRecord>> getChecks() {
+        return Arrays.asList(
+            Internal.createCheck(this, DSL.name("entity_type_check"), "(((is_base_type AND (base_type_id IS NULL)) OR (NOT is_base_type)))", true),
+            Internal.createCheck(this, DSL.name("entity_type_check1"), "(((base_type_id IS NULL) OR (base_type_id <> id)))", true)
+        );
     }
 
     @Override
@@ -226,18 +252,18 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row9 type methods
+    // Row10 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Integer, String, String, Boolean, Boolean, JSONB, Integer, Integer, Object> fieldsRow() {
-        return (Row9) super.fieldsRow();
+    public Row10<Integer, String, String, Boolean, Boolean, JSONB, Integer, Integer, Integer, Object> fieldsRow() {
+        return (Row10) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function9<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Integer, ? super Integer, ? super Object, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function10<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Integer, ? super Integer, ? super Integer, ? super Object, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -245,7 +271,7 @@ public class EntityType extends TableImpl<EntityTypeRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function9<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Integer, ? super Integer, ? super Object, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function10<? super Integer, ? super String, ? super String, ? super Boolean, ? super Boolean, ? super JSONB, ? super Integer, ? super Integer, ? super Integer, ? super Object, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }
