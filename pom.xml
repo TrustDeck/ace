@@ -149,6 +149,13 @@
 	        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 	        <version>${springdoc.version}</version>
 	    </dependency>
+	    <dependency>
+        	<!-- Needed for enitity type definition validation. -->
+        	<!-- License: Apache 2.0 -->
+		    <groupId>com.networknt</groupId>
+		    <artifactId>json-schema-validator</artifactId>
+		    <version>1.5.9</version>
+		</dependency>
 
         <!-- Dependencies for tests -->
         <dependency>
