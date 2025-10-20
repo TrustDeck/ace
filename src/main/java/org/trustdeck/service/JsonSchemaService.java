@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -229,12 +228,10 @@ public class JsonSchemaService {
 	 * <ul>
 	 *   <li>Contains all base attributes (no deletions)</li>
 	 *   <li>Same type for shared attributes</li>
-	 *   <li>Required cannot be relaxed (base required ⇒ project required)</li>
-	 *   <li>Constraints can only be stricter, never more relaxed:
+	 *   <li>Constraints can only be stricter, never weaker:
 	 *     <ul>
-	 *       <li>numbers: min ≥ base.min; max ≤ base.max</li>
-	 *       <li>strings: minLength ≥ base.minLength; maxLength ≤ base.maxLength</li>
-	 *       <li>enum: if base has enum, project enum must be a subset (or equal)</li>
+	 *       <li>numbers: min >= base.min; max <= base.max</li>
+	 *       <li>strings: minLength >= base.minLength; maxLength <= base.maxLength</li>
 	 *       <li>pattern: require equality to base type</li>
 	 *     </ul>
 	 *   </li>
@@ -322,24 +319,6 @@ public class JsonSchemaService {
 	private static void copyIfPresent(JsonNode from, ObjectNode to, String field) {
 		if (from.has(field)) {
 			to.set(field, from.get(field));
-		}
-	}
-
-	private static boolean matchesType(JsonNode v, String type) {
-		switch (type) {
-		case "string":
-			return v.isTextual();
-		case "integer":
-			return v.isIntegralNumber();
-		case "number":
-			return v.isNumber();
-		case "boolean":
-			return v.isBoolean();
-		case "date":
-		case "datetime":
-			return v.isTextual(); // format enforced at instance validation
-		default:
-			return true;
 		}
 	}
 }
