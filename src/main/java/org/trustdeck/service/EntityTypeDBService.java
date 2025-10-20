@@ -250,8 +250,6 @@ public class EntityTypeDBService {
      * @throws UnexpectedResultSizeException when the deletion would have affected an unexpected number of database entries
      */
     @Transactional
-    // TODO: Set is_deprecated (and use it as a safeguard in other methods) instead of removing it from the DB
-    // TODO: What about instances using the type? what about the domain that is referenced?
     public boolean deleteEntityType(String name, Integer projectID, HttpServletRequest request) throws UnexpectedResultSizeException {
     	// Check if all the necessary arguments are available
     	if (Assertion.isNullOrEmpty(name) || projectID == null) {
@@ -286,15 +284,34 @@ public class EntityTypeDBService {
     		return false;
     	}
     	
-    	// The entity type is not used --> perform deletion
+    	// Check if the type is already "deleted"
+    	boolean alreadyDeleted = false;
+		try {
+			alreadyDeleted = dsl.selectFrom(ENTITY_TYPE)
+			        .where(ENTITY_TYPE.NAME.equalIgnoreCase(name))
+			        .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
+			        .fetchOneInto(EntityType.class)
+			        .getIsDeprecated();
+		} catch (DataAccessException e) {
+			log.debug("Checking if the entity type is already deleted failed.", e);
+        	return false;
+		}
+    	
+		// Evaluate
+    	if (alreadyDeleted) {
+    		log.debug("The type was already deleted. Nothing to do.");
+    		return true;
+    	}
+    	
+    	// The entity type is not used --> perform deletion by setting the is_deprecated flag
     	int deletedEntityTypes = 0;
     	try {
     		// Build and execute the query
-    		deletedEntityTypes = dsl.deleteFrom(ENTITY_TYPE)
-                .where(ENTITY_TYPE.NAME.equalIgnoreCase(name))
-                .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
-                .and(ENTITY_TYPE.IS_BASE_TYPE.equal(false))
-                .execute();
+    		deletedEntityTypes = dsl.update(ENTITY_TYPE)
+		            .set(ENTITY_TYPE.IS_DEPRECATED, true)
+		            .where(ENTITY_TYPE.NAME.equalIgnoreCase(name))
+		            .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
+		            .execute();
         } catch (DataAccessException e) {
         	log.debug("Deleting the entity type in the database failed.", e);
         	return false;
@@ -387,11 +404,12 @@ public class EntityTypeDBService {
      * as well as multiple words.
      * 
      * @param query the (multi-word) search query
+     * @param projectId the id of the project
      * @param request the http request object containing information necessary for the audit trail
      * @return a list of entity types that match the search query
      */
     @Transactional
-    public List<EntityTypeDTO> searchEntityType(String query, HttpServletRequest request) {
+    public List<EntityTypeDTO> searchEntityType(String query, int projectId, HttpServletRequest request) {
     	if (Assertion.isNullOrEmpty(query)) {
             log.debug("Search query is empty.");
             return null;
@@ -405,13 +423,9 @@ public class EntityTypeDBService {
         for (String part : parts) {
             String pattern = "%" + part + "%";
 
-            // Search across columns
+            // Search across name, version, and type definition columns
             Condition partCond = ENTITY_TYPE.NAME.likeIgnoreCase(pattern)
                 .or(ENTITY_TYPE.VERSION.likeIgnoreCase(pattern))
-                // Cast non-text columns to text for LIKE matching
-                .or(DSL.cast(ENTITY_TYPE.ID, String.class).likeIgnoreCase(pattern))
-                .or(DSL.cast(ENTITY_TYPE.PROJECT_ID, String.class).likeIgnoreCase(pattern))
-                .or(DSL.cast(ENTITY_TYPE.IS_BASE_TYPE, String.class).likeIgnoreCase(pattern))
                 // JSONB via full text search on the tsvector (uses the GIN index on the tsvector named 'full_text_search_vector')
                 .or(DSL.condition("full_text_search_vector @@ plainto_tsquery('simple', {0})", DSL.val(part)));
 
@@ -421,6 +435,9 @@ public class EntityTypeDBService {
 
         // Exclude deprecated/deleted types
         condition = condition.and(ENTITY_TYPE.IS_DEPRECATED.eq(false));
+        
+        // Only search in a project scope
+        condition = condition.and(ENTITY_TYPE.PROJECT_ID.eq(projectId));
 
         // Execute the search
         List<EntityType> results;
