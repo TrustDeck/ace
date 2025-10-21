@@ -65,33 +65,31 @@ public class EntityInstanceDBService {
      */
     @Transactional
     public EntityInstanceDTO createEntityInstance(EntityInstanceDTO entityInstanceDTO, HttpServletRequest request) {
-    	// Create the record and send it to the database
+    	// Create the insert statement and execute it
     	EntityInstanceRecord createdEntityInstance;
     	try {
-    		createdEntityInstance = dsl.newRecord(ENTITY_INSTANCE);
-	    	createdEntityInstance.setEntityTypeId(entityInstanceDTO.getEntityTypeID());
-	    	createdEntityInstance.setData(entityInstanceDTO.getData());
-	    	createdEntityInstance.setIsDeleted(entityInstanceDTO.getIsDeleted());
-	    	// createdAt and updatedAt will be automatically set by the database on inserts
-	
-	        // Store and determine success
-	        if (createdEntityInstance.insert() != 1) {
+    		// Let DB defaults generate trustdeck_id, created_at, updated_at, is_deleted if null
+    		createdEntityInstance = dsl.insertInto(ENTITY_INSTANCE)
+    				// The UUID will be automatically generated
+	    			.set(ENTITY_INSTANCE.PROJECT_ID, entityInstanceDTO.getProjectID())
+	                .set(ENTITY_INSTANCE.ENTITY_TYPE_ID, entityInstanceDTO.getEntityTypeID())
+	                .set(ENTITY_INSTANCE.DATA, entityInstanceDTO.getData())
+	                // The attributes is_deleted, created_at, and updated_at will be automatically set by the DB using defaults
+	                .returning()
+	                .fetchOne();
+
+	        // Determine success
+	        if (createdEntityInstance == null) {
 	        	log.debug("Inserting the entity instance failed.");
 	        	return null;
 	        }
 	    } catch (DataAccessException e) {
-	    	if (e.getMessage().contains(" already exists.")) {
-	    		// Found duplicate, return the original
-	    		log.info("While creating an entity instance, an identical one was found and will be used instead.");
-	    		return getEntityInstance(entityInstanceDTO.getTrustdeckID(), null);
-	    	} else {
-		    	log.error("Inserting the new entity type into the database failed.", e);
-		    	return null;
-	    	}
+	    	log.error("Inserting the new entity type into the database failed.", e);
+		    return null;
 	    }
 	    
 	    // Return the entity type
-        log.debug("Creating the entity instance \"" + createdEntityInstance.getTrustdeckId() + "\" was successful.");
+        log.trace("Creating the entity instance \"" + createdEntityInstance.getTrustdeckId() + "\" was successful.");
 	    return new EntityInstanceDTO().assignPojoValues(new EntityInstance(createdEntityInstance));
     }
 
