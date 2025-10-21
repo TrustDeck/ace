@@ -21,8 +21,11 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.jooq.JSONB;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.pojos.EntityInstance;
+import org.trustdeck.service.EntityTypeDBService;
+import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.utils.Assertion;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -50,10 +53,18 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	private UUID trustdeckID;
 	
 	/** The ID of the project where this entity instance is scoped in. */
+	@JsonIgnore
 	private Integer projectID;
 	
+	/** The name of the project where this entity instance is scoped in. */
+	private String projectName;
+	
 	/** The ID of the type of this entity instance. */
+	@JsonIgnore
 	private Integer entityTypeID;
+	
+	/** The name of the type of this entity instance. */
+	private String entityTypeName;
 	
 	/** This entity instance's data (i.e. the attributes and values). */
 	private JSONB data;
@@ -66,6 +77,16 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	
 	/** The date and time when this entity instance was last updated. */
 	private OffsetDateTime updatedAt;
+	
+	/** Enables access to the project specific database functions. */
+	@Autowired
+	@JsonIgnore
+	private ProjectDBService pdbs;
+	
+	/** Enables access to the entity type database functions. */
+	@Autowired
+	@JsonIgnore
+	private EntityTypeDBService etdbs;
 
 	@JsonIgnore
 	@Override
@@ -79,7 +100,9 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	    dto.setId(pojo.getId());
 	    dto.setTrustdeckID(pojo.getTrustdeckId());
 	    dto.setProjectID(pojo.getProjectId());
+	    dto.setProjectName(pdbs.getProjectByID(pojo.getProjectId(), null).getName());
 	    dto.setEntityTypeID(pojo.getEntityTypeId());
+	    dto.setEntityTypeName(etdbs.getEntityTypeById(pojo.getEntityTypeId(), pojo.getProjectId(), null).getName());
 	    dto.setData(pojo.getData());
 	    dto.setIsDeleted(pojo.getIsDeleted());
 	    dto.setCreatedAt(pojo.getCreatedAt());
@@ -110,7 +133,9 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	    out += (this.getId() != null) ? "id: " + this.getId().toString() + ", " : "";
 	    out += (this.getTrustdeckID() != null) ? "trustDeckID: " + this.getTrustdeckID().toString() + ", " : "";
 	    out += (this.getProjectID() != null) ? "projectID: " + this.getProjectID().toString() + ", " : "";
+	    out += (this.getProjectName() != null) ? "projectName: " + this.getProjectName() + ", " : "";
 	    out += (this.getEntityTypeID() != null) ? "entityTypeID: " + this.getEntityTypeID().toString() + ", " : "";
+	    out += (this.getEntityTypeName() != null) ? "entityTypeName: " + this.getEntityTypeName() + ", " : "";
 	    out += (this.getData() != null) ? "data: " + this.getData().toString() + ", " : "";
 	    out += (this.getIsDeleted() != null) ? "isDeleted: " + this.getIsDeleted().toString() + ", " : "";
 	    out += (this.getCreatedAt() != null) ? "createdAt: " + this.getCreatedAt().toString() + ", " : "";
@@ -122,6 +147,7 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	@JsonIgnore
 	@Override
 	public Boolean validate() {
-		return this.getEntityTypeID() != null && this.getData() != null && !this.getIsDeleted() && Assertion.isNotNullOrEmpty(this.getTrustdeckID().toString()) && Assertion.isNotNullOrEmpty(this.getProjectID().toString());
+		return this.getEntityTypeID() != null && this.getData() != null && !this.getIsDeleted() 
+				&& Assertion.isNotNullOrEmpty(this.getTrustdeckID().toString(), this.getProjectID().toString());
 	}
 }
