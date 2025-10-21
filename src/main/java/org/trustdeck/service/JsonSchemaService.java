@@ -27,9 +27,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jooq.JSONB;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -42,7 +44,7 @@ import com.networknt.schema.ValidationMessage;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 
+ * Class used to handle the entity type's JSON schemas and their validation.
  * 
  * @author Armin Müller
  */
@@ -50,15 +52,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JsonSchemaService {
 
-	/**
-	 * A mapper that transforms the schemas (stored in a file) into the proper type.
-	 */
+	/** A mapper that transforms the schemas (stored in a file) into the proper type. */
 	private ObjectMapper om;
 
-	/**
-	 * The schema factory used for building the schemas used for validating entity
-	 * types and instances.
-	 */
+	/** The schema factory used for building the schemas used for validating entity types and instances. */
 	private JsonSchemaFactory factory;
 
 	/** Stores (caches) the meta schema used to validate user-provided schemas. */
@@ -68,8 +65,7 @@ public class JsonSchemaService {
 	 * Constructor that defines the object mapper and initializes the schema factory
 	 * and the meta schema.
 	 * 
-	 * @param om the object mapper to map from the meta schema file to a JsonNode
-	 *           (will be auto injected by spring boot)
+	 * @param om the object mapper to map from the meta schema file to a JsonNode (will be auto injected by spring boot)
 	 */
 	public JsonSchemaService(ObjectMapper om) {
 		this.om = om;
@@ -136,11 +132,11 @@ public class JsonSchemaService {
 	}
 
 	/**
-	 * Build an instance JSON schema from a validated definition that can be used
-	 * for validating entity instances.
+	 * Build an instance JSON schema from a validated definition in JsonNode form 
+	 * that can be used for validating entity instances.
 	 * 
-	 * @param definition the validated definition
-	 * @return a instance JSON schema
+	 * @param definition the validated schema definition
+	 * @return an instance JSON schema
 	 */
 	public JsonNode buildInstanceSchema(JsonNode definition) {
 		// Build schema object from the JsonNode type
@@ -221,6 +217,25 @@ public class JsonSchemaService {
 
 		return schema;
 	}
+	
+	/**
+	 * Build an instance JSON schema from a validated definition in JSONB form 
+	 * that can be used for validating entity instances.
+	 * 
+	 * @param definition the validated schema definition
+	 * @return an instance JSON schema
+	 */
+	public JsonNode buildInstanceSchema(JSONB definition) {
+		JsonNode schema;
+		try {
+			schema = om.readTree(definition.toString());
+		} catch (JsonProcessingException e) {
+			log.debug("Failed to parse JSONB into JsonNode while building the instance schema.", e);
+			return null;
+		}
+		
+		return buildInstanceSchema(schema);
+	}
 
 	/**
 	 * Ensure the project specific type definition (projectDef) is a superset of a
@@ -294,7 +309,7 @@ public class JsonSchemaService {
 	/**
 	 * Validate an instance JSON against a previously built instance schema.
 	 * 
-	 * @param instance the instance as a JSON
+	 * @param instance the instance as a JsonNode
 	 * @param instanceSchema the schema to evaluate against
 	 * @return a list of validation errors (an empty list means its valid)
 	 */
@@ -305,6 +320,26 @@ public class JsonSchemaService {
 		// Validate and return possible error messages to the caller
 		Set<ValidationMessage> msgs = compiled.validate(instance);
 		return msgs.stream().map(ValidationMessage::getMessage).collect(Collectors.toList());
+	}
+
+	/**
+	 * Validate an instance JSONB against a previously built instance schema.
+	 * 
+	 * @param instanceData the instance as a JSONB
+	 * @param instanceSchema the schema to evaluate against
+	 * @return a list of validation errors (an empty list means its valid)
+	 */
+	public List<String> validateInstance(JSONB instanceData, JsonNode instanceSchema) {
+		// Parse instance data
+		JsonNode instance;
+		try {
+			instance = om.readTree(instanceData.toString());
+		} catch (JsonProcessingException e) {
+			log.debug("Failed to parse JSONB into JsonNode while validating the instance payload.", e);
+			return null;
+		}
+		
+		return validateInstance(instance, instanceSchema);
 	}
 
 	/**
