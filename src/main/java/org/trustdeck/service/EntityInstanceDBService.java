@@ -23,7 +23,6 @@ import java.util.UUID;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.JSONB;
 import org.jooq.exception.DataAccessException;
 import org.jooq.exception.MappingException;
 import org.jooq.impl.DSL;
@@ -228,46 +227,27 @@ public class EntityInstanceDBService {
     /**
      * Method to update an entity instance.
      * 
-     * @param oldEntityInstanceDTO the entity instance data transfer object containing the necessary data to identify the instance that should be updated
-     * @param newEntityInstanceDTO the entity instance object containing the data to use for the update; null-values lead to keeping the old values
+     * @param oldInstanceID the entity instance database id that is needed to identify the instance that should be updated
+     * @param newEntityInstanceDTO the entity instance object containing the data to use for the update
      * @param request the http request object containing information necessary for the audit trail
      * @return the updated entity instance object when successful, {@code null} when anything went wrong
      */
     @Transactional
-    public EntityInstanceDTO updateEntityInstance(EntityInstanceDTO oldEntityInstanceDTO, EntityInstanceDTO newEntityInstanceDTO, HttpServletRequest request) {
-    	// Ensure that all necessary information is given --> retrieve the database version of the old record
-    	EntityInstanceDTO oldInstance = getEntityInstance(oldEntityInstanceDTO, null);
-    	if (oldInstance == null) {
-    		return null;
-    	}
-    	
-    	// Decide on which values to use
-    	UUID trustDeckID = newEntityInstanceDTO.getTrustdeckID() != null ? newEntityInstanceDTO.getTrustdeckID() : oldInstance.getTrustdeckID();
-    	Integer projectID = newEntityInstanceDTO.getProjectID() != null ? newEntityInstanceDTO.getProjectID() : oldInstance.getProjectID();
-    	Integer entityTypeID = newEntityInstanceDTO.getEntityTypeID() != null ? newEntityInstanceDTO.getEntityTypeID() : oldInstance.getEntityTypeID();
-    	JSONB data = newEntityInstanceDTO.getData() != null ? newEntityInstanceDTO.getData() : oldInstance.getData();
-    	Boolean isDeleted = newEntityInstanceDTO.getIsDeleted() != null ? newEntityInstanceDTO.getIsDeleted() : oldInstance.getIsDeleted();
-    	OffsetDateTime createdAt = newEntityInstanceDTO.getCreatedAt() != null ? newEntityInstanceDTO.getCreatedAt() : oldInstance.getCreatedAt();
-    	
-    	// Check if anything was really updated
-    	boolean anythingUpdated = !Assertion.assertNullAll(newEntityInstanceDTO.getTrustdeckID(), newEntityInstanceDTO.getProjectID(), newEntityInstanceDTO.getEntityTypeID(), newEntityInstanceDTO.getData(), newEntityInstanceDTO.getIsDeleted(), newEntityInstanceDTO.getCreatedAt());
-    	
-    	// If the updated_at value is given --> use it. If not, but anything was updated --> use now(). Else --> use old timestamp
-    	OffsetDateTime updatedAt = newEntityInstanceDTO.getUpdatedAt() != null ? newEntityInstanceDTO.getUpdatedAt() : (anythingUpdated ? OffsetDateTime.now() : oldInstance.getUpdatedAt());
-
+    public EntityInstanceDTO updateEntityInstance(long oldInstanceID, EntityInstanceDTO newEntityInstanceDTO, HttpServletRequest request) {
     	// Create the update-record and send it to the database
         EntityInstanceRecord updatedRecord = null;
     	try {
-    		// Update and return the updated record
+    		// Update and return the updated record (as long as it's not already deleted)
     		updatedRecord = dsl.update(ENTITY_INSTANCE)
-	                .set(ENTITY_INSTANCE.TRUSTDECK_ID, trustDeckID)
-	                .set(ENTITY_INSTANCE.PROJECT_ID, projectID)
-	                .set(ENTITY_INSTANCE.ENTITY_TYPE_ID, entityTypeID)
-	                .set(ENTITY_INSTANCE.DATA, data)
-	                .set(ENTITY_INSTANCE.IS_DELETED, isDeleted)
-	                .set(ENTITY_INSTANCE.CREATED_AT, createdAt)
-	                .set(ENTITY_INSTANCE.UPDATED_AT, updatedAt)
-	                .where(ENTITY_INSTANCE.ID.eq(oldInstance.getId()))
+	                .set(ENTITY_INSTANCE.TRUSTDECK_ID, newEntityInstanceDTO.getTrustdeckID())
+	                .set(ENTITY_INSTANCE.PROJECT_ID, newEntityInstanceDTO.getProjectID())
+	                .set(ENTITY_INSTANCE.ENTITY_TYPE_ID, newEntityInstanceDTO.getEntityTypeID())
+	                .set(ENTITY_INSTANCE.DATA, newEntityInstanceDTO.getData())
+	                .set(ENTITY_INSTANCE.IS_DELETED, newEntityInstanceDTO.getIsDeleted())
+	                .set(ENTITY_INSTANCE.CREATED_AT, newEntityInstanceDTO.getCreatedAt())
+	                .set(ENTITY_INSTANCE.UPDATED_AT, newEntityInstanceDTO.getUpdatedAt())
+	                .where(ENTITY_INSTANCE.ID.eq(oldInstanceID))
+	                .and(ENTITY_INSTANCE.IS_DELETED.ne(true))
 	                .returning()
 	                .fetchOne();
     	} catch (DataAccessException e) {
