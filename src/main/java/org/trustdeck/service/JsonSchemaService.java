@@ -19,7 +19,12 @@ package org.trustdeck.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,10 +35,12 @@ import java.util.stream.Collectors;
 import org.jooq.JSONB;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.trustdeck.utils.LRUCache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.networknt.schema.JsonSchema;
@@ -45,6 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Class used to handle the entity type's JSON schemas and their validation.
+ * Includes a simple LRU caching for compiled schemas.
  * 
  * @author Armin Müller
  */
@@ -60,6 +68,9 @@ public class JsonSchemaService {
 
 	/** Stores (caches) the meta schema used to validate user-provided schemas. */
 	private JsonSchema metaSchema;
+	
+	/** Least recently used cache for the compiled type schemas. */
+	private final Map<String, JsonSchema> compiledCache = Collections.synchronizedMap(new LRUCache<>(50));
 
 	/**
 	 * Constructor that defines the object mapper and initializes the schema factory
@@ -72,7 +83,7 @@ public class JsonSchemaService {
 		this.factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012);
 
 		// Load the meta schema from file into the application
-		try (InputStream metaSchema = new ClassPathResource("schemas/definition-meta.schema.json").getInputStream()) {
+		try (InputStream metaSchema = new ClassPathResource("schemas/definition-meta-schema.json").getInputStream()) {
 			// Map the input stream to the proper type
 			JsonNode meta = om.readTree(metaSchema);
 			this.metaSchema = factory.getSchema(meta);
@@ -251,6 +262,10 @@ public class JsonSchemaService {
 	 *     </ul>
 	 *   </li>
 	 * </ul>
+	 * 
+	 * @param baseDef the type definition of the base type
+	 * @param projectDef the type definition for the project-specific type
+	 * @return a list of errors encountered during validation
 	 */
 	public List<String> validateProjectTypeIsSuperset(JsonNode baseDef, JsonNode projectDef) {
 		List<String> errors = new ArrayList<>();
@@ -340,6 +355,120 @@ public class JsonSchemaService {
 		}
 		
 		return validateInstance(instance, instanceSchema);
+	}
+
+	/**
+	 * Build or reuse a compiled schema for an entity type (build
+	 * from its definition or get from LRU-cached).
+	 * Convenience method that allows using the JSONB directly.
+	 * 
+	 * @param typeDefinition the type definition
+	 * @return the compiled schema
+	 */
+	public JsonSchema getCompiledSchemaFromDefinition(JSONB typeDefinition) {
+		// Parse the JSONB
+		JsonNode def;
+		try {
+			def = om.readTree(typeDefinition.toString());
+		} catch (JsonProcessingException e) {
+			log.debug("Failed to parse JSONB into JsonNode while retrieving the compiled schema.", e);
+			return null;
+		}
+		
+		return getCompiledSchemaFromDefinition(def);
+	}
+
+	/**
+	 * Build or reuse a compiled schema for an entity type (build
+	 * from its definition or get from LRU-cached).
+	 * 
+	 * @param typeDefinition the type definition
+	 * @return the compiled schema
+	 */
+	public JsonSchema getCompiledSchemaFromDefinition(JsonNode typeDefinition) {
+		boolean useCache = true;
+		
+		// Build the schema from the definition
+		JsonNode instanceSchemaNode = buildInstanceSchema(typeDefinition);
+		
+		// Canonicalize the schema and hash it
+		byte[] canonical = canonicalize(instanceSchemaNode);
+		String key = null;
+		try {
+			key = sha256Base64(canonical);
+		} catch (IllegalStateException e) {
+			log.debug("Failed to compute hash, so caching is unavailable. Compile instead.");
+			useCache = false;
+		}
+		
+		if (useCache) {
+			// Check the (locked) cache for an already compiled schema
+			JsonSchema cached;
+			synchronized (compiledCache) {
+				cached = compiledCache.get(key);
+			}
+			if (cached != null) {
+				log.trace("Cache hit: using compiled schema from cache.");
+				return cached;
+			}
+		}
+
+		// No cached schema found: compile the schema
+		log.trace("Cache miss: compile schema and cache it.");
+		JsonSchema compiled = factory.getSchema(instanceSchemaNode);
+
+		if (useCache) {
+			// Cache the newly compiled schema (use double-checked locking)
+			synchronized (compiledCache) {
+				JsonSchema existing = compiledCache.get(key);
+				if (existing != null) {
+					// The schema was cached in the meantime; return it
+					return existing;
+				}
+				
+				// Add to cache
+				log.trace("Added compiled schema to cache.");
+				compiledCache.put(key, compiled);
+			}
+		}
+		
+		return compiled;
+	}
+
+	/**
+	 * Ensures the JSON is always written in a consistent way by sorting
+	 * object keys alphabetically before converting it to bytes.
+	 * 
+	 * @param node the JSON to canonicalize
+	 * @return a byte array representing the canonicalized form of the given JSON
+	 */
+	private byte[] canonicalize(JsonNode node) {
+		try {
+			ObjectMapper omCopy = om.copy();
+			omCopy.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+			
+			return omCopy.writeValueAsBytes(node);
+		} catch (IOException e) {
+			// Fallback to String
+			return node.toString().getBytes(StandardCharsets.UTF_8);
+		}
+	}
+
+	/**
+	 * Computes the SHA-256 hash of the given byte 
+	 * array and returns it as a Base64 string.
+	 * 
+	 * @param data the input data to hash
+	 * @return the Base64 encoded SHA-256 hash of the input
+	 * @throws IllegalStateException if the SHA-256 algorithm is not available on the system
+	 */
+	private static String sha256Base64(byte[] data) throws IllegalStateException {
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			return Base64.getUrlEncoder().withoutPadding().encodeToString(md.digest(data));
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("SHA-256 not available.", e);
+		}
 	}
 
 	/**
