@@ -20,6 +20,7 @@ package org.trustdeck.dto;
 import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.EntityType;
 import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.service.EntityTypeDBService;
@@ -28,8 +29,11 @@ import org.trustdeck.utils.Assertion;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * This class represents a Data Transfer Object (DTO) for an entity type.
@@ -79,16 +83,22 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	private Integer projectId;
 	
 	/** Enables access to domain database functions. */
+	@Getter(value=AccessLevel.NONE)
+    @Setter(value=AccessLevel.NONE)
 	@Autowired
 	@JsonIgnore
 	private DomainDBAccessService ddba;
 	
 	/** Enables access to the project specific database functions. */
+	@Getter(value=AccessLevel.NONE)
+    @Setter(value=AccessLevel.NONE)
 	@Autowired
 	@JsonIgnore
 	private ProjectDBService pdbs;
 	
 	/** Enables access to the entity type database functions. */
+	@Getter(value=AccessLevel.NONE)
+    @Setter(value=AccessLevel.NONE)
 	@Autowired
 	@JsonIgnore
 	private EntityTypeDBService etdbs;
@@ -100,18 +110,21 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	        return null;
 	    }
 		
+		EntityTypeDTO baseType = etdbs.getEntityTypeById(pojo.getBaseTypeId(), pojo.getProjectId(), null);
+		Domain domain = ddba.getDomainByID(pojo.getAssociatedDomainId(), null);
+		ProjectDTO project = pdbs.getProjectByID(pojo.getProjectId(), null);
+		
 		EntityTypeDTO dto = new EntityTypeDTO();
-	    
 	    dto.setId(pojo.getId());
 	    dto.setName(pojo.getName());
 	    dto.setVersion(pojo.getVersion());
 	    dto.setIsDeprecated(pojo.getIsDeprecated());
 	    dto.setIsBaseType(pojo.getIsBaseType());
 	    dto.setTypeDefinition(pojo.getTypeDefinition());
-	    dto.setBaseTypeName(etdbs.getEntityTypeById(pojo.getBaseTypeId(), pojo.getProjectId(), null).getName());
+	    dto.setBaseTypeName(baseType == null ? null : baseType.getName());
 	    dto.setBaseTypeId(pojo.getBaseTypeId());
-	    dto.setAssociatedDomainName(ddba.getDomainByID(pojo.getAssociatedDomainId(), null).getName());
-	    dto.setProjectName(pdbs.getProjectByID(pojo.getProjectId(), null).getName());
+	    dto.setAssociatedDomainName(domain == null ? null : domain.getName());
+	    dto.setProjectName(project == null ? null : project.getName());
 	    dto.setProjectId(pojo.getProjectId());
 
 	    return dto;

@@ -31,8 +31,11 @@ import org.trustdeck.utils.Assertion;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * This class represents a Data Transfer Object (DTO) for an entity instance.
@@ -79,11 +82,15 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	private OffsetDateTime updatedAt;
 	
 	/** Enables access to the project specific database functions. */
+	@Getter(value=AccessLevel.NONE)
+    @Setter(value=AccessLevel.NONE)
 	@Autowired
 	@JsonIgnore
 	private ProjectDBService pdbs;
 	
 	/** Enables access to the entity type database functions. */
+	@Getter(value=AccessLevel.NONE)
+    @Setter(value=AccessLevel.NONE)
 	@Autowired
 	@JsonIgnore
 	private EntityTypeDBService etdbs;
@@ -95,14 +102,16 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	        return null;
 	    }
 		
+		ProjectDTO project = pdbs.getProjectByID(pojo.getProjectId(), null);
+	    EntityTypeDTO type = etdbs.getEntityTypeById(pojo.getEntityTypeId(), pojo.getProjectId(), null);
+		
 		EntityInstanceDTO dto = new EntityInstanceDTO();
-	    
 	    dto.setId(pojo.getId());
 	    dto.setTrustdeckID(pojo.getTrustdeckId());
 	    dto.setProjectID(pojo.getProjectId());
-	    dto.setProjectName(pdbs.getProjectByID(pojo.getProjectId(), null).getName());
+	    dto.setProjectName(project == null ? null : project.getName());
 	    dto.setEntityTypeID(pojo.getEntityTypeId());
-	    dto.setEntityTypeName(etdbs.getEntityTypeById(pojo.getEntityTypeId(), pojo.getProjectId(), null).getName());
+	    dto.setEntityTypeName(type == null ? null : type.getName());
 	    dto.setData(pojo.getData());
 	    dto.setIsDeleted(pojo.getIsDeleted());
 	    dto.setCreatedAt(pojo.getCreatedAt());
