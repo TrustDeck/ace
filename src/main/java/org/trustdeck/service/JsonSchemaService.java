@@ -322,7 +322,7 @@ public class JsonSchemaService {
 	}
 
 	/**
-	 * Validate an instance JSON against a previously built instance schema.
+	 * Validate an instance JSON against an instance schema.
 	 * 
 	 * @param instance the instance as a JsonNode
 	 * @param instanceSchema the schema to evaluate against
@@ -338,7 +338,7 @@ public class JsonSchemaService {
 	}
 
 	/**
-	 * Validate an instance JSONB against a previously built instance schema.
+	 * Validate an instance JSONB against an instance schema.
 	 * 
 	 * @param instanceData the instance as a JSONB
 	 * @param instanceSchema the schema to evaluate against
@@ -355,6 +355,28 @@ public class JsonSchemaService {
 		}
 		
 		return validateInstance(instance, instanceSchema);
+	}
+
+	/**
+	 * Validate an instance JSONB against a previously compiled instance schema.
+	 * 
+	 * @param instanceData the instance as a JSONB
+	 * @param compiledInstanceSchema the already compiled schema to evaluate against
+	 * @return a list of validation errors (an empty list means its valid)
+	 */
+	public List<String> validateInstance(JSONB instanceData, JsonSchema compiledInstanceSchema) {
+		// Parse instance data
+		JsonNode instance;
+		try {
+			instance = om.readTree(instanceData.toString());
+		} catch (JsonProcessingException e) {
+			log.debug("Failed to parse JSONB into JsonNode while validating the instance payload.", e);
+			return List.of("Malformed JSON payload: " + e.getMessage());
+		}
+	
+		// Validate and return any encountered errors
+		Set<ValidationMessage> msgs = compiledInstanceSchema.validate(instance);
+        return msgs.stream().map(ValidationMessage::getMessage).collect(Collectors.toList());
 	}
 
 	/**
