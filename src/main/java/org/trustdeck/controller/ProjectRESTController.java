@@ -182,7 +182,7 @@ public class ProjectRESTController {
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getProjectsWithAccessTo(@RequestHeader(name = "accept", required = false) String responseContentType,
                                            			 HttpServletRequest request) {
-		
+		// TODO
 		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 	}
 	
