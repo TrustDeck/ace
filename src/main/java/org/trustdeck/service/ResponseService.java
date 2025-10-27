@@ -408,4 +408,15 @@ public class ResponseService {
     public <T> ResponseEntity<T> payloadTooLarge(String mediaType) {
         return this.createResponseEntityFromHttpStatus(mediaType, HttpStatus.PAYLOAD_TOO_LARGE, null);
     }
+
+    /**
+     * Unsupported media type (415) response entity.
+     *
+     * @param <T> the type parameter
+     * @param mediaType the media type
+     * @return the response entity
+     */
+    public <T> ResponseEntity<T> unsupportedMediaType(String mediaType) {
+        return this.createResponseEntityFromHttpStatus(mediaType, HttpStatus.UNSUPPORTED_MEDIA_TYPE, null);
+    }
 }
