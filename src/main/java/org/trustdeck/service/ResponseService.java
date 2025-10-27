@@ -397,4 +397,15 @@ public class ResponseService {
     public <T> ResponseEntity<T> gone(String mediaType) {
         return this.createResponseEntityFromHttpStatus(mediaType, HttpStatus.GONE, null);
     }
+
+    /**
+     * Payload too large (413) response entity.
+     *
+     * @param <T> the type parameter
+     * @param mediaType the media type
+     * @return the response entity
+     */
+    public <T> ResponseEntity<T> payloadTooLarge(String mediaType) {
+        return this.createResponseEntityFromHttpStatus(mediaType, HttpStatus.PAYLOAD_TOO_LARGE, null);
+    }
 }
