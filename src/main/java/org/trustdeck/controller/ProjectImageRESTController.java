@@ -79,7 +79,25 @@ public class ProjectImageRESTController {
 	/** The set of media types that a given image needs to be in. */
 	private static final Set<String> ALLOWED_IMAGE_MEDIA_TYPES = Set.of("image/jpeg", "image/png", "image/webp", "image/svg+xml");
 	
-	
+	/**
+	 * Endpoint to store a new image for a project.
+	 * 
+	 * @param abbreviation the abbreviation of the project to which the image belongs to
+	 * @param image the image that should be stored
+	 * @param responseContentType (optional) the response content type
+	 * @param request the request object, injected by Spring Boot
+	 * @return <li>a <b>201-CREATED</b> status when the project image was successfully stored</li>
+     *         <li>a <b>400-BAD_REQUEST</b> status when no image was provided, the abbreviation 
+     *         is missing, or the image is otherwise invalid</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when the project does not exist</li>
+     *         <li>a <b>410-GONE</b> status when the project has already ended</li>
+     *         <li>a <b>413-PAYLOAD_TOO_LARGE</b> status when the image exceeds the maximum 
+     *         allowed size</li>
+     *         <li>a <b>415-UNSUPPORTED_MEDIA_TYPE</b> status when the file is not of a 
+     *         supported image type</li>
+     *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the image could not be 
+     *         processed or creation failed</li>
+	 */
 	@PostMapping(path = "/projects/{abbreviation}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("hasRole('project-image-create')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
@@ -150,7 +168,20 @@ public class ProjectImageRESTController {
 		}
 	}
 	
-
+	/**
+	 * Endpoint to retrieve the image of a project.
+	 * 
+	 * @param abbreviation the abbreviation of the project to which the image belongs to
+	 * @param responseContentType (optional) the response content type
+	 * @param request the request object, injected by Spring Boot
+	 * @return <li>a <b>200-OK</b> status with the image bytes and corresponding MIME type 
+	 * 		   on success</li>
+     *         <li>a <b>204-NO_CONTENT</b> status when an image entry exists but contains no 
+     *         data</li>
+     *         <li>a <b>400-BAD_REQUEST</b> status when the abbreviation is missing</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when the project or its image does not exist</li>
+     *         <li>a <b>410-GONE</b> status when the project has already ended</li>
+	 */
 	@GetMapping(path = "/projects/{abbreviation}/image")
 	@PreAuthorize("hasRole('project-image-read')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
@@ -188,6 +219,25 @@ public class ProjectImageRESTController {
 		return responseService.ok(dto.getMimeType(), dto.getImageBytes());
 	}
 	
+	/**
+	 * Endpoint to update a project image.
+	 * 
+	 * @param abbreviation the abbreviation of the project to which the updated image belongs to
+	 * @param image the updated image that should be stored
+	 * @param responseContentType (optional) the response content type
+	 * @param request the request object, injected by Spring Boot
+	 * @return <li>a <b>200-OK</b> status when the project image was successfully updated</li>
+     *         <li>a <b>400-BAD_REQUEST</b> status when no image was provided or the 
+     *         abbreviation is missing</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when the project does not exist</li>
+     *         <li>a <b>410-GONE</b> status when the project has already ended</li>
+     *         <li>a <b>413-PAYLOAD_TOO_LARGE</b> status when the image exceeds the maximum 
+     *         allowed size</li>
+     *         <li>a <b>415-UNSUPPORTED_MEDIA_TYPE</b> status when the file is not of a 
+     *         supported image type</li>
+     *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the image could not be 
+     *         processed or the update failed</li>
+	 */
 	@PutMapping(path = "/projects/{abbreviation}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("hasRole('project-image-update')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
@@ -254,10 +304,24 @@ public class ProjectImageRESTController {
 			return responseService.unprocessableEntity(responseContentType);
 		} else {
 			log.info("Successfully saved an updated image for the project \"" + project.getName() + "\".");
-			return responseService.created(responseContentType);
+			return responseService.ok(responseContentType);
 		}
 	}
 	
+	/**
+	 * Endpoint to delete an image from a project.
+	 * 
+	 * @param abbreviation the abbreviation of the project to which the image belongs to
+	 * @param responseContentType (optional) the response content type
+	 * @param request the request object, injected by Spring Boot
+	 * @return <li>a <b>204-NO_CONTENT</b> status when the project image was successfully 
+	 * 		   deleted</li>
+     *         <li>a <b>400-BAD_REQUEST</b> status when the abbreviation is missing</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when the project does not exist</li>
+     *         <li>a <b>410-GONE</b> status when the project has already ended</li>
+     *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the deletion failed or was 
+     *         rolled back</li>
+	 */
 	@DeleteMapping(path = "/projects/{abbreviation}/image")
 	@PreAuthorize("hasRole('project-image-delete')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
