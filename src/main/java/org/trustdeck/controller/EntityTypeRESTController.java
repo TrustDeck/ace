@@ -94,7 +94,7 @@ public class EntityTypeRESTController {
     private static final Pattern VALID_NAME_CHAR_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
     
     /** Pattern/Regex of allowed characters for the version attribute of entity types. */
-    private static final Pattern VALID_VERSION_CHAR_PATTERN = Pattern.compile("^[a-zA-Z0-9_-.]+$");
+    private static final Pattern VALID_VERSION_CHAR_PATTERN = Pattern.compile("^[a-zA-Z0-9_.-]+$");
 	
     /**
      * Endpoint to create base entity types in the system. These will be used
