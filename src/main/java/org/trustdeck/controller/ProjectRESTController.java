@@ -109,7 +109,7 @@ public class ProjectRESTController {
 		OffsetDateTime end = projectDTO.getEndDate();
 		Boolean storeEntities = projectDTO.getStoreEntities();
 		Boolean storePseudonyms = projectDTO.getStorePseudonyms();
-		String desc = projectDTO.getDescription().trim();
+		String desc = projectDTO.getDescription();
 		
 		// Check if name and abbreviation are given
 		if (Assertion.isNullOrEmpty(name) || Assertion.isNullOrEmpty(abbr)) {
@@ -205,7 +205,7 @@ public class ProjectRESTController {
                                         HttpServletRequest request) {
 		
 		// Null-check the given string
-		if (Assertion.isNotNullOrEmpty(abbreviation)) {
+		if (Assertion.isNullOrEmpty(abbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
