@@ -20,7 +20,6 @@ package org.trustdeck.controller;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.Period;
-import java.time.format.DateTimeParseException;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +46,7 @@ import org.trustdeck.security.audittrail.usertype.AuditUserType;
 import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
+import org.trustdeck.utils.Utility;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -215,6 +215,9 @@ public class ProjectRESTController {
 		if (project == null) {
 			log.debug("No project found for the given abbreviation.");
 			return responseService.notFound(responseContentType);
+		} else if (project.getEndDate().isBefore(OffsetDateTime.now())) {
+			log.debug("Project has already ended. No changes allowed.");
+			return responseService.gone(responseContentType);
 		}
 		
 		// At this point a project was found, return it to the user
@@ -261,9 +264,13 @@ public class ProjectRESTController {
     									   HttpServletRequest request) {
 		
 		// Check if the original project exists
-		if (projectDBService.getProjectByAbbreviation(abbreviation, null) == null) {
+		ProjectDTO oldProjectDTO = projectDBService.getProjectByAbbreviation(abbreviation, null);
+		if (oldProjectDTO == null) {
 			log.debug("The project that should be updated was not found.");
 			return responseService.notFound(responseContentType);
+		} else if (oldProjectDTO.getEndDate().isBefore(OffsetDateTime.now())) {
+			log.debug("Project has already ended. No updates allowed.");
+			return responseService.gone(responseContentType);
 		}
 		
 		// Sanitize the new abbreviation and name
@@ -273,16 +280,17 @@ public class ProjectRESTController {
 		newProjectDTO.setName(name);
 		
 		// Send the DTO to the database service
-		Integer id = projectDBService.updateProject(abbr, newProjectDTO, request);
+		ProjectDTO updatedDTO = projectDBService.updateProject(oldProjectDTO, newProjectDTO, request);
 		
 		// Check success of the update
-		if (id == null || id < 1) {
+		if (updatedDTO == null) {
 			log.debug("Updating the project data failed.");
 			return responseService.unprocessableEntity(responseContentType);
 		}
 		
-		// At this point the update was successful, return the updated project object
-		return responseService.ok(responseContentType, projectDBService.getProjectByID(id, null));
+		// At this point the update was successful, return the updated project object (when still not "expired"
+		updatedDTO = updatedDTO.getEndDate().isBefore(OffsetDateTime.now()) ? null : updatedDTO;
+		return responseService.ok(responseContentType, updatedDTO);
 	}
 	
 	/**
@@ -307,33 +315,42 @@ public class ProjectRESTController {
     									   @RequestParam(name = "deleteDate", required = false) String deleteDate,
     									   @RequestHeader(name = "accept", required = false) String responseContentType,
                                            HttpServletRequest request) {
-		
-		// Check the given abbreviation
-		if (Assertion.isNullOrEmpty(abbreviation)) {
-			log.debug("The given abbreviation was empty.");
-			responseService.badRequest(responseContentType);
+		// Check if the original project exists
+		ProjectDTO projectDTO = projectDBService.getProjectByAbbreviation(abbreviation, null);
+		if (projectDTO == null) {
+			log.debug("The project that should be deleted was not found.");
+			return responseService.notFound(responseContentType);
+		} else if (projectDTO.getEndDate().isBefore(OffsetDateTime.now())) {
+			log.debug("Project has already ended. Deletion is not allowed.");
+			return responseService.gone(responseContentType);
 		}
 		
-		// Can the project be found
-		if (projectDBService.getProjectByAbbreviation(abbreviation, null) == null) {
-			log.debug("Project with abbreviation \"" + abbreviation + "\" was not found.");
-			return responseService.notFound(responseContentType);
+		// Check if an end date was given
+		OffsetDateTime end;
+		if (deleteDate == null) {
+			log.debug("No end date was given. Using the current time instead.");
+			end = OffsetDateTime.now();
+		} else {
+			// An end date was given --> parse it
+			OffsetDateTime parsed = Utility.parseDateTimeString(deleteDate);
+			if (parsed == null) {
+				log.debug("Parsing the given deletion time failed. Using the current time instead.");
+				end = OffsetDateTime.now();
+			} else {
+				end = parsed;
+			}
 		}
 		
 		// Sanitize the date that should be used for deletion
-		OffsetDateTime end;
-		try {
-			end = OffsetDateTime.parse(deleteDate);
-		} catch (DateTimeParseException e) {
-			log.debug("Parsing the given deletion time failed. Using the current time instead.");
+		if (end.isAfter(OffsetDateTime.now())) {
+			log.debug("The delete date cannot be in the future and was therefore set to now.");
 			end = OffsetDateTime.now();
 		}
-		end = end.isBefore(OffsetDateTime.now()) ? end : OffsetDateTime.now();
 		
 		// Delete the project
 		boolean isDeleted;
 		try {
-			isDeleted = projectDBService.deleteProject(abbreviation, end, request);
+			isDeleted = projectDBService.deleteProject(projectDTO, end, request);
 		} catch (UnexpectedResultSizeException e) {
 			log.debug("Deletion attempt failed and was rolled back.", e);
 			return responseService.unprocessableEntity(responseContentType);
