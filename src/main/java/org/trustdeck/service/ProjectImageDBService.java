@@ -139,7 +139,7 @@ public class ProjectImageDBService {
 			return null;
 		}
 
-		log.debug("Updating the project image for projectId " + projectId + " was successful.");
+		log.debug("Updating the project image for project with id " + projectId + " was successful.");
 		return new ProjectImageDTO().assignPojoValues(new ProjectImage(updated));
     }
 
