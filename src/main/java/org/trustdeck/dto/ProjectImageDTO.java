@@ -17,10 +17,10 @@
 
 package org.trustdeck.dto;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.pojos.ProjectImage;
 import org.trustdeck.service.ProjectDBService;
+import org.trustdeck.utils.SpringBeanLocator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -57,7 +57,7 @@ public class ProjectImageDTO implements IObjectDTO<ProjectImage, ProjectImageDTO
 	@JsonIgnore
 	private byte[] imageBytes;
 
-	/** Size of the image in megabytes. */
+	/** Size of the image in MiB. */
 	private Float imageSize;
 
 	/** The image's MIME type, e.g. image/png, image/jpeg, image/webp, image/svg+xml. */
@@ -66,9 +66,8 @@ public class ProjectImageDTO implements IObjectDTO<ProjectImage, ProjectImageDTO
 	/** Enables access to project specific database functions. */
 	@Getter(value=AccessLevel.NONE)
     @Setter(value=AccessLevel.NONE)
-	@Autowired
 	@JsonIgnore
-	private ProjectDBService pdbs;
+	private ProjectDBService pdbs = SpringBeanLocator.getBean(ProjectDBService.class);
 
 	@JsonIgnore
 	@Override
@@ -78,16 +77,15 @@ public class ProjectImageDTO implements IObjectDTO<ProjectImage, ProjectImageDTO
 		}
 		
 		ProjectDTO project = pdbs.getProjectByID(pojo.getProjectId(), null);
+
+		this.setId(pojo.getId());
+		this.setProjectId(pojo.getProjectId());
+		this.setProjectName(project == null ? null : project.getName());
+		this.setImageBytes(pojo.getImage());
+		this.setImageSize(pojo.getImageSizeBytes() / (1024.0f * 1024.0f));
+		this.setMimeType(pojo.getMimeType());
 		
-		ProjectImageDTO dto = new ProjectImageDTO();
-		dto.setId(pojo.getId());
-		dto.setProjectId(pojo.getProjectId());
-		dto.setProjectName(project == null ? null : project.getName());
-		dto.setImageBytes(pojo.getImage());
-		dto.setImageSize(pojo.getImageSizeBytes() / 1024.0f);
-		dto.setMimeType(pojo.getMimeType());
-		
-		return dto;
+		return this;
 	}
 
 	@JsonIgnore

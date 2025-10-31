@@ -21,12 +21,12 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.jooq.JSONB;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.pojos.EntityInstance;
 import org.trustdeck.service.EntityTypeDBService;
 import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.utils.Assertion;
+import org.trustdeck.utils.SpringBeanLocator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -84,16 +84,14 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	/** Enables access to the project specific database functions. */
 	@Getter(value=AccessLevel.NONE)
     @Setter(value=AccessLevel.NONE)
-	@Autowired
 	@JsonIgnore
-	private ProjectDBService pdbs;
+	private ProjectDBService pdbs = SpringBeanLocator.getBean(ProjectDBService.class);
 	
 	/** Enables access to the entity type database functions. */
 	@Getter(value=AccessLevel.NONE)
     @Setter(value=AccessLevel.NONE)
-	@Autowired
 	@JsonIgnore
-	private EntityTypeDBService etdbs;
+	private EntityTypeDBService etdbs = SpringBeanLocator.getBean(EntityTypeDBService.class);
 
 	@JsonIgnore
 	@Override
@@ -105,19 +103,18 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 		ProjectDTO project = pdbs.getProjectByID(pojo.getProjectId(), null);
 	    EntityTypeDTO type = etdbs.getEntityTypeById(pojo.getEntityTypeId(), pojo.getProjectId(), null);
 		
-		EntityInstanceDTO dto = new EntityInstanceDTO();
-	    dto.setId(pojo.getId());
-	    dto.setTrustdeckID(pojo.getTrustdeckId());
-	    dto.setProjectID(pojo.getProjectId());
-	    dto.setProjectName(project == null ? null : project.getName());
-	    dto.setEntityTypeID(pojo.getEntityTypeId());
-	    dto.setEntityTypeName(type == null ? null : type.getName());
-	    dto.setData(pojo.getData());
-	    dto.setIsDeleted(pojo.getIsDeleted());
-	    dto.setCreatedAt(pojo.getCreatedAt());
-	    dto.setUpdatedAt(pojo.getUpdatedAt());
+	    this.setId(pojo.getId());
+	    this.setTrustdeckID(pojo.getTrustdeckId());
+	    this.setProjectID(pojo.getProjectId());
+	    this.setProjectName(project == null ? null : project.getName());
+	    this.setEntityTypeID(pojo.getEntityTypeId());
+	    this.setEntityTypeName(type == null ? null : type.getName());
+	    this.setData(pojo.getData());
+	    this.setIsDeleted(pojo.getIsDeleted());
+	    this.setCreatedAt(pojo.getCreatedAt());
+	    this.setUpdatedAt(pojo.getUpdatedAt());
 
-	    return dto;
+	    return this;
 	}
 
 	@JsonIgnore

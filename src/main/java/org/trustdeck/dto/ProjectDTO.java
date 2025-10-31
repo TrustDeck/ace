@@ -69,17 +69,16 @@ public class ProjectDTO implements IObjectDTO<Project, ProjectDTO> {
 	        return null;
 	    }
 		
-	    ProjectDTO dto = new ProjectDTO();
-	    dto.setId(pojo.getId());
-	    dto.setName(pojo.getName());
-	    dto.setAbbreviation(pojo.getAbbreviation());
-	    dto.setStartDate(pojo.getStartDate());
-	    dto.setEndDate(pojo.getEndDate());
-	    dto.setStoreEntities(pojo.getStoreEntities());
-	    dto.setStorePseudonyms(pojo.getStorePseudonyms());
-	    dto.setDescription(pojo.getDescription());
+	    this.setId(pojo.getId());
+	    this.setName(pojo.getName());
+	    this.setAbbreviation(pojo.getAbbreviation());
+	    this.setStartDate(pojo.getStartDate());
+	    this.setEndDate(pojo.getEndDate());
+	    this.setStoreEntities(pojo.getStoreEntities());
+	    this.setStorePseudonyms(pojo.getStorePseudonyms());
+	    this.setDescription(pojo.getDescription());
 
-	    return dto;
+	    return this;
 	}
 
 	@JsonIgnore

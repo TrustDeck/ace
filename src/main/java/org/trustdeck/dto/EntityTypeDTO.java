@@ -18,7 +18,6 @@
 package org.trustdeck.dto;
 
 import org.jooq.JSONB;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.EntityType;
@@ -26,6 +25,8 @@ import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.service.EntityTypeDBService;
 import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.utils.Assertion;
+import org.trustdeck.utils.SpringBeanLocator;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -85,23 +86,20 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	/** Enables access to domain database functions. */
 	@Getter(value=AccessLevel.NONE)
     @Setter(value=AccessLevel.NONE)
-	@Autowired
 	@JsonIgnore
-	private DomainDBAccessService ddba;
+	private DomainDBAccessService ddba = SpringBeanLocator.getBean(DomainDBAccessService.class);
 	
 	/** Enables access to the project specific database functions. */
 	@Getter(value=AccessLevel.NONE)
     @Setter(value=AccessLevel.NONE)
-	@Autowired
 	@JsonIgnore
-	private ProjectDBService pdbs;
+	private ProjectDBService pdbs = SpringBeanLocator.getBean(ProjectDBService.class);
 	
 	/** Enables access to the entity type database functions. */
 	@Getter(value=AccessLevel.NONE)
     @Setter(value=AccessLevel.NONE)
-	@Autowired
 	@JsonIgnore
-	private EntityTypeDBService etdbs;
+	private EntityTypeDBService etdbs = SpringBeanLocator.getBean(EntityTypeDBService.class);
 
 	@JsonIgnore
 	@Override
@@ -114,20 +112,19 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 		Domain domain = ddba.getDomainByID(pojo.getAssociatedDomainId(), null);
 		ProjectDTO project = pdbs.getProjectByID(pojo.getProjectId(), null);
 		
-		EntityTypeDTO dto = new EntityTypeDTO();
-	    dto.setId(pojo.getId());
-	    dto.setName(pojo.getName());
-	    dto.setVersion(pojo.getVersion());
-	    dto.setIsDeprecated(pojo.getIsDeprecated());
-	    dto.setIsBaseType(pojo.getIsBaseType());
-	    dto.setTypeDefinition(pojo.getTypeDefinition());
-	    dto.setBaseTypeName(baseType == null ? null : baseType.getName());
-	    dto.setBaseTypeId(pojo.getBaseTypeId());
-	    dto.setAssociatedDomainName(domain == null ? null : domain.getName());
-	    dto.setProjectName(project == null ? null : project.getName());
-	    dto.setProjectId(pojo.getProjectId());
+	    this.setId(pojo.getId());
+	    this.setName(pojo.getName());
+	    this.setVersion(pojo.getVersion());
+	    this.setIsDeprecated(pojo.getIsDeprecated());
+	    this.setIsBaseType(pojo.getIsBaseType());
+	    this.setTypeDefinition(pojo.getTypeDefinition());
+	    this.setBaseTypeName(baseType == null ? null : baseType.getName());
+	    this.setBaseTypeId(pojo.getBaseTypeId());
+	    this.setAssociatedDomainName(domain == null ? null : domain.getName());
+	    this.setProjectName(project == null ? null : project.getName());
+	    this.setProjectId(pojo.getProjectId());
 
-	    return dto;
+	    return this;
 	}
 
 	@JsonIgnore
