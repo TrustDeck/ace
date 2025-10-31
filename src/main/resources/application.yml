@@ -26,6 +26,9 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   main:
     allow-circular-references: true
+  servlet:
+    multipart:
+      enabled: true
   security:
     oauth2:
       resourceserver:
@@ -94,6 +97,14 @@ app:
     - delete-table
     - read-table-storage
     - delete-roles
+    - project-create
+    - project-read
+    - project-update
+    - project-delete
+    - project-image-create
+    - project-image-read
+    - project-image-update
+    - project-image-delete
     - person-create
     - person-read
     - person-update
