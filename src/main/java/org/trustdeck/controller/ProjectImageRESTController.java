@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -102,7 +103,7 @@ public class ProjectImageRESTController {
 	@PreAuthorize("hasRole('project-image-create')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> createProjectImage(@PathVariable(name = "abbreviation", required = true) String abbreviation,
-												@RequestPart("file") MultipartFile image,
+												@RequestParam("image") MultipartFile image,
 												@RequestHeader(name = "accept", required = false) String responseContentType,
 												HttpServletRequest request) {
 		// Check that the given file is not null
@@ -125,7 +126,7 @@ public class ProjectImageRESTController {
 		}
 		
 		// Retrieve the owning project
-		if (Assertion.isNotNullOrEmpty(abbreviation)) {
+		if (Assertion.isNullOrEmpty(abbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
@@ -189,7 +190,7 @@ public class ProjectImageRESTController {
 											 @RequestHeader(name = "accept", required = false) String responseContentType,
 											 HttpServletRequest request) {
 		// Retrieve the owning project
-		if (Assertion.isNotNullOrEmpty(abbreviation)) {
+		if (Assertion.isNullOrEmpty(abbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
@@ -246,7 +247,7 @@ public class ProjectImageRESTController {
 												@RequestHeader(name = "accept", required = false) String responseContentType,
 												HttpServletRequest request) {
 		// Retrieve the owning project
-		if (Assertion.isNotNullOrEmpty(abbreviation)) {
+		if (Assertion.isNullOrEmpty(abbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
@@ -329,7 +330,7 @@ public class ProjectImageRESTController {
 												@RequestHeader(name = "accept", required = false) String responseContentType,
 												HttpServletRequest request) {
 		// Retrieve the owning project
-		if (Assertion.isNotNullOrEmpty(abbreviation)) {
+		if (Assertion.isNullOrEmpty(abbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
