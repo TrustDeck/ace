@@ -29,12 +29,15 @@ import org.trustdeck.utils.SpringBeanLocator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This class represents a Data Transfer Object (DTO) for an entity type.
@@ -45,6 +48,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Scope("prototype")
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Slf4j
 public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	
 	/** The (internal) ID of this entity type. Do not expose it to users. */
@@ -64,7 +68,7 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	private Boolean isBaseType;
 	
 	/** The type definition of this entity. */
-	private JSONB typeDefinition;
+	private JsonNode typeDefinition;
 	
 	/** The name of the base type if this type is not a base type itself. */
 	private String baseTypeName;
@@ -108,16 +112,16 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	        return null;
 	    }
 		
-		EntityTypeDTO baseType = etdbs.getEntityTypeById(pojo.getBaseTypeId(), pojo.getProjectId(), null);
-		Domain domain = ddba.getDomainByID(pojo.getAssociatedDomainId(), null);
-		ProjectDTO project = pdbs.getProjectByID(pojo.getProjectId(), null);
+		EntityTypeDTO baseType = pojo.getBaseTypeId() == null ? null : etdbs.getEntityTypeById(pojo.getBaseTypeId(), null, null);
+		Domain domain = pojo.getAssociatedDomainId() == null ? null : ddba.getDomainByID(pojo.getAssociatedDomainId(), null);
+		ProjectDTO project = pojo.getProjectId() == null ? null : pdbs.getProjectByID(pojo.getProjectId(), null);
 		
 	    this.setId(pojo.getId());
 	    this.setName(pojo.getName());
 	    this.setVersion(pojo.getVersion());
 	    this.setIsDeprecated(pojo.getIsDeprecated());
 	    this.setIsBaseType(pojo.getIsBaseType());
-	    this.setTypeDefinition(pojo.getTypeDefinition());
+	    this.setTypeDefinition(toJsonNode(pojo.getTypeDefinition()));
 	    this.setBaseTypeName(baseType == null ? null : baseType.getName());
 	    this.setBaseTypeId(pojo.getBaseTypeId());
 	    this.setAssociatedDomainName(domain == null ? null : domain.getName());
@@ -125,6 +129,28 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	    this.setProjectId(pojo.getProjectId());
 
 	    return this;
+	}
+	
+	/**
+	 * Helper method to parse a JSONB into a JsonNode.
+	 * 
+	 * @param jsonb the JSONB data
+	 * @return a JsonNode representation of the given data, or {@code null} if parsing failed
+	 */
+	@JsonIgnore
+	private JsonNode toJsonNode(JSONB jsonb) {
+		JsonNode node = null;
+		
+		if (jsonb != null) {
+			ObjectMapper objectMapper = SpringBeanLocator.getBean(ObjectMapper.class);
+			try {
+				node = objectMapper.readTree(jsonb.toString());
+			} catch (JsonProcessingException e) {
+				log.debug("Could not parse JSONB into JsonNode.");
+			}
+		}
+		
+		return node;
 	}
 
 	@JsonIgnore
