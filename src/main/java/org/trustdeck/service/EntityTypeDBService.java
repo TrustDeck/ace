@@ -33,11 +33,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.dto.EntityTypeDTO;
 import org.trustdeck.exception.CreateEntityTypeException;
+import org.trustdeck.exception.DuplicateEntityTypeException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.EntityType;
 import org.trustdeck.jooq.generated.tables.records.EntityTypeRecord;
 import org.trustdeck.utils.Assertion;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +71,10 @@ public class EntityTypeDBService {
 	@Autowired
 	private DomainDBAccessService ddba;
 	
+	/** Enables access to the mapper to transform JsonNode into JSONB and back. */
+	@Autowired
+	private ObjectMapper objectMapper;
+	
 	/**
      * Method to insert a new entity type into the database.
      * 
@@ -76,9 +85,10 @@ public class EntityTypeDBService {
      * 		   {@code null} when the insertion failed.
      * @throws CreateEntityTypeException when the creation of the entity type or the partition 
      * 		   in the database failed to abort and roll back this transaction.
+	 * @throws DuplicateEntityTypeException when an entity type with the same name already exists
      */
     @Transactional
-    public EntityTypeDTO createEntityType(EntityTypeDTO entityTypeDTO, HttpServletRequest request) throws CreateEntityTypeException {
+    public EntityTypeDTO createEntityType(EntityTypeDTO entityTypeDTO, HttpServletRequest request) throws CreateEntityTypeException, DuplicateEntityTypeException {
     	// Create the record and send it to the database
     	EntityTypeRecord createdEntityType;
     	try {
@@ -87,7 +97,7 @@ public class EntityTypeDBService {
 	    	createdEntityType.setVersion(entityTypeDTO.getVersion());
 	    	createdEntityType.setIsDeprecated(entityTypeDTO.getIsDeprecated());
 	    	createdEntityType.setIsBaseType(entityTypeDTO.getIsBaseType());
-	    	createdEntityType.setTypeDefinition(entityTypeDTO.getTypeDefinition());
+	    	createdEntityType.setTypeDefinition(toJSONB(entityTypeDTO.getTypeDefinition()));
 	    	createdEntityType.setBaseTypeId(entityTypeDTO.getBaseTypeId());
 	    	createdEntityType.setAssociatedDomainId(getDomainIdFromName(entityTypeDTO.getAssociatedDomainName()));
 	    	createdEntityType.setProjectId(entityTypeDTO.getProjectId());
@@ -108,8 +118,7 @@ public class EntityTypeDBService {
 	    } catch (DataAccessException e) {
 	    	if (e.getMessage().contains(" already exists.")) {
 	    		// Found duplicate, return the original
-	    		log.info("While creating an entity type, an identical one was found and will be used instead.");
-	    		return getEntityTypeByName(entityTypeDTO.getName(), entityTypeDTO.getProjectId(), null);
+	    		throw new DuplicateEntityTypeException(entityTypeDTO.getName());
 	    	} else {
 		    	// Inserting the new entity type into the database failed; throw exception to abort
 		    	throw new CreateEntityTypeException(e.getMessage());
@@ -132,9 +141,9 @@ public class EntityTypeDBService {
      * @return the retrieved entity type when successfully found, or {@code null} when nothing was found.
      */
     @Transactional
-    public EntityTypeDTO getEntityTypeByName(String name, int projectID, HttpServletRequest request) {
+    public EntityTypeDTO getEntityTypeByName(String name, Integer projectID, HttpServletRequest request) {
     	// Check if all the necessary arguments are available
-    	if (Assertion.isNullOrEmpty(name) && projectID > 0) {
+    	if (Assertion.isNullOrEmpty(name)) {
     		log.debug("For retrieving the entity type, there is an argument missing or empty.");
     		return null;
     	}
@@ -142,11 +151,21 @@ public class EntityTypeDBService {
     	// Build and execute the query
     	List<EntityType> entityTypes = null;
     	try {
-    		entityTypes = dsl.selectFrom(ENTITY_TYPE)
-                .where(ENTITY_TYPE.NAME.equalIgnoreCase(name))
-                .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
-                .and(ENTITY_TYPE.IS_DEPRECATED.equal(false))
-                .fetchInto(EntityType.class);
+			Condition cond = DSL.trueCondition()
+			        .and(ENTITY_TYPE.NAME.equalIgnoreCase(name))
+			        .and(ENTITY_TYPE.IS_DEPRECATED.eq(false));
+
+			// Add the projectID as a condition, if available
+			if (projectID != null) {
+				cond = cond.and(ENTITY_TYPE.PROJECT_ID.eq(projectID));
+			} else {
+				// If the projectID is null, assume we are searching for a base type (which has no associated project)
+				cond = cond.and(ENTITY_TYPE.IS_BASE_TYPE.eq(true));
+			}
+
+			entityTypes = dsl.selectFrom(ENTITY_TYPE)
+					.where(cond)
+					.fetchInto(EntityType.class);
         } catch (MappingException e) {
         	log.debug("Could not map the entity type search result into the EntityType-POJO.", e);
         	return null;
@@ -182,9 +201,9 @@ public class EntityTypeDBService {
      * @return the retrieved entity type when successfully found, or {@code null} when nothing was found.
      */
     @Transactional
-    public EntityTypeDTO getEntityTypeById(int entityTypeId, int projectID, HttpServletRequest request) {
+    public EntityTypeDTO getEntityTypeById(int entityTypeId, Integer projectID, HttpServletRequest request) {
     	// Check if all the necessary arguments are available
-    	if (entityTypeId > 0 && projectID > 0) {
+    	if (entityTypeId <= 0) {
     		log.debug("For retrieving the entity type, there is an argument missing or empty.");
     		return null;
     	}
@@ -192,11 +211,21 @@ public class EntityTypeDBService {
     	// Build and execute the query
     	List<EntityType> entityTypes = null;
     	try {
-    		entityTypes = dsl.selectFrom(ENTITY_TYPE)
-                .where(ENTITY_TYPE.ID.equal(entityTypeId))
-                .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
-                .and(ENTITY_TYPE.IS_DEPRECATED.equal(false))
-                .fetchInto(EntityType.class);
+    		Condition cond = DSL.trueCondition()
+			        .and(ENTITY_TYPE.ID.equal(entityTypeId))
+			        .and(ENTITY_TYPE.IS_DEPRECATED.eq(false));
+
+			// Add the projectID as a condition, if available
+			if (projectID != null) {
+				cond = cond.and(ENTITY_TYPE.PROJECT_ID.eq(projectID));
+			} else {
+				// If the projectID is null, assume we are searching for a base type (which has no associated project)
+				cond = cond.and(ENTITY_TYPE.IS_BASE_TYPE.eq(true));
+			}
+
+			entityTypes = dsl.selectFrom(ENTITY_TYPE)
+					.where(cond)
+					.fetchInto(EntityType.class);
         } catch (MappingException e) {
         	log.debug("Could not map the entity type search result into the EntityType-POJO.", e);
         	return null;
@@ -237,37 +266,45 @@ public class EntityTypeDBService {
     		return null;
     	}
     	
-    	return getEntityTypeByName(entityTypeDTO.getName(), entityTypeDTO.getProjectId(), request);
+    	if (entityTypeDTO.getId() != null) {
+    		return getEntityTypeById(entityTypeDTO.getId(), entityTypeDTO.getProjectId(), request);
+    	} else if (entityTypeDTO.getName() != null) {
+    		return getEntityTypeByName(entityTypeDTO.getName(), entityTypeDTO.getProjectId(), request);
+    	} else {
+    		log.debug("Neither name, nor ID were given to search for in the database.");
+    		return null;
+    	}
     }
     
     /**
      * Method to delete an entity type. Only possible if the entity type is not used anywhere.
      * 
-     * @param name the entity type's name
-     * @param projectID the project to which the entity type is assigned to
+     * @param type the entity type's DTO including the name and the projectID
      * @param request the http request object containing information necessary for the audit trail
      * @return {@code true} when deletion was successful, {@code false} when anything went wrong during the deletion
      * @throws UnexpectedResultSizeException when the deletion would have affected an unexpected number of database entries
      */
     @Transactional
-    public boolean deleteEntityType(String name, Integer projectID, HttpServletRequest request) throws UnexpectedResultSizeException {
+    public boolean deleteEntityType(EntityTypeDTO type, HttpServletRequest request) throws UnexpectedResultSizeException {
     	// Check if all the necessary arguments are available
-    	if (Assertion.isNullOrEmpty(name) || projectID == null) {
+    	if (Assertion.isNullOrEmpty(type.getName()) || type.getProjectId() == null) {
     		log.debug("For retrieving the entity type, there is an argument missing or empty.");
     		return false;
     	}
     	
-    	// Check if the entity type is used anywhere --> only delete it if it's not used
-    	EntityTypeDTO type = getEntityTypeByName(name, projectID, null);
-    	
-    	if (type == null) {
-    		log.debug("Entity type that should be deleted was not found.");
-    		return false;
-    	} else if (type.getIsBaseType()) {
+    	// Check that we do not delete base-types
+    	if (type.getIsBaseType()) {
     		log.info("Cannot delete base type.");
     		return false;
     	}
     	
+    	// Check if the type is already "deleted"
+    	if (type.getIsDeprecated()) {
+    		log.debug("The type was already deleted. Nothing to do.");
+    		return true;
+    	}
+    	
+    	// Check if the entity type is used anywhere --> only delete it if it's not used
     	int usedBy = 0;
     	try {
     		usedBy = dsl.selectCount()
@@ -284,33 +321,14 @@ public class EntityTypeDBService {
     		return false;
     	}
     	
-    	// Check if the type is already "deleted"
-    	boolean alreadyDeleted = false;
-		try {
-			alreadyDeleted = dsl.selectFrom(ENTITY_TYPE)
-			        .where(ENTITY_TYPE.NAME.equalIgnoreCase(name))
-			        .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
-			        .fetchOneInto(EntityType.class)
-			        .getIsDeprecated();
-		} catch (DataAccessException e) {
-			log.debug("Checking if the entity type is already deleted failed.", e);
-        	return false;
-		}
-    	
-		// Evaluate
-    	if (alreadyDeleted) {
-    		log.debug("The type was already deleted. Nothing to do.");
-    		return true;
-    	}
-    	
     	// The entity type is not used --> perform deletion by setting the is_deprecated flag
     	int deletedEntityTypes = 0;
     	try {
     		// Build and execute the query
     		deletedEntityTypes = dsl.update(ENTITY_TYPE)
 		            .set(ENTITY_TYPE.IS_DEPRECATED, true)
-		            .where(ENTITY_TYPE.NAME.equalIgnoreCase(name))
-		            .and(ENTITY_TYPE.PROJECT_ID.equal(projectID))
+		            .where(ENTITY_TYPE.NAME.equalIgnoreCase(type.getName()))
+		            .and(ENTITY_TYPE.PROJECT_ID.equal(type.getProjectId()))
 		            .execute();
         } catch (DataAccessException e) {
         	log.debug("Deleting the entity type in the database failed.", e);
@@ -321,7 +339,7 @@ public class EntityTypeDBService {
     	if (deletedEntityTypes != 1) {
     		// An unexpected number of records was affected. Log it and abort by throwing
             // an exception (which will rollback everything from the transaction).
-            log.error("Couldn't delete the entity type \"" + name + "\" from the database.");
+            log.error("Couldn't delete the entity type \"" + type.getName() + "\" from the database.");
             throw new UnexpectedResultSizeException(1, deletedEntityTypes);
     	}
     	
@@ -372,7 +390,7 @@ public class EntityTypeDBService {
     	// Decide on which values to use
     	String name = Assertion.isNotNullOrEmpty(newEntityTypeDTO.getName()) ? newEntityTypeDTO.getName() : oldType.getName();
         String version = Assertion.isNotNullOrEmpty(newEntityTypeDTO.getVersion()) ? newEntityTypeDTO.getVersion() : oldType.getVersion();
-        JSONB typeDef = newEntityTypeDTO.getTypeDefinition() != null ? newEntityTypeDTO.getTypeDefinition() : oldType.getTypeDefinition();
+        JSONB typeDef = newEntityTypeDTO.getTypeDefinition() != null ? toJSONB(newEntityTypeDTO.getTypeDefinition()) : toJSONB(oldType.getTypeDefinition());
         Integer domainID = Assertion.isNotNullOrEmpty(newEntityTypeDTO.getAssociatedDomainName()) ? getDomainIdFromName(newEntityTypeDTO.getAssociatedDomainName()) : getDomainIdFromName(oldEntityTypeDTO.getAssociatedDomainName());
         
     	// Create the update-record and send it to the database
@@ -558,4 +576,25 @@ public class EntityTypeDBService {
     	Domain d = Assertion.isNotNullOrEmpty(domainName) ? null : ddba.getDomainByName(domainName, null);
     	return d == null ? null : d.getId();
 	}
+    
+    /**
+     * Helper method to transform a JsonNode into a JSONB object.
+     * 
+     * @param node the JsonNode data
+     * @return a JSONB representation of the given data, or {@code null} if parsing failed
+     */
+    private JSONB toJSONB(JsonNode node) {
+    	JSONB jsonb = null;
+    	
+    	if (node != null) {
+    		try {
+				String nodeAsString = objectMapper.writeValueAsString(node);
+				jsonb = JSONB.valueOf(nodeAsString);
+			} catch (JsonProcessingException e) {
+				log.debug("Could not parse JsonNode into JSONB.");
+			}
+    	}
+    	
+        return jsonb;
+    }
 }
