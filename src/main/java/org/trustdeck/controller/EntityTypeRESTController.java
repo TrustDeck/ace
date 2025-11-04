@@ -17,12 +17,10 @@
 
 package org.trustdeck.controller;
 
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.jooq.JSONB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.dto.EntityTypeDTO;
 import org.trustdeck.dto.ProjectDTO;
+import org.trustdeck.exception.DuplicateEntityTypeException;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
@@ -51,7 +50,6 @@ import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
@@ -85,10 +83,6 @@ public class EntityTypeRESTController {
 	/** Enables access to the JSON schema validation functionalities. */
 	@Autowired
 	private JsonSchemaService jsonSchemaService;
-	
-	/** A mapper that transforms the schemas (stored in a file) into the proper type (handled by Spring Boot). */
-	@Autowired
-	private ObjectMapper objectMapper;
 
     /** Pattern/Regex of allowed characters for the name attribute of entity types. */
     private static final Pattern VALID_NAME_CHAR_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
@@ -104,7 +98,8 @@ public class EntityTypeRESTController {
      * @param entityTypeDTO the DTO containing the type definition and some meta data
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
-     * @return <li>a <b>201-CREATED</b> status with the created base entity type on success</li>
+     * @return <li>a <b>200-OK</b> status with the base entity type when it was already existing</li>
+     * 		   <li>a <b>201-CREATED</b> status with the created base entity type on success</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when the name/version is 
      *         invalid or the type definition fails validation</li>
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when creation failed</li>
@@ -121,7 +116,7 @@ public class EntityTypeRESTController {
 		String version = entityTypeDTO.getVersion();
 		boolean isDeprecated = false;
 		boolean isBaseType = true;
-		JSONB typeDefintion = entityTypeDTO.getTypeDefinition();
+		JsonNode typeDefintion = entityTypeDTO.getTypeDefinition();
 		String baseTypeName = null;
 		Integer baseTypeId = null;
 		String associatedDomainName = null;
@@ -171,7 +166,13 @@ public class EntityTypeRESTController {
 		createDTO.setProjectId(projectID);
 		
 		// Create type
-		EntityTypeDTO createdType = entityTypeDBService.createEntityType(createDTO, request);
+		EntityTypeDTO createdType;
+		try {
+			createdType = entityTypeDBService.createEntityType(createDTO, request);
+		} catch (DuplicateEntityTypeException e) {
+			log.info("While creating an entity type, an identical one was found and will be used instead.");
+			return responseService.ok(responseContentType, entityTypeDBService.getEntityTypeByName(name, projectID, null));
+		}
 		
 		// Evaluate success
 		if (createdType == null) {
@@ -194,12 +195,13 @@ public class EntityTypeRESTController {
      * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>201-CREATED</b> status with the created project-specific entity type on success</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when required fields are missing, name/version is 
-     *         invalid, or the type definition is invalid/not a valid superset</li>
+     *         invalid</li>
      *         <li>a <b>404-NOT_FOUND</b> status when the project or referenced base type does not exist</li>
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
-     *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when creation failed</li>
+     *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when creation failed or the type definition 
+     *         is invalid/not a valid extension of the base type</li>
 	 */
-	@PostMapping("/{projectAbbreviation}/entities/config")
+	@PostMapping("/projects/{projectAbbreviation}/entities/config")
 	@PreAuthorize("hasRole('project-entity-type-create')")
 	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> createProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
@@ -222,9 +224,9 @@ public class EntityTypeRESTController {
 		// Collect attributes
 		String typeName = entityTypeDTO.getName();
 		String version = entityTypeDTO.getVersion();
-		boolean isDeprecated = entityTypeDTO.getIsDeprecated();
+		boolean isDeprecated = entityTypeDTO.getIsDeprecated() == null ? false : entityTypeDTO.getIsDeprecated();
 		boolean isBaseType = false;
-		JSONB projectEntityTypeDef = entityTypeDTO.getTypeDefinition();
+		JsonNode projectEntityTypeDef = entityTypeDTO.getTypeDefinition();
 		String baseTypeName = entityTypeDTO.getBaseTypeName();
 		String associatedDomainName = entityTypeDTO.getAssociatedDomainName();
 
@@ -251,7 +253,7 @@ public class EntityTypeRESTController {
     	}
 
 		// Retrieve base definition
-		EntityTypeDTO baseType = entityTypeDBService.getEntityTypeByName(baseTypeName, project.getId(), null);
+		EntityTypeDTO baseType = entityTypeDBService.getEntityTypeByName(baseTypeName, null, null);
 		if (baseType == null) {
 			log.debug("Could not find base type.");
 			return responseService.notFound(responseContentType);
@@ -262,28 +264,22 @@ public class EntityTypeRESTController {
 			return responseService.badRequest(projectAbbreviation);
 		}
 
-		// Validation of the type specifications
-		JsonNode baseDef, projectDef;
-		try {
-			baseDef = objectMapper.readTree(baseType.getTypeDefinition().toString());
-			projectDef = objectMapper.readTree(projectEntityTypeDef.toString());
-		} catch (IOException e) {
-			log.debug("Could not parse type definition.", e);
-			return responseService.badRequest(responseContentType);
-		}
-		
 		// Validate the definition against the meta-schema
-		if (!isTypeDefinitionValid(projectDef)) {
+		if (!isTypeDefinitionValid(projectEntityTypeDef)) {
 			log.debug("Validation of the project specific type definition failed.");
 			return responseService.badRequest(responseContentType);
 		}
 
-		// Ensure project type definition is a superset of the base type definition
-		List<String> supersetErrors = jsonSchemaService.validateProjectTypeIsSuperset(baseDef, projectDef);
-		if (!supersetErrors.isEmpty()) {
+		// Ensure project type definition is an extension of the base type definition
+		List<String> extensionErrors = jsonSchemaService.validateProjectTypeIsSuperset(baseType.getTypeDefinition(), projectEntityTypeDef);
+		if (!extensionErrors.isEmpty()) {
 			log.debug("The project specific type definition is not a valid extension/superset of the base type.");
-			log.trace("Encountered errors:\n", supersetErrors);
-			return responseService.badRequest(responseContentType);
+			log.trace("Encountered errors:");
+			for (String s : extensionErrors) {
+				log.trace(s);
+			}
+			
+			return responseService.unprocessableEntity(responseContentType);
 		}
 
 		// Build DTO
@@ -300,7 +296,13 @@ public class EntityTypeRESTController {
 		createDTO.setProjectId(project.getId());
 		
 		// Create type
-		EntityTypeDTO createdType = entityTypeDBService.createEntityType(createDTO, request);
+		EntityTypeDTO createdType;
+		try {
+			createdType = entityTypeDBService.createEntityType(createDTO, request);
+		} catch (DuplicateEntityTypeException e) {
+			log.info("While creating an entity type, an identical one was found and will be used instead.");
+			return responseService.ok(responseContentType, entityTypeDBService.getEntityTypeByName(typeName, project.getId(), null));
+		}
 		
 		// Evaluate success
 		if (createdType == null) {
@@ -323,7 +325,43 @@ public class EntityTypeRESTController {
      *         <li>a <b>404-NOT_FOUND</b> status when the project or the entity type does not exist</li>
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
 	 */
-	@GetMapping("/{projectAbbreviation}/entities/config/{entityTypeName}")
+	@GetMapping("/entities/{entityTypeName}")
+	@PreAuthorize("hasRole('base-entity-type-read')")
+	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	public ResponseEntity<?> getBaseEntityType(@PathVariable("entityTypeName") String entityTypeName,
+											   @RequestHeader(name = "accept", required = false) String responseContentType,
+											   HttpServletRequest request) {
+		
+		// Retrieve base type from the database
+		EntityTypeDTO type = entityTypeDBService.getEntityTypeByName(entityTypeName, null, request);
+		
+		// Evaluate result
+		if (type == null) {
+			log.debug("No entity type with the name \"" + entityTypeName + "\" was found.");
+			return responseService.notFound(responseContentType);
+		}
+		
+		if (type.getIsDeprecated()) {
+			log.debug("The base entity type with the name \"" + entityTypeName + "\" is marked as deprecated.");
+			return responseService.gone(responseContentType);
+		}
+		
+		log.debug("Successfully retrieved the requested entity type.");
+		return responseService.ok(responseContentType, type);
+	}
+	
+	/**
+	 * Endpoint to retrieve an entity type given it's name.
+	 * 
+	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
+	 * @param entityTypeName the name of the entity type the user wants to retrieve
+	 * @param responseContentType (optional) the response content type
+     * @param request the request object, injected by Spring Boot
+	 * @return <li>a <b>200-OK</b> status with the requested entity type on success</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when the project or the entity type does not exist</li>
+     *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
+	 */
+	@GetMapping("/projects/{projectAbbreviation}/entities/config/{entityTypeName}")
 	@PreAuthorize("hasRole('project-entity-type-read')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> getProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
@@ -370,12 +408,15 @@ public class EntityTypeRESTController {
      * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the updated entity type on success</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when no updatable attributes are provided, 
-     *         name/version is invalid, or the updated type definition is invalid/not a valid superset</li>
-     *         <li>a <b>404-NOT_FOUND</b> status when the project, the old entity type, or the base type cannot be found</li>
-     *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
-     *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the update failed</li>
+     *         name/version is invalid</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when the project, the old entity type, or 
+     *         the base type cannot be found</li>
+     *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as 
+     *         deleted</li>
+     *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the update failed or the 
+     *         updated type definition is invalid/not a valid extension of the base type</li>
 	 */
-	@PutMapping("/{projectAbbreviation}/entities/config/{entityTypeName}")
+	@PutMapping("/projects/{projectAbbreviation}/entities/config/{entityTypeName}")
 	@PreAuthorize("hasRole('project-entity-type-update')")
 	@Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> updateEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
@@ -401,7 +442,7 @@ public class EntityTypeRESTController {
 		String newVersion = newEntityTypeDTO.getVersion();
 		// is_deprecated is not updatable --> use delete endpoint for this
 		// is_base_type is not updatable
-		JSONB newEntityTypeDef = newEntityTypeDTO.getTypeDefinition();
+		JsonNode newEntityTypeDef = newEntityTypeDTO.getTypeDefinition();
 		// base_type_id is not updatable
 		String newAssociatedDomainName = newEntityTypeDTO.getAssociatedDomainName();
 		// project_id is not updatable
@@ -446,7 +487,7 @@ public class EntityTypeRESTController {
 		// Check if the type definition should be updated
 		if (newEntityTypeDef != null) {
 			// Retrieve base type definition
-			EntityTypeDTO baseType = entityTypeDBService.getEntityTypeByName(oldType.getBaseTypeName(), projectDTO.getId(), null);
+			EntityTypeDTO baseType = entityTypeDBService.getEntityTypeByName(oldType.getBaseTypeName(), null, null);
 			if (baseType == null) {
 				log.debug("Could not find base type.");
 				return responseService.notFound(responseContentType);
@@ -457,28 +498,22 @@ public class EntityTypeRESTController {
 				return responseService.badRequest(responseContentType);
 			}
 	
-			// Validate the project specific type specification
-			JsonNode baseDef, newTypeDef;
-			try {
-				baseDef = objectMapper.readTree(baseType.getTypeDefinition().toString());
-				newTypeDef = objectMapper.readTree(newEntityTypeDef.toString());
-			} catch (IOException e) {
-				log.debug("Could not parse type definition.", e);
-				return responseService.badRequest(responseContentType);
-			}
-			
 			// Validate the new definition against the meta-schema
-			if (!isTypeDefinitionValid(newTypeDef)) {
+			if (!isTypeDefinitionValid(newEntityTypeDef)) {
 				log.debug("Validation of the updated type definition failed.");
-				return responseService.badRequest(responseContentType);
+				return responseService.unprocessableEntity(responseContentType);
 			}
 	
 			// Ensure new type definition is a superset of the base type definition
-			List<String> supersetErrors = jsonSchemaService.validateProjectTypeIsSuperset(baseDef, newTypeDef);
-			if (!supersetErrors.isEmpty()) {
-				log.debug("The updated type definition is not a valid extension/superset of the base type.");
-				log.trace("Encountered errors:\n", supersetErrors);
-				return responseService.badRequest(responseContentType);
+			List<String> extensionErrors = jsonSchemaService.validateProjectTypeIsSuperset(baseType.getTypeDefinition(), newEntityTypeDef);
+			if (!extensionErrors.isEmpty()) {
+				log.debug("The updated type definition is not a valid extension of the base type.");
+				log.trace("Encountered errors:");
+				for (String s : extensionErrors) {
+					log.trace(s);
+				}
+				
+				return responseService.unprocessableEntity(responseContentType);
 			}
 		}
 		
@@ -511,7 +546,7 @@ public class EntityTypeRESTController {
 			return responseService.unprocessableEntity(responseContentType);
 		}
 		
-		log.info("Successfully updated an entity type.");
+		log.info("Successfully updated entity type \"" + updatedType.getName() + "\".");
 		return responseService.ok(responseContentType, updatedType);
 	}
 	
@@ -524,11 +559,11 @@ public class EntityTypeRESTController {
 	 * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>204-NO_CONTENT</b> status when the entity type was successfully tombstoned</li>
-     *         <li>a <b>404-NOT_FOUND</b> status when the project does not exist</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when the project or the entity type does not exist</li>
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the deletion could not be performed</li>
 	 */
-	@DeleteMapping("/{projectAbbreviation}/entities/config/{entityTypeName}")
+	@DeleteMapping("/projects/{projectAbbreviation}/entities/config/{entityTypeName}")
 	@PreAuthorize("hasRole('project-entity-type-delete')")
 	@Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> deleteProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
@@ -548,9 +583,17 @@ public class EntityTypeRESTController {
 			return responseService.gone(responseContentType);
 		}
 		
+		// Check if the entity type can be found at all
+		EntityTypeDTO deleteDTO = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), null);
+		if (deleteDTO == null) {
+			log.debug("Entity type \"" + entityTypeName + "\" was not found.");
+			return responseService.notFound(responseContentType);
+		}
+		
 		// Delete the entity type by setting the is_deprecated flag
-		if (entityTypeDBService.deleteEntityType(entityTypeName, project.getId(), request)) {
+		if (entityTypeDBService.deleteEntityType(deleteDTO, request)) {
 			log.info("Successfully deleted the entity type.");
+			log.info("Successfully deleted entity type \"" + deleteDTO.getName() + "\".");
 			return responseService.noContent(responseContentType);
 		} else {
 			log.debug("Could not delete the entity type.");
@@ -571,7 +614,7 @@ public class EntityTypeRESTController {
      *         <li>a <b>404-NOT_FOUND</b> status when no entity types match the query or the project does not exist</li>
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
 	 */
-	@GetMapping("/{projectAbbreviation}/entities")
+	@GetMapping("/projects/{projectAbbreviation}/entities")
 	@PreAuthorize("hasRole('project-entity-type-search')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> searchProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
@@ -608,24 +651,6 @@ public class EntityTypeRESTController {
 	/**
 	 * Helper method that checks if a given definition has a valid format.
 	 * 
-	 * @param typeDefinition the definition to check as a JSONB
-	 * @return {@code true} if the validation was successful and no errors were encountered, {@code false} otherwise
-	 */
-	private boolean isTypeDefinitionValid(JSONB typeDefinition) {
-		JsonNode defNode = null;
-		try {
-			defNode = objectMapper.readTree(typeDefinition.toString());
-	    } catch (IOException e) {
-	        log.debug("Type definition parse error: " + e.getMessage(), e);
-	        return false;
-	    }
-		
-		return isTypeDefinitionValid(defNode);
-	}
-	
-	/**
-	 * Helper method that checks if a given definition has a valid format.
-	 * 
 	 * @param typeDefinition the definition to check as a JsonNode
 	 * @return {@code true} if the validation was successful and no errors were encountered, {@code false} otherwise
 	 */
@@ -633,7 +658,11 @@ public class EntityTypeRESTController {
 		List<String> defErrors = jsonSchemaService.validateDefinition(typeDefinition);
 		
 		if (!defErrors.isEmpty()) {
-			log.trace("Encountered errors during type validation:\n", defErrors);
+			log.trace("Encountered errors during type validation:");
+			for (String s : defErrors) {
+				log.trace(s);
+			}
+			
 			return false;
 		} else {
 			return true;
