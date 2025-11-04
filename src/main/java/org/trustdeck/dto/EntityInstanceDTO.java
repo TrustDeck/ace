@@ -30,12 +30,16 @@ import org.trustdeck.utils.SpringBeanLocator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This class represents a Data Transfer Object (DTO) for an entity instance.
@@ -46,6 +50,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Scope("prototype") // Ensures that an instance is deleted after a request.
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Slf4j
 public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInstanceDTO> {
 	
 	/** The (internal) ID of this entity instance. Do not expose it to users. */
@@ -70,7 +75,7 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	private String entityTypeName;
 	
 	/** This entity instance's data (i.e. the attributes and values). */
-	private JSONB data;
+	private JsonNode data;
 	
 	/** Flag that determines if this type is marked as deleted. */
 	private Boolean isDeleted;
@@ -100,8 +105,8 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	        return null;
 	    }
 		
-		ProjectDTO project = pdbs.getProjectByID(pojo.getProjectId(), null);
-	    EntityTypeDTO type = etdbs.getEntityTypeById(pojo.getEntityTypeId(), pojo.getProjectId(), null);
+		ProjectDTO project = pojo.getProjectId() == null ? null : pdbs.getProjectByID(pojo.getProjectId(), null);
+	    EntityTypeDTO type = pojo.getEntityTypeId() == null ? null : etdbs.getEntityTypeById(pojo.getEntityTypeId(), pojo.getProjectId(), null);
 		
 	    this.setId(pojo.getId());
 	    this.setTrustdeckID(pojo.getTrustdeckId());
@@ -109,12 +114,34 @@ public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInsta
 	    this.setProjectName(project == null ? null : project.getName());
 	    this.setEntityTypeID(pojo.getEntityTypeId());
 	    this.setEntityTypeName(type == null ? null : type.getName());
-	    this.setData(pojo.getData());
+	    this.setData(toJsonNode(pojo.getData()));
 	    this.setIsDeleted(pojo.getIsDeleted());
 	    this.setCreatedAt(pojo.getCreatedAt());
 	    this.setUpdatedAt(pojo.getUpdatedAt());
 
 	    return this;
+	}
+	
+	/**
+	 * Helper method to parse a JSONB into a JsonNode.
+	 * 
+	 * @param jsonb the JSONB data
+	 * @return a JsonNode representation of the given data, or {@code null} if parsing failed
+	 */
+	@JsonIgnore
+	private JsonNode toJsonNode(JSONB jsonb) {
+		JsonNode node = null;
+		
+		if (jsonb != null) {
+			ObjectMapper objectMapper = SpringBeanLocator.getBean(ObjectMapper.class);
+			try {
+				node = objectMapper.readTree(jsonb.toString());
+			} catch (JsonProcessingException e) {
+				log.debug("Could not parse JSONB into JsonNode.");
+			}
+		}
+		
+		return node;
 	}
 
 	@JsonIgnore
