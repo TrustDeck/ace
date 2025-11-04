@@ -13,6 +13,7 @@ import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT13;
+import org.trustdeck.jooq.generated.tables.EntityinstanceT15;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT2;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT8;
 import org.trustdeck.jooq.generated.tables.Person;
@@ -58,6 +59,11 @@ public class Tables {
      * The table <code>public.entityinstance_t13</code>.
      */
     public static final EntityinstanceT13 ENTITYINSTANCE_T13 = EntityinstanceT13.ENTITYINSTANCE_T13;
+
+    /**
+     * The table <code>public.entityinstance_t15</code>.
+     */
+    public static final EntityinstanceT15 ENTITYINSTANCE_T15 = EntityinstanceT15.ENTITYINSTANCE_T15;
 
     /**
      * The table <code>public.entityinstance_t2</code>.

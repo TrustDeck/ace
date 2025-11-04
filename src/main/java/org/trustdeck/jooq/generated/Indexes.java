@@ -14,6 +14,7 @@ import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT13;
+import org.trustdeck.jooq.generated.tables.EntityinstanceT15;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT2;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT8;
 import org.trustdeck.jooq.generated.tables.Person;
@@ -39,6 +40,8 @@ public class Indexes {
     public static final Index ENTITY_TYPE_TYPE_DEFINITION_GIN_IDX = Internal.createIndex(DSL.name("entity_type_type_definition_gin_idx"), EntityType.ENTITY_TYPE, new OrderField[] { EntityType.ENTITY_TYPE.TYPE_DEFINITION }, false);
     public static final Index ENTITYINSTANCE_T13_ENTITY_TYPE_ID_PROJECT_ID_ID_IDX = Internal.createIndex(DSL.name("entityinstance_t13_entity_type_id_project_id_id_idx"), EntityinstanceT13.ENTITYINSTANCE_T13, new OrderField[] { EntityinstanceT13.ENTITYINSTANCE_T13.ENTITY_TYPE_ID, EntityinstanceT13.ENTITYINSTANCE_T13.PROJECT_ID, EntityinstanceT13.ENTITYINSTANCE_T13.ID }, false);
     public static final Index ENTITYINSTANCE_T13_FULL_TEXT_SEARCH_VECTOR_IDX = Internal.createIndex(DSL.name("entityinstance_t13_full_text_search_vector_idx"), EntityinstanceT13.ENTITYINSTANCE_T13, new OrderField[] { EntityinstanceT13.ENTITYINSTANCE_T13.FULL_TEXT_SEARCH_VECTOR }, false);
+    public static final Index ENTITYINSTANCE_T15_ENTITY_TYPE_ID_PROJECT_ID_ID_IDX = Internal.createIndex(DSL.name("entityinstance_t15_entity_type_id_project_id_id_idx"), EntityinstanceT15.ENTITYINSTANCE_T15, new OrderField[] { EntityinstanceT15.ENTITYINSTANCE_T15.ENTITY_TYPE_ID, EntityinstanceT15.ENTITYINSTANCE_T15.PROJECT_ID, EntityinstanceT15.ENTITYINSTANCE_T15.ID }, false);
+    public static final Index ENTITYINSTANCE_T15_FULL_TEXT_SEARCH_VECTOR_IDX = Internal.createIndex(DSL.name("entityinstance_t15_full_text_search_vector_idx"), EntityinstanceT15.ENTITYINSTANCE_T15, new OrderField[] { EntityinstanceT15.ENTITYINSTANCE_T15.FULL_TEXT_SEARCH_VECTOR }, false);
     public static final Index ENTITYINSTANCE_T2_ENTITY_TYPE_ID_PROJECT_ID_ID_IDX = Internal.createIndex(DSL.name("entityinstance_t2_entity_type_id_project_id_id_idx"), EntityinstanceT2.ENTITYINSTANCE_T2, new OrderField[] { EntityinstanceT2.ENTITYINSTANCE_T2.ENTITY_TYPE_ID, EntityinstanceT2.ENTITYINSTANCE_T2.PROJECT_ID, EntityinstanceT2.ENTITYINSTANCE_T2.ID }, false);
     public static final Index ENTITYINSTANCE_T2_FULL_TEXT_SEARCH_VECTOR_IDX = Internal.createIndex(DSL.name("entityinstance_t2_full_text_search_vector_idx"), EntityinstanceT2.ENTITYINSTANCE_T2, new OrderField[] { EntityinstanceT2.ENTITYINSTANCE_T2.FULL_TEXT_SEARCH_VECTOR }, false);
     public static final Index ENTITYINSTANCE_T8_ENTITY_TYPE_ID_PROJECT_ID_ID_IDX = Internal.createIndex(DSL.name("entityinstance_t8_entity_type_id_project_id_id_idx"), EntityinstanceT8.ENTITYINSTANCE_T8, new OrderField[] { EntityinstanceT8.ENTITYINSTANCE_T8.ENTITY_TYPE_ID, EntityinstanceT8.ENTITYINSTANCE_T8.PROJECT_ID, EntityinstanceT8.ENTITYINSTANCE_T8.ID }, false);

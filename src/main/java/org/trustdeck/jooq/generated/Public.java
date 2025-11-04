@@ -19,6 +19,7 @@ import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT13;
+import org.trustdeck.jooq.generated.tables.EntityinstanceT15;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT2;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT8;
 import org.trustdeck.jooq.generated.tables.Person;
@@ -71,6 +72,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.entityinstance_t13</code>.
      */
     public final EntityinstanceT13 ENTITYINSTANCE_T13 = EntityinstanceT13.ENTITYINSTANCE_T13;
+
+    /**
+     * The table <code>public.entityinstance_t15</code>.
+     */
+    public final EntityinstanceT15 ENTITYINSTANCE_T15 = EntityinstanceT15.ENTITYINSTANCE_T15;
 
     /**
      * The table <code>public.entityinstance_t2</code>.
@@ -163,6 +169,7 @@ public class Public extends SchemaImpl {
             EntityInstance.ENTITY_INSTANCE,
             EntityType.ENTITY_TYPE,
             EntityinstanceT13.ENTITYINSTANCE_T13,
+            EntityinstanceT15.ENTITYINSTANCE_T15,
             EntityinstanceT2.ENTITYINSTANCE_T2,
             EntityinstanceT8.ENTITYINSTANCE_T8,
             Person.PERSON,
