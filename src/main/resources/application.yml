@@ -12,6 +12,7 @@ server:
 logging:
   level:
     org.trustdeck: ${TRUSTDECK_LOG_LEVEL:INFO}
+    org.springframework.web.servlet.mvc.method.annotation: TRACE
     root: ERROR
 
 spring:
@@ -105,6 +106,13 @@ app:
     - project-image-read
     - project-image-update
     - project-image-delete
+    - base-entity-type-create
+    - base-entity-type-read
+    - project-entity-type-create
+    - project-entity-type-read
+    - project-entity-type-update
+    - project-entity-type-delete
+    - project-entity-type-search
     - person-create
     - person-read
     - person-update
