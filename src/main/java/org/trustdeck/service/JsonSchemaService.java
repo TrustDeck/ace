@@ -60,7 +60,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JsonSchemaService {
 
-	/** A mapper that transforms the schemas (stored in a file) into the proper type. */
+	/** A mapper for transforming JSONB into JsonNode and back. */
 	private ObjectMapper om;
 
 	/** The schema factory used for building the schemas used for validating entity types and instances. */
@@ -376,6 +376,19 @@ public class JsonSchemaService {
 	
 		// Validate and return any encountered errors
 		Set<ValidationMessage> msgs = compiledInstanceSchema.validate(instance);
+        return msgs.stream().map(ValidationMessage::getMessage).collect(Collectors.toList());
+	}
+
+	/**
+	 * Validate an instance JsonNode against a previously compiled instance schema.
+	 * 
+	 * @param data the JSON data as a JsonNode
+	 * @param compiledInstanceSchema the already compiled schema to evaluate against
+	 * @return a list of validation errors (an empty list means its valid)
+	 */
+	public List<String> validateInstance(JsonNode data, JsonSchema compiledInstanceSchema) {
+		// Validate and return any encountered errors
+		Set<ValidationMessage> msgs = compiledInstanceSchema.validate(data);
         return msgs.stream().map(ValidationMessage::getMessage).collect(Collectors.toList());
 	}
 
