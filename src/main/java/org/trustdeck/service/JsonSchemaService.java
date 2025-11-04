@@ -422,8 +422,10 @@ public class JsonSchemaService {
 			log.debug("Failed to compute hash, so caching is unavailable. Compile instead.");
 			useCache = false;
 		}
-		
+
 		if (useCache) {
+			log.trace("Checking cache for compiled schema.");
+		
 			// Check the (locked) cache for an already compiled schema
 			JsonSchema cached;
 			synchronized (compiledCache) {
@@ -432,11 +434,13 @@ public class JsonSchemaService {
 			if (cached != null) {
 				log.trace("Cache hit: using compiled schema from cache.");
 				return cached;
+			} else {
+				log.trace("Cache miss: compile schema and cache it.");
 			}
 		}
 
-		// No cached schema found: compile the schema
-		log.trace("Cache miss: compile schema and cache it.");
+		// No cached schema found or no cache used: compile the schema
+		log.trace("Compiling schema ...");
 		JsonSchema compiled = factory.getSchema(instanceSchemaNode);
 
 		if (useCache) {
