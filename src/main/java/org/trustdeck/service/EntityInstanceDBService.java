@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.JSONB;
 import org.jooq.exception.DataAccessException;
 import org.jooq.exception.MappingException;
 import org.jooq.impl.DSL;
@@ -34,6 +35,10 @@ import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.EntityInstance;
 import org.trustdeck.jooq.generated.tables.records.EntityInstanceRecord;
 import org.trustdeck.utils.Assertion;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +57,10 @@ public class EntityInstanceDBService {
 	/** References a jOOQ configuration object that configures jOOQ's behavior when executing queries. */
     @Autowired
 	private DSLContext dsl;
+	
+	/** Enables access to the mapper to transform JsonNode into JSONB and back. */
+	@Autowired
+	private ObjectMapper objectMapper;
 	
 	/**
      * Method to insert a new entity instance into the database.
@@ -72,7 +81,7 @@ public class EntityInstanceDBService {
     				// The UUID will be automatically generated
 	    			.set(ENTITY_INSTANCE.PROJECT_ID, entityInstanceDTO.getProjectID())
 	                .set(ENTITY_INSTANCE.ENTITY_TYPE_ID, entityInstanceDTO.getEntityTypeID())
-	                .set(ENTITY_INSTANCE.DATA, entityInstanceDTO.getData())
+	                .set(ENTITY_INSTANCE.DATA, toJSONB(entityInstanceDTO.getData()))
 	                // The attributes is_deleted, created_at, and updated_at will be automatically set by the DB using defaults
 	                .returning()
 	                .fetchOne();
@@ -242,7 +251,7 @@ public class EntityInstanceDBService {
 	                .set(ENTITY_INSTANCE.TRUSTDECK_ID, newEntityInstanceDTO.getTrustdeckID())
 	                .set(ENTITY_INSTANCE.PROJECT_ID, newEntityInstanceDTO.getProjectID())
 	                .set(ENTITY_INSTANCE.ENTITY_TYPE_ID, newEntityInstanceDTO.getEntityTypeID())
-	                .set(ENTITY_INSTANCE.DATA, newEntityInstanceDTO.getData())
+	                .set(ENTITY_INSTANCE.DATA, toJSONB(newEntityInstanceDTO.getData()))
 	                .set(ENTITY_INSTANCE.IS_DELETED, newEntityInstanceDTO.getIsDeleted())
 	                .set(ENTITY_INSTANCE.CREATED_AT, newEntityInstanceDTO.getCreatedAt())
 	                .set(ENTITY_INSTANCE.UPDATED_AT, newEntityInstanceDTO.getUpdatedAt())
@@ -322,5 +331,26 @@ public class EntityInstanceDBService {
 
         // Return the found types
         return results.stream().map(row -> new EntityInstanceDTO().assignPojoValues(row)).toList();
+    }
+    
+    /**
+     * Helper method to transform a JsonNode into a JSONB object.
+     * 
+     * @param node the JsonNode data
+     * @return a JSONB representation of the given data, or {@code null} if parsing failed
+     */
+    private JSONB toJSONB(JsonNode node) {
+    	JSONB jsonb = null;
+    	
+    	if (node != null) {
+    		try {
+				String nodeAsString = objectMapper.writeValueAsString(node);
+				jsonb = JSONB.valueOf(nodeAsString);
+			} catch (JsonProcessingException e) {
+				log.debug("Could not parse JsonNode into JSONB.");
+			}
+    	}
+    	
+        return jsonb;
     }
 }

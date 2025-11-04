@@ -113,6 +113,11 @@ app:
     - project-entity-type-update
     - project-entity-type-delete
     - project-entity-type-search
+    - project-entity-instance-create
+    - project-entity-instance-read
+    - project-entity-instance-update
+    - project-entity-instance-delete
+    - project-entity-instance-search
     - person-create
     - person-read
     - person-update
