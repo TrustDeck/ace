@@ -22,7 +22,7 @@ package org.trustdeck.exception;
  * 
  * @author Armin Müller
  */
-public class CreateEntityTypeException extends RuntimeException {
+public class CreationException extends RuntimeException {
 
 	/** Exception UID. */
 	private static final long serialVersionUID = -915107071211207991L;
@@ -31,7 +31,7 @@ public class CreateEntityTypeException extends RuntimeException {
      * Constructor that only specifies the exception message.
      * @param msg the exception message
      */
-	public CreateEntityTypeException(String msg) {
+	public CreationException(String msg) {
         super(msg);
     }
 }
