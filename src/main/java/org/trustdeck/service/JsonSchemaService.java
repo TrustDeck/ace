@@ -71,6 +71,9 @@ public class JsonSchemaService {
 	
 	/** Least recently used cache for the compiled type schemas. */
 	private final Map<String, JsonSchema> compiledCache = Collections.synchronizedMap(new LRUCache<>(50));
+	
+	/** Path of the meta schema that defines how the entity type schema's are allowed to look like. */
+	private static final String META_SCHEMA_PATH = "entity-schemas/definition-meta-schema.json";
 
 	/**
 	 * Constructor that defines the object mapper and initializes the schema factory
@@ -83,7 +86,7 @@ public class JsonSchemaService {
 		this.factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012);
 
 		// Load the meta schema from file into the application
-		try (InputStream metaSchema = new ClassPathResource("schemas/definition-meta-schema.json").getInputStream()) {
+		try (InputStream metaSchema = new ClassPathResource(META_SCHEMA_PATH).getInputStream()) {
 			// Map the input stream to the proper type
 			JsonNode meta = om.readTree(metaSchema);
 			this.metaSchema = factory.getSchema(meta);
