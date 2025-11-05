@@ -44,6 +44,13 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -196,33 +203,73 @@ ALTER SEQUENCE public.domain_id_seq OWNED BY public.domain.id;
 
 
 --
--- Name: person; Type: TABLE; Schema: public; Owner: trustdeck-manager
+-- Name: entity_instance; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
-CREATE TABLE public.person (
+CREATE TABLE public.entity_instance (
+    id bigint NOT NULL,
+    trustdeck_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    project_id integer NOT NULL,
+    entity_type_id integer NOT NULL,
+    data jsonb NOT NULL,
+    full_text_search_vector tsvector GENERATED ALWAYS AS (jsonb_to_tsvector('simple'::regconfig, data, '["string"]'::jsonb)) STORED,
+    is_deleted boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+)
+PARTITION BY LIST (entity_type_id);
+
+
+ALTER TABLE public.entity_instance OWNER TO "trustdeck-manager";
+
+--
+-- Name: entity_instance_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE SEQUENCE public.entity_instance_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.entity_instance_id_seq OWNER TO "trustdeck-manager";
+
+--
+-- Name: entity_instance_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER SEQUENCE public.entity_instance_id_seq OWNED BY public.entity_instance.id;
+
+
+--
+-- Name: entity_type; Type: TABLE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE TABLE public.entity_type (
     id integer NOT NULL,
-    firstname character varying(255) NOT NULL,
-    lastname character varying(255) NOT NULL,
-    birthname character varying(255),
-    administrativegender character(1) NOT NULL,
-    dateofbirth date,
-    street character varying(255),
-    postalcode character varying(20),
-    city character varying(255),
-    country character varying(100),
-    identifier text NOT NULL,
-    idtype text NOT NULL,
-    identifieralgorithm integer NOT NULL
+    name character varying(255) NOT NULL,
+    version character varying(255) NOT NULL,
+    is_deprecated boolean DEFAULT false NOT NULL,
+    is_base_type boolean NOT NULL,
+    type_definition jsonb NOT NULL,
+    base_type_id integer,
+    associated_domain_id integer,
+    project_id integer,
+    full_text_search_vector tsvector GENERATED ALWAYS AS (jsonb_to_tsvector('simple'::regconfig, type_definition, '["string"]'::jsonb)) STORED,
+    CONSTRAINT entity_type_check CHECK (((is_base_type AND (base_type_id IS NULL)) OR (NOT is_base_type))),
+    CONSTRAINT entity_type_check1 CHECK (((base_type_id IS NULL) OR (base_type_id <> id)))
 );
 
 
-ALTER TABLE public.person OWNER TO "trustdeck-manager";
+ALTER TABLE public.entity_type OWNER TO "trustdeck-manager";
 
 --
--- Name: person_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
+-- Name: entity_type_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
 --
 
-CREATE SEQUENCE public.person_id_seq
+CREATE SEQUENCE public.entity_type_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -231,13 +278,94 @@ CREATE SEQUENCE public.person_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.person_id_seq OWNER TO "trustdeck-manager";
+ALTER SEQUENCE public.entity_type_id_seq OWNER TO "trustdeck-manager";
 
 --
--- Name: person_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
+-- Name: entity_type_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
 --
 
-ALTER SEQUENCE public.person_id_seq OWNED BY public.person.id;
+ALTER SEQUENCE public.entity_type_id_seq OWNED BY public.entity_type.id;
+
+
+--
+-- Name: project; Type: TABLE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE TABLE public.project (
+    id integer NOT NULL,
+    name character varying(255) NOT NULL,
+    abbreviation character varying(50) NOT NULL,
+    start_date timestamp with time zone DEFAULT now() NOT NULL,
+    end_date timestamp with time zone,
+    store_entities boolean NOT NULL,
+    store_pseudonyms boolean NOT NULL,
+    description text,
+    CONSTRAINT project_check CHECK (((end_date IS NULL) OR (end_date >= start_date)))
+);
+
+
+ALTER TABLE public.project OWNER TO "trustdeck-manager";
+
+--
+-- Name: project_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE SEQUENCE public.project_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.project_id_seq OWNER TO "trustdeck-manager";
+
+--
+-- Name: project_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER SEQUENCE public.project_id_seq OWNED BY public.project.id;
+
+
+--
+-- Name: project_image; Type: TABLE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE TABLE public.project_image (
+    id integer NOT NULL,
+    project_id integer NOT NULL,
+    image bytea,
+    image_size_bytes integer GENERATED ALWAYS AS (octet_length(image)) STORED,
+    mime_type text,
+    CONSTRAINT project_image_image_check CHECK ((octet_length(image) <= ((5 * 1024) * 1024))),
+    CONSTRAINT project_image_mime_type_check CHECK ((mime_type ~ '^[a-z0-9.+-]+/[a-z0-9.+-]+$'::text)),
+    CONSTRAINT project_image_mime_type_check1 CHECK ((mime_type = ANY (ARRAY['image/jpeg'::text, 'image/png'::text, 'image/webp'::text, 'image/svg+xml'::text])))
+);
+
+
+ALTER TABLE public.project_image OWNER TO "trustdeck-manager";
+
+--
+-- Name: project_image_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE SEQUENCE public.project_image_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.project_image_id_seq OWNER TO "trustdeck-manager";
+
+--
+-- Name: project_image_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER SEQUENCE public.project_image_id_seq OWNED BY public.project_image.id;
 
 
 --
@@ -302,10 +430,31 @@ ALTER TABLE ONLY public.domain ALTER COLUMN id SET DEFAULT nextval('public.domai
 
 
 --
--- Name: person id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
+-- Name: entity_instance id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
 --
 
-ALTER TABLE ONLY public.person ALTER COLUMN id SET DEFAULT nextval('public.person_id_seq'::regclass);
+ALTER TABLE ONLY public.entity_instance ALTER COLUMN id SET DEFAULT nextval('public.entity_instance_id_seq'::regclass);
+
+
+--
+-- Name: entity_type id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.entity_type ALTER COLUMN id SET DEFAULT nextval('public.entity_type_id_seq'::regclass);
+
+
+--
+-- Name: project id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.project ALTER COLUMN id SET DEFAULT nextval('public.project_id_seq'::regclass);
+
+
+--
+-- Name: project_image id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.project_image ALTER COLUMN id SET DEFAULT nextval('public.project_image_id_seq'::regclass);
 
 
 --
@@ -356,27 +505,67 @@ ALTER TABLE ONLY public.domain
 
 
 --
--- Name: person person_firstname_lastname_administrativegender_dateofbirth__key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+-- Name: entity_instance entity_instance_entity_type_id_trustdeck_id_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
-ALTER TABLE ONLY public.person
-    ADD CONSTRAINT person_firstname_lastname_administrativegender_dateofbirth__key UNIQUE (firstname, lastname, administrativegender, dateofbirth, street, postalcode, city, country);
-
-
---
--- Name: person person_identifier_idtype_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.person
-    ADD CONSTRAINT person_identifier_idtype_key UNIQUE (identifier, idtype);
+ALTER TABLE ONLY public.entity_instance
+    ADD CONSTRAINT entity_instance_entity_type_id_trustdeck_id_key UNIQUE (entity_type_id, trustdeck_id);
 
 
 --
--- Name: person person_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+-- Name: entity_instance entity_instance_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
-ALTER TABLE ONLY public.person
-    ADD CONSTRAINT person_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.entity_instance
+    ADD CONSTRAINT entity_instance_pkey PRIMARY KEY (entity_type_id, id);
+
+
+--
+-- Name: entity_type entity_type_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.entity_type
+    ADD CONSTRAINT entity_type_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: project project_abbreviation_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.project
+    ADD CONSTRAINT project_abbreviation_key UNIQUE (abbreviation);
+
+
+--
+-- Name: project_image project_image_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.project_image
+    ADD CONSTRAINT project_image_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: project_image project_image_project_id_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.project_image
+    ADD CONSTRAINT project_image_project_id_key UNIQUE (project_id);
+
+
+--
+-- Name: project project_name_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.project
+    ADD CONSTRAINT project_name_key UNIQUE (name);
+
+
+--
+-- Name: project project_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.project
+    ADD CONSTRAINT project_pkey PRIMARY KEY (id);
 
 
 --
@@ -418,6 +607,62 @@ CREATE INDEX auditusernameidx ON public.auditevent USING btree (username);
 
 
 --
+-- Name: entity_instance_et_proj_id_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX entity_instance_et_proj_id_idx ON ONLY public.entity_instance USING btree (entity_type_id, project_id, id);
+
+
+--
+-- Name: entity_instance_fts_active_gin_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX entity_instance_fts_active_gin_idx ON ONLY public.entity_instance USING gin (full_text_search_vector) WHERE (is_deleted = false);
+
+
+--
+-- Name: entity_instance_uq_type_sha256; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE UNIQUE INDEX entity_instance_uq_type_sha256 ON ONLY public.entity_instance USING btree (project_id, entity_type_id, public.digest((data)::text, 'sha256'::text)) WHERE (is_deleted = false);
+
+
+--
+-- Name: entity_type_fts_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX entity_type_fts_idx ON public.entity_type USING gin (full_text_search_vector);
+
+
+--
+-- Name: entity_type_name_global_uq; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE UNIQUE INDEX entity_type_name_global_uq ON public.entity_type USING btree (lower((name)::text)) WHERE (project_id IS NULL);
+
+
+--
+-- Name: entity_type_name_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX entity_type_name_idx ON public.entity_type USING btree (name);
+
+
+--
+-- Name: entity_type_name_proj_uq; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE UNIQUE INDEX entity_type_name_proj_uq ON public.entity_type USING btree (lower((name)::text), project_id);
+
+
+--
+-- Name: entity_type_type_definition_gin_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX entity_type_type_definition_gin_idx ON public.entity_type USING gin (type_definition);
+
+
+--
 -- Name: ididtypeidx; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
@@ -439,62 +684,6 @@ CREATE UNIQUE INDEX metadataidx ON public.domain USING btree (name);
 
 
 --
--- Name: person_firstname_lastname_admgender_dob_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX person_firstname_lastname_admgender_dob_uindex ON public.person USING btree (firstname, lastname, administrativegender, dateofbirth);
-
-
---
--- Name: person_firstname_lastname_admgender_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX person_firstname_lastname_admgender_uindex ON public.person USING btree (firstname, lastname, administrativegender);
-
-
---
--- Name: person_firstname_lastname_dob_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX person_firstname_lastname_dob_uindex ON public.person USING btree (firstname, lastname, dateofbirth);
-
-
---
--- Name: person_firstname_lastname_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX person_firstname_lastname_uindex ON public.person USING btree (firstname, lastname);
-
-
---
--- Name: person_firstname_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX person_firstname_uindex ON public.person USING btree (firstname);
-
-
---
--- Name: person_identifier_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX person_identifier_uindex ON public.person USING btree (identifier);
-
-
---
--- Name: person_lastname_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX person_lastname_uindex ON public.person USING btree (lastname);
-
-
---
--- Name: person_street_postalcode_city_country_uindex; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX person_street_postalcode_city_country_uindex ON public.person USING btree (street, postalcode, city, country);
-
-
---
 -- Name: domain domain_superdomainid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
@@ -503,11 +692,51 @@ ALTER TABLE ONLY public.domain
 
 
 --
--- Name: person person_identifieralgorithm_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
+-- Name: entity_instance entity_instance_entity_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
-ALTER TABLE ONLY public.person
-    ADD CONSTRAINT person_identifieralgorithm_fkey FOREIGN KEY (identifieralgorithm) REFERENCES public.algorithm(id);
+ALTER TABLE public.entity_instance
+    ADD CONSTRAINT entity_instance_entity_type_id_fkey FOREIGN KEY (entity_type_id) REFERENCES public.entity_type(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: entity_instance entity_instance_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE public.entity_instance
+    ADD CONSTRAINT entity_instance_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.project(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: entity_type entity_type_associated_domain_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.entity_type
+    ADD CONSTRAINT entity_type_associated_domain_id_fkey FOREIGN KEY (associated_domain_id) REFERENCES public.domain(id) ON DELETE SET NULL;
+
+
+--
+-- Name: entity_type entity_type_base_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.entity_type
+    ADD CONSTRAINT entity_type_base_type_id_fkey FOREIGN KEY (base_type_id) REFERENCES public.entity_type(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: entity_type entity_type_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.entity_type
+    ADD CONSTRAINT entity_type_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.project(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: project_image project_image_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.project_image
+    ADD CONSTRAINT project_image_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.project(id) ON DELETE CASCADE;
 
 
 --
