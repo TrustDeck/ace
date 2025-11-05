@@ -18,6 +18,8 @@
 package org.trustdeck.service;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.CommonTableExpression;
 import org.jooq.DSLContext;
@@ -45,9 +47,6 @@ import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.jooq.generated.tables.records.PseudonymRecord;
 import org.trustdeck.utils.Assertion;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.name;
@@ -226,6 +225,30 @@ public class DomainDBAccessService {
         
         return result;
     }
+
+	/**
+	 * Retrieves the root domain from a list of domain nodes.
+	 * The list of nodes need to be in a tree and connected via the super-domain 
+	 * properties, otherwise a random parent-less domain is returned.
+	 *
+	 * @param nodes a list of domain objects representing the nodes in the domain tree
+	 * @return the root domain object if found, or {@code null} if anything went wrong
+	 */
+	public Domain getRootDomainFromTree(List<Domain> nodes) {
+		if (nodes == null || nodes.size() == 0) {
+			return null;
+		}
+		
+		for (Domain domain : nodes) {
+			if (domain.getSuperdomainid() == null) {
+				return domain;
+			}
+		}
+		
+		// If we reach this point, no root domain was found
+		log.trace("Could not find root of the given tree.");
+		return null;
+	}
 
     /**
      * Method to find pseudonym(s) linked to the given one in the provided domain.

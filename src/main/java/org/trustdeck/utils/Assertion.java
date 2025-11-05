@@ -70,7 +70,7 @@ public class Assertion {
      * @param value the String to check
      * @return {@code true} only if the passed object is a string and null or empty, {@code false} otherwise.
      */
-    public static Boolean isNullOrEmpty(String value) {
+    public static boolean isNullOrEmpty(String value) {
         return value == null || value.isBlank();
     }
 
@@ -99,7 +99,7 @@ public class Assertion {
      * @param value the String to check
      * @return {@code true} only if the passed object is a string and neither null nor empty, {@code false} otherwise.
      */
-    public static Boolean isNotNullOrEmpty(String value) {
+    public static boolean isNotNullOrEmpty(String value) {
         return value != null && !value.isBlank();
     }
 

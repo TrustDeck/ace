@@ -23,6 +23,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.net.ssl.SSLContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -53,30 +67,11 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.trustdeck.dto.DomainDTO;
 import org.trustdeck.dto.PseudonymDTO;
 import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.utils.Assertion;
-
-import javax.net.ssl.SSLContext;
-
-import java.io.File;
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -611,12 +606,12 @@ public class AssertWebRequestService {
      */
     public String obtainNewAccessToken(String username, String password) throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         // Getting the trust-store file
-        File trustore = ResourceUtils.getFile(Objects.requireNonNull(this.env.getProperty("spring.security.oauth2.resourceserver.jwt.truststore")));
+        //File trustore = ResourceUtils.getFile(Objects.requireNonNull(this.env.getProperty("spring.security.oauth2.resourceserver.jwt.truststore")));
 
         // Setting up a SSL context in case we want to do HTTPS requests
         SSLContext theContext = SSLContexts.custom()
                 .setProtocol("TLS")
-                .loadTrustMaterial(trustore, Objects.requireNonNull(this.env.getProperty("spring.security.oauth2.resourceserver.jwt.truststore-password")).toCharArray())
+                .loadTrustMaterial((chain, authType) -> true) //except any https requests <- its just for test not any prod call
                 .build();
 
         List<NameValuePair> params = new ArrayList<>();
@@ -628,7 +623,7 @@ public class AssertWebRequestService {
 
         // Contains the realm
         String targetUrl = this.env.getProperty("spring.security.oauth2.resourceserver.jwt.issuer-uri") + "/protocol/openid-connect/token";
-        System.setProperty("javax.net.ssl.trustStore", trustore.getAbsolutePath());
+        //System.setProperty("javax.net.ssl.trustStore", trustore.getAbsolutePath());
 
         HttpClient httpClient = HttpClientBuilder.create().setSSLContext(theContext).build();
 

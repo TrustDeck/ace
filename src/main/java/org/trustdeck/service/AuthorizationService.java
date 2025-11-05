@@ -17,6 +17,12 @@
 
 package org.trustdeck.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations;
@@ -26,13 +32,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import org.trustdeck.security.authentication.configuration.JwtProperties;
 import org.trustdeck.utils.Assertion;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This class encapsulates utility functionalities to check roles and relationships within a given OIDC token.
@@ -45,11 +44,11 @@ public class AuthorizationService {
 
     /** JWT properties. */
     @Autowired
-    JwtProperties jwtProperties;
+    private JwtProperties jwtProperties;
 
     /** Caching service for group paths. */
     @Autowired
-    CachingService cachingService;
+    private CachingService cachingService;
 
     /**
      * Returns the authentication object from the SecurityContextHolder.

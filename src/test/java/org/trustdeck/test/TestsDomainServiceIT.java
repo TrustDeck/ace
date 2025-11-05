@@ -17,21 +17,6 @@
 
 package org.trustdeck.test;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.opentest4j.AssertionFailedError;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.trustdeck.dto.DomainDTO;
-import org.trustdeck.service.AssertWebRequestService;
-import org.trustdeck.service.DomainOIDCService;
-
-import lombok.extern.slf4j.Slf4j;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -41,6 +26,19 @@ import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuild
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.trustdeck.dto.DomainDTO;
+import org.trustdeck.service.AssertWebRequestService;
+import org.trustdeck.service.DomainOIDCService;
 
 /**
  * This class offers tests to test only the domain endpoints.

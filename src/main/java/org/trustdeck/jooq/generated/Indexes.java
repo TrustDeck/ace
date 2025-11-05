@@ -15,6 +15,7 @@ import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT16;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT17;
+import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
 
 

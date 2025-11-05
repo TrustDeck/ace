@@ -60,6 +60,12 @@ audittrail:
       isTechnical: Technical
       isNoAuditing: Unaudited
       isAuditEverything: AuditEverything
+  cleanup:
+    enabled: true
+    # Cron expression for cleanup task. Default: Every day at 2:00 AM.
+    cron: "0 0 2 * * ?"
+    # Retention period in days for audit entries.
+    retention-days: 3650
 
 app:
   response:
@@ -117,3 +123,6 @@ app:
     - project-entity-instance-update
     - project-entity-instance-delete
     - project-entity-instance-search
+  administration-operations:
+    # Roles that are needed to manage other roles and rights
+    - permission-manager
