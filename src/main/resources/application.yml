@@ -117,8 +117,3 @@ app:
     - project-entity-instance-update
     - project-entity-instance-delete
     - project-entity-instance-search
-    - person-create
-    - person-read
-    - person-update
-    - person-delete
-    - person-search
