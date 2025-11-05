@@ -31,6 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.dto.EntityInstanceDTO;
+import org.trustdeck.exception.CreationException;
+import org.trustdeck.exception.DuplicateEntityInstanceException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.EntityInstance;
 import org.trustdeck.jooq.generated.tables.records.EntityInstanceRecord;
@@ -92,8 +94,13 @@ public class EntityInstanceDBService {
 	        	return null;
 	        }
 	    } catch (DataAccessException e) {
-	    	log.error("Inserting the new entity type into the database failed.", e);
-		    return null;
+	    	if (e.getMessage().contains(" already exists.")) {
+	    		// Found duplicate, abort and tell the calling method why we aborted with an exception
+	    		throw new DuplicateEntityInstanceException(e.getMessage());
+	    	} else {
+		    	// Inserting the new entity instance into the database failed; throw exception to abort
+		    	throw new CreationException(e.getMessage());
+	    	}
 	    }
 	    
 	    // Return the entity type
@@ -143,25 +150,6 @@ public class EntityInstanceDBService {
     }
     
     /**
-     * Method to retrieve an entity instance from the database by providing an EntityInstanceDTO. 
-     * Internally it uses only the trustDeckID, which is unique in the database.
-     * 
-     * @param entityInstance the DTO containing at least the instance's publicly accessible TrustDeck ID
-     * @param request the http request object containing information necessary for the audit trail
-     * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found.
-     */
-    @Transactional
-    public EntityInstanceDTO getEntityInstance(EntityInstanceDTO entityInstance, HttpServletRequest request) {
-    	// Check if all the necessary arguments are available
-    	if (entityInstance == null || entityInstance.getTrustdeckID() == null) {
-    		log.debug("Could not retrieve the entity instance, because an argument is missing or empty.");
-    		return null;
-    	}
-    	
-    	return getEntityInstance(entityInstance.getTrustdeckID(), request);
-    }
-    
-    /**
      * Method to retrieve an entity instance from the database by explicitly providing the 
      * trustDeckID as a String, which is unique in the database.
      * 
@@ -172,7 +160,7 @@ public class EntityInstanceDBService {
     @Transactional
     public EntityInstanceDTO getEntityInstance(String trustDeckID, HttpServletRequest request) {
     	// Check if all the necessary arguments are available
-    	if (Assertion.isNotNullOrEmpty(trustDeckID)) {
+    	if (Assertion.isNullOrEmpty(trustDeckID)) {
     		log.debug("Could not retrieve the entity instance, because to the TrustDeckID is missing or empty.");
     		return null;
     	}
@@ -187,6 +175,71 @@ public class EntityInstanceDBService {
 		}
     	
     	return getEntityInstance(tdid, request);
+    }
+
+    /**
+     * Method to retrieve an entity instance from the database by providing the data JSON.
+     * 
+     * @param data the entity instance's data object
+     * @param request the http request object containing information necessary for the audit trail
+     * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found.
+     */
+    @Transactional
+    public EntityInstanceDTO getEntityInstanceByData(JSONB data, HttpServletRequest request) {
+    	// Check if all the necessary arguments are available
+    	if (data == null) {
+    		log.debug("Could not retrieve the entity instance, because the data-object is missing or empty.");
+    		return null;
+    	}
+    	
+    	// Build and execute the query
+    	EntityInstance instance = null;
+    	try {
+    		instance = dsl.selectFrom(ENTITY_INSTANCE)
+                .where(ENTITY_INSTANCE.DATA.equal(data))
+                .and(ENTITY_INSTANCE.IS_DELETED.equal(false))
+                .fetchOneInto(EntityInstance.class);
+        } catch (MappingException e) {
+        	log.debug("Could not map the entity instance search result into the EntityInstance-POJO.", e);
+        	return null;
+        } catch (DataAccessException f) {
+        	log.debug("Searching for the entity instance in the database failed.", f);
+        	return null;
+        }
+    	
+    	// Check if the search was successful
+    	if (instance == null) {
+    		log.debug("No entity instance was found.");
+            return null;
+    	}
+
+        // Create a DTO, populate and return it
+        return new EntityInstanceDTO().assignPojoValues(instance);
+    }
+    
+    /**
+     * Method to retrieve an entity instance from the database by providing an EntityInstanceDTO. 
+     * Internally it uses only the trustDeckID, which is unique in the database.
+     * 
+     * @param entityInstance the DTO containing at least the instance's publicly accessible TrustDeck ID
+     * @param request the http request object containing information necessary for the audit trail
+     * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found.
+     */
+    @Transactional
+    public EntityInstanceDTO getEntityInstance(EntityInstanceDTO entityInstance, HttpServletRequest request) {
+    	// Check if all the necessary arguments are available
+    	if (entityInstance == null || entityInstance.getTrustdeckID() == null) {
+    		// No trustDeckId available --> try identification via the data object
+    		if (entityInstance != null && entityInstance.getData() != null) {
+    			return getEntityInstanceByData(toJSONB(entityInstance.getData()), request);
+    		} else {
+	    		log.debug("Could not retrieve the entity instance, because an argument is missing or empty.");
+	    		return null;
+    		}
+    	} else {
+    		// Use trustDeckId to find the instance
+    		return getEntityInstance(entityInstance.getTrustdeckID(), request);
+    	}
     }
     
     /**
