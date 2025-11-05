@@ -32,7 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.dto.EntityTypeDTO;
-import org.trustdeck.exception.CreateEntityTypeException;
+import org.trustdeck.exception.CreationException;
 import org.trustdeck.exception.DuplicateEntityTypeException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
@@ -83,12 +83,12 @@ public class EntityTypeDBService {
      * @return The newly inserted entity type object when the insertion was successful,
      * 		   the original entity type object if the given one was a duplicate, and
      * 		   {@code null} when the insertion failed.
-     * @throws CreateEntityTypeException when the creation of the entity type or the partition 
+     * @throws CreationException when the creation of the entity type or the partition 
      * 		   in the database failed to abort and roll back this transaction.
 	 * @throws DuplicateEntityTypeException when an entity type with the same name already exists
      */
     @Transactional
-    public EntityTypeDTO createEntityType(EntityTypeDTO entityTypeDTO, HttpServletRequest request) throws CreateEntityTypeException, DuplicateEntityTypeException {
+    public EntityTypeDTO createEntityType(EntityTypeDTO entityTypeDTO, HttpServletRequest request) throws CreationException, DuplicateEntityTypeException {
     	// Create the record and send it to the database
     	EntityTypeRecord createdEntityType;
     	try {
@@ -121,7 +121,7 @@ public class EntityTypeDBService {
 	    		throw new DuplicateEntityTypeException(entityTypeDTO.getName());
 	    	} else {
 		    	// Inserting the new entity type into the database failed; throw exception to abort
-		    	throw new CreateEntityTypeException(e.getMessage());
+		    	throw new CreationException(e.getMessage());
 	    	}
 	    }
 	    
