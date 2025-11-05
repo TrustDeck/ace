@@ -573,7 +573,7 @@ public class EntityTypeDBService {
      * @return the ID of the domain or {@code null} when the name was empty or not found
      */
     private Integer getDomainIdFromName(String domainName) {
-    	Domain d = Assertion.isNotNullOrEmpty(domainName) ? null : ddba.getDomainByName(domainName, null);
+    	Domain d = Assertion.isNullOrEmpty(domainName) ? null : ddba.getDomainByName(domainName, null);
     	return d == null ? null : d.getId();
 	}
     

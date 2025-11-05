@@ -165,6 +165,10 @@ public class EntityInstanceRESTController {
     	// Check if there are any errors
         if (!errors.isEmpty()) {
             log.debug("Instance payload validation failed.");
+            for (String s : errors) {
+            	log.trace(s);
+            }
+            
             return responseService.badRequest(responseContentType);
         }
 		
