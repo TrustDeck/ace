@@ -12,7 +12,6 @@ server:
 logging:
   level:
     org.trustdeck: ${TRUSTDECK_LOG_LEVEL:INFO}
-    org.springframework.web.servlet.mvc.method.annotation: TRACE
     root: ERROR
 
 spring:
