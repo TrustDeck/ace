@@ -40,6 +40,8 @@ import org.trustdeck.algorithms.Pseudonymizer;
 import org.trustdeck.dto.EntityInstanceDTO;
 import org.trustdeck.dto.EntityTypeDTO;
 import org.trustdeck.dto.ProjectDTO;
+import org.trustdeck.exception.DuplicateEntityInstanceException;
+import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.security.audittrail.annotation.Audit;
@@ -53,7 +55,6 @@ import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.PseudonymDBAccessService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
-
 import com.networknt.schema.JsonSchema;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -120,7 +121,7 @@ public class EntityInstanceRESTController {
      *         is marked as deprecated</li>
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when creation failed</li>
 	 */
-	@PostMapping("/{projectAbbreviation}/entities/{entityTypeName}")
+	@PostMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}")
 	@PreAuthorize("hasRole('project-entity-instance-create')")
 	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> createEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
@@ -173,7 +174,13 @@ public class EntityInstanceRESTController {
 		createInstance.setEntityTypeID(entityType.getId());
 		createInstance.setData(entityInstanceDTO.getData());
 		
-		EntityInstanceDTO created = entityInstanceDBService.createEntityInstance(createInstance, request);
+		EntityInstanceDTO created;
+		try {
+			created = entityInstanceDBService.createEntityInstance(createInstance, request);
+		} catch (DuplicateEntityInstanceException e) {
+			log.info("While creating an entity instance, an identical one was found and will be used instead.");
+			return responseService.ok(responseContentType, entityInstanceDBService.getEntityInstance(createInstance, null));
+		}
 		
 		// Evaluate the creation success
 		if (created == null) {
@@ -232,7 +239,7 @@ public class EntityInstanceRESTController {
 	 * 
 	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
 	 * @param entityTypeName the name of the entity type associated with this instance
-	 * @param trustDeckId
+	 * @param trustDeckId the unique UUID for this entity instance
 	 * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the requested entity instance on success</li>
@@ -241,7 +248,7 @@ public class EntityInstanceRESTController {
      *         <li>a <b>410-GONE</b> status when the project has ended or the entity type 
      *         is marked as deprecated</li>
 	 */
-	@GetMapping(value = "/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
+	@GetMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
 	@PreAuthorize("hasRole('project-entity-instance-read')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> getEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
@@ -290,7 +297,7 @@ public class EntityInstanceRESTController {
 	 * 
 	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
 	 * @param entityTypeName the name of the entity type associated with this instance
-	 * @param trustDeckId
+	 * @param trustDeckId the unique UUID for this entity instance
 	 * @param entityInstanceDTO the data transfer object containing this instance's data
 	 * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
@@ -303,7 +310,7 @@ public class EntityInstanceRESTController {
      *         is marked as deprecated</li>
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the update failed</li>
 	 */
-	@PutMapping("/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
+	@PutMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
 	@PreAuthorize("hasRole('project-entity-instance-update')")
 	@Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> updateEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
@@ -398,7 +405,7 @@ public class EntityInstanceRESTController {
 	 * 
 	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
 	 * @param entityTypeName the name of the entity type associated with this instance
-	 * @param trustDeckId
+	 * @param trustDeckId the unique UUID for this entity instance
 	 * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>204-NO_CONTENT</b> status when the instance was successfully 
@@ -411,7 +418,7 @@ public class EntityInstanceRESTController {
      *         is marked as deprecated</li>
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the deletion failed</li>
 	 */
-	@DeleteMapping("/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
+	@DeleteMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
 	@PreAuthorize("hasRole('project-entity-instance-delete')")
 	@Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> deleteEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
@@ -450,7 +457,18 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Delete the instance and evaluate the result
-		if (entityInstanceDBService.deleteEntityInstance(tdid, request)) {
+		boolean deleted = false;
+		try {
+			deleted = entityInstanceDBService.deleteEntityInstance(tdid, request);
+		} catch (UnexpectedResultSizeException e) {
+			if (e.getActualSize() == 0) {
+				log.debug("Could not find the entity instance that should be deleted.");
+				return responseService.notFound(responseContentType);
+			}
+		}
+		
+		// Evaluate deletion result
+		if (deleted) {
 			log.debug("Successfully deleted (tombstoned) the requested entity instance.");
 			return responseService.noContent(responseContentType);
 		} else {
@@ -476,7 +494,7 @@ public class EntityInstanceRESTController {
      *         <li>a <b>410-GONE</b> status when the project has ended or the entity type 
      *         is marked as deprecated</li>
 	 */
-	@GetMapping(value = "/{projectAbbreviation}/entities/{entityTypeName}", params = {"query"})
+	@GetMapping(value = "/projects/{projectAbbreviation}/entities/{entityTypeName}", params = {"query"})
 	@PreAuthorize("hasRole('project-entity-instance-search')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> searchEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
