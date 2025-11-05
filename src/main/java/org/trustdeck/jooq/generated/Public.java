@@ -22,7 +22,6 @@ import org.trustdeck.jooq.generated.tables.EntityinstanceT13;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT15;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT2;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT8;
-import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.ProjectImage;
@@ -87,11 +86,6 @@ public class Public extends SchemaImpl {
      * The table <code>public.entityinstance_t8</code>.
      */
     public final EntityinstanceT8 ENTITYINSTANCE_T8 = EntityinstanceT8.ENTITYINSTANCE_T8;
-
-    /**
-     * The table <code>public.person</code>.
-     */
-    public final Person PERSON = Person.PERSON;
 
     /**
      * The table <code>public.pgp_armor_headers</code>.
@@ -172,7 +166,6 @@ public class Public extends SchemaImpl {
             EntityinstanceT15.ENTITYINSTANCE_T15,
             EntityinstanceT2.ENTITYINSTANCE_T2,
             EntityinstanceT8.ENTITYINSTANCE_T8,
-            Person.PERSON,
             PgpArmorHeaders.PGP_ARMOR_HEADERS,
             Project.PROJECT,
             ProjectImage.PROJECT_IMAGE,

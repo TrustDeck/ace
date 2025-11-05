@@ -16,7 +16,6 @@ import org.trustdeck.jooq.generated.tables.EntityinstanceT13;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT15;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT2;
 import org.trustdeck.jooq.generated.tables.EntityinstanceT8;
-import org.trustdeck.jooq.generated.tables.Person;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.ProjectImage;
@@ -74,11 +73,6 @@ public class Tables {
      * The table <code>public.entityinstance_t8</code>.
      */
     public static final EntityinstanceT8 ENTITYINSTANCE_T8 = EntityinstanceT8.ENTITYINSTANCE_T8;
-
-    /**
-     * The table <code>public.person</code>.
-     */
-    public static final Person PERSON = Person.PERSON;
 
     /**
      * The table <code>public.pgp_armor_headers</code>.
