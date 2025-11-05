@@ -12,10 +12,8 @@ import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
-import org.trustdeck.jooq.generated.tables.EntityinstanceT13;
-import org.trustdeck.jooq.generated.tables.EntityinstanceT15;
-import org.trustdeck.jooq.generated.tables.EntityinstanceT2;
-import org.trustdeck.jooq.generated.tables.EntityinstanceT8;
+import org.trustdeck.jooq.generated.tables.EntityinstanceT16;
+import org.trustdeck.jooq.generated.tables.EntityinstanceT17;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.ProjectImage;
@@ -55,24 +53,14 @@ public class Tables {
     public static final EntityType ENTITY_TYPE = EntityType.ENTITY_TYPE;
 
     /**
-     * The table <code>public.entityinstance_t13</code>.
+     * The table <code>public.entityinstance_t16</code>.
      */
-    public static final EntityinstanceT13 ENTITYINSTANCE_T13 = EntityinstanceT13.ENTITYINSTANCE_T13;
+    public static final EntityinstanceT16 ENTITYINSTANCE_T16 = EntityinstanceT16.ENTITYINSTANCE_T16;
 
     /**
-     * The table <code>public.entityinstance_t15</code>.
+     * The table <code>public.entityinstance_t17</code>.
      */
-    public static final EntityinstanceT15 ENTITYINSTANCE_T15 = EntityinstanceT15.ENTITYINSTANCE_T15;
-
-    /**
-     * The table <code>public.entityinstance_t2</code>.
-     */
-    public static final EntityinstanceT2 ENTITYINSTANCE_T2 = EntityinstanceT2.ENTITYINSTANCE_T2;
-
-    /**
-     * The table <code>public.entityinstance_t8</code>.
-     */
-    public static final EntityinstanceT8 ENTITYINSTANCE_T8 = EntityinstanceT8.ENTITYINSTANCE_T8;
+    public static final EntityinstanceT17 ENTITYINSTANCE_T17 = EntityinstanceT17.ENTITYINSTANCE_T17;
 
     /**
      * The table <code>public.pgp_armor_headers</code>.
