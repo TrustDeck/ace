@@ -35,7 +35,7 @@ import org.trustdeck.utils.Utility;
 import lombok.extern.slf4j.Slf4j;
 
 import static org.trustdeck.jooq.generated.Tables.ALGORITHM;
-import static org.trustdeck.jooq.generated.Tables.PERSON;
+//import static org.trustdeck.jooq.generated.Tables.DOMAIN;
 
 import java.security.SecureRandom;
 import java.util.List;
@@ -210,7 +210,7 @@ public class AlgorithmDBService {
     	}
     	
     	// Check if any person object still uses this algorithm object
-    	if (getNumberOfPersonsUsingAlgorithm(ID) != 0) { 
+    	if (isAlgorithmInUse(ID)) { 
     		log.debug("The algorithm is still in use and is therefore not deleted.");
     		return false;
     	}
@@ -379,15 +379,33 @@ public class AlgorithmDBService {
     }
     
     /**
-     * Helper method to retrieve the number of person objects 
-     * that are referencing the algorithm given by its ID.
+     * Helper method that checks if an algorithm is still used anywhere 
+     * by searching for references to its ID.
      * 
      * @param algorithmID the algorithm's ID
-     * @return the number of person objects using the algorithm
+     * @return {@code true} when the algorithm ID is referenced anywhere, {@code false} otherwise
      */
     @Transactional
-    public int getNumberOfPersonsUsingAlgorithm(int algorithmID) {
-    	return dsl.fetchCount(PERSON, PERSON.IDENTIFIERALGORITHM.eq(algorithmID));
+    public boolean isAlgorithmInUse(int algorithmID) {
+    	// Count the references
+//    	int usedBy = 0;
+//    	try {
+//    		usedBy = dsl.selectCount()
+//    				.from(DOMAIN)
+//    				.where(DOMAIN.ALGORITHM_ID.equal(algorithmID))
+//    				.fetchOne(0, int.class);
+//    	} catch (DataAccessException e) {
+//    		log.debug("Searching for algorithm refrences in the database failed.", e);
+//    		return false;
+//    	}
+//    	
+//    	if (usedBy != 0) {
+//    		log.debug("The algorithm was referenced " + usedBy + (usedBy == 1 ? "time." : "times."));
+//    		return false;
+//    	}
+    	
+    	// TODO: use this method, when the algorithm object is extracted from the domain
+    	return false;
     }
     
     /**
