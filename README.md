@@ -31,3 +31,9 @@ Please refer to the [benchmarking repository](https://github.com/TrustDeck/ace-b
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## How to cite
+
+If you use this software in your research, please cite the accompanying article:
+
+> Müller A, Wündisch E, Wirth FN, Meier Zu Ummeln S, Weber J, Prasser F. **The Advanced Confidentiality Engine as a Scalable Tool for the Pseudonymization of Biomedical Data in Translational Settings: Development and Usability Study.** *J Med Internet Res.* 2025 Nov 5;27:e71822. doi:10.2196/71822. PMID: 41191920.
