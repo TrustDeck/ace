@@ -351,10 +351,16 @@ public class EntityInstanceDBService {
                 .or(DSL.cast(ENTITY_INSTANCE.PROJECT_ID, String.class).likeIgnoreCase(pattern))
                 .or(DSL.cast(ENTITY_INSTANCE.ENTITY_TYPE_ID, String.class).likeIgnoreCase(pattern))
                 // JSONB via full text search on the tsvector (uses the GIN index on the tsvector named 'full_text_search_vector')
-                .or(DSL.condition("full_text_search_vector @@ plainto_tsquery('simple', {0})", DSL.val(part)))
+                // Removes all non-alphanumeric characters and adds the prefix-operator (:*)
+                .or(DSL.condition("full_text_search_vector @@ to_tsquery('simple', regexp_replace({0}, '[^[:alnum:]]+', '', 'g') || ':*')", DSL.val(part)))
                 .or(DSL.cast(ENTITY_INSTANCE.CREATED_AT, String.class).likeIgnoreCase(pattern))
                 .or(DSL.cast(ENTITY_INSTANCE.UPDATED_AT, String.class).likeIgnoreCase(pattern));
 
+            // If the query is long enough, perform a typo-tolerant search via the data_text column
+			if (part.length() >= 3) {
+				partCond = partCond.or(DSL.cast(ENTITY_INSTANCE.DATA_TEXT, String.class).likeIgnoreCase(pattern));
+			}
+            
             // AND-connect all search parts
             condition = condition.and(partCond);
         }
@@ -367,6 +373,9 @@ public class EntityInstanceDBService {
         try {
             results = dsl.selectFrom(ENTITY_INSTANCE)
                       .where(condition)
+                      .orderBy(DSL.field("ts_rank(full_text_search_vector, to_tsquery('simple', {0}))", Double.class, DSL.val(query)).desc(),
+                    		   DSL.field("similarity(data_text, {0})", Double.class, DSL.val(query)).desc())
+                      .limit(100)
                       .fetchInto(EntityInstance.class);
         } catch (MappingException e) {
             log.debug("Could not map entity instance search result.", e);
