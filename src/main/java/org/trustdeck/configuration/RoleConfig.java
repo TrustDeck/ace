@@ -59,4 +59,16 @@ public class RoleConfig {
      * adding a role to a user via the frontend.
      */
     private List<String> administrationOperations;
+    
+    /**
+     * Returns a list of all defined roles including all administrative roles.
+     * 
+     * @return a list of all roles defined in the application.yml
+     */
+    public List<String> getAllOperationRoles() {
+    	List<String> allRoles = getOperations();
+    	allRoles.addAll(getAdministrationOperations());
+    	
+    	return allRoles;
+    }
 }
