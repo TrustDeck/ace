@@ -373,7 +373,7 @@ public class EntityInstanceDBService {
         try {
             results = dsl.selectFrom(ENTITY_INSTANCE)
                       .where(condition)
-                      .orderBy(DSL.field("ts_rank(full_text_search_vector, to_tsquery('simple', {0}))", Double.class, DSL.val(query)).desc(),
+                      .orderBy(DSL.field("ts_rank(full_text_search_vector, plainto_tsquery('simple', {0}))", Double.class, DSL.val(query)).desc(),
                     		   DSL.field("similarity(data_text, {0})", Double.class, DSL.val(query)).desc())
                       .limit(100)
                       .fetchInto(EntityInstance.class);
