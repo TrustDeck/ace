@@ -18,8 +18,6 @@ import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
-import org.trustdeck.jooq.generated.tables.EntityinstanceT16;
-import org.trustdeck.jooq.generated.tables.EntityinstanceT17;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.ProjectImage;
@@ -64,16 +62,6 @@ public class Public extends SchemaImpl {
      * The table <code>public.entity_type</code>.
      */
     public final EntityType ENTITY_TYPE = EntityType.ENTITY_TYPE;
-
-    /**
-     * The table <code>public.entityinstance_t16</code>.
-     */
-    public final EntityinstanceT16 ENTITYINSTANCE_T16 = EntityinstanceT16.ENTITYINSTANCE_T16;
-
-    /**
-     * The table <code>public.entityinstance_t17</code>.
-     */
-    public final EntityinstanceT17 ENTITYINSTANCE_T17 = EntityinstanceT17.ENTITYINSTANCE_T17;
 
     /**
      * The table <code>public.pgp_armor_headers</code>.
@@ -150,8 +138,6 @@ public class Public extends SchemaImpl {
             Domain.DOMAIN,
             EntityInstance.ENTITY_INSTANCE,
             EntityType.ENTITY_TYPE,
-            EntityinstanceT16.ENTITYINSTANCE_T16,
-            EntityinstanceT17.ENTITYINSTANCE_T17,
             PgpArmorHeaders.PGP_ARMOR_HEADERS,
             Project.PROJECT,
             ProjectImage.PROJECT_IMAGE,

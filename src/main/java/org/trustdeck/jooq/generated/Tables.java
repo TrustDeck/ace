@@ -12,8 +12,6 @@ import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
-import org.trustdeck.jooq.generated.tables.EntityinstanceT16;
-import org.trustdeck.jooq.generated.tables.EntityinstanceT17;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.ProjectImage;
@@ -51,16 +49,6 @@ public class Tables {
      * The table <code>public.entity_type</code>.
      */
     public static final EntityType ENTITY_TYPE = EntityType.ENTITY_TYPE;
-
-    /**
-     * The table <code>public.entityinstance_t16</code>.
-     */
-    public static final EntityinstanceT16 ENTITYINSTANCE_T16 = EntityinstanceT16.ENTITYINSTANCE_T16;
-
-    /**
-     * The table <code>public.entityinstance_t17</code>.
-     */
-    public static final EntityinstanceT17 ENTITYINSTANCE_T17 = EntityinstanceT17.ENTITYINSTANCE_T17;
 
     /**
      * The table <code>public.pgp_armor_headers</code>.

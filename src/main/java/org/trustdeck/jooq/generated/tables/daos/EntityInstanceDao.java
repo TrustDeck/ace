@@ -143,6 +143,36 @@ public class EntityInstanceDao extends DAOImpl<EntityInstanceRecord, org.trustde
     }
 
     /**
+     * Fetch records that have <code>data_text BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityInstance> fetchRangeOfDataText(String lowerInclusive, String upperInclusive) {
+        return fetchRange(EntityInstance.ENTITY_INSTANCE.DATA_TEXT, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>data_text IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityInstance> fetchByDataText(String... values) {
+        return fetch(EntityInstance.ENTITY_INSTANCE.DATA_TEXT, values);
+    }
+
+    /**
+     * Fetch records that have <code>data_sha256 BETWEEN lowerInclusive AND
+     * upperInclusive</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityInstance> fetchRangeOfDataSha256(byte[] lowerInclusive, byte[] upperInclusive) {
+        return fetchRange(EntityInstance.ENTITY_INSTANCE.DATA_SHA256, lowerInclusive, upperInclusive);
+    }
+
+    /**
+     * Fetch records that have <code>data_sha256 IN (values)</code>
+     */
+    public List<org.trustdeck.jooq.generated.tables.pojos.EntityInstance> fetchByDataSha256(byte[]... values) {
+        return fetch(EntityInstance.ENTITY_INSTANCE.DATA_SHA256, values);
+    }
+
+    /**
      * Fetch records that have <code>is_deleted BETWEEN lowerInclusive AND
      * upperInclusive</code>
      */

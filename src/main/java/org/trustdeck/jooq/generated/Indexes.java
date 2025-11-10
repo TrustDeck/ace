@@ -13,9 +13,6 @@ import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
-import org.trustdeck.jooq.generated.tables.EntityinstanceT16;
-import org.trustdeck.jooq.generated.tables.EntityinstanceT17;
-import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
 
 
@@ -31,15 +28,12 @@ public class Indexes {
 
     public static final Index ALGORITHM_NAME_UINDEX = Internal.createIndex(DSL.name("algorithm_name_uindex"), Algorithm.ALGORITHM, new OrderField[] { Algorithm.ALGORITHM.NAME }, false);
     public static final Index AUDITUSERNAMEIDX = Internal.createIndex(DSL.name("auditusernameidx"), Auditevent.AUDITEVENT, new OrderField[] { Auditevent.AUDITEVENT.USERNAME }, false);
+    public static final Index ENTITY_INSTANCE_DATA_TRGM_GIN_IDX = Internal.createIndex(DSL.name("entity_instance_data_trgm_gin_idx"), EntityInstance.ENTITY_INSTANCE, new OrderField[] { EntityInstance.ENTITY_INSTANCE.DATA_TEXT }, false);
     public static final Index ENTITY_INSTANCE_ET_PROJ_ID_IDX = Internal.createIndex(DSL.name("entity_instance_et_proj_id_idx"), EntityInstance.ENTITY_INSTANCE, new OrderField[] { EntityInstance.ENTITY_INSTANCE.ENTITY_TYPE_ID, EntityInstance.ENTITY_INSTANCE.PROJECT_ID, EntityInstance.ENTITY_INSTANCE.ID }, false);
     public static final Index ENTITY_INSTANCE_FTS_ACTIVE_GIN_IDX = Internal.createIndex(DSL.name("entity_instance_fts_active_gin_idx"), EntityInstance.ENTITY_INSTANCE, new OrderField[] { EntityInstance.ENTITY_INSTANCE.FULL_TEXT_SEARCH_VECTOR }, false);
     public static final Index ENTITY_TYPE_FTS_IDX = Internal.createIndex(DSL.name("entity_type_fts_idx"), EntityType.ENTITY_TYPE, new OrderField[] { EntityType.ENTITY_TYPE.FULL_TEXT_SEARCH_VECTOR }, false);
     public static final Index ENTITY_TYPE_NAME_IDX = Internal.createIndex(DSL.name("entity_type_name_idx"), EntityType.ENTITY_TYPE, new OrderField[] { EntityType.ENTITY_TYPE.NAME }, false);
     public static final Index ENTITY_TYPE_TYPE_DEFINITION_GIN_IDX = Internal.createIndex(DSL.name("entity_type_type_definition_gin_idx"), EntityType.ENTITY_TYPE, new OrderField[] { EntityType.ENTITY_TYPE.TYPE_DEFINITION }, false);
-    public static final Index ENTITYINSTANCE_T16_ENTITY_TYPE_ID_PROJECT_ID_ID_IDX = Internal.createIndex(DSL.name("entityinstance_t16_entity_type_id_project_id_id_idx"), EntityinstanceT16.ENTITYINSTANCE_T16, new OrderField[] { EntityinstanceT16.ENTITYINSTANCE_T16.ENTITY_TYPE_ID, EntityinstanceT16.ENTITYINSTANCE_T16.PROJECT_ID, EntityinstanceT16.ENTITYINSTANCE_T16.ID }, false);
-    public static final Index ENTITYINSTANCE_T16_FULL_TEXT_SEARCH_VECTOR_IDX = Internal.createIndex(DSL.name("entityinstance_t16_full_text_search_vector_idx"), EntityinstanceT16.ENTITYINSTANCE_T16, new OrderField[] { EntityinstanceT16.ENTITYINSTANCE_T16.FULL_TEXT_SEARCH_VECTOR }, false);
-    public static final Index ENTITYINSTANCE_T17_ENTITY_TYPE_ID_PROJECT_ID_ID_IDX = Internal.createIndex(DSL.name("entityinstance_t17_entity_type_id_project_id_id_idx"), EntityinstanceT17.ENTITYINSTANCE_T17, new OrderField[] { EntityinstanceT17.ENTITYINSTANCE_T17.ENTITY_TYPE_ID, EntityinstanceT17.ENTITYINSTANCE_T17.PROJECT_ID, EntityinstanceT17.ENTITYINSTANCE_T17.ID }, false);
-    public static final Index ENTITYINSTANCE_T17_FULL_TEXT_SEARCH_VECTOR_IDX = Internal.createIndex(DSL.name("entityinstance_t17_full_text_search_vector_idx"), EntityinstanceT17.ENTITYINSTANCE_T17, new OrderField[] { EntityinstanceT17.ENTITYINSTANCE_T17.FULL_TEXT_SEARCH_VECTOR }, false);
     public static final Index IDIDTYPEIDX = Internal.createIndex(DSL.name("ididtypeidx"), Pseudonym.PSEUDONYM, new OrderField[] { Pseudonym.PSEUDONYM.IDENTIFIER, Pseudonym.PSEUDONYM.IDTYPE }, false);
     public static final Index IDPSNIDX = Internal.createIndex(DSL.name("idpsnidx"), Pseudonym.PSEUDONYM, new OrderField[] { Pseudonym.PSEUDONYM.IDENTIFIER, Pseudonym.PSEUDONYM.PSEUDONYM_ }, true);
     public static final Index METADATAIDX = Internal.createIndex(DSL.name("metadataidx"), Domain.DOMAIN, new OrderField[] { Domain.DOMAIN.NAME }, true);
