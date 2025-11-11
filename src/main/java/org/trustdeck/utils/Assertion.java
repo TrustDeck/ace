@@ -19,6 +19,8 @@ package org.trustdeck.utils;
 
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 /**
  * This class encapsulates utility functionalities.
  *
@@ -120,5 +122,27 @@ public class Assertion {
         }
     	
     	return result;
+    }
+    
+    /**
+     * Helper method to check if a given JSON is empty.
+     * 
+     * @param node the JSON to check
+     * @return {@code true} if the JSON is empty, {@code false} otherwise
+     */
+    public static boolean isJsonEmpty(JsonNode node) {
+        if (node == null || node.isNull()) {
+        	return true;
+        }
+    	
+    	if (node.isTextual()) {
+        	return node.asText().trim().isEmpty();
+        }
+        
+        if (node.isArray() || node.isObject()) {
+        	return node.isEmpty();
+        }
+        
+        return false;
     }
 }
