@@ -123,6 +123,7 @@ app:
     - project-entity-instance-update
     - project-entity-instance-delete
     - project-entity-instance-search
+    - project-entity-instance-record-linkage
   administration-operations:
     # Roles that are needed to manage other roles and rights
     - permission-manager

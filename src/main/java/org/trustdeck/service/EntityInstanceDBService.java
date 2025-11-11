@@ -19,6 +19,7 @@ package org.trustdeck.service;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.jooq.Condition;
@@ -393,6 +394,67 @@ public class EntityInstanceDBService {
 
         // Return the found types
         return results.stream().map(row -> new EntityInstanceDTO().assignPojoValues(row)).toList();
+    }
+    
+    /**
+     * Method to search for record linkage candidates that match a given set of attributes.
+     * 
+     * @param projectId the id of the project in which the linkage should be done
+     * @param entityTypeId the id of the instance's type
+     * @param linkageValues a map of attribute-value-combinations that should be searched for
+     * @param limit the maximum amount of matches that should be returned
+     * @param request the http request object containing information necessary for the audit trail
+     * @return a list of entity instances that match the given linkage values
+     */
+    @Transactional(readOnly = true)
+    public List<EntityInstanceDTO> searchRecordLinkageCandidates(int projectId, int entityTypeId, Map<String, JsonNode> linkageValues, int limit, HttpServletRequest request) {
+    	if (linkageValues == null) {
+            log.debug("Missing linkage values.");
+            return null;
+        }
+    	
+    	// Build condition statements for the attribute checks
+    	Condition condition = DSL.trueCondition();
+    	for (Map.Entry<String, JsonNode> entry : linkageValues.entrySet()) {
+    	    // Format the attribute-value-combination properly: {"attribute": <value>}
+    	    String fragment = null;
+			try {
+				fragment = objectMapper.writeValueAsString(Map.of(entry.getKey(), entry.getValue()));
+			} catch (JsonProcessingException e) {
+				log.debug("Could not transform an attribute-value-combination into a String.");
+				continue;
+			}
+
+    	    // Add contains-search (i.e. data @> '{"attr": <val>}'::jsonb)
+    	    condition = condition.and(DSL.condition("{0} @> {1}::jsonb", ENTITY_INSTANCE.DATA, DSL.inline(fragment)));
+    	}
+    	
+    	// Perform the search
+    	List<EntityInstance> candidates;
+        try {
+	    	candidates = dsl.selectFrom(ENTITY_INSTANCE)
+		    	.where(ENTITY_INSTANCE.PROJECT_ID.eq(projectId))
+		    	.and(ENTITY_INSTANCE.ENTITY_TYPE_ID.eq(entityTypeId))
+		    	.and(ENTITY_INSTANCE.IS_DELETED.eq(false))
+		    	.and(condition)
+		    	.limit(limit)
+		    	.fetchInto(EntityInstance.class);
+        } catch (MappingException e) {
+            log.debug("Could not map entity instance search result.", e);
+            return null;
+        } catch (DataAccessException f) {
+            log.debug("Searching entity instances failed.", f);
+            return null;
+        }
+
+        // Evaluate the search results
+        if (candidates == null) {
+            log.debug("No entity instance candidates found that match the given attributes.");
+            return null;
+        }
+
+        // Return the found types
+        return candidates.stream().map(row -> new EntityInstanceDTO().assignPojoValues(row)).toList();
     }
     
     /**

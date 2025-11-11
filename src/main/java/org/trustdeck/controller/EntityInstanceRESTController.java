@@ -18,7 +18,10 @@
 package org.trustdeck.controller;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +58,8 @@ import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.PseudonymDBAccessService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.networknt.schema.JsonSchema;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -542,5 +547,117 @@ public class EntityInstanceRESTController {
 			log.debug("Successfully queried the database and found " + foundInstances.size() + " search results.");
 			return responseService.ok(responseContentType, foundInstances);
 		}
+	}
+	
+	/**
+	 * Endpoint to check if there are entities in the database similar/equal to the 
+	 * given one. 
+	 * 
+	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
+	 * @param entityTypeName the name of the entity type associated with the instance to check
+	 * @param entityInstanceDTO the data transfer object containing the data of the instance that should be checked
+	 * @param responseContentType (optional) the response content type
+     * @param request the request object, injected by Spring Boot
+	 * @return <li>a <b>200-OK</b> status with a list of candidate entities when matches are found</li>
+     *         <li>a <b>204-NO_CONTENT</b> status when no record-linkage candidates are found</li>
+     *         <li>a <b>400-BAD_REQUEST</b> status when the instance payload is missing/empty or 
+     *         none of the required linkage attributes have values or are not defined at all, or 
+     *         when payload validation fails</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when the project or entity type does not exist</li>
+     *         <li>a <b>410-GONE</b> status when the project has ended or the entity type is deprecated</li>
+     *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the record-linkage search fails</li>
+	 */
+	@PostMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/record-linkage")
+	@PreAuthorize("hasRole('project-entity-instance-record-linkage')")
+	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	public ResponseEntity<?> recordLinkage(@PathVariable("projectAbbreviation") String projectAbbreviation,
+			   							   @PathVariable("entityTypeName") String entityTypeName,
+			   							   @RequestBody EntityInstanceDTO entityInstanceDTO,
+			   							   @RequestHeader(name = "accept", required = false) String responseContentType,
+			   							   HttpServletRequest request) {
+		// Check if project exists and still active
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		if (project == null) {
+			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
+			return responseService.notFound(responseContentType);
+		} else if (project.getEndDate().isBefore(OffsetDateTime.now())) {
+			// Project end was in the past
+			log.debug("The project already ended so that no entity types can be retrieved from it.");
+			return responseService.gone(responseContentType);
+		}
+		
+		// Check if entity type exists and is still active
+		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), null);
+		if (entityType == null) {
+			log.debug("Entity type \"" + entityTypeName + "\" was not found.");
+			return responseService.notFound(responseContentType);
+		} else if (entityType.getIsDeprecated()) {
+			log.debug("The entity type is marked as deprecated and cannot be used anymore.");
+			return responseService.gone(responseContentType);
+		}
+		
+		// Check if a payload was given
+	    if (entityInstanceDTO == null || entityInstanceDTO.getData() == null) {
+	        log.debug("No instance payload or empty data provided for record linkage.");
+	        return responseService.badRequest(responseContentType);
+	    }
+	    
+	    // Retrieve or build the compiled type schema
+    	JsonSchema compiledTypeSchema = jsonSchemaService.getCompiledSchemaFromDefinition(entityType.getTypeDefinition());
+    	
+    	// Validate the payload data against the type definition
+    	List<String> errors = jsonSchemaService.validateInstance(entityInstanceDTO.getData(), compiledTypeSchema);
+
+    	// Check if there are any errors
+        if (!errors.isEmpty()) {
+            log.debug("Instance payload validation failed.");
+            for (String s : errors) {
+            	log.trace(s);
+            }
+            
+            return responseService.badRequest(responseContentType);
+        }
+        
+        // Determine which attributes should be used during the record linkage ("linkage"-flag on attributes)
+        List<String> linkageAttributes = new ArrayList<>();
+        for (JsonNode attr : entityType.getTypeDefinition().get("attributes")) {
+            if (attr.has("linkage") && attr.get("linkage").asBoolean(false)) {
+                linkageAttributes.add(attr.get("name").asText());
+            }
+        }
+        
+        if (linkageAttributes.isEmpty()) {
+            log.debug("The entity type \"" + entityTypeName + "\" defines no linkage attributes.");
+            return responseService.badRequest(responseContentType);
+        }
+        
+        // Build a map of the values for the attributes that should be used for RL
+        Map<String, JsonNode> linkageValues = new HashMap<>();
+        JsonNode data = entityInstanceDTO.getData();
+        
+        for (String attributeName : linkageAttributes) {
+            if (data.has(attributeName) && !data.get(attributeName).isNull() && !Assertion.isJsonEmpty(data.get(attributeName))) {
+                linkageValues.put(attributeName, data.get(attributeName));
+            }
+        }
+        
+        if (linkageValues.isEmpty()) {
+            log.debug("None of the linkage attributes were present or non-empty in the given payload.");
+            return responseService.badRequest(responseContentType);
+        }
+        
+        // Search for candidates
+        List<EntityInstanceDTO> candidates = entityInstanceDBService.searchRecordLinkageCandidates(project.getId(), entityType.getId(), linkageValues, MAX_NUMBER_OF_SEARCH_RESULTS, request);
+	    
+        // Evaluate results
+        if (candidates == null) {
+            log.debug("Record linkage candidate search failed.");
+            return responseService.unprocessableEntity(responseContentType);
+        } else if (candidates.isEmpty()) {
+        	log.debug("No record linkage candidates were found.");
+        	return responseService.noContent(responseContentType);
+        } else {
+        	return responseService.ok(responseContentType, candidates);
+        }
 	}
 }
