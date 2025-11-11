@@ -50,7 +50,7 @@ public class DomainDTO implements IObjectDTO<IDomain, DomainDTO> {
 	@Getter(value=AccessLevel.NONE)
     @Setter(value=AccessLevel.NONE)
     @JsonIgnore
-    DomainDBAccessService domainDBAccessService = SpringBeanLocator.getBean(DomainDBAccessService.class);
+    private DomainDBAccessService domainDBAccessService = SpringBeanLocator.getBean(DomainDBAccessService.class);
 	
     /** The id of this domain. */
     private Integer id;

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:trustdeck:schema:meta:definition:1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["typeName", "version", "attributes"],
+  "properties": {
+    "typeName": {
+		"type": "string",
+		"minLength": 1,
+		"pattern": "^[a-zA-Z0-9_-]+$"
+	},
+    "version": { "type": "string", "minLength": 1 },
+    "attributes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "type", "required", "linkage"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["string", "integer", "number", "boolean", "date", "datetime"]
+          },
+          "required": { "type": "boolean" },
+          "linkage": { "type": "boolean" },
+
+          "minimum": { "type": "number" },
+          "maximum": { "type": "number" },
+          "minLength": { "type": "integer", "minimum": 0 },
+          "maxLength": { "type": "integer", "minimum": 0 },
+          "pattern": { "type": "string" },
+          "enum": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": ["string", "number", "integer", "boolean"] }
+          }
+        }
+      }
+    }
+  }
+}

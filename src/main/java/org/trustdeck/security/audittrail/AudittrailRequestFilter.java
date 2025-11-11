@@ -31,7 +31,7 @@ import org.trustdeck.security.audittrail.request.CachedBodyHttpServletRequest;
 import lombok.NoArgsConstructor;
 
 /**
- * The audittrail request filter that injects a request object that 
+ * The audit trail request filter that injects a request object that 
  * enables non-consuming readability of the request-body.
  * 
  * @author Armin Müller
@@ -43,11 +43,26 @@ public class AudittrailRequestFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-		// Must be wrapped. Otherwise we would consume the request/response objects which would lead to their disappearance.
-        CachedBodyHttpServletRequest req = new CachedBodyHttpServletRequest(request);
+		// Get the type of content that was sent with the request --> check if it was a file (represented as a multipart)
+        String contentType = request.getContentType();
+        boolean isMultipart = contentType != null && contentType.toLowerCase().startsWith("multipart/");
+
+        // If the content is a (multipart) file, don't wrap the request as this consumes the 
+        // file sent with the request, because for multipart handling, getParts(), which is 
+        // called later by Spring, and getInputStream(), which is called in the 
+        // CachedBodyHttpServletRequest-constructor, are mutually exclusive
+        HttpServletRequest req;
+        if (!isMultipart) {
+            // Only wrap non-multipart requests
+            req = new CachedBodyHttpServletRequest(request);
+        } else {
+        	req = request;
+        }
+
+        // Must be wrapped, otherwise we would consume the response objects which would lead to their disappearance
         ContentCachingResponseWrapper res = new ContentCachingResponseWrapper(response);
         
-        // Performs the actual request
+        // Passes the actual request down the filter chain
         filterChain.doFilter(req, res);
 
         // This is important !!!

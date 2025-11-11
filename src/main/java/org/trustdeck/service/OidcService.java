@@ -255,7 +255,7 @@ public class OidcService implements InitializingBean {
         List<String> adminGroupIds = new ArrayList<>();
         
         // Match the created roles to their group IDs based on paths
-        for (String role : roleConfig.getOperations()) {
+        for (String role : roleConfig.getAllOperationRoles()) {
             Map.Entry<String, String> groupEntry = Utility.findGroupEntryByPath(finalGroupPaths, "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role);
 
             if (groupEntry != null) {
@@ -274,7 +274,7 @@ public class OidcService implements InitializingBean {
 
         // Ensure that the number of administrative groups matches the number of roles
         if (adminGroupIds.size() != roleConfig.getAdministrationOperations().size()) {
-            throw new OIDCException("Could not find all administrative groups and roles that should have been added.");
+        	throw new OIDCException("Could not find all administrative groups and roles that should have been added.");
         }
 
         // Cache the standard group IDs for future use

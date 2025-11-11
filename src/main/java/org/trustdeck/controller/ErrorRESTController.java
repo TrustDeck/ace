@@ -60,16 +60,23 @@ public class ErrorRESTController implements ErrorController {
             }
         }
 
+		// Try to retrieve and log the root cause of the error
+		Throwable throwable = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
+		if (throwable != null) {
+			log.trace("Request failed with exception: ", throwable);
+		} else {
+			log.trace("Error occurred but no exception object was found in the request.");
+		}
+
         // Build a response map with error details
         Map<String, Object> errorAttributes = new HashMap<>();
         errorAttributes.put("timestamp", LocalDateTime.now());
         errorAttributes.put("status", status.value());
         errorAttributes.put("error", status.getReasonPhrase());
         errorAttributes.put("message", "An unexpected error occurred.");
-        errorAttributes.put("path", request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI));
+		errorAttributes.put("path", request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI));
 
-        log.debug("Handled error request.");
-        log.trace("Erroneous request details: " + errorAttributes.toString());
+        log.debug("Handled error request: " + errorAttributes.toString());
         return new ResponseEntity<>(errorAttributes, status);
     }
 }

@@ -95,7 +95,7 @@ public class AuditAnnotationAspect {
             }
         } catch (Throwable e) {
         	log.debug("Audit trail information could not be stored: " + e.getClass().getSimpleName());
-            log.trace("", e);
+            log.debug("", e);
             
             // Throw an exception to terminate the transaction that surrounds the audit annotation processing.
             throw new AuditTrailException();

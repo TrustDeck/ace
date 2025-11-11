@@ -19,6 +19,8 @@ package org.trustdeck.utils;
 
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 /**
  * This class encapsulates utility functionalities.
  *
@@ -77,7 +79,7 @@ public class Assertion {
     /**
      * Method that checks whether a list of given Strings <b>is</b> null or empty.
      *
-     * @param value the String to check
+     * @param values the String to check
      * @return {@code true} only if the passed objects are strings and null or empty, {@code false} otherwise.
      */
     public static boolean isNullOrEmpty(String... values) {
@@ -94,7 +96,7 @@ public class Assertion {
     }
 
     /**
-     * Method that checks whether the given String <b>is not</b> null nor empty.
+     * Method that checks whether the given String is <b>not</b> null nor empty.
      *
      * @param value the String to check
      * @return {@code true} only if the passed object is a string and neither null nor empty, {@code false} otherwise.
@@ -106,7 +108,7 @@ public class Assertion {
     /**
      * Method that checks whether a list of given Strings <b>is not</b> null nor empty.
      *
-     * @param value the String to check
+     * @param values the String to check
      * @return {@code true} only if the passed objects are strings and neither null nor empty, {@code false} otherwise.
      */
     public static boolean isNotNullOrEmpty(String... values) {
@@ -120,5 +122,27 @@ public class Assertion {
         }
     	
     	return result;
+    }
+    
+    /**
+     * Helper method to check if a given JSON is empty.
+     * 
+     * @param node the JSON to check
+     * @return {@code true} if the JSON is empty, {@code false} otherwise
+     */
+    public static boolean isJsonEmpty(JsonNode node) {
+        if (node == null || node.isNull()) {
+        	return true;
+        }
+    	
+    	if (node.isTextual()) {
+        	return node.asText().trim().isEmpty();
+        }
+        
+        if (node.isArray() || node.isObject()) {
+        	return node.isEmpty();
+        }
+        
+        return false;
     }
 }

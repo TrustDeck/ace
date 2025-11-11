@@ -19,8 +19,9 @@ package org.trustdeck.service;
 
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
+import org.jooq.exception.IntegrityConstraintViolationException;
 import org.jooq.exception.MappingException;
-import org.jooq.exception.TooManyRowsException;
+import org.jooq.impl.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,15 +30,15 @@ import org.trustdeck.exception.DuplicateProjectException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Project;
 import org.trustdeck.jooq.generated.tables.records.ProjectRecord;
+import org.trustdeck.utils.Assertion;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.time.OffsetDateTime;
 import java.util.List;
-
-import static org.trustdeck.jooq.generated.Tables.OBJECTTYPE;
+import static org.trustdeck.jooq.generated.Tables.ENTITY_INSTANCE;
+import static org.trustdeck.jooq.generated.Tables.ENTITY_TYPE;
 import static org.trustdeck.jooq.generated.Tables.PROJECT;
 
 /**
@@ -61,14 +62,17 @@ public class ProjectDBService {
      * 		   {@code null} when the insertion failed or would create a duplicate.
      */
     @Transactional
-    public Project createProject(Project project, HttpServletRequest request) throws DuplicateProjectException {
+    public ProjectDTO createProject(ProjectDTO project, HttpServletRequest request) throws DuplicateProjectException {
     	try {
+    		// Insert project
     		ProjectRecord projectRecord = dsl.newRecord(PROJECT);
     		projectRecord.setName(project.getName());
-    		projectRecord.setStartdate(project.getStartdate());
-    		projectRecord.setEnddate(project.getEnddate());
-    		projectRecord.setMainContact(project.getMainContact());
-    		projectRecord.setAssociatedObjecttypeIds(project.getAssociatedObjecttypeIds());
+    		projectRecord.setAbbreviation(project.getAbbreviation());
+    		projectRecord.setStartDate(project.getStartDate());
+    		projectRecord.setEndDate(project.getEndDate());
+    		projectRecord.setStoreEntities(project.getStoreEntities());
+    		projectRecord.setStorePseudonyms(project.getStorePseudonyms());
+    		projectRecord.setDescription(project.getDescription());
     		
     		// Store and determine success
 	        if(projectRecord.insert() == 0) {
@@ -129,6 +133,40 @@ public class ProjectDBService {
     }
     
     /**
+     * This method retrieves a project by its abbreviation.
+     * 
+     * @param abbreviation the abbreviation of the project to search for
+     * @param request the http request object containing information necessary for the audit trail
+     * @return the project object or {@code null} if nothing was found
+     */
+    @Transactional
+    public ProjectDTO getProjectByAbbreviation(String abbreviation, HttpServletRequest request) {
+    	// Build and execute the query
+    	List<Project> projects = null;
+        try {
+	        // Execute the query
+        	projects = dsl.selectFrom(PROJECT)
+	                  .where(PROJECT.ABBREVIATION.equalIgnoreCase(abbreviation))
+	                  .fetchInto(Project.class);
+        } catch (MappingException e) {
+        	log.debug("Could not map the project search result into the Project-POJO.");
+        } catch (DataAccessException f) {
+        	log.debug("Searching for the project in the database failed: " + f.getMessage());
+        }
+    	
+        // Check if the search was successful
+    	if (projects == null || projects.size() == 0) {
+    		log.debug("No project with abbreviation \"" + abbreviation + "\" found.");
+            return null;
+    	} else if (projects.size() > 1) {
+        	log.debug("More than one project object was found. The first result will be used.");
+        }
+
+        // Create a ProjectDTO, populate and return it
+        return new ProjectDTO().assignPojoValues(projects.getFirst());
+    }
+    
+    /**
      * This method retrieves a project by its id.
      * 
      * @param id the id of the project to search for
@@ -164,32 +202,43 @@ public class ProjectDBService {
 
     /**
      * Delete a project from the database using its name.
-     * Also deletes orphaned algorithm objects.
+     * The deletion is a tombstoning operation where the 
+     * end_date is set and no real deletion is performed. 
      * 
-     * @param name the name of the project that should be deleted
+     * @param abbreviation the name of the project that should be deleted
      * @param request the http request object containing information necessary for the audit trail
      * @return {@code true} when the deletion was successful, {@code false} when the project object 
      * 			that should be deleted was not found
      * @throws UnexpectedResultSizeException whenever the deletion would not exactly affect one project entry
      */
     @Transactional
-    public boolean deleteProject(String name, HttpServletRequest request) throws UnexpectedResultSizeException {
-    	// Fetch the person to check if it exist and to get the algorithm ID before deletion
-    	ProjectDTO project = getProjectByName(name, null);
-        if (project != null) {
-        	// Delete person object
-        	int deletedRecords = dsl.deleteFrom(PROJECT)
-               .where(PROJECT.NAME.equalIgnoreCase(name))
-               .execute();
+    // TODO: When deleting a project, should the types defined in it also be considered deleted? What about the instances using the type?
+    public boolean deleteProject(ProjectDTO project, OffsetDateTime deleteDate, HttpServletRequest request) throws UnexpectedResultSizeException {
+    	// Check if the given project is valid
+    	if (project != null && project.getId() != null && project.getId() > 0) {
+    		// Check if project is still active
+    		if (project.getEndDate().isBefore(deleteDate)) {
+    			log.debug("The project's end date is already in the past. Deleting (tombstoning) not necessary.");
+    			return true;
+    		}
+    		
+        	// Delete project object by updating the end_date
+        	int deletedRecords = 0;
+			try {
+				deletedRecords = dsl.update(PROJECT)
+						.set(PROJECT.END_DATE, deleteDate)
+						.where(PROJECT.ID.eq(project.getId()))
+						.execute();
+			} catch (DataAccessException e) {
+				log.error("Failed to delete the project \"" + project.getAbbreviation() + "\".", e);
+				return false;
+			}
         	
         	// Determine success
-            if (deletedRecords > 1) {
+            if (deletedRecords != 1) {
             	// Throw exception to terminate the transaction
-                log.debug("Deleting the project with name \"" + project.getName() + "\" would not affect exactly one entry. Aborting.");
+                log.debug("Deleting the project with abbreviation \"" + project.getAbbreviation() + "\" would not affect exactly one entry. Aborting.");
                 throw new UnexpectedResultSizeException(1, deletedRecords);
-            } else if (deletedRecords == 0) {
-            	log.debug("Nothing found to delete.");
-            	return false;
             }
             
             // The project object was successfully deleted
@@ -198,118 +247,113 @@ public class ProjectDBService {
         }
         
         // At this point, no project with the given name was found
-        log.debug("No project with the given name found. Nothing to delete.");
+        log.debug("No project with the given abbreviation found. Nothing to delete.");
         return false;
     }
 
     /**
      * This method updates a project identified by its name.
      * 
-     * @param name the name of the project that should be updated
+     * @param abbreviation the abbreviation of the project that should be updated
      * @param updatedProject the project object containing the updated information
      * @param request the http request object containing information necessary for the audit trail
      * @return the ID of the updated project, or {@code null} if an error occurred
      */
     @Transactional
-    public Integer updateProject(String name, ProjectDTO updatedProject, HttpServletRequest request) {
-    	DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    	
-    	// Get data needed for the update
-    	ProjectDTO oldProject = getProjectByName(name, null);
-    	
-    	    		
-    	// Update the project object
-    	// Fetch old project record
-    	ProjectRecord projectRecord = null;
+    public ProjectDTO updateProject(ProjectDTO oldProject, ProjectDTO updatedProject, HttpServletRequest request) {
+    	// Check if the old record was given
+		if (oldProject == null || oldProject.getId() == null) {
+			log.debug("The project object that should be updated was not found.");
+			return null;
+		}
+		
+		// Check if the project is deleted/tombstoned
+		if (oldProject.getEndDate().isBefore(OffsetDateTime.now())) {
+			log.debug("The project cannot be updated because it is deleted/tombstoned.");
+			return null;
+		}
+		
+		// Check if the project is in use (find project_id mentions in the type table and in the instance table)
+		int usedBy = 0;
     	try {
-    		projectRecord = dsl.fetchOne(PROJECT, PROJECT.ID.eq(oldProject.getId()));
-		} catch (DataAccessException e) {
-			log.debug("Fetching the project record that should be updated failed (ID: " + oldProject.getId() + ").");
-			return null;
-		}
-		
-		// Check if the old record was found
-		if (projectRecord == null) {
-			log.debug("The project object that should be updated was not found (ID: " + oldProject.getId() + ").");
-			return null;
-		}
-		
-		// Sanitize the given values and update the attributes
-		projectRecord.setName(updatedProject.getName() != null && !updatedProject.getName().isBlank() ? updatedProject.getName() : oldProject.getName());
-		projectRecord.setStartdate(updatedProject.getStartDate() != null && !updatedProject.getStartDate().isBlank() ? LocalDate.parse(updatedProject.getStartDate(), dateFormatter) : LocalDate.parse(oldProject.getStartDate(), dateFormatter));
-		projectRecord.setEnddate(updatedProject.getEndDate() != null && !updatedProject.getEndDate().isBlank() ? LocalDate.parse(updatedProject.getEndDate(), dateFormatter) : LocalDate.parse(oldProject.getEndDate(), dateFormatter));
-		projectRecord.setMainContact(updatedProject.getMainContact() != null && !updatedProject.getMainContact().isBlank() ? updatedProject.getMainContact() : oldProject.getMainContact());
-		projectRecord.setAssociatedObjecttypeIds(updatedProject.getAssociatedObjects() != null && updatedProject.getAssociatedObjects().length != 0 ? getObjectTypeIDs(updatedProject.getAssociatedObjects()) : getObjectTypeIDs(oldProject.getAssociatedObjects()));
-        
-        // Store and determine success
-        int wasStored = projectRecord.update();
-        log.debug("Updating the project object \"" + projectRecord.getName() + "\" " + ((wasStored == 1) ? "succeeded." : "failed."));
-        
-        // Return the project ID when successful
-        return wasStored == 1 ? projectRecord.getId() : null;
-    }
-    
-    /**
-     * This method retrieves the names for the given object type IDs from a project.
-     * 
-     * @param objectTypeIDs the array of object type IDs stored in a project
-     * @return an array of the names of the object types in the same order as the IDs were given.
-     */
-    @Transactional
-    public String[] getObjectTypeNames(Integer[] objectTypeIDs) {
-    	String[] objectTypeNames = new String[objectTypeIDs.length];
-    	
-    	for (int i = 0; i < objectTypeIDs.length; i++) {
-    		String name = null;
-    		
-    		try {
-    			name = dsl.select(OBJECTTYPE.NAME)
-	    	                 .from(OBJECTTYPE)
-	    	                 .where(OBJECTTYPE.ID.eq(objectTypeIDs[i]))
-	    	                 .fetchOneInto(String.class);
-    		} catch (TooManyRowsException e) {
-            	log.debug("Found more than one project.");
-        	} catch (MappingException f) {
-            	log.debug("Could not map the search result.");
-            } catch (DataAccessException g) {
-            	log.debug("Searching for the object name in the database failed: " + g.getMessage());
-            }
-    		
-    		objectTypeNames[i] = name;
+    		usedBy = dsl.select(
+    				DSL.field(dsl.selectCount()
+    	                     .from(ENTITY_TYPE)
+    	                     .where(ENTITY_TYPE.PROJECT_ID.eq(oldProject.getId())))
+    				.add(DSL.field(dsl.selectCount()
+    	                     .from(ENTITY_INSTANCE)
+    	                     .where(ENTITY_INSTANCE.PROJECT_ID.eq(oldProject.getId()))))
+    				).fetchOne(0, int.class);
+    	} catch (DataAccessException e) {
+    		log.debug("Searching for entity type references in the database failed.", e);
+    		return null;
     	}
     	
-    	return objectTypeNames;
-    }
-    
-    /**
-     * This method retrieves the IDs for the given object type names from a project.
-     * 
-     * @param objectTypeNames the array of object type names stored in a project
-     * @return an array of the IDs of the object types in the same order as the names were given.
-     */
-    @Transactional
-    public Integer[] getObjectTypeIDs(String[] objectTypeNames) {
-    	Integer[] objectTypeIDs = new Integer[objectTypeNames.length];
+    	// Built update object with sanitized values, depending on if the project is in use or not
+		ProjectRecord updatedProjectRecord;
+		try {
+			if (usedBy != 0) {
+				log.debug("The project is currently in use and can therefore only be partially updated.");
+
+				OffsetDateTime newStart = updatedProject.getStartDate() != null ? updatedProject.getStartDate() : oldProject.getStartDate();
+				OffsetDateTime newEnd = updatedProject.getEndDate() != null ? updatedProject.getEndDate() : oldProject.getEndDate();
+
+				// Sanity check: is the end after the start
+				newStart = newStart.isBefore(newEnd) ? newStart : oldProject.getStartDate();
+				newEnd = newEnd.isAfter(newStart) ? newEnd : oldProject.getEndDate();
+
+				String newDescription = updatedProject.getDescription() != null ? updatedProject.getDescription() : oldProject.getDescription();
+
+				// Do the actual update
+				updatedProjectRecord = dsl.update(PROJECT)
+						.set(PROJECT.START_DATE, newStart)
+						.set(PROJECT.END_DATE, newEnd)
+						.set(PROJECT.DESCRIPTION, newDescription)
+						.where(PROJECT.ID.eq(oldProject.getId()))
+						.returning()
+						.fetchOne();
+			} else {
+				String newName = Assertion.isNotNullOrEmpty(updatedProject.getName()) ? updatedProject.getName() : oldProject.getName();
+				String newAbbreviation = Assertion.isNotNullOrEmpty(updatedProject.getAbbreviation())? updatedProject.getAbbreviation() : oldProject.getAbbreviation();
+				OffsetDateTime newStart = updatedProject.getStartDate() != null ? updatedProject.getStartDate() : oldProject.getStartDate();
+				OffsetDateTime newEnd = updatedProject.getEndDate() != null ? updatedProject.getEndDate() : oldProject.getEndDate();
+
+				// Sanity check: is the end after the start
+				newStart = newStart.isBefore(newEnd) ? newStart : oldProject.getStartDate();
+				newEnd = newEnd.isAfter(newStart) ? newEnd : oldProject.getEndDate();
+
+				Boolean newStoreEntities = updatedProject.getStoreEntities() != null ? updatedProject.getStoreEntities() : oldProject.getStoreEntities();
+				Boolean newStorePseudonyms = updatedProject.getStorePseudonyms() != null ? updatedProject.getStorePseudonyms() : oldProject.getStorePseudonyms();
+				String newDescription = updatedProject.getDescription() != null ? updatedProject.getDescription() : oldProject.getDescription();
+
+				updatedProjectRecord = dsl.update(PROJECT)
+						.set(PROJECT.NAME, newName)
+						.set(PROJECT.ABBREVIATION, newAbbreviation)
+						.set(PROJECT.START_DATE, newStart)
+						.set(PROJECT.END_DATE, newEnd)
+						.set(PROJECT.STORE_ENTITIES, newStoreEntities)
+						.set(PROJECT.STORE_PSEUDONYMS, newStorePseudonyms)
+						.set(PROJECT.DESCRIPTION, newDescription)
+						.where(PROJECT.ID.eq(oldProject.getId()))
+						.returning()
+						.fetchOne();
+			}
+		} catch (IntegrityConstraintViolationException e) {
+			log.debug("The date constraint that is built in the database was violated: start date was after end date.");
+			return null;
+    	} catch (DataAccessException e) {
+    		log.debug("Updating the project object \"" + oldProject.getName() + "\" failed.");
+            return null;
+		}
     	
-    	for (int i = 0; i < objectTypeNames.length; i++) {
-    		Integer id = null;
-    		
-    		try {
-    			id = dsl.select(OBJECTTYPE.ID)
-	    	            .from(OBJECTTYPE)
-	    	            .where(OBJECTTYPE.NAME.equalIgnoreCase(objectTypeNames[i]))
-	    	            .fetchOneInto(Integer.class);
-    		} catch (TooManyRowsException e) {
-            	log.debug("Found more than one project.");
-        	} catch (MappingException f) {
-            	log.debug("Could not map the search result.");
-            } catch (DataAccessException g) {
-            	log.debug("Searching for the object ID in the database failed: " + g.getMessage());
-            }
-    		
-    		objectTypeIDs[i] = id;
+    	// Check result
+    	if (updatedProjectRecord == null) {
+    		log.debug("Updating the project object \"" + oldProject.getName() + "\" failed.");
+            return null;
+    	} else {
+    		// Return the newly updated project DTO
+    		log.debug("Updating the project object \"" + oldProject.getName() + "\" succeeded.");
+            return new ProjectDTO().assignPojoValues(new Project(updatedProjectRecord));
     	}
-    	
-    	return objectTypeIDs;
     }
 }

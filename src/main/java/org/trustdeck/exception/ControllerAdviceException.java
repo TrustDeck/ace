@@ -59,8 +59,10 @@ public class ControllerAdviceException extends ResponseEntityExceptionHandler {
         // Create a valid value for the response's content type header.
         String contentTypeHeaderValue = responseService.buildContentTypeHeaderStringForResponse(this.responseService.getMediaTypeFromRequest(request));
 
-        // Add the value to the response header.
-        headers.setContentType(MediaType.parseMediaType(contentTypeHeaderValue));
+        // Add the value to the response header, preserve existing headers
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.putAll(headers);
+        responseHeaders.setContentType(MediaType.parseMediaType(contentTypeHeaderValue));
 
         // Return as a simple response entity.
         return new ResponseEntity(overrideBody, headers, statusCode);

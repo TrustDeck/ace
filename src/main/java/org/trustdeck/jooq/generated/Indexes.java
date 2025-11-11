@@ -13,8 +13,6 @@ import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
-import org.trustdeck.jooq.generated.tables.Person;
-import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
 
 
@@ -30,6 +28,7 @@ public class Indexes {
 
     public static final Index ALGORITHM_NAME_UINDEX = Internal.createIndex(DSL.name("algorithm_name_uindex"), Algorithm.ALGORITHM, new OrderField[] { Algorithm.ALGORITHM.NAME }, false);
     public static final Index AUDITUSERNAMEIDX = Internal.createIndex(DSL.name("auditusernameidx"), Auditevent.AUDITEVENT, new OrderField[] { Auditevent.AUDITEVENT.USERNAME }, false);
+    public static final Index ENTITY_INSTANCE_DATA_TRGM_GIN_IDX = Internal.createIndex(DSL.name("entity_instance_data_trgm_gin_idx"), EntityInstance.ENTITY_INSTANCE, new OrderField[] { EntityInstance.ENTITY_INSTANCE.DATA_TEXT }, false);
     public static final Index ENTITY_INSTANCE_ET_PROJ_ID_IDX = Internal.createIndex(DSL.name("entity_instance_et_proj_id_idx"), EntityInstance.ENTITY_INSTANCE, new OrderField[] { EntityInstance.ENTITY_INSTANCE.ENTITY_TYPE_ID, EntityInstance.ENTITY_INSTANCE.PROJECT_ID, EntityInstance.ENTITY_INSTANCE.ID }, false);
     public static final Index ENTITY_INSTANCE_FTS_ACTIVE_GIN_IDX = Internal.createIndex(DSL.name("entity_instance_fts_active_gin_idx"), EntityInstance.ENTITY_INSTANCE, new OrderField[] { EntityInstance.ENTITY_INSTANCE.FULL_TEXT_SEARCH_VECTOR }, false);
     public static final Index ENTITY_TYPE_FTS_IDX = Internal.createIndex(DSL.name("entity_type_fts_idx"), EntityType.ENTITY_TYPE, new OrderField[] { EntityType.ENTITY_TYPE.FULL_TEXT_SEARCH_VECTOR }, false);
@@ -38,17 +37,4 @@ public class Indexes {
     public static final Index IDIDTYPEIDX = Internal.createIndex(DSL.name("ididtypeidx"), Pseudonym.PSEUDONYM, new OrderField[] { Pseudonym.PSEUDONYM.IDENTIFIER, Pseudonym.PSEUDONYM.IDTYPE }, false);
     public static final Index IDPSNIDX = Internal.createIndex(DSL.name("idpsnidx"), Pseudonym.PSEUDONYM, new OrderField[] { Pseudonym.PSEUDONYM.IDENTIFIER, Pseudonym.PSEUDONYM.PSEUDONYM_ }, true);
     public static final Index METADATAIDX = Internal.createIndex(DSL.name("metadataidx"), Domain.DOMAIN, new OrderField[] { Domain.DOMAIN.NAME }, true);
-    public static final Index OBJECTINSTANCE_DATA_GIN_IDX = Internal.createIndex(DSL.name("objectinstance_data_gin_idx"), Objectinstance.OBJECTINSTANCE, new OrderField[] { Objectinstance.OBJECTINSTANCE.DATA }, false);
-    public static final Index OBJECTINSTANCE_OBJECTTYPE_ID_IDX = Internal.createIndex(DSL.name("objectinstance_objecttype_id_idx"), Objectinstance.OBJECTINSTANCE, new OrderField[] { Objectinstance.OBJECTINSTANCE.OBJECTTYPE_ID }, false);
-    public static final Index OBJECTTYPE_NAME_IDX = Internal.createIndex(DSL.name("objecttype_name_idx"), Objecttype.OBJECTTYPE, new OrderField[] { Objecttype.OBJECTTYPE.NAME }, false);
-    public static final Index OBJECTTYPE_TYPEDEF_GIN_IDX = Internal.createIndex(DSL.name("objecttype_typedef_gin_idx"), Objecttype.OBJECTTYPE, new OrderField[] { Objecttype.OBJECTTYPE.TYPEDEF }, false);
-    public static final Index PERSON_FIRSTNAME_LASTNAME_ADMGENDER_DOB_UINDEX = Internal.createIndex(DSL.name("person_firstname_lastname_admgender_dob_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.FIRSTNAME, Person.PERSON.LASTNAME, Person.PERSON.ADMINISTRATIVEGENDER, Person.PERSON.DATEOFBIRTH }, false);
-    public static final Index PERSON_FIRSTNAME_LASTNAME_ADMGENDER_UINDEX = Internal.createIndex(DSL.name("person_firstname_lastname_admgender_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.FIRSTNAME, Person.PERSON.LASTNAME, Person.PERSON.ADMINISTRATIVEGENDER }, false);
-    public static final Index PERSON_FIRSTNAME_LASTNAME_DOB_UINDEX = Internal.createIndex(DSL.name("person_firstname_lastname_dob_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.FIRSTNAME, Person.PERSON.LASTNAME, Person.PERSON.DATEOFBIRTH }, false);
-    public static final Index PERSON_FIRSTNAME_LASTNAME_UINDEX = Internal.createIndex(DSL.name("person_firstname_lastname_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.FIRSTNAME, Person.PERSON.LASTNAME }, false);
-    public static final Index PERSON_FIRSTNAME_UINDEX = Internal.createIndex(DSL.name("person_firstname_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.FIRSTNAME }, false);
-    public static final Index PERSON_IDENTIFIER_UINDEX = Internal.createIndex(DSL.name("person_identifier_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.IDENTIFIER }, false);
-    public static final Index PERSON_LASTNAME_UINDEX = Internal.createIndex(DSL.name("person_lastname_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.LASTNAME }, false);
-    public static final Index PERSON_STREET_POSTALCODE_CITY_COUNTRY_UINDEX = Internal.createIndex(DSL.name("person_street_postalcode_city_country_uindex"), Person.PERSON, new OrderField[] { Person.PERSON.STREET, Person.PERSON.POSTALCODE, Person.PERSON.CITY, Person.PERSON.COUNTRY }, false);
-    public static final Index PROJECT_ASSOCIATED_OBJECTTYPE_IDS_GIN_IDX = Internal.createIndex(DSL.name("project_associated_objecttype_ids_gin_idx"), Project.PROJECT, new OrderField[] { Project.PROJECT.ASSOCIATED_OBJECTTYPE_IDS }, false);
 }

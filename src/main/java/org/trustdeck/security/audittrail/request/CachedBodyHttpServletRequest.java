@@ -20,7 +20,6 @@ package org.trustdeck.security.audittrail.request;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import jakarta.servlet.ServletInputStream;
@@ -49,22 +48,43 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 	 */
     public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);
-        InputStream requestInputStream = request.getInputStream();
-        this.cachedBody = StreamUtils.copyToByteArray(requestInputStream);
+        
+        // Get the type of content that was sent with the request --> check if it was a file (represented as a multipart)
+        String contentType = request.getContentType();
+        boolean isMultipart = contentType != null && contentType.toLowerCase().startsWith("multipart/");
+        
+        // Only copy the request body when it's not a multipart request as calling getInputStream() 
+        // is mutually exclusive to calling getParts, which happens later by Spring
+		if (!isMultipart) {
+			this.cachedBody = StreamUtils.copyToByteArray(request.getInputStream());
+		} else {
+			this.cachedBody = new byte[0];
+		}
     }
     
     @Override
     public ServletInputStream getInputStream() {
     	try {
+			if (cachedBody == null || cachedBody.length == 0) {
+				// Don’t interfere with multipart requests
+				return super.getInputStream();
+			}
+			
 			return new CachedBodyServletInputStream(this.cachedBody);
-		} catch (Exception e) {
+		} catch (IOException e) {
 			return null;
 		}
     }
 
     @Override
     public BufferedReader getReader() throws IOException {
-        // Create a reader from the cached content and return it
+		// Create a reader from the cached content and return it
+    	if (cachedBody == null || cachedBody.length == 0) {
+    		// Don’t interfere with multipart requests
+			return super.getReader();
+		}
+		
+		// Request has body data, return the cached content
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(this.cachedBody);
         return new BufferedReader(new InputStreamReader(byteArrayInputStream));
     }

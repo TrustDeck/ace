@@ -22,9 +22,20 @@ import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -38,6 +49,9 @@ public class Utility {
     
     /** The default alphabet (A-Z0-9) used for the pseudonymization process. */
     private static final String DEFAULT_PSEUDONYMIZATION_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    
+    /** A flexible date-time-formatter that accepts a multitude of input variants. */
+    private static final DateTimeFormatter FLEXIBLE_DATE_TIME_FORMATTER = buildFormatter();
 	
 	/**
 	 * This method processes the given String, computes
@@ -240,4 +254,85 @@ public class Utility {
 	        }
 		}
 	}
+
+    /**
+     * Method to build a flexible date time formatter that accepts date-times such as:
+     * <li>2025-12-31</li>
+     * <li>2025-12-31 12:00</li>
+     * <li>2025-12-31 12:00:30</li>
+     * <li>2025-12-31T12:00</li>
+     * <li>2025-12-31T12:00:30</li>
+     * <li>... with offsets: Z, +02:00, etc.</li>
+     * 
+     * @return
+     */
+	private static DateTimeFormatter buildFormatter() {
+		return new DateTimeFormatterBuilder()
+		        .parseCaseInsensitive()
+		        .append(DateTimeFormatter.ISO_LOCAL_DATE)
+		        // Time with 'T' separator
+		        .optionalStart()
+		            .appendLiteral('T')
+		            .append(DateTimeFormatter.ISO_LOCAL_TIME)
+		        .optionalEnd()
+		        // Time with space separator
+		        .optionalStart()
+		            .appendLiteral(' ')
+		            .append(DateTimeFormatter.ISO_LOCAL_TIME)
+		        .optionalEnd()
+		        // Optional offset (Z or +HH:mm) after the time
+		        .optionalStart()
+		            .appendOffset("+HH:MM", "Z")
+		        .optionalEnd()
+		        .toFormatter(Locale.ROOT)
+		        .withResolverStyle(ResolverStyle.SMART);
+	}
+	
+	/**
+	 * Method to parse a string in an unknown date-time format into
+	 * the OffsetDateTime format.
+	 * 
+	 * @param dateTime the date time String
+	 * @return the given date-time as an instance of OffsetDateTime, or {@code null} if no known format was detected
+	 */
+	public static OffsetDateTime parseDateTimeString(String dateTime) {
+        // Check if the input is given
+		if (Assertion.isNullOrEmpty(dateTime)) {
+        	return null;
+        }
+		
+		// Use the system time zone when necessary for conversion/parsing
+        ZoneId timeZone = ZoneId.systemDefault();
+        
+        // Try best-fit parsing: OffsetDateTime, ZonedDateTime, LocalDateTime, LocalDate
+        try {
+            TemporalAccessor ta = FLEXIBLE_DATE_TIME_FORMATTER.parseBest(
+            		dateTime.trim(),
+                    OffsetDateTime::from,
+                    ZonedDateTime::from,
+                    LocalDateTime::from,
+                    LocalDate::from
+            );
+
+            if (ta instanceof OffsetDateTime odt) {
+            	log.trace("Given input date time is of type " + OffsetDateTime.class.getName() + ": " + odt.toString());
+                return odt;
+            } else if (ta instanceof ZonedDateTime zdt) {
+            	log.trace("Given input date time is of type " + ZonedDateTime.class.getName() + ": " + zdt.toString());
+                return zdt.toOffsetDateTime();
+            } else if (ta instanceof LocalDateTime ldt) {
+            	log.trace("Given input date time is of type " + LocalDateTime.class.getName() + ": " + ldt.toString());
+                return ldt.atZone(timeZone).toOffsetDateTime();
+            } else if (ta instanceof LocalDate ld) {
+            	log.trace("Given input date time is of type " + LocalDate.class.getName() + ": " + ld.toString());
+                return ld.atStartOfDay(timeZone).toOffsetDateTime();
+            } else {
+            	log.trace("Could not detect type of the given input string.");
+            	return null;
+            }
+        } catch (DateTimeParseException e) {
+            log.debug("No valid parser option for the given date \"" + dateTime + "\" was found.");
+            return null;
+        }
+    }
 }

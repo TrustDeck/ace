@@ -98,10 +98,10 @@ public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
 		path = path.startsWith("/") ? path.substring(1) : path;
 		
 		// Now only one slash should be in the path which divides operation and domain; extract these
-		String[] splitedPath = path.split("/");
-		if (splitedPath.length == 2) {
-			this.setOperation(splitedPath[0]);
-			this.setDomainName(splitedPath[1]);
+		String[] splitPath = path.split("/");
+		if (splitPath.length == 2) {
+			this.setOperation(splitPath[0]);
+			this.setDomainName(splitPath[1]);
 		} else {
 			return;
 		}

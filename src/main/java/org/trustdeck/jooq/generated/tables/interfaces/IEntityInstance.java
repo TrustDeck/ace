@@ -95,6 +95,26 @@ public interface IEntityInstance extends Serializable {
     public Object getFullTextSearchVector();
 
     /**
+     * Setter for <code>public.entity_instance.data_text</code>.
+     */
+    public IEntityInstance setDataText(String value);
+
+    /**
+     * Getter for <code>public.entity_instance.data_text</code>.
+     */
+    public String getDataText();
+
+    /**
+     * Setter for <code>public.entity_instance.data_sha256</code>.
+     */
+    public IEntityInstance setDataSha256(byte[] value);
+
+    /**
+     * Getter for <code>public.entity_instance.data_sha256</code>.
+     */
+    public byte[] getDataSha256();
+
+    /**
      * Setter for <code>public.entity_instance.is_deleted</code>.
      */
     public IEntityInstance setIsDeleted(Boolean value);

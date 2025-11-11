@@ -105,7 +105,11 @@ public class AuditEventBuilder {
     private String readInputStreamInStringFormat(InputStream stream, Charset charset) {
         final int MAX_BODY_SIZE = 1024;
         final StringBuilder bodyStringBuilder = new StringBuilder();
-
+        
+        if (stream == null) {
+        	return null;
+        }
+        
         if (!stream.markSupported()) {
             stream = new BufferedInputStream(stream);
         }

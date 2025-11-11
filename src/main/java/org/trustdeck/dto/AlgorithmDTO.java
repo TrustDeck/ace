@@ -80,23 +80,21 @@ public class AlgorithmDTO implements IObjectDTO<Algorithm, AlgorithmDTO> {
 		if (pojo == null) {
 	        return null;
 	    }
-
-	    AlgorithmDTO dto = new AlgorithmDTO();
 	    
-	    dto.setId(pojo.getId());
-	    dto.setName(pojo.getName());
-	    dto.setAlphabet(pojo.getAlphabet());
-	    dto.setRandomAlgorithmDesiredSize(pojo.getRandomalgorithmdesiredsize());
-	    dto.setRandomAlgorithmDesiredSuccessProbability(pojo.getRandomalgorithmdesiredsuccessprobability());
-	    dto.setConsecutiveValueCounter(pojo.getConsecutivevaluecounter());
-	    dto.setPseudonymLength(pojo.getPseudonymlength());
-	    dto.setPaddingCharacter(pojo.getPaddingcharacter());
-	    dto.setAddCheckDigit(pojo.getAddcheckdigit());
-	    dto.setLengthIncludesCheckDigit(pojo.getLengthincludescheckdigit());
-	    dto.setSalt(pojo.getSalt());
-	    dto.setSaltLength(pojo.getSaltlength());
+	    this.setId(pojo.getId());
+	    this.setName(pojo.getName());
+	    this.setAlphabet(pojo.getAlphabet());
+	    this.setRandomAlgorithmDesiredSize(pojo.getRandomalgorithmdesiredsize());
+	    this.setRandomAlgorithmDesiredSuccessProbability(pojo.getRandomalgorithmdesiredsuccessprobability());
+	    this.setConsecutiveValueCounter(pojo.getConsecutivevaluecounter());
+	    this.setPseudonymLength(pojo.getPseudonymlength());
+	    this.setPaddingCharacter(pojo.getPaddingcharacter());
+	    this.setAddCheckDigit(pojo.getAddcheckdigit());
+	    this.setLengthIncludesCheckDigit(pojo.getLengthincludescheckdigit());
+	    this.setSalt(pojo.getSalt());
+	    this.setSaltLength(pojo.getSaltlength());
 	    
-	    return dto;
+	    return this;
 	}
 	
 	@JsonIgnore

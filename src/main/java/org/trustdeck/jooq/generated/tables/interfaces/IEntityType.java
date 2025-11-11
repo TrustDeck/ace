@@ -85,6 +85,16 @@ public interface IEntityType extends Serializable {
     public JSONB getTypeDefinition();
 
     /**
+     * Setter for <code>public.entity_type.base_type_id</code>.
+     */
+    public IEntityType setBaseTypeId(Integer value);
+
+    /**
+     * Getter for <code>public.entity_type.base_type_id</code>.
+     */
+    public Integer getBaseTypeId();
+
+    /**
      * Setter for <code>public.entity_type.associated_domain_id</code>.
      */
     public IEntityType setAssociatedDomainId(Integer value);

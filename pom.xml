@@ -149,6 +149,13 @@
 	        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 	        <version>${springdoc.version}</version>
 	    </dependency>
+	    <dependency>
+        	<!-- Needed for enitity type definition validation. -->
+        	<!-- License: Apache 2.0 -->
+		    <groupId>com.networknt</groupId>
+		    <artifactId>json-schema-validator</artifactId>
+		    <version>1.5.9</version>
+		</dependency>
 
         <!-- Dependencies for tests -->
         <dependency>
@@ -215,7 +222,8 @@
                         <database>
                             <name>org.jooq.meta.postgres.PostgresDatabase</name>
                             <includes>.*</includes>
-                            <excludes></excludes>
+							<!-- Exclude two matching functions and all tables for partition children -->
+							<excludes>public\.regexp_matches|public\.regexp_split_to_table | (?i:(?:public\.)?entityinstance_t\d+)</excludes>
                             <inputSchema>public</inputSchema>
                         </database>
                         <target>

@@ -7,6 +7,7 @@ package org.trustdeck.jooq.generated.tables.pojos;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.UUID;
 
 import org.jooq.JSONB;
@@ -27,6 +28,8 @@ public class EntityInstance implements IEntityInstance {
     private Integer entityTypeId;
     private JSONB data;
     private Object fullTextSearchVector;
+    private String dataText;
+    private byte[] dataSha256;
     private Boolean isDeleted;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
@@ -40,6 +43,8 @@ public class EntityInstance implements IEntityInstance {
         this.entityTypeId = value.getEntityTypeId();
         this.data = value.getData();
         this.fullTextSearchVector = value.getFullTextSearchVector();
+        this.dataText = value.getDataText();
+        this.dataSha256 = value.getDataSha256();
         this.isDeleted = value.getIsDeleted();
         this.createdAt = value.getCreatedAt();
         this.updatedAt = value.getUpdatedAt();
@@ -52,6 +57,8 @@ public class EntityInstance implements IEntityInstance {
         Integer entityTypeId,
         JSONB data,
         Object fullTextSearchVector,
+        String dataText,
+        byte[] dataSha256,
         Boolean isDeleted,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
@@ -62,6 +69,8 @@ public class EntityInstance implements IEntityInstance {
         this.entityTypeId = entityTypeId;
         this.data = data;
         this.fullTextSearchVector = fullTextSearchVector;
+        this.dataText = dataText;
+        this.dataSha256 = dataSha256;
         this.isDeleted = isDeleted;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -185,6 +194,40 @@ public class EntityInstance implements IEntityInstance {
     }
 
     /**
+     * Getter for <code>public.entity_instance.data_text</code>.
+     */
+    @Override
+    public String getDataText() {
+        return this.dataText;
+    }
+
+    /**
+     * Setter for <code>public.entity_instance.data_text</code>.
+     */
+    @Override
+    public EntityInstance setDataText(String dataText) {
+        this.dataText = dataText;
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.entity_instance.data_sha256</code>.
+     */
+    @Override
+    public byte[] getDataSha256() {
+        return this.dataSha256;
+    }
+
+    /**
+     * Setter for <code>public.entity_instance.data_sha256</code>.
+     */
+    @Override
+    public EntityInstance setDataSha256(byte[] dataSha256) {
+        this.dataSha256 = dataSha256;
+        return this;
+    }
+
+    /**
      * Getter for <code>public.entity_instance.is_deleted</code>.
      */
     @Override
@@ -280,6 +323,18 @@ public class EntityInstance implements IEntityInstance {
         }
         else if (!this.fullTextSearchVector.equals(other.fullTextSearchVector))
             return false;
+        if (this.dataText == null) {
+            if (other.dataText != null)
+                return false;
+        }
+        else if (!this.dataText.equals(other.dataText))
+            return false;
+        if (this.dataSha256 == null) {
+            if (other.dataSha256 != null)
+                return false;
+        }
+        else if (!Arrays.equals(this.dataSha256, other.dataSha256))
+            return false;
         if (this.isDeleted == null) {
             if (other.isDeleted != null)
                 return false;
@@ -311,6 +366,8 @@ public class EntityInstance implements IEntityInstance {
         result = prime * result + ((this.entityTypeId == null) ? 0 : this.entityTypeId.hashCode());
         result = prime * result + ((this.data == null) ? 0 : this.data.hashCode());
         result = prime * result + ((this.fullTextSearchVector == null) ? 0 : this.fullTextSearchVector.hashCode());
+        result = prime * result + ((this.dataText == null) ? 0 : this.dataText.hashCode());
+        result = prime * result + ((this.dataSha256 == null) ? 0 : Arrays.hashCode(this.dataSha256));
         result = prime * result + ((this.isDeleted == null) ? 0 : this.isDeleted.hashCode());
         result = prime * result + ((this.createdAt == null) ? 0 : this.createdAt.hashCode());
         result = prime * result + ((this.updatedAt == null) ? 0 : this.updatedAt.hashCode());
@@ -327,6 +384,8 @@ public class EntityInstance implements IEntityInstance {
         sb.append(", ").append(entityTypeId);
         sb.append(", ").append(data);
         sb.append(", ").append(fullTextSearchVector);
+        sb.append(", ").append(dataText);
+        sb.append(", ").append("[binary...]");
         sb.append(", ").append(isDeleted);
         sb.append(", ").append(createdAt);
         sb.append(", ").append(updatedAt);
@@ -347,6 +406,8 @@ public class EntityInstance implements IEntityInstance {
         setEntityTypeId(from.getEntityTypeId());
         setData(from.getData());
         setFullTextSearchVector(from.getFullTextSearchVector());
+        setDataText(from.getDataText());
+        setDataSha256(from.getDataSha256());
         setIsDeleted(from.getIsDeleted());
         setCreatedAt(from.getCreatedAt());
         setUpdatedAt(from.getUpdatedAt());

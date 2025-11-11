@@ -12,14 +12,14 @@ import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function9;
+import org.jooq.Function11;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row9;
+import org.jooq.Row11;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -93,6 +93,16 @@ public class EntityInstance extends TableImpl<EntityInstanceRecord> {
     public final TableField<EntityInstanceRecord, Object> FULL_TEXT_SEARCH_VECTOR = createField(DSL.name("full_text_search_vector"), org.jooq.impl.DefaultDataType.getDefaultDataType("\"pg_catalog\".\"tsvector\""), this, "");
 
     /**
+     * The column <code>public.entity_instance.data_text</code>.
+     */
+    public final TableField<EntityInstanceRecord, String> DATA_TEXT = createField(DSL.name("data_text"), SQLDataType.CLOB, this, "");
+
+    /**
+     * The column <code>public.entity_instance.data_sha256</code>.
+     */
+    public final TableField<EntityInstanceRecord, byte[]> DATA_SHA256 = createField(DSL.name("data_sha256"), SQLDataType.BLOB, this, "");
+
+    /**
      * The column <code>public.entity_instance.is_deleted</code>.
      */
     public final TableField<EntityInstanceRecord, Boolean> IS_DELETED = createField(DSL.name("is_deleted"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "");
@@ -147,7 +157,7 @@ public class EntityInstance extends TableImpl<EntityInstanceRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.ENTITY_INSTANCE_ET_PROJ_ID_IDX, Indexes.ENTITY_INSTANCE_FTS_ACTIVE_GIN_IDX);
+        return Arrays.asList(Indexes.ENTITY_INSTANCE_DATA_TRGM_GIN_IDX, Indexes.ENTITY_INSTANCE_ET_PROJ_ID_IDX, Indexes.ENTITY_INSTANCE_FTS_ACTIVE_GIN_IDX);
     }
 
     @Override
@@ -233,18 +243,18 @@ public class EntityInstance extends TableImpl<EntityInstanceRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row9 type methods
+    // Row11 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Long, UUID, Integer, Integer, JSONB, Object, Boolean, OffsetDateTime, OffsetDateTime> fieldsRow() {
-        return (Row9) super.fieldsRow();
+    public Row11<Long, UUID, Integer, Integer, JSONB, Object, String, byte[], Boolean, OffsetDateTime, OffsetDateTime> fieldsRow() {
+        return (Row11) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function9<? super Long, ? super UUID, ? super Integer, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? super OffsetDateTime, ? super OffsetDateTime, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function11<? super Long, ? super UUID, ? super Integer, ? super Integer, ? super JSONB, ? super Object, ? super String, ? super byte[], ? super Boolean, ? super OffsetDateTime, ? super OffsetDateTime, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -252,7 +262,7 @@ public class EntityInstance extends TableImpl<EntityInstanceRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function9<? super Long, ? super UUID, ? super Integer, ? super Integer, ? super JSONB, ? super Object, ? super Boolean, ? super OffsetDateTime, ? super OffsetDateTime, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function11<? super Long, ? super UUID, ? super Integer, ? super Integer, ? super JSONB, ? super Object, ? super String, ? super byte[], ? super Boolean, ? super OffsetDateTime, ? super OffsetDateTime, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

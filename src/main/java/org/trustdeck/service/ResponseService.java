@@ -18,6 +18,7 @@
 package org.trustdeck.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -317,6 +318,25 @@ public class ResponseService {
     }
 
     /**
+     * Ok (200) response entity <b>with</b> an image in the body.
+     *
+     * @param mimeType the mime type of the image
+     * @param image the image in byte-array representation
+     * @return the response entity
+     */
+    public ResponseEntity<byte[]> ok(String mimeType, byte[] image) {
+    	// Build headers for the image payload
+    	HttpHeaders headers = new HttpHeaders();
+		headers.set(HttpHeaders.CONTENT_TYPE, mimeType);
+		
+		// Disallow caching the image so that endpoint-users always have the up-to-date image
+		headers.set(HttpHeaders.CACHE_CONTROL, CacheControl.noCache().getHeaderValue());
+		
+		// Return image
+        return ResponseEntity.ok().headers(headers).body(image);
+    }
+
+    /**
      * Created (201) response entity <b>without</b> a body and <b>without</b> a location.
      *
      * @param <T> the type parameter
@@ -385,5 +405,38 @@ public class ResponseService {
      */
     public <T> ResponseEntity<T> partialContent(String mediaType, T body) {
         return this.createResponseEntityFromBody(HttpStatus.PARTIAL_CONTENT, mediaType, body, null);
+    }
+
+    /**
+     * Gone (410) response entity.
+     *
+     * @param <T> the type parameter
+     * @param mediaType the media type
+     * @return the response entity
+     */
+    public <T> ResponseEntity<T> gone(String mediaType) {
+        return this.createResponseEntityFromHttpStatus(mediaType, HttpStatus.GONE, null);
+    }
+
+    /**
+     * Payload too large (413) response entity.
+     *
+     * @param <T> the type parameter
+     * @param mediaType the media type
+     * @return the response entity
+     */
+    public <T> ResponseEntity<T> payloadTooLarge(String mediaType) {
+        return this.createResponseEntityFromHttpStatus(mediaType, HttpStatus.PAYLOAD_TOO_LARGE, null);
+    }
+
+    /**
+     * Unsupported media type (415) response entity.
+     *
+     * @param <T> the type parameter
+     * @param mediaType the media type
+     * @return the response entity
+     */
+    public <T> ResponseEntity<T> unsupportedMediaType(String mediaType) {
+        return this.createResponseEntityFromHttpStatus(mediaType, HttpStatus.UNSUPPORTED_MEDIA_TYPE, null);
     }
 }
