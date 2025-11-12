@@ -1082,8 +1082,15 @@ public class DomainRESTController {
             log.error("The domain that should be updated wasn't found.");
             return responseService.notFound(responseContentType);
         }
-
-        String domainName = (newDomainName != null && !newDomainName.isBlank()) ? newDomainName.trim() : old.getName();
+        
+        // Check if the new name is already in use
+        String domainName;
+        if (newDomainName != null && !newDomainName.isBlank()) {
+        	Domain d = domainDBAccessService.getDomainByName(newDomainName, null);
+        	domainName = d == null ? old.getName() : newDomainName.trim();
+        } else {
+        	domainName = old.getName();
+        }
 
         // Check if the (new) name is valid in an URI. If not, tell the user and abort
         try {
@@ -1214,10 +1221,28 @@ public class DomainRESTController {
             log.error("The domain that should be updated wasn't found.");
             return responseService.notFound(responseContentType);
         }
+        
+        // Check if the new name is already in use
+        String domainName;
+        if (newName != null && !newName.isBlank()) {
+        	Domain d = domainDBAccessService.getDomainByName(newName, null);
+        	domainName = d == null ? old.getName() : newName.trim();
+        } else {
+        	domainName = old.getName();
+        }
+
+        // Check if the (new) name is valid in an URI. If not, tell the user and abort
+        try {
+            @SuppressWarnings("unused")
+            URI location = new URI("/api/pseudonymization/domain?name=" + domainName);
+        } catch (URISyntaxException e) {
+            log.debug("The new domain name is not suitable to be used in a URI. Please choose another name.");
+            return responseService.notAcceptable(responseContentType);
+        }
 
         // Create the updated domain object
         Domain updated = new Domain();
-        updated.setName((newName != null && !newName.isBlank()) ? newName.trim() : null);
+        updated.setName(domainName);
         updated.setValidfrom((validFrom != null) ? validFrom.toLocalDateTime() : null);
         updated.setValidfrominherited((validFrom != null) ? false : null);
         updated.setValidto((validTo != null) ? validTo.toLocalDateTime() : null);
@@ -1232,7 +1257,7 @@ public class DomainRESTController {
             updated.setMultiplepsnallowed(multiplePsnAllowed);
             updated.setMultiplepsnallowedinherited((multiplePsnAllowed != null) ? false : null);
         } else {
-            log.info("Since the domain \"" + newName != null ? newName : old.getName() + "\" isn't empty, updates of the prefix, the algorithm, "
+            log.info("Since the domain \"" + domainName + "\" isn't empty, updates of the prefix, the algorithm, "
                     + "the consecutive value, the pseudonym-length, or the padding character can't be processed and are ignored.");
         }
 
@@ -1247,11 +1272,11 @@ public class DomainRESTController {
             	updatedDomDTO = updatedDomDTO.toReducedStandardView();
             }
             
-            log.info("Successfully updated the domain \"" + newName + "\".");
+            log.info("Successfully updated the domain \"" + domainName + "\".");
             return responseService.ok(responseContentType, updatedDomDTO);
         } else {
             // Updating the meta-information failed. Return an error 422-UNPROCESSABLE_ENTITY.
-            log.error("Updating the domain \"" + newName + "\" was unsuccessful.");
+            log.error("Updating the domain \"" + domainName + "\" was unsuccessful.");
             return responseService.unprocessableEntity(responseContentType);
         }
     }
