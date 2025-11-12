@@ -1603,6 +1603,11 @@ public class PseudonymRESTController {
     	// Retrieve domain
     	Domain d = domainDBAccessService.getDomainByName(domainName, null);
     	
+    	if (d == null) {
+    		log.debug("Could not find the domain in which the validation should be performed.");
+    		return responseService.notFound(responseContentType);
+    	}
+    	
     	if (!d.getAddcheckdigit()) {
     		// There is no check digit to validate
     		log.debug("The domain is configured so that there is no check digit added. Therefore, no validation can be performed.");
