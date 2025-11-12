@@ -1039,6 +1039,7 @@ public class DomainRESTController {
         String prefix = domainDTO.getPrefix();
         Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
         Timestamp validTo = domainDTO.getValidTo() != null ? Timestamp.valueOf(domainDTO.getValidTo()) : null;
+        Long validityTime = domainDTO.getValidityTime() != null ? Utility.validityTimeToSeconds(domainDTO.getValidityTime()) : null;
         Boolean enforceStartDateValidity = domainDTO.getEnforceStartDateValidity();
         Boolean enforceEndDateValidity = domainDTO.getEnforceEndDateValidity();
         String algorithm = domainDTO.getAlgorithm();
@@ -1064,7 +1065,7 @@ public class DomainRESTController {
             return responseService.badRequest(responseContentType);
         }
 
-        if (Assertion.assertNullAll(newDomainName, prefix, validFrom, validTo, enforceStartDateValidity,
+        if (Assertion.assertNullAll(newDomainName, prefix, validFrom, validTo, validityTime, enforceStartDateValidity,
                 enforceEndDateValidity, algorithm, alphabet, randomAlgorithmDesiredSize, 
                 randomAlgorithmDesiredSuccessProbability, multiplePsnAllowed, consecVal, psnLength, paddingChar, 
                 addCheckDigit, lengthIncludesCheckDigit, salt, saltLength, description)) {
@@ -1122,6 +1123,18 @@ public class DomainRESTController {
         	// Do not update and discard any provided information
         	randomAlgorithmDesiredSuccessProbability = null;
         }
+        
+        // Determine validTo date
+        LocalDateTime vTo = null;
+        if (validTo != null) {
+            vTo = validTo.toLocalDateTime();
+        } else if (validTo == null && validityTime != null) {
+        	if (validFrom == null) {
+        		vTo = old.getValidfrom().plusSeconds(validityTime);
+        	} else {
+        		vTo = validFrom.toLocalDateTime().plusSeconds(validityTime);
+        	}
+        }
 
         // Create the updated domain object
         Domain updated = new Domain();
@@ -1129,8 +1142,8 @@ public class DomainRESTController {
         updated.setPrefix((prefix != null && !prefix.trim().equals("")) ? prefix.trim() : null);
         updated.setValidfrom((validFrom != null) ? validFrom.toLocalDateTime() : null);
         updated.setValidfrominherited((validFrom != null) ? false : null);
-        updated.setValidto((validTo != null) ? validTo.toLocalDateTime() : null);
-        updated.setValidtoinherited((validTo != null) ? false : null);
+        updated.setValidto(vTo);
+        updated.setValidtoinherited((vTo != null) ? false : null);
         updated.setEnforcestartdatevalidity(enforceStartDateValidity);
         updated.setEnforcestartdatevalidityinherited((enforceStartDateValidity != null) ? false : null);
         updated.setEnforceenddatevalidity(enforceEndDateValidity);
@@ -1205,11 +1218,12 @@ public class DomainRESTController {
         String prefix = domainDTO.getPrefix();
         Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
         Timestamp validTo = domainDTO.getValidTo() != null ? Timestamp.valueOf(domainDTO.getValidTo()) : null;
+        Long validityTime = domainDTO.getValidityTime() != null ? Utility.validityTimeToSeconds(domainDTO.getValidityTime()) : null;
         String algorithm = domainDTO.getAlgorithm();
         Boolean multiplePsnAllowed = domainDTO.getMultiplePsnAllowed();
         String description = domainDTO.getDescription();
 
-        if (Assertion.assertNullAll(newName, prefix, validFrom, validTo, algorithm, multiplePsnAllowed, description)) {
+        if (Assertion.assertNullAll(newName, prefix, validFrom, validTo, validityTime, algorithm, multiplePsnAllowed, description)) {
             // An empty object was passed, so there is nothing to update.
             log.debug("The domain DTO passed by the user was empty. Nothing to update.");
             return responseService.unprocessableEntity(responseContentType);
@@ -1240,13 +1254,25 @@ public class DomainRESTController {
             return responseService.notAcceptable(responseContentType);
         }
 
+        // Determine validTo date
+        LocalDateTime vTo = null;
+        if (validTo != null) {
+            vTo = validTo.toLocalDateTime();
+        } else if (validTo == null && validityTime != null) {
+        	if (validFrom == null) {
+        		vTo = old.getValidfrom().plusSeconds(validityTime);
+        	} else {
+        		vTo = validFrom.toLocalDateTime().plusSeconds(validityTime);
+        	}
+        }
+
         // Create the updated domain object
         Domain updated = new Domain();
         updated.setName(domainName);
         updated.setValidfrom((validFrom != null) ? validFrom.toLocalDateTime() : null);
         updated.setValidfrominherited((validFrom != null) ? false : null);
-        updated.setValidto((validTo != null) ? validTo.toLocalDateTime() : null);
-        updated.setValidtoinherited((validTo != null) ? false : null);
+        updated.setValidto(vTo);
+        updated.setValidtoinherited((vTo != null) ? false : null);
         updated.setDescription(description);
 
         // Allow the following changes only when the domain does not contain any records yet
@@ -1272,11 +1298,11 @@ public class DomainRESTController {
             	updatedDomDTO = updatedDomDTO.toReducedStandardView();
             }
             
-            log.info("Successfully updated the domain \"" + domainName + "\".");
+            log.info("Successfully updated the domain \"" + updatedDomain.getName() + "\".");
             return responseService.ok(responseContentType, updatedDomDTO);
         } else {
             // Updating the meta-information failed. Return an error 422-UNPROCESSABLE_ENTITY.
-            log.error("Updating the domain \"" + domainName + "\" was unsuccessful.");
+            log.error("Updating the domain \"" + old.getName() + "\" was unsuccessful.");
             return responseService.unprocessableEntity(responseContentType);
         }
     }
