@@ -1247,11 +1247,11 @@ public class DomainRESTController {
             	updatedDomDTO = updatedDomDTO.toReducedStandardView();
             }
             
-            log.info("Successfully updated the domain \"" + newName + "\".");
+            log.info("Successfully updated the domain \"" + updatedDomain.getName() + "\".");
             return responseService.ok(responseContentType, updatedDomDTO);
         } else {
             // Updating the meta-information failed. Return an error 422-UNPROCESSABLE_ENTITY.
-            log.error("Updating the domain \"" + newName + "\" was unsuccessful.");
+            log.error("Updating the domain \"" + old.getName() + "\" was unsuccessful.");
             return responseService.unprocessableEntity(responseContentType);
         }
     }
