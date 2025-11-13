@@ -218,7 +218,7 @@ public class DomainOIDCService {
             	// Found a domain or project name in the group path ending; check if the path contains a domain-role-name
             	String pathWithoutEnding = e.getValue().substring(0, e.getValue().length() - groupPathEnding.length() - 1);
             	String roleName = pathWithoutEnding.substring(pathWithoutEnding.lastIndexOf("/") + 1);
-            	log.trace("pathWithoutEnding: " + pathWithoutEnding + ", roleName: " + roleName);
+
             	if (domainRoles.contains(roleName)) {
 	            	// Found a domain name, remove the associated group for every user that has it
 	                for (UserRepresentation user : oidcService.getKeycloakRealm().groups().group(e.getKey()).members()) {
