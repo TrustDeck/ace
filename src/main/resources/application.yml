@@ -45,8 +45,9 @@ spring:
           realm: ${KEYCLOAK_REALM_NAME}
           admin-username: ${KEYCLOAK_CACHE_ADMIN_USER}
           admin-password: ${KEYCLOAK_CACHE_ADMIN_PASSWORD}
-          domain-role-group-claim-name: groups
+          role-group-claim-name: groups
           domain-role-group-context-name: Domain
+          project-role-group-context-name: Project
           # Custom section ends
           jws-algorithm: RSA256
           issuer-uri: ${spring.security.oauth2.resourceserver.jwt.server-uri}/realms/${spring.security.oauth2.resourceserver.jwt.realm}
@@ -78,52 +79,54 @@ app:
       password: ${DATABASE_TRUSTDECK_PASSWORD}
       configuration:
         maximum-pool-size: 20
-  operations:
+  roles:
     # Name of all possible rights -- used for rights and roles management
-    - domain-create
-    - domain-create-complete
-    - domain-delete
-    - domain-list-all
-    - domain-read
-    - domain-read-salt
-    - domain-update
-    - domain-update-complete
-    - domain-update-salt
-    - record-create
-    - record-create-batch
-    - record-delete
-    - record-delete-batch
-    - record-read
-    - record-read-batch
-    - record-update
-    - record-update-complete
-    - record-update-batch
-    - complete-view
-    - link-pseudonyms
-    - delete-table
-    - read-table-storage
-    - delete-roles
-    - project-create
-    - project-read
-    - project-update
-    - project-delete
-    - project-image-create
-    - project-image-read
-    - project-image-update
-    - project-image-delete
-    - base-entity-type-create
-    - base-entity-type-read
-    - project-entity-type-create
-    - project-entity-type-read
-    - project-entity-type-update
-    - project-entity-type-delete
-    - project-entity-type-search
-    - project-entity-instance-create
-    - project-entity-instance-read
-    - project-entity-instance-update
-    - project-entity-instance-delete
-    - project-entity-instance-search
-    - project-entity-instance-record-linkage
-  administration-operations:
-    # Roles that are needed to manage other roles and rights
-    - permission-manager
+    ACE:
+      - domain-create
+      - domain-create-complete
+      - domain-delete
+      - domain-list-all
+      - domain-read
+      - domain-read-salt
+      - domain-update
+      - domain-update-complete
+      - domain-update-salt
+      - record-create
+      - record-create-batch
+      - record-delete
+      - record-delete-batch
+      - record-read
+      - record-read-batch
+      - record-update
+      - record-update-complete
+      - record-update-batch
+      - link-pseudonyms
+      - complete-view
+    KING:
+      - project-create
+      - project-read
+      - project-update
+      - project-delete
+      - project-image-create
+      - project-image-read
+      - project-image-update
+      - project-image-delete
+      - base-entity-type-create
+      - base-entity-type-read
+      - project-entity-type-create
+      - project-entity-type-read
+      - project-entity-type-update
+      - project-entity-type-delete
+      - project-entity-type-search
+      - project-entity-instance-create
+      - project-entity-instance-read
+      - project-entity-instance-update
+      - project-entity-instance-delete
+      - project-entity-instance-search
+      - project-entity-instance-record-linkage
+    administrative:
+      # Roles that are needed to manage other roles and rights
+      - permission-manager
+      - delete-roles
+      - delete-table
+      - read-table-storage
