@@ -49,6 +49,10 @@ public class AuthorizationService {
     /** Caching service for group paths. */
     @Autowired
     private CachingService cachingService;
+    
+    /** Enables access to project database methods. */
+    @Autowired
+    private ProjectDBService projectDBService;
 
     /**
      * Returns the authentication object from the SecurityContextHolder.
@@ -169,7 +173,7 @@ public class AuthorizationService {
         	return false;
         }
 
-        return hasAssignedGroupPaths(groupPaths, domain, role);
+        return hasAssignedDomainGroupPaths(groupPaths, domain, role);
     }
 
     /**
@@ -189,7 +193,65 @@ public class AuthorizationService {
             return false;
         }
         
-        return hasAssignedGroupPaths(groupPaths, domain, role);
+        return hasAssignedDomainGroupPaths(groupPaths, domain, role);
+    }
+
+    /**
+     * Method that checks whether the user has the specified project and role 
+     * as a role in the OIDC token and a relationship between them.
+     * For security reasons, this method is only used for new requests and 
+     * always contains the token of the new request.
+     *
+     * @param root method-level security control context object that includes information about the authenticated user
+     * @param projectAbbreviation the project abbreviation as a string
+     * @param role the role as a string
+     * @return {@code true} only if the given role and project have a relationship, {@code false} if not
+     */
+    public boolean hasProjectRoleRelationship(MethodSecurityExpressionOperations root, String projectAbbreviation, String role) {
+        List<String> groupPaths = null;
+        Authentication authentication = root.getAuthentication();
+        
+        if (authentication == null) {
+        	return false;
+        }
+        
+        try {
+	        Jwt jwt = (Jwt) authentication.getPrincipal();
+            if (jwt == null) {
+                return false;
+            }
+
+	        groupPaths = cachingService.getGroupPaths(jwt.getSubject());
+        } catch (ClassCastException e) {
+         	return false;
+        }
+
+        if (!Assertion.isNotNullOrEmpty(projectAbbreviation) || !Assertion.isNotNullOrEmpty(role) || groupPaths == null || groupPaths.isEmpty()) {
+            // Project name or role were not provided
+        	return false;
+        }
+
+        return hasAssignedProjectGroupPaths(groupPaths, projectAbbreviation, role);
+    }
+
+    /**
+     * Method that checks whether the user has the specified project and role 
+     * as a role in the OIDC token and a relationship between them
+     * when no method-level security control context object is given by the user.
+     *
+     * @param projectAbbreviation the project abbreviation as a string
+     * @param role the role as a string
+     * @return {@code true} only if given role and project have a relationship, {@code false} if not
+     */
+    public boolean hasProjectRoleRelationship(String projectAbbreviation, String role) {
+        List<String> groupPaths = this.getCachedGroupPaths();
+
+        if (!Assertion.isNotNullOrEmpty(projectAbbreviation) || !Assertion.isNotNullOrEmpty(role) || groupPaths == null || groupPaths.isEmpty()) {
+            // Project name or role were not provided
+            return false;
+        }
+        
+        return hasAssignedProjectGroupPaths(groupPaths, projectAbbreviation, role);
     }
 
     /**
@@ -200,8 +262,22 @@ public class AuthorizationService {
      * @param role the given role as a string
      * @return {@code true} only if the given role and domain have a relationship and are set as role, {@code false} if not
      */
-    private Boolean hasAssignedGroupPaths(List<String> groupPaths, String domain, String role) {
+    private Boolean hasAssignedDomainGroupPaths(List<String> groupPaths, String domain, String role) {
         String path = "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role + "/" + domain;
+        return groupPaths.contains(path);
+    }
+
+    /**
+     * Helper method to have the group paths check in one place.
+     *
+     * @param groupPaths the project as a list
+     * @param projectAbbreviation the given project's abbreviation as a string
+     * @param role the given role as a string
+     * @return {@code true} only if the given role and project have a relationship and are set as role, {@code false} if not
+     */
+    private Boolean hasAssignedProjectGroupPaths(List<String> groupPaths, String projectAbbreviation, String role) {
+    	String projectName = projectDBService.getProjectByAbbreviation(projectAbbreviation, null).getName();
+        String path = "/" + jwtProperties.getProjectRoleGroupContextName() + "/" + role + "/" + projectName;
         return groupPaths.contains(path);
     }
 }
