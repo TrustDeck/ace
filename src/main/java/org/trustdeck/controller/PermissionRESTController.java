@@ -45,6 +45,7 @@ import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
 import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.service.OidcService;
+import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
 import org.trustdeck.utils.Utility;
@@ -60,11 +61,15 @@ import org.trustdeck.utils.Utility;
 @EnableMethodSecurity
 @Slf4j
 @RequestMapping(value = "/api/permissions")
-public class PermissionRestController {
+public class PermissionRESTController {
 
 	/** Enables the access to the domain specific database access methods. */
 	@Autowired
 	private DomainDBAccessService domainDBAccessService;
+
+	/** Enables the access to the project specific database access methods. */
+	@Autowired
+	private ProjectDBService projectDBService;
 
 	/** Enables services for better working with responses. */
 	@Autowired
@@ -156,11 +161,11 @@ public class PermissionRestController {
 			return responseService.badRequest(responseContentType);
 		}
 		
-		return responseService.ok(responseContentType, getCurrentPermissions(domainName, userId));
+		return responseService.ok(responseContentType, getCurrentACEPermissions(domainName, userId));
 	}
 
 	/**
-	 * Updates the permission for a user in a domain.
+	 * Updates the ACE-specific permission for a user in a domain.
 	 *
 	 * @param domainName the name of the domain
 	 * @param userId the ID of the user
@@ -175,20 +180,20 @@ public class PermissionRestController {
      *         not exist or cannot be resolved</li>
 	 */
 	@PutMapping("/{domainName}")
-	@PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'permission-manager')")
+	@PreAuthorize("hasRole('permission-manager')")
 	@Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-	public ResponseEntity<?> updatePermission(@PathVariable("domain") String domainName,
-											  @RequestParam(name = "userId", required = true) String userId,
-											  @RequestBody List<PermissionDTO> permissions,
-											  @RequestHeader(name = "accept", required = false) String responseContentType, 
-											  HttpServletRequest request) {
+	public ResponseEntity<?> updateACEPermission(@PathVariable("domainName") String domainName,
+												 @RequestParam(name = "userId", required = true) String userId,
+												 @RequestBody List<PermissionDTO> permissions,
+												 @RequestHeader(name = "accept", required = false) String responseContentType,
+												 HttpServletRequest request) {
 
 		// Check if the given list of updated permissions is empty
 		if (permissions == null || permissions.size() == 0) {
 			return responseService.badRequest(responseContentType);
 		}
 
-		// Check if the domain exists
+		// Retrieve the domain tree that includes the domain of interest as a list
 		List<String> domainNames;
 		try {
 			domainNames = getFlatDomainTree(domainName);
@@ -202,7 +207,7 @@ public class PermissionRestController {
 		// Check if the permissions are valid
 		for (PermissionDTO permissionDTO : permissions) {
 			if (!domainNames.contains(permissionDTO.getDomainName())
-					|| !roleConfig.getOperations().contains(permissionDTO.getOperation())
+					|| !roleConfig.getACERoles().contains(permissionDTO.getRole())
 					|| !permissionDTO.getUserId().equals(userId)
 					|| !groupPaths.containsValue(permissionDTO.getDomainPath())) {
 				return responseService.badRequest(responseContentType);
@@ -212,7 +217,7 @@ public class PermissionRestController {
 		// Get the current permissions of the user
 		List<PermissionDTO> currentPermissions;
 		try {
-			currentPermissions = getCurrentPermissions(domainName, userId);
+			currentPermissions = getCurrentACEPermissions(domainName, userId);
 		} catch (IllegalArgumentException e) {
 			return responseService.notFound(responseContentType);
 		}
@@ -222,13 +227,13 @@ public class PermissionRestController {
 			if (!permissionDTO.isPermissionInList(currentPermissions)) {
 				// Get the key from the group paths by the value
 				Map.Entry<String, String> domainEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getDomainPath());
-				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getOperationPath());
+				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getRolePath());
 				
 				if (domainEntry != null && operationEntry != null) {
 					oidcService.addUserToGroup(domainEntry.getKey(), userId);
 					oidcService.addUserToGroup(operationEntry.getKey(), userId);
 				} else {
-					log.debug("No group found for path: {}", permissionDTO.getDomainPath());
+					log.debug("No group found for path: " + permissionDTO.getDomainPath());
 				}
 			}
 		}
@@ -237,13 +242,13 @@ public class PermissionRestController {
 		for (PermissionDTO permissionDTO : currentPermissions) {
 			if (!permissionDTO.isPermissionInList(permissions)) {
 				Map.Entry<String, String> domainEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getDomainPath());
-				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getOperationPath());
+				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getRolePath());
 				
 				if (domainEntry != null && operationEntry != null) {
 					oidcService.removeUserFromGroup(domainEntry.getKey(), userId);
 					oidcService.removeUserFromGroup(operationEntry.getKey(), userId);
 				} else {
-					log.debug("No group found for path: {}", permissionDTO.getDomainPath());
+					log.debug("No group found for path: " + permissionDTO.getDomainPath());
 				}
 			}
 		}
@@ -252,12 +257,96 @@ public class PermissionRestController {
 	}
 
 	/**
-	* Retrieves a flat list of domain names for a given domain.
+	 * Updates the KING-specific permission for a user in a project.
+	 *
+	 * @param projectName the name of the project
+	 * @param userId the ID of the user
+	 * @param permissions the list of permissions to be created
+	 * @param responseContentType (optional) the response content type
+     * @param request the request object, injected by Spring Boot
+     * @return <li>a <b>200-OK</b> status when the user's permissions were 
+     * 		   successfully synchronized with the provided list</li>
+     *         <li>a <b>400-BAD_REQUEST</b> status when the provided permissions 
+     *         list is empty or contains invalid entries</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when the specified domain does 
+     *         not exist or cannot be resolved</li>
+	 */
+	@PutMapping("/{projectName}")
+	@PreAuthorize("hasRole('permission-manager')")
+	@Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+	public ResponseEntity<?> updateKINGPermission(@PathVariable("projectName") String projectName,
+												  @RequestParam(name = "userId", required = true) String userId,
+												  @RequestBody List<PermissionDTO> permissions,
+												  @RequestHeader(name = "accept", required = false) String responseContentType,
+												  HttpServletRequest request) {
+
+		// Check if the given list of updated permissions is empty
+		if (permissions == null || permissions.size() == 0) {
+			return responseService.badRequest(responseContentType);
+		}
+
+		// Get the paths of the groups
+		Map<String, String> groupPaths = Utility.flattenGroupIDToPathMapping(oidcService.getRealmGroups(), true);
+
+		// Check if the permissions are valid
+		for (PermissionDTO permissionDTO : permissions) {
+			if (!roleConfig.getKINGRoles().contains(permissionDTO.getRole()) || !permissionDTO.getUserId().equals(userId)) {
+				return responseService.badRequest(responseContentType);
+			}
+		}
+
+		// Get the current permissions of the user
+		List<PermissionDTO> currentPermissions;
+		try {
+			currentPermissions = getCurrentKINGPermissions(projectName, userId);
+		} catch (IllegalArgumentException e) {
+			return responseService.notFound(responseContentType);
+		}
+
+		// Create missing permissions
+		for (PermissionDTO permissionDTO : permissions) {
+			if (!permissionDTO.isPermissionInList(currentPermissions)) {
+				// Get the key from the group paths by the value
+				// TODO
+				Map.Entry<String, String> projectEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getProjectPath());
+				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getRolePath());
+				
+				if (projectEntry != null && operationEntry != null) {
+					oidcService.addUserToGroup(projectEntry.getKey(), userId);
+					oidcService.addUserToGroup(operationEntry.getKey(), userId);
+				} else {
+					log.debug("No group found for path: " + permissionDTO.getProjectPath());
+				}
+			}
+		}
+
+		// Delete permissions that are not in the new list
+		for (PermissionDTO permissionDTO : currentPermissions) {
+			if (!permissionDTO.isPermissionInList(permissions)) {
+				Map.Entry<String, String> projectEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getProjectPath());
+				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getRolePath());
+				
+				if (projectEntry != null && operationEntry != null) {
+					oidcService.removeUserFromGroup(projectEntry.getKey(), userId);
+					oidcService.removeUserFromGroup(operationEntry.getKey(), userId);
+				} else {
+					log.debug("No group found for path: " + permissionDTO.getProjectPath());
+				}
+			}
+		}
+
+		return this.responseService.ok(responseContentType);
+	}
+
+	/**
+	* Retrieves a flat list of domain names for a given domain that represents the domain-
+	* tree that the given domain is in.
 	*
 	* @param domainName the name of the domain to retrieve the tree structure for
 	* @return a list of domain names in a flat structure
+	* @throws IllegalArgumentException when the domain or it's tree could not be retrieved
 	*/
-	private List<String> getFlatDomainTree(String domainName) {
+	private List<String> getFlatDomainTree(String domainName) throws IllegalArgumentException {
 		Domain domain = domainDBAccessService.getDomainByName(domainName, null);
 		List<Domain> domainTree = domainDBAccessService.getDomainTreeStructure(domain);
 
@@ -281,8 +370,9 @@ public class PermissionRestController {
 	 * @param domainName the name of the domain
 	 * @param userId the ID of the user
 	 * @return a list of current permissions for the user in the specified domain
+	 * @throws IllegalArgumentException when this exception was thrown inside of another method called from this method
 	 */
-	private List<PermissionDTO> getCurrentPermissions(String domainName, String userId) {
+	private List<PermissionDTO> getCurrentACEPermissions(String domainName, String userId) throws IllegalArgumentException {
 		// Retrieve the domain tree
 		List<String> domainNames = getFlatDomainTree(domainName);
 
@@ -294,6 +384,33 @@ public class PermissionRestController {
 			PermissionDTO permissionDTO = new PermissionDTO(groupPath, userId);
 
 			if (permissionDTO.validate() && domainNames.contains(permissionDTO.getDomainName())) {
+				currentPermissions.add(permissionDTO);
+			}
+		}
+
+		return currentPermissions;
+	}
+
+	/**
+	 * Retrieves a list of the current permissions of a user for a specific project.
+	 *
+	 * @param projectName the name of the project
+	 * @param userId the ID of the user
+	 * @return a list of current permissions for the user in the specified project
+	 * @throws IllegalArgumentException when this exception was thrown inside of another method called from this method
+	 */
+	private List<PermissionDTO> getCurrentKINGPermissions(String projectName, String userId) throws IllegalArgumentException {
+		// Retrieve the project names
+		List<String> projectNames = projectDBService.getAllProjectNames(null);
+
+		// Extract permissions for the given domain from the list of all permissions
+		List<PermissionDTO> currentPermissions = new ArrayList<>();
+		List<String> groupPaths = Utility.extractGroupPaths(oidcService.getGroupsByUserId(userId), true);
+		for (String groupPath : groupPaths) {
+			// Transform group path into permission DTO
+			PermissionDTO permissionDTO = new PermissionDTO(groupPath, userId);
+
+			if (permissionDTO.validate() && permissionDTO.getProjectName().equals(projectName) && projectNames.contains(projectName)) {
 				currentPermissions.add(permissionDTO);
 			}
 		}
