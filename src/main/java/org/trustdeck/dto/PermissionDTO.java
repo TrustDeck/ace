@@ -19,22 +19,26 @@ package org.trustdeck.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.trustdeck.configuration.RoleConfig;
 import org.trustdeck.jooq.generated.tables.daos.DomainDao;
+import org.trustdeck.jooq.generated.tables.daos.ProjectDao;
 import org.trustdeck.security.authentication.configuration.JwtProperties;
 import org.trustdeck.utils.Assertion;
 import org.trustdeck.utils.SpringBeanLocator;
 
 /**
  * Data Transfer Object (DTO) for permissions. This class represents the
- * permissions of a user for a specific domain and operation.
+ * permissions of a user for a specific domain/project and role.
  *
  * @author Eric Wündisch, Armin Müller
  */
@@ -44,34 +48,46 @@ import org.trustdeck.utils.SpringBeanLocator;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
 
-	/** The domain for which the permission applies. */
+	/** The domain this permission applies to. Either this or the projectName should be used. */
 	private String domainName;
+	
+	/** The project this permission applies to. Either this or the domainName should be used. */
+	private String projectName;
 
-	/** The operation associated with the permission. */
-	private String operation;
+	/** The role associated with the permission. */
+	private String role;
 
 	/** The user ID associated with the permission. */
 	private String userId;
 
 	/** Properties for the JWT configuration. */
+	@Getter(value=AccessLevel.NONE)
+    @Setter(value=AccessLevel.NONE)
 	@JsonIgnore
-	@Autowired
-	private JwtProperties jwtProperties;
+	private JwtProperties jwtProperties = SpringBeanLocator.getBean(JwtProperties.class);
 
 	/** Configuration of roles and operations. */
+	@Getter(value=AccessLevel.NONE)
+    @Setter(value=AccessLevel.NONE)
 	@JsonIgnore
-	@Autowired
-	private RoleConfig roleConfig;
+	private RoleConfig roleConfig = SpringBeanLocator.getBean(RoleConfig.class);
 
-	/** Service for accessing domain database methods. */
+	/** Service for accessing domains. */
+	@Getter(value=AccessLevel.NONE)
+    @Setter(value=AccessLevel.NONE)
 	@JsonIgnore
-	@Autowired
-	private DomainDao domainDao;
+	private DomainDao domainDao = SpringBeanLocator.getBean(DomainDao.class);
+
+	/** Service for accessing projects. */
+	@Getter(value=AccessLevel.NONE)
+    @Setter(value=AccessLevel.NONE)
+	@JsonIgnore
+	private ProjectDao projectDao = SpringBeanLocator.getBean(ProjectDao.class);
 
 	/**
 	 * Constructor that creates the DTO from a given group path.
 	 * 
-	 * @param groupPath the flat path including the domain name and the permitted operation
+	 * @param groupPath the flat path including the domain name and the permitted role
 	 * @param userId the user ID associated with the permission
 	 */
 	@JsonIgnore
@@ -81,15 +97,12 @@ public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
 			return;
 		}
 		
-		// Ensure that we have access to the JWT properties
-		if (jwtProperties == null) {
-			jwtProperties = SpringBeanLocator.getBean(JwtProperties.class);
-		}
-		
 		// Remove the name of the role-bucket from the path
 		String path;
 		if (groupPath.startsWith("/" + jwtProperties.getDomainRoleGroupContextName())) {
 			path = groupPath.substring(("/" + jwtProperties.getDomainRoleGroupContextName()).length());
+		} else if (groupPath.startsWith("/" + jwtProperties.getProjectRoleGroupContextName())) {
+			path = groupPath.substring(("/" + jwtProperties.getProjectRoleGroupContextName()).length());
 		} else {
 			path = groupPath;
 		}
@@ -97,11 +110,17 @@ public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
 		// Remove leading slashes
 		path = path.startsWith("/") ? path.substring(1) : path;
 		
-		// Now only one slash should be in the path which divides operation and domain; extract these
+		// Now only one slash should be in the path which divides role and domain/project; extract these
 		String[] splitPath = path.split("/");
 		if (splitPath.length == 2) {
-			this.setOperation(splitPath[0]);
-			this.setDomainName(splitPath[1]);
+			this.setRole(splitPath[0]);
+			
+			// Check if this role is ACE- or KING-specific and assign the second part of the path accordingly
+			if (roleConfig.getACERoles().contains(this.getRole())) {
+				this.setDomainName(splitPath[1]);
+			} else if (roleConfig.getKINGRoles().contains(this.getRole())) {
+				this.setProjectName(splitPath[1]);
+			}
 		} else {
 			return;
 		}
@@ -143,7 +162,7 @@ public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
 
 	/**
 	 * Returns a string representation of the object. The representation includes
-	 * the values for operation, domain, and user ID.
+	 * the values for role, domain, and user ID.
 	 *
 	 * @return a string representation of the object
 	 */
@@ -152,53 +171,66 @@ public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
 	public String toRepresentationString() {
 		String out = "";
 
-		out += (this.getOperation() != null) ? "operation: " + this.getOperation() + ", " : "";
+		out += (this.getRole() != null) ? "role: " + this.getRole() + ", " : "";
 		out += (this.getDomainName() != null) ? "domainName: " + this.getDomainName() + ", " : "";
-		out += (this.getDomainName() != null) ? "userId: " + this.getUserId() + ", " : "";
+		out += (this.getProjectName() != null) ? "projectName: " + this.getProjectName() + ", " : "";
+		out += (this.getUserId() != null) ? "userId: " + this.getUserId() + ", " : "";
 
 		return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
 	}
 
 	/**
-	 * Validates the permission. Checks whether the operation is valid and whether
-	 * the domain exists.
+	 * Validates the permission. Checks whether the role is valid and whether
+	 * the domain or project exists.
 	 *
 	 * @return {@code true} if the permission is valid, otherwise {@code false}
 	 */
 	@Override
 	@JsonIgnore
 	public Boolean validate() {
-		// Ensure that we have access to the role configuration
-		if (roleConfig == null) {
-			roleConfig = SpringBeanLocator.getBean(RoleConfig.class);
+		if (roleConfig.getACERoles().contains(this.getRole()) && domainDao.fetchOneByName(this.getDomainName()) != null) {
+			return true;
+		} else if (roleConfig.getKINGRoles().contains(this.getRole()) && projectDao.fetchOneByName(this.getProjectName()) != null) {
+			return true;
+		} else {
+			return false;
 		}
-		
-		// Ensure that we have access to the domain database service
-		if (domainDao == null) {
-			domainDao = SpringBeanLocator.getBean(DomainDao.class);
-		}
-		
-		return roleConfig.getOperations().contains(this.getOperation()) && domainDao.fetchOneByName(this.getDomainName()) != null;
 	}
 
 	/**
-	 * Returns the partial path for the operation.
+	 * Returns the partial path for the role.
 	 *
-	 * @return the path up until the operation
+	 * @return the path up until the role
 	 */
 	@JsonIgnore
-	public String getOperationPath() {
-		return "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + this.getOperation();
+	public String getRolePath() {
+		if (roleConfig.getACERoles().contains(this.getRole())) {
+			return "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + this.getRole();
+		} else if (roleConfig.getKINGRoles().contains(this.getRole())) {
+			return "/" + jwtProperties.getProjectRoleGroupContextName() + "/" + this.getRole();
+		} else {
+			return null;
+		}
 	}
 
 	/**
-	 * Returns the path for the domain. Includes the operation.
+	 * Returns the path for the domain. Includes the role.
 	 *
-	 * @return the path including the operation and the domain name
+	 * @return the path including the role and the domain name
 	 */
 	@JsonIgnore
 	public String getDomainPath() {
-		return this.getOperationPath() + "/" + this.getDomainName();
+		return this.getRolePath() + "/" + this.getDomainName();
+	}
+
+	/**
+	 * Returns the path for the project. Includes the role.
+	 *
+	 * @return the path including the role and the project name
+	 */
+	@JsonIgnore
+	public String getProjectPath() {
+		return this.getRolePath() + "/" + this.getProjectName();
 	}
 	
 	/**
