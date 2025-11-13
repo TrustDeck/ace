@@ -17,8 +17,12 @@
 
 package org.trustdeck.exception;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
- * This class represents an exception when handling OIDC rights and roles while handling a domain went wrong.
+ * This class represents an exception when handling OIDC 
+ * rights and roles while handling a domain went wrong.
  * 
  * @author Armin Müller
  */
@@ -28,6 +32,8 @@ public class DomainOIDCException extends RuntimeException {
 	private static final long serialVersionUID = 6391408398815926680L;
 
 	/** The name of the domain where the error arose. */
+	@Getter
+	@Setter
 	private String domainName;
 
 	/**
@@ -37,20 +43,6 @@ public class DomainOIDCException extends RuntimeException {
 	public DomainOIDCException(String domainName) {
 		super("There was an error while handling OIDC rights and roles of the domain.");
 		
-		this.domainName = domainName;
-	}
-
-	/**
-	 * @return the domainName
-	 */
-	public String getDomainName() {
-		return domainName;
-	}
-
-	/**
-	 * @param domainName the domainName to set
-	 */
-	public void setDomainName(String domainName) {
 		this.domainName = domainName;
 	}
 }
