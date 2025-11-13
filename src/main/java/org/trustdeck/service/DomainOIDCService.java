@@ -77,7 +77,7 @@ public class DomainOIDCService {
         Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(oidcService.getRealmGroupsWithSubGroups(), true);
 
         // Iterate over each operation-role defined in the configuration
-        for (String role : roleConfig.getOperations()) {
+        for (String role : roleConfig.getACERoles()) {
             // Check if a sub-group with the specified domain name already exists
             Map.Entry<String, String> matches = Utility.findGroupEntryByPath(flatGroupPaths, "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role + "/" + domainName);
 
@@ -110,15 +110,9 @@ public class DomainOIDCService {
         List<String> domainGroupIds = new ArrayList<>();
 
         // Iterate over each operation group and create a subgroup for the domain
-		for (String operationGroupId : oidcService.getOperationGroupIDs()) {
-
-			// Ensure that the operation is not a administrative one
-			if (oidcService.getAdministrativeOperationGroupIDs().contains(operationGroupId)) {
-				continue;
-			}
-
+		for (String roleGroupId : oidcService.getAceRoleGroupIDs()) {
 			// Create a subgroup for the domain name under the current operation group
-			GroupRepresentation groupRepresentation = oidcService.createSubGroup(operationGroupId, domainName);
+			GroupRepresentation groupRepresentation = oidcService.createSubGroup(roleGroupId, domainName);
 
 			// Ensure the subgroup was successfully created
 			if (groupRepresentation == null) {
@@ -135,13 +129,13 @@ public class DomainOIDCService {
 
         // Ensure that the user is added to all operation-groups
         // Note: adding a user to a group he/she is already part of should not return any errors
-        if (!oidcService.joinGroups(oidcService.getOperationGroupIDs(), userId)) {
+        if (!oidcService.addUserToGroups(oidcService.getAceRoleGroupIDs(), userId)) {
             log.debug("Could not add the user \"" + userId + "\" to all operation-groups.");
             throw new DomainOIDCException(domainName);
         }
 
         // Add the user to the newly created domain groups
-        if (!oidcService.joinGroups(domainGroupIds, userId)) {
+        if (!oidcService.addUserToGroups(domainGroupIds, userId)) {
             log.debug("Could not add the user \"" + userId + "\" to newly created groups for domain \"" + domainName + "\".");
             throw new DomainOIDCException(domainName);
         }
@@ -200,7 +194,8 @@ public class DomainOIDCService {
      * The audit trail user type names are also kept as groups.
      */
     public void deleteAllDomainGroups() {
-        List<String> operations = roleConfig.getOperations();
+        List<String> allRoles = roleConfig.getAllRoles();
+        List<String> domainRoles = roleConfig.getACERoles();
         List<String> auditUserTypeNames = getAuditUserGroupNames();
 
         // Retrieve a flat map of group paths for all groups in the realm
@@ -211,25 +206,33 @@ public class DomainOIDCService {
             // Extract the last part of the group path
             String groupPathEnding = e.getValue().substring(e.getValue().lastIndexOf("/") + 1);
 
-            // If the last part is an audit user type group or the group context, keep the group
-            if (auditUserTypeNames.contains(groupPathEnding) || jwtProperties.getDomainRoleGroupContextName().equals(groupPathEnding)) {
+            // If the last part is an audit user type group or the group context (either domain- or project-specific), keep the group
+            if (auditUserTypeNames.contains(groupPathEnding) 
+            		|| jwtProperties.getDomainRoleGroupContextName().equals(groupPathEnding)
+            		|| jwtProperties.getProjectRoleGroupContextName().equals(groupPathEnding)) {
                 continue;
             }
 
-            // If the last part is an operation role name, keep the group; if it's a domain name, remove it
-            if (!operations.contains(groupPathEnding)) {
-                // Found a domain name, remove the associated group for every user that has it
-                for (UserRepresentation user : oidcService.getKeycloakRealm().groups().group(e.getKey()).members()) {
-                    log.debug("Removing user from group: " + e.getValue());
-                    oidcService.removeUserFromGroup(e.getKey(), user.getId());
-
-                    // Update cache for the user
-                    cachingService.flushAndReCacheMatchingGroups(user.getId(), groupPathEnding);
-                }
-
-                // Additionally, remove the role from the Keycloak client entirely
-                log.debug("Removing group from Keycloak: " + e.getValue());
-                oidcService.removeGroupById(e.getKey());
+            // If the last part is a role name, keep the group; if it's a project name, keep it; if it's a domain name, remove it
+            if (!allRoles.contains(groupPathEnding)) {
+            	// Found a domain or project name in the group path ending; check if the path contains a domain-role-name
+            	String pathWithoutEnding = e.getValue().substring(0, e.getValue().length() - groupPathEnding.length() - 1);
+            	String roleName = pathWithoutEnding.substring(pathWithoutEnding.lastIndexOf("/") + 1);
+            	log.trace("pathWithoutEnding: " + pathWithoutEnding + ", roleName: " + roleName);
+            	if (domainRoles.contains(roleName)) {
+	            	// Found a domain name, remove the associated group for every user that has it
+	                for (UserRepresentation user : oidcService.getKeycloakRealm().groups().group(e.getKey()).members()) {
+	                    log.debug("Removing user from group: " + e.getValue());
+	                    oidcService.removeUserFromGroup(e.getKey(), user.getId());
+	
+	                    // Update cache for the user
+	                    cachingService.flushAndReCacheMatchingGroups(user.getId(), groupPathEnding);
+	                }
+	
+	                // Additionally, remove the role from the Keycloak client entirely
+	                log.debug("Removing group from Keycloak: " + e.getValue());
+	                oidcService.removeGroupById(e.getKey());
+            	}
             }
         }
     }
@@ -238,11 +241,11 @@ public class DomainOIDCService {
      * Removes all non-operation roles for all users. Deletes the roles from Keycloak.
      */
     public void deleteAllDomainRoles() {
-        List<String> operations = roleConfig.getOperations();
+        List<String> roles = roleConfig.getACERoles();
 
         // Remove any non-operation role
         for (String role : oidcService.getClientRoles()) {
-            if (!operations.contains(role)) {
+            if (roles.contains(role) ) {
                 // Found a domain name-role, delete it for every user that has it
                 for (UserRepresentation user : oidcService.getClientResource().roles().get(role).getUserMembers()) {
                     log.debug("Removing role from user: " + role);
