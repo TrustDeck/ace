@@ -41,12 +41,16 @@ public class JwtProperties {
     private String principalAttribute;
 
     /** The claim name to read all group paths. */
-    @Value("${spring.security.oauth2.resourceserver.jwt.domain-role-group-claim-name:groups}")
-    private String domainRoleGroupClaimName;
+    @Value("${spring.security.oauth2.resourceserver.jwt.role-group-claim-name:groups}")
+    private String roleGroupClaimName;
 
     /** The bucket/group to store all groups as relationship between domain and role. */
     @Value("${spring.security.oauth2.resourceserver.jwt.domain-role-group-context-name:Domain}")
     private String domainRoleGroupContextName;
+
+    /** The bucket/group to store all groups as relationship between project and role. */
+    @Value("${spring.security.oauth2.resourceserver.jwt.project-role-group-context-name:Project}")
+    private String projectRoleGroupContextName;
 
     /** The user name of an admin account for Keycloak. This is used to handle automatic rights and roles management . */
     @Value("${spring.security.oauth2.resourceserver.jwt.admin-username:-}")

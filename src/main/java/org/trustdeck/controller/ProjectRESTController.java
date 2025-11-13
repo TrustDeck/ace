@@ -198,7 +198,7 @@ public class ProjectRESTController {
      *         <li>a <b>404-NOT_FOUND</b> status when no project exists for the given abbreviation</li>
 	 */
 	@GetMapping("/projects/{abbreviation}")
-    @PreAuthorize("hasRole('project-read')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
+    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #abbreviation, 'project-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getProject(@PathVariable(name = "abbreviation", required = true) String abbreviation,
                                         @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -235,7 +235,7 @@ public class ProjectRESTController {
      * @return <li>a <b>501-NOT_IMPLEMENTED</b> status (endpoint not implemented yet)</li>
 	 */
 	@GetMapping("projects/{abbreviation}/statistics")
-    @PreAuthorize("hasRole('project-read')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
+    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #abbreviation, 'project-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getProjectStatistics(@PathVariable("abbreviation") String abbreviation,
                                 				  @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -256,7 +256,7 @@ public class ProjectRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the update failed</li>
 	 */
 	@PutMapping("/projects/{abbreviation}")
-    @PreAuthorize("hasRole('project-update')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
+    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #abbreviation, 'project-update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> updateProject(@PathVariable("abbreviation") String abbreviation,
     									   @RequestBody ProjectDTO newProjectDTO,
@@ -309,7 +309,7 @@ public class ProjectRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the deletion failed</li>
 	 */
 	@DeleteMapping("/projects/{abbreviation}")
-    @PreAuthorize("hasRole('project-delete')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
+    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #abbreviation, 'project-delete')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> deleteProject(@PathVariable("abbreviation") String abbreviation,
     									   @RequestParam(name = "deleteDate", required = false) String deleteDate,

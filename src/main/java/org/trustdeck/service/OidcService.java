@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.OAuth2Constants;
+import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.ClientResource;
@@ -73,11 +74,15 @@ public class OidcService implements InitializingBean {
 
     /** List of group IDs representing the operation groups in the Keycloak server. */
     @Getter
-    private List<String> operationGroupIDs;
+    private List<String> roleGroupIDs;
 
-    /** List of group IDs representing the keycloak operation groups needed for administrative purposes such as managing other roles. */
+    /** List of group IDs representing the keycloak operation groups needed for ACE specific roles. */
     @Getter
-    private List<String> administrativeOperationGroupIDs;
+    private List<String> aceRoleGroupIDs;
+
+    /** List of group IDs representing the keycloak operation groups needed for KING specific roles. */
+    @Getter
+    private List<String> kingRoleGroupIDs;
 
     /**
      * Initializes the Keycloak client and sets up the necessary roles and groups.
@@ -146,9 +151,12 @@ public class OidcService implements InitializingBean {
 
         try {
             // Create the required operation groups
-            this.createOperationGroups();
+            this.createRolesAndGroups();
         } catch (Exception e) {
-            log.error("OIDC resource could not be prepared:\n\t" + e.getMessage());
+            log.error("OIDC resource could not be prepared:\n\t" + e.getClass() + ": " + e.getMessage());
+            if (log.isTraceEnabled()) {
+            	e.printStackTrace();
+            }
         }
     }
 
@@ -159,13 +167,13 @@ public class OidcService implements InitializingBean {
      */
     private Keycloak initKeycloak() {
         return KeycloakBuilder.builder()
-                .grantType(OAuth2Constants.PASSWORD)           // Use password grant type for authentication.
-                .realm(jwtProperties.getRealm())               // Set the target realm.
-                .clientId(jwtProperties.getClientId())         // Set the client ID.
-                .username(jwtProperties.getAdminUsername())    // Set the admin username.
-                .password(jwtProperties.getAdminPassword())    // Set the admin password.
-                .serverUrl(jwtProperties.getServerUri())       // Set the server URL.
-                .clientSecret(jwtProperties.getClientSecret()) // Set the client secret (if applicable).
+                .grantType(OAuth2Constants.PASSWORD)           // Use password grant type for authentication
+                .realm(jwtProperties.getRealm())               // Set the target realm
+                .clientId(jwtProperties.getClientId())         // Set the client ID
+                .username(jwtProperties.getAdminUsername())    // Set the admin username
+                .password(jwtProperties.getAdminPassword())    // Set the admin password
+                .serverUrl(jwtProperties.getServerUri())       // Set the server URL
+                .clientSecret(jwtProperties.getClientSecret()) // Set the client secret
                 .build();
     }
 
@@ -174,13 +182,13 @@ public class OidcService implements InitializingBean {
      *
      * @throws OIDCException if any step fails during the creation or assignment of roles and groups.
      */
-    private void createOperationGroups() throws OIDCException {
+    private void createRolesAndGroups() throws OIDCException {
         // Retrieve the list of existing roles for the Keycloak client
         List<String> clientRoles = this.getClientRoles();
 
-        // Loop through each operation role defined in the configuration.
-        for (String role : roleConfig.getOperations()) {
-            // Check if the role is already present in the client. If not, add it.
+        // Loop through each role defined in the configuration
+        for (String role : roleConfig.getAllRoles()) {
+            // Check if the role is already present in the client, if not, add it
             if (!clientRoles.contains(role)) {
 
                 // Create each new role in the Keycloak server
@@ -191,26 +199,63 @@ public class OidcService implements InitializingBean {
         }
 
         // Retrieve the main group (container group) for the domain roles
-        GroupRepresentation mainGroup = this.getMainGroup();
+        GroupRepresentation mainGroupACE = this.getMainGroupACE();
+        GroupRepresentation mainGroupKING = this.getMainGroupKING();
 
-        // Fail if the main group is not present in Keycloak.
-        if (mainGroup == null) {
-            throw new OIDCException("Main group \"" + jwtProperties.getDomainRoleGroupContextName() + "\" not found.");
+        // Check if the main groups are present in Keycloak
+        if (mainGroupACE == null) {
+        	// The domain parent group is not there yet, try creating it
+        	mainGroupACE = createParentGroup(jwtProperties.getDomainRoleGroupContextName());
+        	
+        	// Check if it is the creation was successful
+        	if (mainGroupACE == null) {
+        		throw new OIDCException("Main group \"" + jwtProperties.getDomainRoleGroupContextName() + "\" could neither be found, nor created.");
+        	}
+        }
+        
+        if (mainGroupKING == null) {
+        	// The project parent group is not there yet, try creating it
+        	mainGroupKING = createParentGroup(jwtProperties.getProjectRoleGroupContextName());
+        	
+        	// Check if it is the creation was successful
+        	if (mainGroupKING == null) {
+        		throw new OIDCException("Main group \"" + jwtProperties.getProjectRoleGroupContextName() + "\" could neither be found, nor created.");
+        	}
         }
 
         // Retrieve a flat map of all existing groups in the realm
         Map<String, String> flatGroupPaths = Utility.flattenGroupIDToPathMapping(this.getRealmGroupsWithSubGroups(), true);
         
 		// List to store group names that need to be created
-        List<String> newGroups = new ArrayList<>();
+        List<String> newRoles = new ArrayList<>();
 
-        // Check for each operation role if a corresponding group path exists
-        for (String role : roleConfig.getOperations()) {
+        // Check for each ACE/KING role if a corresponding group path exists
+        for (String role : roleConfig.getACERoles()) {
             Map.Entry<String, String> groupEntry = Utility.findGroupEntryByPath(flatGroupPaths, "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role);
 
             if (groupEntry == null) {
                 // If the group path does not exist, mark the role as "needing a new group"
-                newGroups.add(role);
+                newRoles.add(role);
+            } else {
+                // If the group path exists, ensure the role is assigned to the group
+                RoleRepresentation roleRepresentation = this.getClientRoleByName(role);
+
+                if (roleRepresentation == null) {
+                    // The role should have been created earlier or it should have been already available
+                    throw new OIDCException("The role \"" + role + "\" is not present in Keycloak while it should be.");
+                }
+
+                // Assign the role to the group
+                this.assignRoleToGroup(groupEntry.getKey(), roleRepresentation);
+            }
+        }
+        
+        for (String role : roleConfig.getKINGRoles()) {
+            Map.Entry<String, String> groupEntry = Utility.findGroupEntryByPath(flatGroupPaths, "/" + jwtProperties.getProjectRoleGroupContextName() + "/" + role);
+
+            if (groupEntry == null) {
+                // If the group path does not exist, mark the role as "needing a new group"
+                newRoles.add(role);
             } else {
                 // If the group path exists, ensure the role is assigned to the group
                 RoleRepresentation roleRepresentation = this.getClientRoleByName(role);
@@ -226,24 +271,32 @@ public class OidcService implements InitializingBean {
         }
 
         // Create new groups for roles that do not yet have corresponding groups
-        for (String newGroup : newGroups) {
-            // Create a new subgroup under the main group
-            GroupRepresentation groupRepresentation = this.createSubGroup(mainGroup.getId(), newGroup);
+        for (String role : newRoles) {
+        	// Create a new subgroup under the correct main group
+            GroupRepresentation roleAsGroupRepresentation = null;
+            
+            if (roleConfig.getACERoles().contains(role)) {
+            	roleAsGroupRepresentation = this.createSubGroup(mainGroupACE.getId(), role);
+            } else if (roleConfig.getKINGRoles().contains(role)) {
+            	roleAsGroupRepresentation = this.createSubGroup(mainGroupKING.getId(), role);
+            }
 
-            if (groupRepresentation == null) {
-                throw new OIDCException("Group \"" + newGroup + "\" could not be created.");
+            if (roleAsGroupRepresentation == null) {
+                throw new OIDCException("Group \"" + role + "\" could not be created.");
+            } else {
+            	log.trace("Successfully created role: " + role);
             }
 
             // Retrieve the role representation for the new group
-            RoleRepresentation roleRepresentation = this.getClientRoleByName(newGroup);
+            RoleRepresentation roleRepresentation = this.getClientRoleByName(role);
 
             if (roleRepresentation == null) {
                 // The role should have been created earlier or it should have been already available
-                throw new OIDCException("The role \"" + newGroup + "\" is not present in Keycloak while it should be.");
+                throw new OIDCException("The role \"" + role + "\" is not present in Keycloak while it should be.");
             }
 
             // Assign the role to the newly created group
-            this.assignRoleToGroup(groupRepresentation.getId(), roleRepresentation);
+            this.assignRoleToGroup(roleAsGroupRepresentation.getId(), roleRepresentation);
         }
 
         // Re-fetch the list of all groups after creation to ensure consistency
@@ -252,36 +305,47 @@ public class OidcService implements InitializingBean {
         
         // List to store the group IDs for each role
         List<String> groupIds = new ArrayList<>();
-        List<String> adminGroupIds = new ArrayList<>();
+        List<String> aceGroupIds = new ArrayList<>();
+        List<String> kingGroupIds = new ArrayList<>();
         
         // Match the created roles to their group IDs based on paths
-        for (String role : roleConfig.getAllOperationRoles()) {
-            Map.Entry<String, String> groupEntry = Utility.findGroupEntryByPath(finalGroupPaths, "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role);
+        for (String role : roleConfig.getAllRoles()) {
+            Map.Entry<String, String> domainGroupEntry = Utility.findGroupEntryByPath(finalGroupPaths, "/" + jwtProperties.getDomainRoleGroupContextName() + "/" + role);
+            Map.Entry<String, String> projectGroupEntry = Utility.findGroupEntryByPath(finalGroupPaths, "/" + jwtProperties.getProjectRoleGroupContextName() + "/" + role);
 
-            if (groupEntry != null) {
-                groupIds.add(groupEntry.getKey());
-
-                if(roleConfig.getAdministrationOperations().contains(role)){
-                    adminGroupIds.add(groupEntry.getKey());
-                }
+            // Add IDs to lists for easier access
+            if (domainGroupEntry != null) {
+                groupIds.add(domainGroupEntry.getKey());
+                aceGroupIds.add(domainGroupEntry.getKey());
+            } else if (projectGroupEntry != null) {
+                groupIds.add(projectGroupEntry.getKey());
+                kingGroupIds.add(projectGroupEntry.getKey());
             }
         }
 
-        // Ensure that the number of groups matches the number of roles
-        if (groupIds.size() != roleConfig.getOperations().size()) {
-            throw new OIDCException("Could not find all groups and roles that should have been added.");
+        // Ensure that the number of ACE specific groups matches the number of roles
+        if (groupIds.size() != roleConfig.getACERoles().size() + roleConfig.getKINGRoles().size()) {
+        	throw new OIDCException("Could not find all groups and roles that should have been added.");
+        }
+        
+        // Ensure that the number of domain specific groups matches the number of roles
+        if (aceGroupIds.size() != roleConfig.getACERoles().size()) {
+        	throw new OIDCException("Could not find all domain specific groups and roles that should have been added.");
         }
 
-        // Ensure that the number of administrative groups matches the number of roles
-        if (adminGroupIds.size() != roleConfig.getAdministrationOperations().size()) {
-        	throw new OIDCException("Could not find all administrative groups and roles that should have been added.");
+        // Ensure that the number of project specific groups matches the number of roles
+        if (kingGroupIds.size() != roleConfig.getKINGRoles().size()) {
+        	throw new OIDCException("Could not find all project specific groups and roles that should have been added.");
         }
 
         // Cache the standard group IDs for future use
-        this.operationGroupIDs = groupIds;
+        this.roleGroupIDs = groupIds;
 
-        // Cache the root group IDs for future use
-        this.administrativeOperationGroupIDs = adminGroupIds;
+        // Cache the ace group IDs for future use
+        this.aceRoleGroupIDs = aceGroupIds;
+
+        // Cache the king group IDs for future use
+        this.kingRoleGroupIDs = kingGroupIds;
     }
 
     /**
@@ -393,8 +457,10 @@ public class OidcService implements InitializingBean {
      * @return {@link List} of {@link GroupRepresentation} containing all groups in the current realm.
      */
     public List<GroupRepresentation> getRealmGroups() {
+    	// Fetch all top-level groups from the Keycloak realm
         // search query: "" (empty string) to retrieve all groups
         // briefRepresentation: false, to include detailed group information
+        // Exact matching: false, to enable partial matching
         return this.getKeycloakRealm().groups().groups("", false, 0, Integer.MAX_VALUE, false);
     }
 
@@ -406,14 +472,8 @@ public class OidcService implements InitializingBean {
      *         and all their nested subgroups
      */
     public List<GroupRepresentation> getRealmGroupsWithSubGroups() {
-        // Fetch all top-level groups from the Keycloak realm
-        // search query: "" (empty string) to retrieve all groups
-        // briefRepresentation: false, to include detailed group information
-        // Exact matching: false, to enable partial matching
-        List<GroupRepresentation> topGroups = this.getKeycloakRealm().groups().groups("", false, 0, Integer.MAX_VALUE, false);
-
-        // Process these groups recursively to get all subgroups
-        return fetchSubGroupsRecursively(topGroups);
+    	// Process the top groups recursively to get all subgroups
+        return fetchSubGroupsRecursively(getRealmGroups());
     }
 
     /**
@@ -453,16 +513,40 @@ public class OidcService implements InitializingBean {
     }
 
     /**
-     * Retrieves the main group representation from the Keycloak server.
+     * Retrieves the main group representation for ACE (domain handling) from the Keycloak server.
      *
      * @return {@link GroupRepresentation} of the main group if found, or {@code null} if no such group exists.
      */
-    public GroupRepresentation getMainGroup() {
+    public GroupRepresentation getMainGroupACE() {
         // Retrieve all groups from the Keycloak realm
         List<GroupRepresentation> groups = this.getRealmGroups();
 
         // Construct the expected path for the main group using the configured context name
         String path = "/" + jwtProperties.getDomainRoleGroupContextName();
+
+        // Iterate through the list of groups to find the group that matches the expected path
+        for (GroupRepresentation group : groups) {
+            if (group.getPath().equals(path)) {
+                // Return the group representation if the path matches
+                return group;
+            }
+        }
+
+        // Return null if no group with the specified path is found
+        return null;
+    }
+
+    /**
+     * Retrieves the main group representation for KING (project handling) from the Keycloak server.
+     *
+     * @return {@link GroupRepresentation} of the main group if found, or {@code null} if no such group exists.
+     */
+    public GroupRepresentation getMainGroupKING() {
+        // Retrieve all groups from the Keycloak realm
+        List<GroupRepresentation> groups = this.getRealmGroups();
+
+        // Construct the expected path for the main group using the configured context name
+        String path = "/" + jwtProperties.getProjectRoleGroupContextName();
 
         // Iterate through the list of groups to find the group that matches the expected path
         for (GroupRepresentation group : groups) {
@@ -497,35 +581,62 @@ public class OidcService implements InitializingBean {
     }
 
     /**
+     * Creates a new parent group in the Keycloak server.
+     * 
+     * @param groupName the name of the parent group
+     * @return {@link GroupRepresentation} of the newly created parent group, or {@code null} if the creation fails
+     */
+	public GroupRepresentation createParentGroup(String groupName) {
+		GroupRepresentation group = new GroupRepresentation();
+		group.setName(groupName);
+		
+		// Sent create request and collect response
+		Response response = this.getKeycloakRealm().groups().add(group);
+		
+		// Evaluate response
+		if (response.getStatus() == 201) {
+			// Extract the group ID from the response 
+			String groupId = CreatedResponseUtil.getCreatedId(response);
+			response.close();
+
+			// Retrieve and return the full group representation from Keycloak
+			return this.getKeycloakRealm().groups().group(groupId).toRepresentation();
+		} else {
+			log.debug("Could not create the group \"" + groupName + "\".");
+			return null;
+		}
+	}
+
+    /**
      * Creates a new subgroup under a specified parent group in the Keycloak server.
      *
      * @param parentGroupId the unique identifier of the parent group under which the new subgroup will be created
      * @param groupName the name of the new subgroup to be created
-     * @return {@link GroupRepresentation} of the newly created subgroup, or {@code null} if the creation fails.
+     * @return {@link GroupRepresentation} of the newly created subgroup, or {@code null} if the creation fails
      */
     public GroupRepresentation createSubGroup(String parentGroupId, String groupName) {
-        // Create a new GroupRepresentation object to represent the new subgroup
         GroupRepresentation subGroup = new GroupRepresentation();
         subGroup.setName(groupName);
 
-        try {
-            // Use the Keycloak API to create the new subgroup under the specified parent group
-            Response response = this.getKeycloakRealm().groups().group(parentGroupId).subGroup(subGroup);
+        // Use the Keycloak API to create the new subgroup under the specified parent group
+        Response response = this.getKeycloakRealm().groups().group(parentGroupId).subGroup(subGroup);
 
-            // Check if the response status indicates successful creation of the group
-            GroupRepresentation returnedGroupRepresentation = null;
-            if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
-                // Read the created group representation from the response
-                returnedGroupRepresentation = response.readEntity(GroupRepresentation.class);
-            }
-            response.close(); // Close the response to release resources
-
-            // Return the created group representation, or null if the creation was not successful.
-            return returnedGroupRepresentation;
-        } catch (Exception e) {
-            // Log the error if any exception occurs during the subgroup creation process
-            log.error("Creating the subgroup in Keycloak failed: " + e.getMessage());
-            return null;
+        // Check if the response status indicates successful creation of the group
+        if (response.getStatus() == 201) {
+            // Read the created group representation from the response
+        	String groupId = CreatedResponseUtil.getCreatedId(response);
+        	response.close();
+        	
+        	return this.getKeycloakRealm().groups().group(groupId).toRepresentation();
+        } else if (response.getStatus() == 409) {
+        	// Subgroup is already in Keycloak, no need to create it again
+        	// Retrieve and return the group from Keycloak
+        	List<GroupRepresentation> subGroups = this.getKeycloakRealm().groups().group(parentGroupId).getSubGroups(0, Integer.MAX_VALUE, true);
+            return subGroups.stream().filter(g -> groupName.equals(g.getName())).findFirst().orElse(null);
+    	} else {
+			log.debug("Could not create the subgroup \"" + groupName + "\".");
+			log.trace("The response of the subgroup creation request was: " + response.getStatus() + ", " + response.getStatusInfo());
+			return null;
         }
     }
 
@@ -556,6 +667,7 @@ public class OidcService implements InitializingBean {
             this.getKeycloakRealm().groups().group(groupId).roles().clientLevel(this.clientUUID).add(List.of(roleRepresentation));
         } catch (Exception e) {
             // Catch and ignore any exceptions during role assignment
+        	log.trace("", e);
         }
     }
 
@@ -583,7 +695,7 @@ public class OidcService implements InitializingBean {
      * @param userId the unique identifier of the user to be added to the groups
      * @return {@code true} if the user is successfully added to all groups, or {@code false} if any operation fails.
      */
-    public Boolean joinGroups(List<String> groupIds, String userId) {
+    public Boolean addUserToGroups(List<String> groupIds, String userId) {
         for (String groupId : groupIds) {
             // Add the user to each group in the list
             if (!this.addUserToGroup(groupId, userId)) {
@@ -618,7 +730,7 @@ public class OidcService implements InitializingBean {
      * @param userId the unique identifier of the user to be removed from the groups
      * @return {@code true} if the user is successfully removed from all groups, or {@code false} if any operation fails.
      */
-    public Boolean leaveGroups(List<String> groupIds, String userId) {
+    public Boolean removeUserFromGroups(List<String> groupIds, String userId) {
         for (String groupId : groupIds) {
             // Remove the user from each group in the list
             if (!this.removeUserFromGroup(groupId, userId)) {

@@ -22,27 +22,27 @@ import lombok.Setter;
 
 /**
  * This class represents an exception when handling OIDC 
- * rights and roles while handling a domain went wrong.
+ * rights and roles while handling a project went wrong.
  * 
  * @author Armin Müller
  */
-public class DomainOIDCException extends RuntimeException {
+public class ProjectOIDCException extends RuntimeException {
 
 	/** Exception UID. */
-	private static final long serialVersionUID = 6391408398815926680L;
-
-	/** The name of the domain where the error arose. */
+	private static final long serialVersionUID = 1659840914095638965L;
+	
+	/** The name of the project where the error arose. */
 	@Getter
 	@Setter
-	private String domainName;
+	private String projectName;
 
 	/**
-	 * Constructor that also defines the name of the domain causing the exception.
-	 * @param domainName the name of the exception-causing domain
+	 * Constructor that also defines the name of the project causing the exception.
+	 * @param projectName the name of the exception-causing domain
 	 */
-	public DomainOIDCException(String domainName) {
-		super("There was an error while handling OIDC rights and roles of the domain.");
+	public ProjectOIDCException(String projectName) {
+		super("There was an error while handling OIDC rights and roles for the project.");
 		
-		this.domainName = domainName;
+		this.projectName = projectName;
 	}
 }

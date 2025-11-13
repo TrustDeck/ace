@@ -37,7 +37,7 @@ public class AuditUserTypeConfiguration {
     private String tokenClaimName;
     
     /** The group name that defines the human user group. */
-    @Value("${audittrail.oidc-group-mapper.group-names.isHuman:human}")
+    @Value("${audittrail.oidc-group-mapper.group-names.isHuman:Human}")
     private String humanUserGroupName;
 
     /** The group name that defines the technical user group. */

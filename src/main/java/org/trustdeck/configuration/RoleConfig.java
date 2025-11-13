@@ -21,7 +21,9 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Configuration class that holds the operational roles for the application.
@@ -33,10 +35,18 @@ import java.util.List;
  * For example, a configuration in `application.yml` might look like:
  * <pre>
  * app:
- *   operations:
- *     - domain-create
- *     - domain-create-complete
- *     - domain-delete
+ *   roles:
+ *     ACE:
+ *       - domain-create
+ *       - domain-read
+ *       ...
+ *     KING:
+ *       - project-create
+ *       - project-read
+ *       ...
+ *     administrative:
+ *       - permission-manager
+ *       - delete-roles
  * </pre>
  *
  * @author Eric Wündisch & Armin Müller
@@ -47,27 +57,69 @@ import java.util.List;
 public class RoleConfig {
 
     /**
-     * List of operations defined for the application under `app.operations` in the yml-file.
+     * List of operations defined for the application under `app.roles` in the yml-file.
      * It represents the names of various rights and roles (e.g., create, read, update, delete) that the application
      * will use to define roles and permissions in the Keycloak server.
      */
-    private List<String> operations;
+    private Map<String, List<String>> roles;
+    
+    /** The key to extract the administrative roles from the yml. */
+    public static final String ADMINISTRATIVE_ROLES_GROUP_KEY = "administrative";
+    
+    /** The key to extract the ACE-specific roles from the yml. */
+    public static final String ACE_ROLES_GROUP_KEY = "ACE";
+    
+    /** The key to extract the KING-specific roles from the yml. */
+    public static final String KING_ROLES_GROUP_KEY = "KING";
     
     /**
-     * List of operations defined for the application under `app.administration-operations` in the yml-file.
-     * It represents the names of rights and roles that are needed to manage other rights and roles, e.g. when 
-     * adding a role to a user via the frontend.
+     * Retrieves the roles for a group defined by it's name (e.g. "ACE").
+     * 
+     * @param groupName the name that indicates the sublist of roles
+     * @return a list of roles found
      */
-    private List<String> administrationOperations;
+    public List<String> getRoleSublist(String groupName) {
+    	List<String> roleSublist = roles.get(groupName);
+        return roleSublist == null ? null : roleSublist;
+    }
+    
+    /**
+     * Retrieves the roles for ACE.
+     * 
+     * @return a list of roles found
+     */
+    public List<String> getACERoles() {
+        return getRoleSublist(ACE_ROLES_GROUP_KEY);
+    }
+    
+    /**
+     * Retrieves the roles for KING.
+     * 
+     * @return a list of roles found
+     */
+    public List<String> getKINGRoles() {
+        return getRoleSublist(KING_ROLES_GROUP_KEY);
+    }
+    
+    /**
+     * Retrieves the roles for for KING.
+     * 
+     * @return a list of roles found
+     */
+    public List<String> getAdministrativeRoles() {
+        return getRoleSublist(ADMINISTRATIVE_ROLES_GROUP_KEY);
+    }
     
     /**
      * Returns a list of all defined roles including all administrative roles.
      * 
      * @return a list of all roles defined in the application.yml
      */
-    public List<String> getAllOperationRoles() {
-    	List<String> allRoles = getOperations();
-    	allRoles.addAll(getAdministrationOperations());
+    public List<String> getAllRoles() {
+    	List<String> allRoles = new ArrayList<>();
+    	allRoles.addAll(getACERoles());
+    	allRoles.addAll(getKINGRoles());
+    	allRoles.addAll(getAdministrativeRoles());
     	
     	return allRoles;
     }

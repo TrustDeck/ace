@@ -23,10 +23,12 @@ import org.jooq.exception.IntegrityConstraintViolationException;
 import org.jooq.exception.MappingException;
 import org.jooq.impl.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.dto.ProjectDTO;
 import org.trustdeck.exception.DuplicateProjectException;
+import org.trustdeck.exception.ProjectOIDCException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Project;
 import org.trustdeck.jooq.generated.tables.records.ProjectRecord;
@@ -36,6 +38,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import static org.trustdeck.jooq.generated.Tables.ENTITY_INSTANCE;
 import static org.trustdeck.jooq.generated.Tables.ENTITY_TYPE;
@@ -51,6 +54,10 @@ public class ProjectDBService {
 	/** References a jOOQ configuration object that configures jOOQ's behavior when executing queries. */
     @Autowired
 	private DSLContext dsl;
+    
+    /** Handles rights and roles for projects. */
+    @Autowired
+    private ProjectOIDCService projectOidcService;
 
     /**
      * Method to insert a new project into the database table.
@@ -92,6 +99,18 @@ public class ProjectDBService {
 	    	log.error("Inserting the new project object into the database failed: " + e.getMessage());
 	    	return null;
 	    }
+    	
+    	// Handle rights and roles
+        if (request != null) {
+            // Check if the information needed for OIDC management are in the token
+            JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+            if (token == null || token.getToken() == null || token.getToken().getSubject().isBlank()) {
+                throw new ProjectOIDCException(project.getName());
+            }
+
+            // Create project groups and roles and add the user that made this request to the new groups and roles
+            projectOidcService.createProjectGroupsAndRolesAndJoin(project.getName(), token.getToken().getSubject());
+        }
 	    
 	    // Return the project object
         log.debug("Creating the project with name \"" + project.getName() + "\" was successful.");
@@ -240,6 +259,18 @@ public class ProjectDBService {
                 log.debug("Deleting the project with abbreviation \"" + project.getAbbreviation() + "\" would not affect exactly one entry. Aborting.");
                 throw new UnexpectedResultSizeException(1, deletedRecords);
             }
+    	
+	    	// Handle rights and roles
+	        if (request != null) {
+	            // Check if the information needed for OIDC management are in the token
+	            JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+	            if (token == null || token.getToken() == null || token.getToken().getSubject().isBlank()) {
+	                throw new ProjectOIDCException(project.getName());
+	            }
+	
+	            // Remove the associated groups and roles for this domain from Keycloak
+	            projectOidcService.leaveAndDeleteProjectGroupsAndRoles(project.getName());
+	        }
             
             // The project object was successfully deleted
             log.debug("Successfully removed the project object.");
@@ -291,6 +322,7 @@ public class ProjectDBService {
     	
     	// Built update object with sanitized values, depending on if the project is in use or not
 		ProjectRecord updatedProjectRecord;
+		String newName = null;
 		try {
 			if (usedBy != 0) {
 				log.debug("The project is currently in use and can therefore only be partially updated.");
@@ -313,7 +345,7 @@ public class ProjectDBService {
 						.returning()
 						.fetchOne();
 			} else {
-				String newName = Assertion.isNotNullOrEmpty(updatedProject.getName()) ? updatedProject.getName() : oldProject.getName();
+				newName = Assertion.isNotNullOrEmpty(updatedProject.getName()) ? updatedProject.getName() : oldProject.getName();
 				String newAbbreviation = Assertion.isNotNullOrEmpty(updatedProject.getAbbreviation())? updatedProject.getAbbreviation() : oldProject.getAbbreviation();
 				OffsetDateTime newStart = updatedProject.getStartDate() != null ? updatedProject.getStartDate() : oldProject.getStartDate();
 				OffsetDateTime newEnd = updatedProject.getEndDate() != null ? updatedProject.getEndDate() : oldProject.getEndDate();
@@ -350,10 +382,85 @@ public class ProjectDBService {
     	if (updatedProjectRecord == null) {
     		log.debug("Updating the project object \"" + oldProject.getName() + "\" failed.");
             return null;
-    	} else {
-    		// Return the newly updated project DTO
-    		log.debug("Updating the project object \"" + oldProject.getName() + "\" succeeded.");
-            return new ProjectDTO().assignPojoValues(new Project(updatedProjectRecord));
     	}
+    	
+    	// Check if the OIDC rights and roles need to be adapted
+        if (newName != null && !oldProject.getName().equals(newName)
+                    && projectOidcService.canBeUsedAsProjectGroup(newName)) {
+        	// The project name has changed, so we need to update the OIDC rights and roles
+        	
+        	// Check if the required request object is available
+        	if (request != null) {
+                JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
+                
+                if (token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()) {
+                    try {
+                    	projectOidcService.updateProjectGroups(oldProject.getName(), newName, token.getToken().getSubject());
+                    } catch (Exception e) {
+                        log.error("Updating OIDC rights and roles failed: " + e.getMessage());
+                        throw new ProjectOIDCException("oldName: " + oldProject.getName() + ", newName: " + newName);
+                    }
+                }
+            }
+        }
+
+		// Return the newly updated project DTO
+		log.debug("Updating the project object \"" + oldProject.getName() + "\" succeeded.");
+        return new ProjectDTO().assignPojoValues(new Project(updatedProjectRecord));
+    }
+    
+    /**
+     * This method retrieves all projects.
+     * 
+     * @param request the http request object containing information necessary for the audit trail
+     * @return all projects as a list
+     */
+    @Transactional(readOnly = true)
+    public List<ProjectDTO> getAllProjects(HttpServletRequest request) {
+    	// Build and execute the query
+    	List<Project> projects = null;
+        try {
+	        // Execute the query
+        	projects = dsl.selectFrom(PROJECT)
+	                  .fetchInto(Project.class);
+        } catch (MappingException e) {
+        	log.debug("Could not map the project search result into the Project-POJO.");
+        } catch (DataAccessException f) {
+        	log.debug("Searching for the project in the database failed: " + f.getMessage());
+        }
+        
+        // Transform projects into the right format
+        List<ProjectDTO> dtos = new ArrayList<>();
+        for (Project p : projects) {
+        	dtos.add(new ProjectDTO().assignPojoValues(p));
+        }
+
+        // Return the list of projects
+        return dtos;
+    }
+    
+    /**
+     * This method retrieves all project names.
+     * 
+     * @param request the http request object containing information necessary for the audit trail
+     * @return the names of all projects as a list
+     */
+    @Transactional(readOnly = true)
+    public List<String> getAllProjectNames(HttpServletRequest request) {
+    	// Build and execute the query
+    	List<String> projects = null;
+        try {
+	        // Execute the query
+        	projects = dsl.select(PROJECT.NAME)
+                    .from(PROJECT)
+                    .fetch(PROJECT.NAME);
+        } catch (MappingException e) {
+        	log.debug("Could not map the project search result into the Project-POJO.");
+        } catch (DataAccessException f) {
+        	log.debug("Searching for the project in the database failed: " + f.getMessage());
+        }
+        
+        // Return the list of projects
+        return projects;
     }
 }

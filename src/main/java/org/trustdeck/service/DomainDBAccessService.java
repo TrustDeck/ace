@@ -157,7 +157,7 @@ public class DomainDBAccessService {
      */
     public List<Domain> getDomainTreeStructure(Domain domain) {
 
-        if (domain.getId() == null) {
+        if (domain == null || domain.getId() == null) {
             return null;
         }
 
@@ -918,7 +918,7 @@ public class DomainDBAccessService {
 
             // Successful update
             String name = (newDomain.getName() != null) ? newDomain.getName() : oldDomain.getName();
-            log.info("Successfully updated the domain \"" + name + "\".");
+            log.debug("Successfully updated the domain \"" + name + "\".");
             return getDomainByName(name, null);
         } catch (DomainNotFoundException e) {
             log.info("The domain (\"" + e.getDomainName() + "\") is not in the database. Nothing to update.");
