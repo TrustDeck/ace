@@ -33,7 +33,9 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.util.Pair;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.algorithms.PathFinder;
+import org.trustdeck.dto.PseudonymDTO;
 import org.trustdeck.exception.DomainNotFoundException;
 import org.trustdeck.exception.DomainOIDCException;
 import org.trustdeck.exception.DuplicateDomainException;
@@ -46,6 +48,7 @@ import org.trustdeck.jooq.generated.tables.daos.DomainDao;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.jooq.generated.tables.records.PseudonymRecord;
+import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.utils.Assertion;
 
 import static org.jooq.impl.DSL.field;
@@ -265,11 +268,12 @@ public class DomainDBAccessService {
      * 			record, and <b>B</b> being the linked record, i.e., [(A, B), (A, C), (A, D), ..., (A, N)]
      * 			or {@code null}.
      */
-    public List<Pair<Pseudonym, Pseudonym>> getLinkedPseudonyms(String sourceDomainName, String sourceIdentifier, String sourceIdType, String sourcePsn, String targetDomainName, HttpServletRequest request) {
+    public List<Pair<PseudonymDTO, PseudonymDTO>> getLinkedPseudonyms(String sourceDomainName, String sourceIdentifier, String sourceIdType, String sourcePsn, String targetDomainName, HttpServletRequest request) {
     	// Retrieve the source domain object (will not be audited)
 		Domain sourceDomain = getDomainByName(sourceDomainName, null);
 		Domain targetDomain = getDomainByName(targetDomainName, null);
-		List<Pseudonym> sourceRecordList = pseudonymDBAccessService.getRecord(sourceDomainName, sourceIdentifier, sourceIdType, sourcePsn, null);
+		IdentifierItem sourceII = IdentifierItem.builder().identifier(sourceIdentifier).idType(sourceIdType).build();
+		List<PseudonymDTO> sourceRecordList = pseudonymDBAccessService.getPseudonym(sourceDomainName, sourceII, sourcePsn, null);
 		
 		// Check if the given information is sufficient to start the linking-process
         if (sourceDomain == null) {
@@ -283,7 +287,7 @@ public class DomainDBAccessService {
             return null;
         }
         
-        Pseudonym sourceRecord = sourceRecordList.getFirst();
+        PseudonymDTO sourceRecord = sourceRecordList.getFirst();
         
         // Generate the tree starting from the given source-domain and generate the path to the destination domain
         PathFinder pathFinder = new PathFinder(getDomainTreeStructure(sourceDomain));
@@ -303,11 +307,9 @@ public class DomainDBAccessService {
         }
 
         try {
-            List<Pair<Pseudonym, Pseudonym>> result = this.dslCtx.transactionResult(configuration -> {
+            List<Pair<PseudonymDTO, PseudonymDTO>> result = dslCtx.transactionResult(configuration -> {
                 // Start building the query
-            	SelectQuery<Record> query = DSL.using(configuration)
-                		.select(PSEUDONYM.as("p" + pathSize).asterisk())
-                		.getQuery();
+            	SelectQuery<Record> query = dslCtx.select(PSEUDONYM.as("p" + pathSize).asterisk()).getQuery();
                 query.addFrom(PSEUDONYM.as("p1"));
 
                 // Iterate over the path to find all the pseudonyms along the path
@@ -341,10 +343,10 @@ public class DomainDBAccessService {
                 List<Pseudonym> resultList = query.fetchInto(Pseudonym.class);
                 
                 // Transform the query result into a list of pairs
-                List<Pair<Pseudonym, Pseudonym>> pairList = new ArrayList<>();
+                List<Pair<PseudonymDTO, PseudonymDTO>> pairList = new ArrayList<>();
                 for (Pseudonym r : resultList) {
                 	if (r != null) {
-                		pairList.add(Pair.of(sourceRecord, r));
+                		pairList.add(Pair.of(sourceRecord, new PseudonymDTO().assignPojoValues(r)));
                 	}
                 }
                 
@@ -398,24 +400,23 @@ public class DomainDBAccessService {
      * auditing should be performed, you can pass {@code null}.
      * @return a list of records stored in the given domain when successful, {@code null} otherwise
      */
-    public List<Pseudonym> getAllRecordsInDomain(String domainName, HttpServletRequest request) {
+	@Transactional
+    public List<PseudonymDTO> getAllRecordsInDomain(String domainName, HttpServletRequest request) {
         try {
-            List<Pseudonym> pseudonyms = this.dslCtx.transactionResult(configuration -> {
-                // Get domain
-                Domain d = this.getDomainByName(domainName, null);
+            // Get domain
+            Domain d = this.getDomainByName(domainName, null);
 
-                // Retrieve all records from a domain
-                return DSL.using(configuration)
-                        .selectFrom(PSEUDONYM)
-                        .where(PSEUDONYM.DOMAINID.equal(d.getId()))
-                        .fetchInto(Pseudonym.class);
-
-                // Implicit transaction commit here
-            });
+            // Retrieve all records from a domain
+            List<PseudonymDTO> ps = dslCtx.selectFrom(PSEUDONYM)
+                    .where(PSEUDONYM.DOMAINID.eq(d.getId()))
+                    .fetchInto(Pseudonym.class)
+                    .stream()
+                    .map(p -> new PseudonymDTO().assignPojoValues(p))
+                    .toList();
 
             // At this point the retrieval was successful
             log.debug("Successfully retrieved all records from the domain.");
-            return pseudonyms;
+            return ps;
         } catch (Exception e) {
             log.error("Couldn't retrieve the records of domain " + domainName + " from the database: " + e.getMessage() + "\n");
             return null;
@@ -591,7 +592,7 @@ public class DomainDBAccessService {
             return false;
         } catch (UnexpectedResultSizeException h) {
             log.error("The deletion would have affected an unexpected number of database entries. It should only affect 1, "
-                    + "but affected " + h.getActualSize() + " database entries.");
+                    + "but affected " + h.getActual() + " database entries.");
             return false;
         } catch (DomainOIDCException i) {
             log.error("Couldn't delete OIDC rights and roles of domain \"" + i.getDomainName() + "\".");
@@ -684,7 +685,7 @@ public class DomainDBAccessService {
             return INSERTION_DUPLICATE;
         } catch (UnexpectedResultSizeException g) {
             log.error("The insertion would have affected an unexpected number of domains. It should only affect 1 domain, "
-                    + "but affected " + g.getActualSize() + " domains.");
+                    + "but affected " + g.getActual() + " domains.");
             return INSERTION_ERROR;
         } catch (DomainOIDCException h) {
             log.error("Creating OIDC rights and roles for the domain \"" + h.getDomainName() + "\" failed. No insertion performed.");
@@ -751,7 +752,7 @@ public class DomainDBAccessService {
             return true;
     	} catch (UnexpectedResultSizeException f) {
             log.error("The update would have affected an unexpected number of records. It should only affect 1 record, "
-                    + "but affected " + f.getActualSize() + " records. It was therefore rolled back.");
+                    + "but affected " + f.getActual() + " records. It was therefore rolled back.");
             return false;
         } catch (Exception i) {
             log.error("Couldn't update the domain: " + i.getMessage() + "\n");
@@ -833,14 +834,14 @@ public class DomainDBAccessService {
                 for (Pseudonym old : records) {
                     // Create a new record with the necessary changes (null values will automatically be replaced by
                     // values from the old record)
-                    Pseudonym update = new Pseudonym();
-                    update.setValidfrom(old.getValidfrominherited() ? newDomain.getValidfrom() : oldDomain.getValidfrom());
-                    update.setValidfrominherited(old.getValidfrominherited());
-                    update.setValidto(old.getValidtoinherited() ? newDomain.getValidto() : oldDomain.getValidto());
-                    update.setValidtoinherited(old.getValidtoinherited());
+                    PseudonymDTO update = new PseudonymDTO();
+                    update.setValidFrom(old.getValidfrominherited() ? newDomain.getValidfrom() : oldDomain.getValidfrom());
+                    update.setValidFromInherited(old.getValidfrominherited());
+                    update.setValidTo(old.getValidtoinherited() ? newDomain.getValidto() : oldDomain.getValidto());
+                    update.setValidToInherited(old.getValidtoinherited());
 
                     // Update the inheritable variables
-                    if (!this.pseudonymDBAccessService.updatePseudonym(old, update, null)) {
+                    if (!this.pseudonymDBAccessService.updatePseudonym(new PseudonymDTO().assignPojoValues(old), update, oldDomain.getId(), null)) {
                         // Failed update of record. Use exception to break the transaction.
                         throw new FailedPseudonymUpdateException((newDomain.getName() != null) ? newDomain.getName() : oldDomain.getName(), old.getIdentifier(), old.getIdtype());
                     }
@@ -925,7 +926,7 @@ public class DomainDBAccessService {
             return null;
         } catch (UnexpectedResultSizeException f) {
             log.error("The update would have affected an unexpected number of records. It should only affect 1 record, "
-                    + "but affected " + f.getActualSize() + " records.");
+                    + "but affected " + f.getActual() + " records.");
             return null;
         } catch (FailedPseudonymUpdateException g) {
             log.error("While updating the records in the domain \"" + g.getDomainName() + "\" an error occurred. The update was therefore rolled back.");

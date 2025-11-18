@@ -43,10 +43,11 @@ import org.trustdeck.algorithms.Pseudonymizer;
 import org.trustdeck.dto.EntityInstanceDTO;
 import org.trustdeck.dto.EntityTypeDTO;
 import org.trustdeck.dto.ProjectDTO;
+import org.trustdeck.dto.PseudonymDTO;
 import org.trustdeck.exception.DuplicateEntityInstanceException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
-import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
+import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
@@ -215,18 +216,18 @@ public class EntityInstanceRESTController {
 	            String psn = domain.getAddcheckdigit() ? pseudonymizer.addCheckDigit(rawPseudonym, domain.getLengthincludescheckdigit(), domain.getName(), domain.getPrefix()) : rawPseudonym;
 				
 				// Build pseudonym object
-				Pseudonym p = new Pseudonym();
-				p.setIdentifier(identifier);
-				p.setIdtype(idType);
-				p.setPseudonym(psn);
-				p.setValidfrom(domain.getValidfrom());
-	            p.setValidfrominherited(true);
-	            p.setValidto(domain.getValidfrom());
-	            p.setValidtoinherited(true);
-	            p.setDomainid(domain.getId());
+	            IdentifierItem idItem = IdentifierItem.builder().identifier(identifier).idType(idType).build();
+				PseudonymDTO p = new PseudonymDTO();
+				p.setIdentifierItem(idItem);
+				p.setPsn(psn);
+				p.setValidFrom(domain.getValidfrom());
+	            p.setValidFromInherited(true);
+	            p.setValidTo(domain.getValidfrom());
+	            p.setValidToInherited(true);
+	            p.setDomainName(domain.getName());
 				
 	            // Sent to database
-				String result = pdba.insertPseudonym(p, false, request);
+				String result = pdba.createPseudonym(p, domain.getId(), false, request);
 				
 				// Evaluate creation result
 				if (!result.equals(PseudonymDBAccessService.INSERTION_SUCCESS)) {
@@ -470,7 +471,7 @@ public class EntityInstanceRESTController {
 		try {
 			deleted = entityInstanceDBService.deleteEntityInstance(tdid, request);
 		} catch (UnexpectedResultSizeException e) {
-			if (e.getActualSize() == 0) {
+			if (e.getActual() == 0) {
 				log.debug("Could not find the entity instance that should be deleted.");
 				return responseService.notFound(responseContentType);
 			}
