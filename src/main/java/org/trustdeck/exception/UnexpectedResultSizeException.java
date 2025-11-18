@@ -17,21 +17,29 @@
 
 package org.trustdeck.exception;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * This class represents an exception when the expected and actually received result sizes differ.
  * 
  * @author Armin Müller
  *
  */
+
 public class UnexpectedResultSizeException extends RuntimeException {
 
 	/** Exception UID. */
 	private static final long serialVersionUID = 5077979347589252209L;
 	
 	/** The expected result size. */
+	@Getter
+	@Setter
 	private Integer expected;
 	
 	/** The actual result size. */
+	@Getter
+	@Setter
 	private Integer actual;
 	
 	/** 
@@ -43,34 +51,6 @@ public class UnexpectedResultSizeException extends RuntimeException {
 		super("The result of an operation has an unexpected size.");
 		
 		this.expected = expected;
-		this.actual = actual;
-	}
-
-	/**
-	 * @return the expected
-	 */
-	public Integer getExpectedSize() {
-		return expected;
-	}
-
-	/**
-	 * @return the actual
-	 */
-	public Integer getActualSize() {
-		return actual;
-	}
-
-	/**
-	 * @param expected the expected to set
-	 */
-	public void setExpectedSize(Integer expected) {
-		this.expected = expected;
-	}
-
-	/**
-	 * @param actual the actual to set
-	 */
-	public void setActualSize(Integer actual) {
 		this.actual = actual;
 	}
 }
