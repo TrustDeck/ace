@@ -227,7 +227,7 @@ public class EntityInstanceRESTController {
 	            p.setDomainName(domain.getName());
 				
 	            // Sent to database
-				String result = pdba.createPseudonym(p, domain.getId(), false, request);
+				String result = pdba.createPseudonyms(List.of(p), domain.getId(), false, request).getFirst();
 				
 				// Evaluate creation result
 				if (!result.equals(PseudonymDBAccessService.INSERTION_SUCCESS)) {
