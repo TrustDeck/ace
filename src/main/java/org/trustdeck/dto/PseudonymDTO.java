@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,15 +44,17 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
-@Scope("prototype") // Ensures that an instance is deleted after a request
+@AllArgsConstructor
+@Scope("prototype")
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Builder
 public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
 
     /** Enables the access to the domain specific database access methods. */
 	@Getter(value=AccessLevel.NONE)
     @Setter(value=AccessLevel.NONE)
     @JsonIgnore
-    private DomainDBAccessService domainDBAccessService = SpringBeanLocator.getBean(DomainDBAccessService.class);
+    private final DomainDBAccessService domainDBAccessService = SpringBeanLocator.getBean(DomainDBAccessService.class);
 
     /** Stores the identifier for that entry. */
     private IdentifierItem identifierItem;
@@ -77,6 +81,7 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
     private String domainName;
 
     /** The domain object this entry belongs to. */
+    @JsonIgnore
     private DomainDTO domain;
 
     /**
@@ -142,7 +147,7 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
         out += (this.getValidTo() != null) ? "validTo: " + this.getValidTo().toString() + ", " : "";
         out += (this.getValidToInherited() != null) ? "validToInherited: " + this.getValidToInherited() + ", " : "";
         out += (this.getDomainName() != null) ? "domainName: " + this.getDomainName() + ", " : "";
-        //out += (this.getDomain() != null) ? "domain: {" + this.getDomain().toRepresentationString() + "}" : "";
+        out += (this.getDomain() != null) ? "domain: {" + this.getDomain().toRepresentationString() + "}" : "";
 
         return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
     }
@@ -150,6 +155,6 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
     @Override
     @JsonIgnore
     public Boolean validate() {
-        return this.getIdentifierItem().validate();
+        return this.getIdentifierItem().isNotNullNorEmpty();
     }
 }
