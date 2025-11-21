@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.algorithms.PathFinder;
 import org.trustdeck.dto.PseudonymDTO;
+import org.trustdeck.dto.PseudonymUpdateDTO;
 import org.trustdeck.exception.DomainNotFoundException;
 import org.trustdeck.exception.DomainOIDCException;
 import org.trustdeck.exception.DuplicateDomainException;
@@ -830,21 +831,34 @@ public class DomainDBAccessService {
                         .where(PSEUDONYM.DOMAINID.equal(oldDomain.getId()))
                         .fetchInto(Pseudonym.class);
 
-                // Iterate over the pseudonym-records, if there are any, and update them
+                // Iterate over the pseudonym-records, if there are any, and create updatable DTOs
+                List<PseudonymUpdateDTO> updates = new ArrayList<>();
                 for (Pseudonym old : records) {
-                    // Create a new record with the necessary changes (null values will automatically be replaced by
-                    // values from the old record)
-                    PseudonymDTO update = new PseudonymDTO();
+                    // Create a new record with the necessary changes
+                	IdentifierItem oldIdItem = IdentifierItem.builder().identifier(old.getIdentifier()).idType(old.getIdtype()).build();
+                	
+                    PseudonymUpdateDTO update = new PseudonymUpdateDTO();
+                    update.setOldIdentifierItem(oldIdItem);
+                    update.setOldPsn(old.getPseudonym());
+                    update.setOldDomain(oldDomain);
+                    update.setNewIdentifierItem(oldIdItem);
+                    update.setNewPsn(old.getPseudonym());
+                    update.setNewDomain(newDomain);
+                    update.setNewDomainName(newDomain.getName());
                     update.setValidFrom(old.getValidfrominherited() ? newDomain.getValidfrom() : oldDomain.getValidfrom());
                     update.setValidFromInherited(old.getValidfrominherited());
                     update.setValidTo(old.getValidtoinherited() ? newDomain.getValidto() : oldDomain.getValidto());
                     update.setValidToInherited(old.getValidtoinherited());
 
-                    // Update the inheritable variables
-                    if (!this.pseudonymDBAccessService.updatePseudonym(new PseudonymDTO().assignPojoValues(old), update, oldDomain.getId(), null)) {
-                        // Failed update of record. Use exception to break the transaction.
-                        throw new FailedPseudonymUpdateException((newDomain.getName() != null) ? newDomain.getName() : oldDomain.getName(), old.getIdentifier(), old.getIdtype());
-                    }
+                    updates.add(update);
+                }
+                
+                // Update the inheritable variables
+                List<Boolean> results = pseudonymDBAccessService.updatePseudonyms(updates, null);
+                if (!updates.isEmpty() && results.contains(false)) {
+                    // Failed update of a pseudonym-record: use exception to break the transaction
+                	IdentifierItem ii = updates.get(results.indexOf(false)).getNewIdentifierItem();
+                    throw new FailedPseudonymUpdateException((newDomain.getName() != null) ? newDomain.getName() : oldDomain.getName(), ii.getIdentifier(), ii.getIdType());
                 }
 
                 // Check if child domains should also be updated
