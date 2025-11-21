@@ -57,17 +57,37 @@ public class IdentifierItem {
         return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
     }
     
+    @JsonIgnore
+    public Boolean validate() {
+        // Unused
+    	return null;
+    }
+    
     /**
-     * Ensure that the item's values are valid.
+     * Ensure that the item's values are null or empty.
+     * 
+     * @return {@code true} if any of the item's attributes are null or empty, {@code false} otherwise
+     */
+    @JsonIgnore
+    public boolean isNullOrEmpty() {
+    	if (this.getIdentifier() == null || this.getIdentifier().isBlank() || this.getIdType() == null || this.getIdType().isBlank()) {
+            return true;
+        }
+
+        return false;
+    }
+    
+    /**
+     * Ensure that the item's values are not null nor empty.
      * 
      * @return {@code true} if none of the item's attributes are null or empty, {@code false} otherwise
      */
     @JsonIgnore
-    public Boolean validate() {
-        if (this.getIdentifier() == null || this.getIdentifier().isBlank() || this.getIdType() == null || this.getIdType().isBlank()) {
-            return false;
+    public boolean isNotNullNorEmpty() {
+    	if (this.getIdentifier() != null && !this.getIdentifier().isBlank() && this.getIdType() != null && !this.getIdType().isBlank()) {
+            return true;
         }
 
-        return true;
+        return false;
     }
 }
