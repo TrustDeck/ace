@@ -22,28 +22,33 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.jooq.DSLContext;
 import org.jooq.DeleteConditionStep;
-import org.jooq.Loader;
+import org.jooq.Insert;
+import org.jooq.Row2;
 import org.jooq.UpdateConditionStep;
-import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
-import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
-import org.trustdeck.exception.DomainNotFoundException;
-import org.trustdeck.exception.DuplicateIdentifierException;
-import org.trustdeck.exception.DuplicatePseudonymException;
-import org.trustdeck.exception.PseudonymNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.trustdeck.dto.PseudonymDTO;
+import org.trustdeck.dto.PseudonymUpdateDTO;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.jooq.generated.tables.records.PseudonymRecord;
+import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.utils.Assertion;
 
 import static org.trustdeck.jooq.generated.Tables.PSEUDONYM;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This class is used to encapsulate all methods needed to access the database for handling pseudonym-records.
@@ -75,203 +80,252 @@ public class PseudonymDBAccessService {
     public static final String INSERTION_SUCCESS = "success";
 
     /**
-     * Method to delete multiple pseudonyms at once in a batch. Not found pseudonyms will be ignored.
+     * Method to insert multiple pseudonyms at once in a batch. Duplicates will be ignored.
      *
-     * @param pseudonyms a list of pseudonyms that are to be deleted from the database
+     * @param pseudonyms a list of pseudonyms to insert into the database
+     * @param domainId the ID of the domain in which the pseudonyms should be created
+     * @param multiplePsnAllowed whether or not multiple pseudonyms per id&idType combination are allowed
      * @param request the request object that is needed for creating the audit database-entries. If no 
      * auditing should be performed, you can pass {@code null}.
-     * @return {@code true} when the batch deletion was successful, {@code false} otherwise
+     * @return {@code INSERTION_SUCCESS} when the batch insertion was successful, {@code INSERTION_ERROR} otherwise
      */
-    public boolean deletePseudonymBatch(List<Pseudonym> pseudonyms, HttpServletRequest request) {
-        try {
-            int removed = dslCtx.transactionResult(configuration -> {
-                // Delete by creating multiple delete statements and executing them as a batch.
-                DSLContext ctx = DSL.using(configuration);
+    @Transactional
+    public List<String> createPseudonyms(List<PseudonymDTO> pseudonyms, int domainId, boolean multiplePsnAllowed, HttpServletRequest request) {
+    	// Check if there is something to do
+    	if (pseudonyms == null || pseudonyms.isEmpty()) {
+            return List.of();
+        }
+    	
+    	int n = pseudonyms.size();
+    	List<String> results = new ArrayList<>(n);
+    	
+    	// Prefill the result list with nulls
+    	for (int i = 0; i < n; i++) {
+    		results.add(null);
+    	}
+    	
+    	// Prefill the identifier-idType-duplicate-check list (only used if !multiplePsnAllowed)
+        List<Boolean> idExistsFlags = new ArrayList<>(Collections.nCopies(n, Boolean.FALSE));
+        
+        // Prefill the psn-duplicate-check list
+        List<Boolean> psnExistsFlags = new ArrayList<>(Collections.nCopies(n, Boolean.FALSE));
+    	
+    	try {
+    		// If multiple pseudonyms per id&idType-combination are not allowed, then check 
+        	// if the id&idType-combination is already in the database
+            if (!multiplePsnAllowed) {
+            	// Create a list of identifier-idType-pairs that we can use to query the database
+            	List<Row2<String, String>> idRows = new ArrayList<>(n);
+	            for (PseudonymDTO dto : pseudonyms) {
+	                idRows.add(DSL.row(dto.getIdentifierItem().getIdentifier(), dto.getIdentifierItem().getIdType()));
+	            }
+	            
+	            // Query the database and see if we find any of the user-provided identifier-idType-pairs already in there
+	            Map<Row2<String, String>, Boolean> existingIdMap = dslCtx.select(PSEUDONYM.IDENTIFIER, PSEUDONYM.IDTYPE)
+	            	       .from(PSEUDONYM)
+	            	       .where(DSL.row(PSEUDONYM.IDENTIFIER, PSEUDONYM.IDTYPE).in(idRows))
+	            	       .and(PSEUDONYM.DOMAINID.eq(domainId))
+	            	       .fetchMap(r -> DSL.row(r.get(PSEUDONYM.IDENTIFIER), r.get(PSEUDONYM.IDTYPE)), r -> Boolean.TRUE);
 
-                // Create a list of delete statements
-                List<DeleteConditionStep<PseudonymRecord>> deletions = new ArrayList<>();
-                for (Pseudonym p : pseudonyms) {
-                    deletions.add(ctx.delete(PSEUDONYM)
-                            .where(PSEUDONYM.IDENTIFIER.equal(p.getIdentifier()))
-                            .and(PSEUDONYM.IDTYPE.equal(p.getIdtype()))
-                            .and(PSEUDONYM.PSEUDONYM_.equal(p.getPseudonym()))
-                            .and(PSEUDONYM.DOMAINID.equal(p.getDomainid())));
+            	// Build List<Boolean> in the original order and mark duplicates
+	            for (int i = 0; i < n; i++) {
+	                boolean idIsDuplicate = existingIdMap.containsKey(idRows.get(i));
+	                idExistsFlags.set(i, idIsDuplicate);
+
+            		if (idIsDuplicate) {
+            	        results.set(i, INSERTION_DUPLICATE_IDENTIFIER);
+            	    }
+            	}
+            }
+            
+            // Check for duplicated pseudonyms (e.g. when using randomness-based algorithms and only a few unused pseudonyms left)
+            // Build list of (domain_id, pseudonym) pairs
+            List<String> psns = new ArrayList<>(n);
+            for (PseudonymDTO dto : pseudonyms) {
+                psns.add(dto.getPsn());
+            }
+
+            // Fetch existing (domain_id, pseudonym) pairs
+            Set<String> existingPsns = new HashSet<>(dslCtx.select(PSEUDONYM.PSEUDONYM_)
+                      .from(PSEUDONYM)
+                      .where(PSEUDONYM.DOMAINID.eq(domainId))
+                      .and(PSEUDONYM.PSEUDONYM_.in(psns))
+                      .fetch(PSEUDONYM.PSEUDONYM_));
+
+            // Fill psnExistsFlags and mark results
+            for (int i = 0; i < n; i++) {
+                boolean psnIsDuplicate = existingPsns.contains(psns.get(i));
+                psnExistsFlags.set(i, psnIsDuplicate);
+
+                if (psnIsDuplicate && results.get(i) == null) {
+                    results.set(i, INSERTION_DUPLICATE_PSEUDONYM);
+                }
+            }
+            
+            // Try inserting all (non-duplicate) pseudonym records
+            // Prepare the batch insert
+            List<Insert<PseudonymRecord>> inserts = new ArrayList<>(n);
+            List<Integer> insertIndices = new ArrayList<>(n); // For mapping batch result index -> pseudonym index
+            int skippedDuplicates = 0;
+
+            for (int i = 0; i < n; i++) {
+                // Skip if duplicate and duplicates are not allowed
+                if ((!multiplePsnAllowed && idExistsFlags.get(i)) || psnExistsFlags.get(i)) {
+                    skippedDuplicates++;
+                    continue;
                 }
 
-                // Batch the delete statements and execute the batch
-                int[] result = ctx.batch(deletions).execute();
+                // Prepare and add the insert query
+                PseudonymDTO dto = pseudonyms.get(i);
+                inserts.add(dslCtx.insertInto(PSEUDONYM)
+                    .set(PSEUDONYM.IDENTIFIER, dto.getIdentifierItem().getIdentifier())
+                    .set(PSEUDONYM.IDTYPE, dto.getIdentifierItem().getIdType())
+                    .set(PSEUDONYM.PSEUDONYM_, dto.getPsn())
+                    .set(PSEUDONYM.VALIDFROM, dto.getValidFrom())
+                    .set(PSEUDONYM.VALIDFROMINHERITED, dto.getValidFromInherited())
+                    .set(PSEUDONYM.VALIDTO, dto.getValidTo())
+                    .set(PSEUDONYM.VALIDTOINHERITED, dto.getValidToInherited())
+                    .set(PSEUDONYM.DOMAINID, domainId));
+                
+                // Track prepared indices
+                insertIndices.add(i);
+            }
 
-                // Process the result
-                int deleted = 0;
-                int ignored = 0;
+            // If there is nothing to insert, we’re done
+            if (inserts.isEmpty()) {
+                log.trace("No pseudonyms to insert (" + skippedDuplicates + " duplicates skipped).");
+                return results;
+            }
+            
+            // Execute the batch 
+            int[] batchResult = dslCtx.batch(inserts).execute();
+            
+            // Evaluate the results
+            int inserted = 0;
+            int ignored = skippedDuplicates;
 
-                for (int i = 0; i < result.length; i++) {
-                    if (result[i] == 1) {
-                        // Successful deletion of exactly one record
-                        deleted++;
-                    } else if (result[i] == 0) {
-                        // Deletion didn't affect any record (e.g. because the record to be deleted wasn't found)
-                        ignored++;
-                    } else {
-                        // Unexpected result, abort the complete transaction by throwing an exception
-                        throw new UnexpectedResultSizeException(1, result[i]);
+            for (int j = 0; j < batchResult.length; j++) {
+                int individualResult = batchResult[j];
+                int originalIndex = insertIndices.get(j);
+
+                if (individualResult == 1) {
+                    inserted++;
+                    results.set(originalIndex, INSERTION_SUCCESS);
+                } else if (individualResult == 0) {
+                    ignored++;
+                    if (results.get(originalIndex) == null) {
+                        results.set(originalIndex, INSERTION_ERROR);
                     }
+                } else {
+                    // Unexpected result size: abort
+                    throw new UnexpectedResultSizeException(1, individualResult);
                 }
+            }
 
-                // Log information about the batch processing
-                log.debug("Deleted " + deleted + " pseudonym(s).");
-                log.debug("Ignored " + ignored + " pseudonym(s).");
+            log.trace("Inserted " + inserted + " pseudonym(s).");
+            log.trace("Ignored " + ignored + " pseudonym(s) (including " + skippedDuplicates + " duplicates).");
+            log.debug("Successfully inserted " + inserted + " out of " + n + " pseudonym" + (n == 1 ? "" : "s") + " into the database.");
 
-                // Return the number of successful deletions
-                return deleted;
-
-                // Implicit transaction commit here
-            });
-
-            log.debug("Successfully deleted a batch of " + removed + " pseudonyms from the database.");
-            return true;
-        } catch (UnexpectedResultSizeException e) {
-            log.error("The deletion would have affected an unexpected number of records (" + e.getActualSize() + ") "
-                    + "when it should have only affected " + e.getExpectedSize() + " record(s). The complete deletion "
-                    + "was therefore rolled back.\n" + e.getMessage());
-            return false;
-        } catch (Exception f) {
-            log.error("Couldn't delete the batch of " + pseudonyms.size() + " pseudonyms from the database: " + f.getMessage() + "\n");
-            return false;
+            return results;
+        } catch (Exception e) {
+        	// Force the outcome of this method to be a roll-back instead of committing the transaction
+        	TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        	
+            log.error("Couldn't insert the batch of " + n + " pseudonyms into the database: " + e.getMessage() + "\n");
+            return null;
         }
     }
-
+    
     /**
-     * Deletes a pseudonym-record from the pseudonym table.
-     *
+     * Method to retrieve pseudonym-records. This method actually only 
+     * evaluates the given information and delegates the getting-process.
+     * 
      * @param domainName the name of the domain to search in
-     * @param identifier the identifier of the record you want to delete
-     * @param idType the type of the identifier of the record you want to delete
-     * @param pseudonym the pseudonym of the record you want to delete
+     * @param identifierItem the identifierItem to search for
+     * @param psn the pseudonym to search for
      * @param request the request object that is needed for creating the audit database-entries. If no 
      * auditing should be performed, you can pass {@code null}.
-     * @return {@code true} when the deletion was successful or the record
-     * was not in the database, {@code false} otherwise
+     * @return the pseudonymization data element referring to the given information, or
+     * {@code null} when nothing is found or an error occurs
      */
-    public boolean deletePseudonym(String domainName, String identifier, String idType, String pseudonym, HttpServletRequest request) {
-        try {
-            dslCtx.transaction(configuration -> {
-                // Retrieve the domain the pseudonym belongs to
-                Domain d = domainDBAccessService.getDomainByName(domainName, null);
-                if (d == null) {
-                    // Invalid domain name. Use exception to break the transaction.
-                    throw new DomainNotFoundException(domainName);
-                }
-
-                // Check if the record that should be deleted is in the database
-                Pseudonym p = DSL.using(configuration).selectFrom(PSEUDONYM)
-                        .where(PSEUDONYM.IDENTIFIER.equal(identifier))
-                        .and(PSEUDONYM.IDTYPE.equal(idType))
-                        .and(PSEUDONYM.PSEUDONYM_.equal(pseudonym))
-                        .and(PSEUDONYM.DOMAINID.equal(d.getId()))
-                        .fetchOneInto(Pseudonym.class);
-
-                if (p == null) {
-                    // Pseudonym wasn't found. Use exception to break the transaction.
-                    throw new PseudonymNotFoundException(domainName, identifier, idType);
-                }
-
-                // Create and execute the deletion query
-                int deletedRecords = DSL.using(configuration).deleteFrom(PSEUDONYM)
-                        .where(PSEUDONYM.IDENTIFIER.equal(identifier))
-                        .and(PSEUDONYM.IDTYPE.equal(idType))
-                        .and(PSEUDONYM.PSEUDONYM_.equal(pseudonym))
-                        .and(PSEUDONYM.DOMAINID.equal(d.getId()))
-                        .execute();
-
-                // Determine deletion success
-                if (deletedRecords != 1) {
-                    // An unexpected number of records was affected. Log it and abort by throwing
-                    // an exception (which will rollback everything from the transaction).
-                    log.error("Couldn't delete the record from the database.");
-                    throw new UnexpectedResultSizeException(1, deletedRecords);
-                }
-
-                // Implicit transaction commit here
-            });
-
-            // At this point the deletion was successful
-            log.debug("Successfully deleted the record from the database.");
-            return true;
-        } catch (DomainNotFoundException e) {
-            log.debug("The domain to search the record in (\"" + e.getDomainName() + "\"), wasn't found.");
-            return false;
-        } catch (PseudonymNotFoundException f) {
-            log.info("The pseudonym-record is not in the database. Nothing to delete.");
-            return true;
-        } catch (UnexpectedResultSizeException g) {
-            log.error("The deletion would have affected an unexpected number of records. It should only affect 1 record, "
-                    + "but affected " + g.getActualSize() + " records.");
-            return false;
-        } catch (Exception h) {
-            log.error("Couldn't delete the record from the database: " + h.getMessage() + "\n");
-            return false;
-        }
-    }
-
-    /**
-     * Checks whether or not the given pseudonym-record can be found in the DB.
-     * 
-     * @param p the pseudonym-record to check the existence of
-     * @return {@code true} when the pseudonym-record exists in the DB, {@code false} otherwise
-     */
-    public boolean exists(Pseudonym p) {
-    	Domain d = domainDBAccessService.getDomainByID(p.getDomainid(), null);
-    	
-    	// Also include the pseudonym-value in the check if multiple pseudonym-values 
-    	// per identifier&idType-combination are allowed
-    	List<Pseudonym> results = getRecord(d.getName(), p.getIdentifier(), p.getIdtype(), (d.getMultiplepsnallowed() ? p.getPseudonym() : null), null);
-    	
-    	return results != null && results.size() == 1;
+    @Transactional
+    public List<PseudonymDTO> getPseudonym(String domainName, IdentifierItem identifierItem, String psn, HttpServletRequest request) {
+    	// Decide on which get-method to use depending on the given information
+    	if (identifierItem != null && identifierItem.isNotNullNorEmpty() && psn == null) {
+    		// Retrieve pseudonym through the identifier
+    		return getPseudonymFromIdentifier(domainName, identifierItem, request);
+    	} else if ((identifierItem == null || identifierItem.isNullOrEmpty()) && psn != null) {
+    		// Retrieve pseudonym through the pseudonym
+    		PseudonymDTO p = getPseudonymFromPsn(domainName, psn, request);
+    		return p == null ? null : List.of(p);
+    	} else if (identifierItem != null && Assertion.isNotNullOrEmpty(identifierItem.getIdentifier(), identifierItem.getIdType(), psn)) {
+    		// The identifier, idType, and pseudonym were given, check that all attributes are correct
+    		List<PseudonymDTO> pseudonyms = getPseudonymFromIdentifier(domainName, identifierItem, request);
+    		
+    		if (pseudonyms == null) {
+    			log.debug("Nothing was found for the given parameter configuration.");
+        		return null;
+    		}
+    		
+    		for (PseudonymDTO p : pseudonyms) {
+    			if (p.getIdentifierItem().equals(identifierItem) && p.getPsn().equals(psn)) {
+        			return List.of(p);
+        		}
+        	}
+    		
+    		log.debug("None of the records that were found matched the given pseudonym.");
+    		return null;
+    	} else {
+    		log.debug("Invalid configuration of parameters. Either id and idType, the psn, or all three are needed.");
+    		return null;
+    	}
     }
 
     /**
      * Retrieves a pseudonym-record from a specified identifier.
      *
      * @param domainName the name of the domain to search in
-     * @param identifier the identifier to search for
-     * @param idType the type of the identifier
+     * @param identifierItem the identifierItem to search for
      * @param request the request object that is needed for creating the audit database-entries. If no 
      * auditing should be performed, you can pass {@code null}.
      * @return the pseudonymization data element referring to the given identifier, or
      * {@code null} when nothing is found or an error occurs
      */
-    public List<Pseudonym> getRecordFromIdentifier(String domainName, String identifier, String idType, HttpServletRequest request) {
+    @Transactional
+    public List<PseudonymDTO> getPseudonymFromIdentifier(String domainName, IdentifierItem identifierItem, HttpServletRequest request) {
         try {
-            List<Pseudonym> p = dslCtx.transactionResult(configuration -> {
-                // Check that the domain name is valid
-                Domain d = domainDBAccessService.getDomainByName(domainName, null);
-                if (d == null) {
-                    log.debug("The domain to search the record in, wasn't found.");
-                    return null;
-                }
-
-                // Build and execute the query
-                return DSL.using(configuration)
-                        .selectFrom(PSEUDONYM)
-                        .where(PSEUDONYM.IDENTIFIER.equal(identifier))
-                        .and(PSEUDONYM.IDTYPE.equal(idType))
-                        .and(PSEUDONYM.DOMAINID.eq(d.getId()))
-                        .fetchInto(Pseudonym.class);
-
-                // Implicit transaction commit here
-            });
+            // Check that the domain name is valid
+        	Domain d = domainDBAccessService.getDomainByName(domainName, null);
+            if (d == null) {
+                log.debug("The domain to search the pseudonym in, wasn't found.");
+                return null;
+            }
+        	
+        	// Build and execute the query
+            List<Pseudonym> pseudonyms = dslCtx.selectFrom(PSEUDONYM)
+                    .where(PSEUDONYM.IDENTIFIER.equal(identifierItem.getIdentifier()))
+                    .and(PSEUDONYM.IDTYPE.equal(identifierItem.getIdType()))
+                    .and(PSEUDONYM.DOMAINID.eq(d.getId()))
+                    .fetchInto(Pseudonym.class);
 
             // Check if a pseudonym-record was found or not
-            if (p == null) {
+            if (pseudonyms == null || pseudonyms.size() == 0) {
                 log.debug("There is no element in the database matching the given identifier and type.");
                 return null;
             } else {
-                log.debug("Successfully retrieved " + p.size() + " pseudonym" + (p.size() == 1 ? "." : "s."));
-                return p;
+            	List<PseudonymDTO> dtos = pseudonyms.stream()
+                        .map(p -> new PseudonymDTO().assignPojoValues(p))
+                        .collect(Collectors.toList());
+
+                log.trace("Successfully retrieved " + dtos.size() + " pseudonym" + (dtos.size() == 1 ? "." : "s."));
+                return dtos;
             }
         } catch (Exception e) {
-            log.error("Couldn't query the database: " + e.getMessage() + "\n");
+        	// Force the outcome of this method to be a roll-back instead of committing the transaction
+        	TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        	
+            log.error("Couldn't query the database: " + e.getClass() + ": " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
@@ -286,368 +340,232 @@ public class PseudonymDBAccessService {
      * @return the pseudonymization data element referring to the given pseudonym, or
      * {@code null} when nothing is found or an error occurs
      */
-    public Pseudonym getRecordFromPseudonym(String domainName, String psn, HttpServletRequest request) {
+    @Transactional
+    public PseudonymDTO getPseudonymFromPsn(String domainName, String psn, HttpServletRequest request) {
         try {
-            Pseudonym p = dslCtx.transactionResult(configuration -> {
-                // Check that the domain name is valid
-                Domain d = domainDBAccessService.getDomainByName(domainName, null);
-                if (d == null) {
-                    log.debug("The domain to search the record in, wasn't found.");
-                    return null;
-                }
-
-                // Build and execute the query
-                return DSL.using(configuration)
-                        .selectFrom(PSEUDONYM)
-                        .where(PSEUDONYM.PSEUDONYM_.equal(psn))
-                        .and(PSEUDONYM.DOMAINID.eq(d.getId()))
-                        .fetchOneInto(Pseudonym.class);
-
-                // Implicit transaction commit here
-            });
-
+        	// Check that the domain name is valid
+            Domain d = domainDBAccessService.getDomainByName(domainName, null);
+            if (d == null) {
+                log.debug("The domain to search the pseudonym in, wasn't found.");
+                return null;
+            }
+        	
+        	// Build and execute the query
+            Pseudonym pseudonym = dslCtx.selectFrom(PSEUDONYM)
+                    .where(PSEUDONYM.PSEUDONYM_.equal(psn))
+                    .and(PSEUDONYM.DOMAINID.eq(d.getId()))
+                    .fetchOneInto(Pseudonym.class);
+            
             // Check if a pseudonym-record was found or not
-            if (p == null) {
-                log.debug("There is no element in the database matching the given pseudonym.");
+            if (pseudonym == null) {
+                log.debug("There is no element in the database matching the given pseudonym-value.");
                 return null;
             } else {
             	log.debug("Successfully retrieved a pseudonym.");
-                return p;
+                return new PseudonymDTO().assignPojoValues(pseudonym);
             }
         } catch (Exception e) {
-            log.error("Couldn't query the database: " + e.getMessage() + "\n");
+        	// Force the outcome of this method to be a roll-back instead of committing the transaction
+        	TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        	
+            log.error("Couldn't query the database: " + e.getClass() + ": " + e.getMessage());
             return null;
         }
     }
-    
+
     /**
-     * Method to retrieve pseudonym-records. This method actually only 
-     * evaluates the given information and delegates the getting-process.
-     * 
-     * @param domainName the name of the domain to search in
-     * @param identifier the identifier to search for
-     * @param idType the type of the identifier
-     * @param psn the pseudonym to search for
+     * Method to update multiple pseudonyms at once in a single batch. Not found pseudonyms will be ignored.
+     * Can also update a single pseudonym (given as a list).
+     *
+     * @param pseudonymUpdates a list of pseudonyms that are to be updated in the database
      * @param request the request object that is needed for creating the audit database-entries. If no 
      * auditing should be performed, you can pass {@code null}.
-     * @return the pseudonymization data element referring to the given information, or
-     * {@code null} when nothing is found or an error occurs
+     * @return List of {@code true} when the individual update was successful, {@code false} otherwise
      */
-    public List<Pseudonym> getRecord(String domainName, String identifier, String idType, String psn, HttpServletRequest request) {
-    	// Decide on which get-method to use depending on the given information
-    	if (Assertion.assertNotNullAll(identifier, idType) && psn == null) {
-    		// Retrieve record through the identifier
-    		return getRecordFromIdentifier(domainName, identifier, idType, request);
-    	} else if (Assertion.assertNullAll(identifier, idType) && psn != null) {
-    		// Retrieve record through the pseudonym
-    		List<Pseudonym> pList = new ArrayList<Pseudonym>();
-            
-    		Pseudonym p = getRecordFromPseudonym(domainName, psn, request);
-            if (p != null) {
-                pList.add(p);
-                return pList;
-            } else {
-                return null;
-            }
-    	} else if (Assertion.assertNotNullAll(identifier, idType, psn)) {
-    		// The identifier, idType, and pseudonym were given. Check that all attributes are correct.
-    		List<Pseudonym> res = getRecordFromIdentifier(domainName, identifier, idType, request);
-    		
-    		if (res == null) {
-    			log.debug("Nothing was found for the given parameter configuration.");
-        		return null;
-    		}
-    		
-    		for (Pseudonym r : res) {
-    			if (r.getIdentifier().equals(identifier) && r.getIdtype().equals(idType) && r.getPseudonym().equals(psn)) {
-        			List<Pseudonym> singleRecordAsList = new ArrayList<Pseudonym>();
-        			singleRecordAsList.add(r);
-        			return singleRecordAsList;
-        		}
-        	}
-    		
-    		log.debug("None of the records that were found matched the given pseudonym.");
-    		return null;
-    	} else {
-    		log.debug("Invalid configuration of parameters. Either id and idType, the psn, or all three are needed.");
-    		return null;
+    @Transactional
+    public List<Boolean> updatePseudonyms(List<PseudonymUpdateDTO> pseudonymUpdates, HttpServletRequest request) {
+        // Check if there is something to do
+    	if (pseudonymUpdates == null || pseudonymUpdates.isEmpty()) {
+            return List.of();
+        }
+    	
+    	int n = pseudonymUpdates.size();
+    	List<Boolean> updateSuccess = new ArrayList<>(n);
+    	
+    	// Prefill the result list with nulls
+    	for (int i = 0; i < n; i++) {
+    		updateSuccess.add(null);
     	}
-    }
-
-    /**
-     * Method to insert multiple pseudonyms at once in a batch. Duplicates will be ignored.
-     *
-     * @param pseudonyms a list of pseudonyms to insert into the database
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
-     * @return {@code INSERTION_SUCCESS} when the batch insertion was successful, {@code INSERTION_ERROR} otherwise
-     */
-    public String insertPseudonymBatch(List<Pseudonym> pseudonyms, HttpServletRequest request) {
-        try {
-            dslCtx.transaction(configuration -> {
-                // Load the batch through mapping an array of pseudonyms (represented as an array of attributes)
-                // to the database fields.
-                Loader<PseudonymRecord> loader = DSL.using(configuration).loadInto(PSEUDONYM)
-                        .onDuplicateKeyIgnore()
-                        .loadArrays(pseudonyms.stream().map(
-                                        t -> new Object[] {
-                                                t.getIdentifier(),
-                                                t.getIdtype(),
-                                                t.getPseudonym(),
-                                                t.getValidfrom(),
-                                                t.getValidfrominherited(),
-                                                t.getValidto(),
-                                                t.getValidtoinherited(),
-                                                t.getDomainid()
-                                        })
-                                .toArray(Object[][]::new))
-                        .fields(PSEUDONYM.IDENTIFIER,
-                                PSEUDONYM.IDTYPE,
-                                PSEUDONYM.PSEUDONYM_,
-                                PSEUDONYM.VALIDFROM,
-                                PSEUDONYM.VALIDFROMINHERITED,
-                                PSEUDONYM.VALIDTO,
-                                PSEUDONYM.VALIDTOINHERITED,
-                                PSEUDONYM.DOMAINID)
-                        .execute();
-
-                // Log information about the batch processing
-                log.debug("Inserted " + loader.stored() + " pseudonym(s).");
-                log.debug("Ignored " + loader.ignored() + " pseudonym(s).");
-
-                // Implicit transaction commit here
-            });
-
-            log.debug("Successfully inserted a batch of " + pseudonyms.size() + " pseudonyms into the database.");
-            return INSERTION_SUCCESS;
-        } catch (Exception e) {
-            log.error("Couldn't insert the batch of " + pseudonyms.size() + " pseudonyms into the database: " + e.getMessage() + "\n");
-            return INSERTION_ERROR;
-        }
-    }
-
-    /**
-     * Method to insert a pseudonym into the database.
-     *
-     * @param pseudonym the pseudonym object that should be inserted
-     * @param multiplePsnAllowed whether or not multiple pseudonyms per id&idType combination are allowed
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
-     * @return {@code INSERTION_SUCCESS} when the insertion was successful, {@code INSERTION_DUPLICATE}
-     * when the record was already in the database, {@code INSERTION_ERROR} otherwise
-     */
-    public String insertPseudonym(Pseudonym pseudonym, boolean multiplePsnAllowed, HttpServletRequest request) {
-        try {
-            dslCtx.transaction(configuration -> {
-            	// If no multiple pseudonyms per id&idType-combination are allowed, then check 
-            	// if the id&idType-combination is already in the database
-            	if (!multiplePsnAllowed) {
-            		// Try retrieving duplicates
-	            	List<Pseudonym> p = DSL.using(configuration)
-							            	.selectFrom(PSEUDONYM)
-							                .where(PSEUDONYM.IDENTIFIER.equal(pseudonym.getIdentifier()))
-							                .and(PSEUDONYM.IDTYPE.equal(pseudonym.getIdtype()))
-							                .and(PSEUDONYM.DOMAINID.eq(pseudonym.getDomainid()))
-							                .fetchInto(Pseudonym.class);
-	            	
-	            	if (p != null && p.size() >= 1) {
-	                    throw new DuplicateIdentifierException("", pseudonym.getIdentifier(), pseudonym.getIdtype());
-	            	}
-            	}
-
-                // Insert into table
-                int insertedRecords = 0;
-                try {
-					insertedRecords = DSL.using(configuration)
-                        .insertInto(PSEUDONYM, PSEUDONYM.IDENTIFIER, PSEUDONYM.IDTYPE, PSEUDONYM.PSEUDONYM_, PSEUDONYM.VALIDFROM,
-                                PSEUDONYM.VALIDFROMINHERITED, PSEUDONYM.VALIDTO, PSEUDONYM.VALIDTOINHERITED, PSEUDONYM.DOMAINID)
-                        .values(pseudonym.getIdentifier(), pseudonym.getIdtype(), pseudonym.getPseudonym(), pseudonym.getValidfrom(),
-                                pseudonym.getValidfrominherited(), pseudonym.getValidto(), pseudonym.getValidtoinherited(), pseudonym.getDomainid())
-                        .execute();
-				} catch (DataAccessException e) {
-					// Check if the cause of the exception was a uniqueness violation
-		            if (e.getCause() instanceof PSQLException) {
-		                PSQLException psqlException = (PSQLException) e.getCause();
-		                
-		                if (psqlException.getSQLState().equals("23505") || psqlException.getMessage().contains("duplicate key")) {
-		                	// Record is already in the DB. Use exception to break the transaction.
-		                    throw new DuplicatePseudonymException(domainDBAccessService.getDomainByID(pseudonym.getDomainid(), null).getName(), pseudonym.getIdentifier(), pseudonym.getIdtype());
-		                } else {
-		                    // Re-throw the original PSQL exception
-		                	throw psqlException;
-		                }
-		            } else {
-		            	// Re-throw the original exception
-	                	throw e;
-		            }
-		        }
-
-                // Determine insertion success
-                if (insertedRecords != 1) {
-                    // An unexpected number of records was affected. Log it and abort by throwing
-                    // an exception (which will rollback everything from the transaction).
-                    log.error("Couldn't insert the record into the database.");
-                    throw new UnexpectedResultSizeException(1, insertedRecords);
+    	
+    	try {
+            List<UpdateConditionStep<PseudonymRecord>> updates = new ArrayList<>();
+            List<Integer> originalIndex = new ArrayList<>();
+            int updated = 0;
+            int ignored = 0;
+        	
+        	// Create a list of update statements
+            for (int j = 0; j < n; j++) {
+            	PseudonymUpdateDTO p = pseudonymUpdates.get(j);
+            	
+            	// Check if the pseudonym record to be updated exists
+            	List<PseudonymDTO> found = getPseudonym(p.getOldDomain().getName(), p.getOldIdentifierItem(), p.getOldPsn(), null);
+            	if (found == null || found.size() == 0 || found.getFirst() == null) {
+            		log.debug("The pseudonym record was not found in the database, so this update is ignored.");
+            		ignored++;
+                    updateSuccess.set(j, false);
+                    continue;
+                } else if (found.size() != 1) {
+                	log.debug("Found too many matching pseudonym records, so this update is ignored.");
+            		ignored++;
+                    updateSuccess.set(j, false);
+                    continue;
                 }
-
-                // Implicit transaction commit here
-            });
-
-            log.debug("Successfully inserted the pseudonym into the database.");
-            return INSERTION_SUCCESS;
-        } catch (DuplicateIdentifierException e) {
-        	log.debug("The identifier & idType combination that should be inserted was already there. No insertion performed.");
-            return INSERTION_DUPLICATE_IDENTIFIER;
-        } catch (DuplicatePseudonymException | DuplicateKeyException f) {
-        	log.debug("The pseudonym that should be inserted was already there. No insertion performed.");
-            return INSERTION_DUPLICATE_PSEUDONYM;
-        } catch (UnexpectedResultSizeException g) {
-            log.error("The insertion would have affected an unexpected number of records. It should only affect 1 record, "
-                    + "but affected " + g.getActualSize() + " records.");
-            return INSERTION_ERROR;
-        } catch (Exception h) {
-            log.error("Couldn't insert the record into the database: " + h.getMessage() + "\n");
-            return INSERTION_ERROR;
-        }
-    }
-
-    /**
-     * Method to update multiple pseudonyms at once in a batch. Not found pseudonyms will be ignored.
-     * Updatable attributes are restricted to pseudonym, validFrom, validFromInherited,
-     * validTo, and validToInherited.
-     *
-     * @param pseudonyms a list of pseudonyms that are to be updated in the database
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
-     * @return {@code true} when the batch update was successful, {@code false} otherwise
-     */
-    public List<Boolean> updatePseudonymBatch(List<Pseudonym> pseudonyms, HttpServletRequest request) {
-        try {
-        	List<Boolean> updateSuccess = new ArrayList<>();
-            
-        	int up = dslCtx.transactionResult(configuration -> {
-                // Update by creating multiple update statements and executing them as a batch.
-                DSLContext ctx = DSL.using(configuration);
-
-                // Create a list of update statements
-                List<UpdateConditionStep<PseudonymRecord>> updates = new ArrayList<>();
-                for (Pseudonym p : pseudonyms) {
-                    updates.add(ctx.update(PSEUDONYM)
-                            //.set(PSEUDONYM.IDENTIFIER, p.getIdentifier())
-                            //.set(PSEUDONYM.IDTYPE, p.getIdtype())
-                            .set(PSEUDONYM.PSEUDONYM_, p.getPseudonym())
-                            .set(PSEUDONYM.VALIDFROM, p.getValidfrom())
-                            .set(PSEUDONYM.VALIDFROMINHERITED, p.getValidfrominherited())
-                            .set(PSEUDONYM.VALIDTO, p.getValidto())
-                            .set(PSEUDONYM.VALIDTOINHERITED, p.getValidtoinherited())
-                            //.set(PSEUDONYM.DOMAINID, p.getDomainid())
-                            .where(PSEUDONYM.IDENTIFIER.equal(p.getIdentifier()))
-                            .and(PSEUDONYM.IDTYPE.equal(p.getIdtype()))
-                            .and(PSEUDONYM.DOMAINID.equal(p.getDomainid())));
-                }
-
-                // Batch the update statements and execute the batch
-                int[] result = ctx.batch(updates).execute();
-
-                // Process the result
-                int updated = 0;
-                int ignored = 0;
+            	
+            	PseudonymDTO old = found.getFirst();
                 
-                for (int i = 0; i < result.length; i++) {
-                    if (result[i] == 1) {
-                        // Successful update of exactly one record
-                        updated++;
-                        updateSuccess.add(true);
-                    } else if (result[i] == 0) {
-                        // Update didn't affect any record (e.g. because the record to be updated wasn't found)
-                        ignored++;
-                        updateSuccess.add(false);
-                    } else {
-                        // Unexpected result, abort the complete transaction by throwing an exception
-                        throw new UnexpectedResultSizeException(1, result[i]);
-                    }
+                // Sanitize update values
+                String identifier = (p.getNewIdentifierItem() != null && Assertion.isNotNullOrEmpty(p.getNewIdentifierItem().getIdentifier())) ? p.getNewIdentifierItem().getIdentifier() : old.getIdentifierItem().getIdentifier();
+                String idType = (p.getNewIdentifierItem() != null && Assertion.isNotNullOrEmpty(p.getNewIdentifierItem().getIdType())) ? p.getNewIdentifierItem().getIdType() : old.getIdentifierItem().getIdType();
+                String psn = Assertion.isNotNullOrEmpty(p.getNewPsn()) ? p.getNewPsn() : old.getPsn();
+                LocalDateTime validFrom = (p.getValidFrom() != null) ? p.getValidFrom() : old.getValidFrom();
+                Boolean validFromInh = (p.getValidFromInherited() != null) ? p.getValidFromInherited() : old.getValidFromInherited();
+                LocalDateTime validTo = (p.getValidTo() != null) ? p.getValidTo() : old.getValidTo();
+                Boolean validToInh = (p.getValidToInherited() != null) ? p.getValidToInherited() : old.getValidToInherited();
+                int domainId = (p.getNewDomain() != null) ? p.getNewDomain().getId() : p.getOldDomain().getId();
+            	
+            	// Add to batch update
+            	updates.add(dslCtx.update(PSEUDONYM)
+                        .set(PSEUDONYM.IDENTIFIER, identifier)
+                        .set(PSEUDONYM.IDTYPE, idType)
+                        .set(PSEUDONYM.PSEUDONYM_, psn)
+                        .set(PSEUDONYM.VALIDFROM, validFrom)
+                        .set(PSEUDONYM.VALIDFROMINHERITED, validFromInh)
+                        .set(PSEUDONYM.VALIDTO, validTo)
+                        .set(PSEUDONYM.VALIDTOINHERITED, validToInh)
+                        .set(PSEUDONYM.DOMAINID, domainId)
+                        .where(PSEUDONYM.IDENTIFIER.eq(old.getIdentifierItem().getIdentifier()))
+            	        .and(PSEUDONYM.IDTYPE.eq(old.getIdentifierItem().getIdType()))
+            	        .and(PSEUDONYM.PSEUDONYM_.eq(old.getPsn()))
+            	        .and(PSEUDONYM.DOMAINID.eq(p.getOldDomain().getId())));
+            	
+            	// Store the index of the original list
+            	originalIndex.add(j);            }
+            
+        	// Batch the update statements and execute the batch
+            int[] result = dslCtx.batch(updates).execute();
+
+            // Process the result
+            for (int i = 0; i < result.length; i++) {
+                if (result[i] == 1) {
+                    // Successful update of exactly one record
+                    updated++;
+                    updateSuccess.set(originalIndex.get(i), true);
+                } else if (result[i] == 0) {
+                    // Update didn't affect any record (e.g. because the record to be updated wasn't found)
+                    ignored++;
+                    updateSuccess.set(originalIndex.get(i), false);
+                } else {
+                    // Unexpected result, abort the complete transaction by throwing an exception
+                    throw new UnexpectedResultSizeException(1, result[i]);
                 }
+            }
 
-                // Log information about the batch processing
-                log.debug("Updated " + updated + " pseudonym(s).");
-                log.debug("Ignored " + ignored + " pseudonym(s).");
+            // Log information about the batch processing
+            log.trace("Updated " + updated + " pseudonym(s).");
+            log.trace("Ignored " + ignored + " pseudonym(s).");
 
-                // Return the number of successful deletions
-                return updated;
-
-                // Implicit transaction commit here
-            });
-
-            log.debug("Successfully updated a batch of " + up + " pseudonyms in the database.");
+            // Return the list of success or failure
+            log.debug("Successfully updated " + updated + " out of " + pseudonymUpdates.size() + " pseudonym" + (updates.size() == 1 ? "" : "s") + " in the database.");
             return updateSuccess;
         } catch (UnexpectedResultSizeException e) {
-            log.error("The update would have affected an unexpected number of records (" + e.getActualSize() + ") "
-                    + "when it should have only affected " + e.getExpectedSize() + " record(s). The complete update "
-                    + "was therefore rolled back.\n" + e.getMessage());
+        	// Force the outcome of this method to be a roll-back instead of committing the transaction
+        	TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        	
+            log.error("The update would have affected an unexpected number of records (" + e.getActual() + ") "
+                    + "when it should have only affected " + e.getExpected() + " record(s). The batch update "
+                    + "was therefore rolled back.");
             return null;
         } catch (Exception f) {
-            log.error("Couldn't update the batch of " + pseudonyms.size() + " pseudonyms in the database: " + f.getMessage() + "\n");
+        	// Force the outcome of this method to be a roll-back instead of committing the transaction
+        	TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        	
+        	log.error("Couldn't update the batch of pseudonyms in the database: " + f.getClass() + ": " + f.getMessage());
             return null;
         }
     }
 
     /**
-     * Method to update pseudonym-records in the database.
-     * Updates only those parameters that aren't {@code null}.
+     * Method to delete multiple pseudonyms at once in a batch. Not found pseudonyms will be ignored.
      *
-     * @param oldRecord the record object of the record that should be updated
-     * @param newRecord the new record object containing the data that should be updated
+     * @param pseudonyms a list of pseudonyms that are to be deleted from the database
+     * @param domainId the ID of the domain in which the pseudonym should be updated
      * @param request the request object that is needed for creating the audit database-entries. If no 
      * auditing should be performed, you can pass {@code null}.
-     * @return {@code true} if the update was successful and only one record was affected, {@code false} otherwise.
+     * @return {@code true} when the batch deletion was successful, {@code false} otherwise
      */
-    public boolean updatePseudonym(Pseudonym oldRecord, Pseudonym newRecord, HttpServletRequest request) {
-        try {
-            dslCtx.transaction(configuration -> {
-                // Check if the record to be updated exists
-                if (!exists(oldRecord)) {
-                    // Record is not in the DB. Use exception to break the transaction.
-                    throw new PseudonymNotFoundException(domainDBAccessService.getDomainByID(oldRecord.getDomainid(), null).getName(), oldRecord.getIdentifier(), oldRecord.getIdtype());
+    @Transactional
+    public List<Boolean> deletePseudonyms(List<PseudonymDTO> pseudonyms, int domainId, HttpServletRequest request) {
+    	List<Boolean> deleteSuccess = new ArrayList<>();
+    	
+    	if (pseudonyms == null || pseudonyms.isEmpty()) {
+            return List.of();
+        }
+    	
+    	try {
+        	
+        	// Create a list of delete statements
+            List<DeleteConditionStep<PseudonymRecord>> deletions = new ArrayList<>(pseudonyms.size());
+            for (PseudonymDTO p : pseudonyms) {
+                deletions.add(dslCtx.delete(PSEUDONYM)
+                        .where(PSEUDONYM.IDENTIFIER.equal(p.getIdentifierItem().getIdentifier()))
+                        .and(PSEUDONYM.IDTYPE.equal(p.getIdentifierItem().getIdType()))
+                        .and(PSEUDONYM.PSEUDONYM_.equal(p.getPsn()))
+                        .and(PSEUDONYM.DOMAINID.equal(domainId)));
+            }
+
+            // Batch the delete statements and execute the batch
+            int[] result = dslCtx.batch(deletions).execute();
+
+            // Process the result
+            int deleted = 0;
+            int ignored = 0;
+
+            for (int i = 0; i < result.length; i++) {
+                if (result[i] == 1) {
+                    // Successful deletion of exactly one record
+                    deleted++;
+                    deleteSuccess.add(true);
+                } else if (result[i] == 0) {
+                    // Deletion didn't affect any record (e.g. because the record to be deleted wasn't found)
+                    ignored++;
+                    deleteSuccess.add(false);
+                } else {
+                    // Unexpected result, abort the complete transaction by throwing an exception
+                    throw new UnexpectedResultSizeException(1, result[i]);
                 }
+            }
 
-                // Create and execute the update query
-                int updatedRecords = DSL.using(configuration).update(PSEUDONYM)
-                        .set(PSEUDONYM.IDENTIFIER, (newRecord.getIdentifier() != null && newRecord.getIdentifier().trim() != "") ? newRecord.getIdentifier() : oldRecord.getIdentifier())
-                        .set(PSEUDONYM.IDTYPE, (newRecord.getIdtype() != null && newRecord.getIdtype().trim() != "") ? newRecord.getIdtype() : oldRecord.getIdtype())
-                        .set(PSEUDONYM.PSEUDONYM_, (newRecord.getPseudonym() != null && newRecord.getPseudonym().trim() != "") ? newRecord.getPseudonym() : oldRecord.getPseudonym())
-                        .set(PSEUDONYM.VALIDFROM, (newRecord.getValidfrom() != null) ? newRecord.getValidfrom() : oldRecord.getValidfrom())
-                        .set(PSEUDONYM.VALIDFROMINHERITED, (newRecord.getValidfrominherited() != null) ? newRecord.getValidfrominherited() : oldRecord.getValidfrominherited())
-                        .set(PSEUDONYM.VALIDTO, (newRecord.getValidto() != null) ? newRecord.getValidto() : oldRecord.getValidto())
-                        .set(PSEUDONYM.VALIDTOINHERITED, (newRecord.getValidtoinherited() != null) ? newRecord.getValidtoinherited() : oldRecord.getValidtoinherited())
-                        .set(PSEUDONYM.DOMAINID, (newRecord.getDomainid() != null) ? newRecord.getDomainid() : oldRecord.getDomainid())
-                        .where(PSEUDONYM.IDENTIFIER.equal(oldRecord.getIdentifier()))
-                        .and(PSEUDONYM.IDTYPE.equal(oldRecord.getIdtype()))
-                        .and(PSEUDONYM.DOMAINID.equal(oldRecord.getDomainid()))
-                        .execute();
+            // Log information about the batch processing
+            log.trace("Deleted " + deleted + " pseudonym(s).");
+            log.trace("Ignored " + ignored + " pseudonym(s).");
 
-                // Determine success
-                if (updatedRecords != 1) {
-                    // An unexpected number of records was affected. Log it and abort by throwing
-                    // an exception (which will rollback everything from the transaction).
-                    throw new UnexpectedResultSizeException(1, updatedRecords);
-                }
-
-                // Implicit transaction commit here
-            });
-            
-            // At this point the update was successful
-            log.debug("Successfully updated the record in the database.");
-            return true;
-        } catch (PseudonymNotFoundException e) {
-            log.info("The pseudonym-record is not in the database. Nothing to update.");
-            return false;
-        } catch (UnexpectedResultSizeException f) {
-            log.error("The update would have affected an unexpected number of records. It should only affect 1 record, "
-                    + "but affected " + f.getActualSize() + " records.");
-            return false;
-        } catch (Exception g) {
-            log.error("Couldn't update the record from the database: " + g.getMessage() + "\n");
-            return false;
+            // Return the list of deletion success or failure
+            log.debug("Successfully deleted " + deleted + " out of " + deletions.size() + " pseudonyms in the database.");
+            return deleteSuccess;
+        } catch (UnexpectedResultSizeException e) {
+        	// Force the outcome of this method to be a roll-back instead of committing the transaction
+        	TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        	
+            log.error("The deletion would have affected an unexpected number of records (" + e.getActual() + ") "
+                    + "when it should have only affected " + e.getExpected() + " record(s). The deletion process "
+                    + "was therefore rolled back.");
+            return null;
+        } catch (Exception f) {
+        	// Force the outcome of this method to be a roll-back instead of committing the transaction
+        	TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        	
+            log.error("Couldn't delete a batch of pseudonyms from the database: " + f.getClass() + ": " + f.getMessage());
+            return null;
         }
     }
 }

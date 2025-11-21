@@ -37,8 +37,9 @@ import org.trustdeck.algorithms.PseudonymizationFactory;
 import org.trustdeck.algorithms.Pseudonymizer;
 import org.trustdeck.algorithms.RandomNumberPseudonymizer;
 import org.trustdeck.dto.PseudonymDTO;
+import org.trustdeck.dto.PseudonymUpdateDTO;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
-import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
+import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
@@ -69,6 +70,9 @@ public class PseudonymRESTController {
 
     /** The default maximum allowed batch size. */
     private static final int DEFAULT_PSEUDONYM_BATCH_LENGTH = 50000;
+
+    /** The default for regenerating the pseudonym on updates that affect the identifierItem or the domain. */
+    private static final boolean DEFAULT_REGENERATE_PSEUDONYM = true;
 
     /** Enables the access to the domain specific database access methods. */
     @Autowired
@@ -172,13 +176,12 @@ public class PseudonymRESTController {
         }
 
         // Transform the user-given inputs into a list of pseudonym objects.
-        List<Pseudonym> pseudonyms = new ArrayList<>();
+        List<PseudonymDTO> pseudonyms = new ArrayList<>();
         for (PseudonymDTO pseudonymDTO : recordDtoList) {
             // Start creating the record
-            Pseudonym p = new Pseudonym();
-            p.setIdentifier(pseudonymDTO.getIdentifierItem().getIdentifier());
-            p.setIdtype(pseudonymDTO.getIdentifierItem().getIdType());
-            p.setDomainid(domain.getId());
+            PseudonymDTO p = new PseudonymDTO();
+            p.setIdentifierItem(pseudonymDTO.getIdentifierItem());
+            p.setDomainName(domain.getName());
 
             // Pseudonymize the identifier and store it in the object
             String pseudonym = null;
@@ -214,22 +217,34 @@ public class PseudonymRESTController {
                     return responseService.internalServerError(responseContentType);
                 }
             }
-            p.setPseudonym(pseudonym);
+            p.setPsn(pseudonym);
 
             // Determine validFrom date if (not) given by the user
             if (pseudonymDTO.getValidFrom() != null) {
                 if (domain.getEnforcestartdatevalidity()) {
                     // Ensure that the given start date isn't before the start date of the domain
-                    p.setValidfrom(pseudonymDTO.getValidFrom().isAfter(domain.getValidfrom()) ? pseudonymDTO.getValidFrom() : domain.getValidfrom());
-                    p.setValidfrominherited(!pseudonymDTO.getValidFrom().isAfter(domain.getValidfrom()));
+                    p.setValidFrom(pseudonymDTO.getValidFrom().isAfter(domain.getValidfrom()) ? pseudonymDTO.getValidFrom() : domain.getValidfrom());
+                    p.setValidFromInherited(!pseudonymDTO.getValidFrom().isAfter(domain.getValidfrom()));
                 } else {
-                    p.setValidfrom(pseudonymDTO.getValidFrom());
-                    p.setValidfrominherited(false);
+                    p.setValidFrom(pseudonymDTO.getValidFrom());
+                    p.setValidFromInherited(false);
                 }
             } else {
                 // Nothing given by the user. Use domain information.
-                p.setValidfrom(domain.getValidfrom());
-                p.setValidfrominherited(true);
+            	// If no start and end date is given, ensure that the used start date plus a given validityTime results in a 
+            	// validity period that has not already ended (e.g. domain.start is 2 weeks ago, validityTime is 1 week 
+            	// --> the calculated period would be in the past) 
+            	if (pseudonymDTO.getValidTo() == null && pseudonymDTO.getValidityTime() != null 
+            			&& domain.getValidfrom().plusSeconds(Utility.validityTimeToSeconds(pseudonymDTO.getValidityTime())).isBefore(LocalDateTime.now())
+            			&& LocalDateTime.now().isBefore(domain.getValidto())) {
+            		log.debug("Using the domain validFrom-date plus the given validity time would result in an expired pseudonym. Using now() for the start instead.");
+            		
+            		p.setValidFrom(LocalDateTime.now());
+            		p.setValidFromInherited(false);
+            	}
+            	
+                p.setValidFrom(domain.getValidfrom());
+                p.setValidFromInherited(true);
             }
 
             // Determine validTo date if (not) given by the user
@@ -237,11 +252,11 @@ public class PseudonymRESTController {
                 // End date of validity period is given
                 if (domain.getEnforceenddatevalidity()) {
                     // Ensure that the given end date isn't after the end date of the domain
-                    p.setValidto((pseudonymDTO.getValidTo().isBefore(domain.getValidto())) ? pseudonymDTO.getValidTo() : domain.getValidto());
-                    p.setValidtoinherited(!pseudonymDTO.getValidTo().isBefore(domain.getValidto()));
+                    p.setValidTo((pseudonymDTO.getValidTo().isBefore(domain.getValidto())) ? pseudonymDTO.getValidTo() : domain.getValidto());
+                    p.setValidToInherited(!pseudonymDTO.getValidTo().isBefore(domain.getValidto()));
                 } else {
-                    p.setValidto(pseudonymDTO.getValidTo());
-                    p.setValidtoinherited(false);
+                    p.setValidTo(pseudonymDTO.getValidTo());
+                    p.setValidToInherited(false);
                 }
             } else if (pseudonymDTO.getValidTo() == null && pseudonymDTO.getValidityTime() != null) {
                 // A validity period was given
@@ -249,16 +264,16 @@ public class PseudonymRESTController {
 
                 if (domain.getEnforceenddatevalidity()) {
                     // Ensure that the given validity period ends before the end date of the domain
-                    p.setValidto((p.getValidfrom().plusSeconds(vTime).isBefore(domain.getValidto())) ? p.getValidfrom().plusSeconds(vTime) : domain.getValidto());
-                    p.setValidtoinherited(!p.getValidfrom().plusSeconds(vTime).isBefore(domain.getValidto()));
+                    p.setValidTo((p.getValidFrom().plusSeconds(vTime).isBefore(domain.getValidto())) ? p.getValidFrom().plusSeconds(vTime) : domain.getValidto());
+                    p.setValidToInherited(!p.getValidFrom().plusSeconds(vTime).isBefore(domain.getValidto()));
                 } else {
-                    p.setValidto(p.getValidfrom().plusSeconds(vTime));
-                    p.setValidtoinherited(false);
+                    p.setValidTo(p.getValidFrom().plusSeconds(vTime));
+                    p.setValidToInherited(false);
                 }
             } else {
                 // Nothing was given: use date from domain
-                p.setValidto(domain.getValidto());
-                p.setValidtoinherited(true);
+                p.setValidTo(domain.getValidto());
+                p.setValidToInherited(true);
             }
 
             // Add the newly created pseudonym to the list
@@ -266,40 +281,55 @@ public class PseudonymRESTController {
         }
 
         // Insert the list of pseudonyms in one batch
-        String result = pseudonymDBAccessService.insertPseudonymBatch(pseudonyms, request);
+        List<String> result = pseudonymDBAccessService.createPseudonyms(pseudonyms, domain.getId(), domain.getMultiplepsnallowed(), request);
 
         // Evaluate the result
-        if (result.equals(PseudonymDBAccessService.INSERTION_SUCCESS)) {
-            // Success. Return a status code 201-CREATED and the pseudonym as payload.
-            List<PseudonymDTO> pseudonymDTOs = new ArrayList<>();
-            List<String> recordDtosStrings = new ArrayList<>();
+        List<PseudonymDTO> pseudonymDTOs = new ArrayList<>();
+        List<String> pseudonymDtoStrings = new ArrayList<>();
+        int successful = 0;
 
-            for (Pseudonym record : pseudonyms) {
-                PseudonymDTO pseudonymDTO = null;
+        for (int i = 0; i < pseudonyms.size(); i++) {
+        	if (result.get(i).equals(PseudonymDBAccessService.INSERTION_SUCCESS)) {
+	            // Success. Return a status code 201-CREATED and the pseudonym as payload.
+        		PseudonymDTO p = pseudonyms.get(i);
+        		successful++;
 
                 // Determine whether or not a reduced standard view or a complete view is requested
                 if (!authorizationService.currentRequestHasRole("complete-view")) {
-                    pseudonymDTO = new PseudonymDTO().assignPojoValues(record).toReducedStandardView();
-                } else {
-                    pseudonymDTO = new PseudonymDTO().assignPojoValues(record);
+                    p.toReducedStandardView();
                 }
 
                 // Process the DTO depending on the response`s media type
                 if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN_VALUE)) {
-                    recordDtosStrings.add(pseudonymDTO.toRepresentationString());
+                    pseudonymDtoStrings.add(p.toRepresentationString());
                 } else {
-                    pseudonymDTOs.add(pseudonymDTO);
+                    pseudonymDTOs.add(p);
                 }
             }
-
-            // Log success message and return status
-            log.debug("Successfully inserted the batch of " + pseudonyms.size() + " pseudonym-records.");
-
-            if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN_VALUE)) {
-                return responseService.created(responseContentType, recordDtosStrings);
-            } else {
-                return responseService.created(responseContentType, pseudonymDTOs);
-            }
+        }
+        
+        // Decide which status code to use
+        if (result.contains(PseudonymDBAccessService.INSERTION_SUCCESS)) {
+        	if (result.contains(PseudonymDBAccessService.INSERTION_DUPLICATE_IDENTIFIER)
+        		|| result.contains(PseudonymDBAccessService.INSERTION_DUPLICATE_PSEUDONYM)
+        		|| result.contains(PseudonymDBAccessService.INSERTION_ERROR)) {
+        		// Encountered some unprocessable entities
+        		log.debug("Successfully inserted " + successful + " out of " + pseudonyms.size() + " pseudonym-records.");
+        		if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN_VALUE)) {
+                    return responseService.partialContent(responseContentType, pseudonymDtoStrings);
+                } else {
+                    return responseService.partialContent(responseContentType, pseudonymDTOs);
+                }
+        	} else {
+	            // Only successful inserts
+	            log.debug("Successfully inserted the batch of " + pseudonyms.size() + " pseudonym-records.");
+	
+	            if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN_VALUE)) {
+	                return responseService.created(responseContentType, pseudonymDtoStrings);
+	            } else {
+	                return responseService.created(responseContentType, pseudonymDTOs);
+	            }
+        	}
         } else {
             // Nothing added. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Insertion of a batch of pseudonym-records failed.");
@@ -375,24 +405,34 @@ public class PseudonymRESTController {
         }
 
         // Start creating the record
-        Pseudonym p = new Pseudonym();
-        p.setIdentifier(identifier);
-        p.setIdtype(idType);
-        p.setDomainid(domain.getId());
+        PseudonymDTO p = new PseudonymDTO();
+        p.setIdentifierItem(pseudonymDTO.getIdentifierItem());
+        p.setDomainName(domainName);
 
         // Determine validFrom date if (not) given by the user
         if (validFrom != null) {
             if (domain.getEnforcestartdatevalidity()) {
                 // Ensure that the given start date isn't before the start date of the domain
-                p.setValidfrom((validFrom.after(Timestamp.valueOf(domain.getValidfrom()))) ? validFrom.toLocalDateTime() : domain.getValidfrom());
-                p.setValidfrominherited(!validFrom.after(Timestamp.valueOf(domain.getValidfrom())));
+                p.setValidFrom((validFrom.after(Timestamp.valueOf(domain.getValidfrom()))) ? validFrom.toLocalDateTime() : domain.getValidfrom());
+                p.setValidFromInherited(!validFrom.after(Timestamp.valueOf(domain.getValidfrom())));
             } else {
-                p.setValidfrom(validFrom.toLocalDateTime());
-                p.setValidfrominherited(false);
+                p.setValidFrom(validFrom.toLocalDateTime());
+                p.setValidFromInherited(false);
             }
         } else {
-            p.setValidfrom(domain.getValidfrom());
-            p.setValidfrominherited(true);
+        	// If no start and end date is given, ensure that the used start date plus a given validityTime results in a 
+        	// validity period that has not already ended (e.g. domain.start is 2 weeks ago, validityTime is 1 week 
+        	// --> the calculated period would be in the past) 
+        	if (validTo == null && validityTime != null && domain.getValidfrom().plusSeconds(validityTime).isBefore(LocalDateTime.now())
+        			&& LocalDateTime.now().isBefore(domain.getValidto())) {
+        		log.debug("Using the domain validFrom-date plus the given validity time would result in an expired pseudonym. Using now() for the start instead.");
+        		
+        		p.setValidFrom(LocalDateTime.now());
+        		p.setValidFromInherited(false);
+        	}
+        	
+            p.setValidFrom(domain.getValidfrom());
+            p.setValidFromInherited(true);
         }
 
         // Determine validTo date if (not) given by the user
@@ -400,26 +440,26 @@ public class PseudonymRESTController {
             // End date of validity period is given
             if (domain.getEnforceenddatevalidity()) {
                 // Ensure that the given end date isn't after the end date of the domain
-                p.setValidto((validTo.before(Timestamp.valueOf(domain.getValidto()))) ? validTo.toLocalDateTime() : domain.getValidto());
-                p.setValidtoinherited(!validTo.before(Timestamp.valueOf(domain.getValidto())));
+                p.setValidTo((validTo.before(Timestamp.valueOf(domain.getValidto()))) ? validTo.toLocalDateTime() : domain.getValidto());
+                p.setValidToInherited(!validTo.before(Timestamp.valueOf(domain.getValidto())));
             } else {
-                p.setValidto(validTo.toLocalDateTime());
-                p.setValidtoinherited(false);
+                p.setValidTo(validTo.toLocalDateTime());
+                p.setValidToInherited(false);
             }
         } else if (validTo == null && validityTime != null) {
             // A validity period was given
             if (domain.getEnforceenddatevalidity()) {
                 // Ensure that the given validity period ends before the end date of the domain
-                p.setValidto((p.getValidfrom().plusSeconds(validityTime).isBefore(domain.getValidto())) ? p.getValidfrom().plusSeconds(validityTime) : domain.getValidto());
-                p.setValidtoinherited(!p.getValidfrom().plusSeconds(validityTime).isBefore(domain.getValidto()));
+                p.setValidTo((p.getValidFrom().plusSeconds(validityTime).isBefore(domain.getValidto())) ? p.getValidFrom().plusSeconds(validityTime) : domain.getValidto());
+                p.setValidToInherited(!p.getValidFrom().plusSeconds(validityTime).isBefore(domain.getValidto()));
             } else {
-                p.setValidto(p.getValidfrom().plusSeconds(validityTime));
-                p.setValidtoinherited(false);
+                p.setValidTo(p.getValidFrom().plusSeconds(validityTime));
+                p.setValidToInherited(false);
             }
         } else {
             // Nothing was given: use date from domain
-            p.setValidto(domain.getValidto());
-            p.setValidtoinherited(true);
+            p.setValidTo(domain.getValidto());
+            p.setValidToInherited(true);
         }
 
         // Pseudonymize the identifier and store it in the object
@@ -442,10 +482,10 @@ public class PseudonymRESTController {
             return responseService.internalServerError(responseContentType);
         }
         
-        p.setPseudonym(pseudonym);
+        p.setPsn(pseudonym);
         
         // Insert the pseudonym-record into the database
-        String result = pseudonymDBAccessService.insertPseudonym(p, domain.getMultiplepsnallowed(), request);
+        String result = pseudonymDBAccessService.createPseudonyms(List.of(p), domain.getId(), domain.getMultiplepsnallowed(), request).getFirst();
         
         // If a random algorithm is used, check if we generated a duplicate. If so, retry.
         if (domain.getAlgorithm().toUpperCase().startsWith("RANDOM")) {
@@ -457,8 +497,8 @@ public class PseudonymRESTController {
         			checkDomainFillingRate(domain);
 	        		
 	        		// Retry
-	        		p.setPseudonym(pseudonymize(identifier, idType, domain, omitPrefix));
-	        		result = pseudonymDBAccessService.insertPseudonym(p, domain.getMultiplepsnallowed(), request);
+	        		p.setPsn(pseudonymize(identifier, idType, domain, omitPrefix));
+	        		result = pseudonymDBAccessService.createPseudonyms(List.of(p), domain.getId(), domain.getMultiplepsnallowed(), request).getFirst();
 				} else {
 					// Not a duplicate
 					break;
@@ -475,20 +515,16 @@ public class PseudonymRESTController {
         // Evaluate the result
         if (result.equals(PseudonymDBAccessService.INSERTION_SUCCESS)) {
             // Success. Return a status code 201-CREATED and the pseudonym as payload.
-            PseudonymDTO newRecordDto = null;
-
             // Determine whether or not a reduced standard view or a complete view is requested
             if (!authorizationService.currentRequestHasRole("complete-view")) {
-                newRecordDto = new PseudonymDTO().assignPojoValues(p).toReducedStandardView();
-            } else {
-                newRecordDto = new PseudonymDTO().assignPojoValues(p);
+                p.toReducedStandardView();
             }
 
             log.debug("Successfully inserted a new pseudonym-record (" + pseudonym + ").");
-            return responseService.created(responseContentType, newRecordDto);
+            return responseService.created(responseContentType, p);
         } else if (result.equals(PseudonymDBAccessService.INSERTION_DUPLICATE_IDENTIFIER)) {
             // Nothing added since the entry is a duplicate. Return an 200-OK status.
-        	List<Pseudonym> ps = pseudonymDBAccessService.getRecord(domainName, identifier, idType, psn, null);
+        	List<PseudonymDTO> ps = pseudonymDBAccessService.getPseudonym(domainName, p.getIdentifierItem(), psn, null);
             if (ps == null || ps.isEmpty()) {
             	// Could not find the pseudonym object that was just created
             	log.error("Insertion of a new pseudonym-record failed.");
@@ -496,15 +532,13 @@ public class PseudonymRESTController {
             }
             
             // Determine whether or not a reduced standard view or a complete view is requested
-            PseudonymDTO recordDto = null;
+            PseudonymDTO psnDTO = ps.getFirst();
             if (!authorizationService.currentRequestHasRole("complete-view")) {
-                recordDto = new PseudonymDTO().assignPojoValues(ps.getFirst()).toReducedStandardView();
-            } else {
-                recordDto = new PseudonymDTO().assignPojoValues(ps.getFirst());
+                psnDTO.toReducedStandardView();
             }
 
             log.debug("The pseudonym-record requested to be inserted was skipped because it is already in the database.");
-            return responseService.ok(responseContentType, recordDto);
+            return responseService.ok(responseContentType, psnDTO);
         } else {
             // Nothing added. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("Insertion of a new pseudonym-record failed.");
@@ -520,6 +554,8 @@ public class PseudonymRESTController {
      * @param request the request object, injected by Spring Boot
      * @return	<li>a <b>204-NO_CONTENT</b> status when the deletion was
      * 				successful</li>
+     * 			<li>a <b>206-PARTIAL_CONTENT</b> status and a list of deletion 
+     * 				results matching the input list</li>
      * 			<li>a <b>404-NOT_FOUND</b> when the given domain wasn't
      * 				found</li>
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the
@@ -540,7 +576,7 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the pseudonym-records
-        List<Pseudonym> records = domainDBAccessService.getAllRecordsInDomain(domainName, null);
+        List<PseudonymDTO> records = domainDBAccessService.getAllRecordsInDomain(domainName, null);
 
         // Check if anything was found
         if (records == null) {
@@ -554,11 +590,16 @@ public class PseudonymRESTController {
         }
 
         // Perform deletion
-        if (pseudonymDBAccessService.deletePseudonymBatch(records, request)) {
+        List<Boolean> results = pseudonymDBAccessService.deletePseudonyms(records, d.getId(), request);
+        if (results != null && results.contains(true) && !results.contains(false)) {
             // Successfully deleted the batch, return a 204-NO_CONTENT.
-            log.debug("Successfully deleted all records from domain \"" + domainName + "\".");
+            log.debug("Successfully deleted all pseudonyms from domain \"" + domainName + "\".");
             return responseService.noContent(responseContentType);
-        } else {
+        } else if (results != null && results.contains(true) && results.contains(false)) {
+        	// Partially successful deletion
+        	log.debug("Partially deleted the batch of pseudonyms.");
+        	return responseService.partialContent(responseContentType, results);
+    	} else {
             // Deletion was unsuccessful, return a 422-UNPROCESSABLE_ENTITY
             log.error("Deletion of the records in domain \"" + domainName + "\" was unsuccessful.");
             return responseService.unprocessableEntity(responseContentType);
@@ -593,15 +634,23 @@ public class PseudonymRESTController {
                                           @RequestParam(name = "psn", required = false) String psn,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
                                           HttpServletRequest request) {
-        // Check if any record-identifying information was given
-        // If so, perform deletion
-        boolean deletionSuccessful = false;
-        if (Assertion.assertNotNullAll(identifier, idType, psn)) {
-            // All necessary info was given, perform deletion
-            deletionSuccessful = pseudonymDBAccessService.deletePseudonym(domainName, identifier, idType, psn, request);
+    	// Retrieve domain
+        Domain d = domainDBAccessService.getDomainByName(domainName, null);
+        if (d == null) {
+        	log.debug("The domain with the name \"" + domainName + "\" was not found.");
+        	return responseService.notFound(responseContentType);
+        }
+    	
+    	// Check if any record-identifying information was given and build the delete-object
+        IdentifierItem idItem = IdentifierItem.builder().identifier(identifier).idType(idType).build();
+        PseudonymDTO p;
+        
+        if (idItem.isNotNullNorEmpty() && Assertion.isNotNullOrEmpty(psn)) {
+            // All necessary info was given
+        	p = PseudonymDTO.builder().identifierItem(idItem).psn(psn).build();
         } else if (Assertion.assertNotNullAll(identifier, idType) && psn == null) {
             // Delete through identifier
-            List<Pseudonym> pList = pseudonymDBAccessService.getRecord(domainName, identifier, idType, null, null);
+            List<PseudonymDTO> pList = pseudonymDBAccessService.getPseudonym(domainName, idItem, null, null);
 
             // Check if a record with the given identifier exists
             if (pList == null || pList.size() == 0) {
@@ -612,28 +661,28 @@ public class PseudonymRESTController {
             	return responseService.unprocessableEntity(responseContentType);
             }
 
-            // Perform deletion
-            deletionSuccessful = pseudonymDBAccessService.deletePseudonym(domainName, identifier, idType, pList.get(0).getPseudonym(), request);
+            // Build delete-object
+            p = PseudonymDTO.builder().identifierItem(idItem).psn(pList.get(0).getPsn()).build();
         } else if (Assertion.assertNullAll(identifier, idType) && psn != null) {
             // Delete through pseudonym
-            List<Pseudonym> p = pseudonymDBAccessService.getRecord(domainName, null, null, psn, null);
+            List<PseudonymDTO> pList = pseudonymDBAccessService.getPseudonym(domainName, null, psn, null);
 
             // Check if a record with the given pseudonym exists
-            if (p == null || p.size() == 0) {
+            if (pList == null || pList.size() == 0) {
                 log.debug("There was no pseudonym-record found for the given identifier and idType.");
                 return responseService.notFound(responseContentType);
             }
 
-            // Perform deletion
-            deletionSuccessful = pseudonymDBAccessService.deletePseudonym(domainName, p.get(0).getIdentifier(), p.get(0).getIdtype(), psn, request);
+            // Build delete-object
+            p = PseudonymDTO.builder().identifierItem(pList.get(0).getIdentifierItem()).psn(psn).build();
         } else {
             // Invalid configuration of parameters encountered, return an error 400-BAD_REQUEST
             log.debug("Invalid configuration of parameters. At least an id and idType or the psn is needed. Ideally all three.");
             return responseService.badRequest(responseContentType);
         }
-
-        // Evaluate success
-        if (deletionSuccessful) {
+        
+        // Perform deletion and evaluate success
+        if (pseudonymDBAccessService.deletePseudonyms(List.of(p), d.getId(), request).getFirst()) {
             // Successfully deleted a record, return a 204-NO_CONTENT
             log.debug("Successfully deleted the pseudonym-record.");
             return responseService.noContent(responseContentType);
@@ -683,7 +732,7 @@ public class PseudonymRESTController {
             return responseService.forbidden(responseContentType);
         }
         
-        List<Pair<Pseudonym, Pseudonym>> pseudonyms = domainDBAccessService.getLinkedPseudonyms(sourceDomain,
+        List<Pair<PseudonymDTO, PseudonymDTO>> pseudonyms = domainDBAccessService.getLinkedPseudonyms(sourceDomain,
                 Assertion.isNotNullOrEmpty(sourceIdentifier) ? sourceIdentifier : null,
                 Assertion.isNotNullOrEmpty(sourceIdType) ? sourceIdType : null,
                 Assertion.isNotNullOrEmpty(sourcePsn) ? sourcePsn : null,
@@ -700,15 +749,15 @@ public class PseudonymRESTController {
         boolean completeView = authorizationService.currentRequestHasRole("complete-view");
 
         List<List<PseudonymDTO>> listOfRecordPairs = new ArrayList<>();
-        for (Pair<Pseudonym, Pseudonym> pair : pseudonyms) {
+        for (Pair<PseudonymDTO, PseudonymDTO> pair : pseudonyms) {
             List<PseudonymDTO> recordPair = new ArrayList<>();
             
             if (completeView) {
-            	recordPair.add(new PseudonymDTO().assignPojoValues(pair.getFirst()).toReducedStandardView());
-            	recordPair.add(new PseudonymDTO().assignPojoValues(pair.getSecond()).toReducedStandardView());
+            	recordPair.add(pair.getFirst().toReducedStandardView());
+            	recordPair.add(pair.getSecond().toReducedStandardView());
             } else {
-            	recordPair.add(new PseudonymDTO().assignPojoValues(pair.getFirst()));
-            	recordPair.add(new PseudonymDTO().assignPojoValues(pair.getSecond()));
+            	recordPair.add(pair.getFirst());
+            	recordPair.add(pair.getSecond());
             }
 
             listOfRecordPairs.add(recordPair);
@@ -762,7 +811,7 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the pseudonym-records
-        List<Pseudonym> records = domainDBAccessService.getAllRecordsInDomain(domainName, request);
+        List<PseudonymDTO> records = domainDBAccessService.getAllRecordsInDomain(domainName, request);
 
         // Check if anything was found
         if (records == null) {
@@ -778,21 +827,17 @@ public class PseudonymRESTController {
         // Transform result into the desired output format
         List<PseudonymDTO> resultAsJson = new ArrayList<>();
         List<String> resultAsString = new ArrayList<>();
-        for (Pseudonym p : records) {
-            PseudonymDTO r = null;
-
-            // Determine whether or not a reduced standard view or a complete view is requested
+        for (PseudonymDTO p : records) {
+        	// Determine whether or not a reduced standard view or a complete view is requested
             if (!authorizationService.currentRequestHasRole("complete-view")) {
-                r = new PseudonymDTO().assignPojoValues(p).toReducedStandardView();
-            } else {
-                r = new PseudonymDTO().assignPojoValues(p);
+                p = p.toReducedStandardView();
             }
 
             // Process the DTO depending on the response`s media type
             if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN_VALUE)) {
-                resultAsString.add(r.toRepresentationString());
+                resultAsString.add(p.toRepresentationString());
             } else {
-                resultAsJson.add(r);
+                resultAsJson.add(p);
             }
         }
 
@@ -837,16 +882,17 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the pseudonym-record
-        List<Pseudonym> p = pseudonymDBAccessService.getRecord(domainName, identifier, idType, null, request);
+        IdentifierItem idItem = IdentifierItem.builder().identifier(identifier).idType(idType).build();
+        List<PseudonymDTO> p = pseudonymDBAccessService.getPseudonym(domainName, idItem, null, request);
         if (p != null && !p.isEmpty()) {
             // Successfully retrieved record(s), return it to the user as well as a 200-OK
         	PseudonymDTO pseudonymDTO = null;
 		
 	        // Determine whether or not a reduced standard view or a complete view is requested
 	        if (!authorizationService.currentRequestHasRole("complete-view")) {
-	            pseudonymDTO = new PseudonymDTO().assignPojoValues(p.getFirst()).toReducedStandardView();
+	        	pseudonymDTO = p.getFirst().toReducedStandardView();
 	        } else {
-	            pseudonymDTO = new PseudonymDTO().assignPojoValues(p.getFirst());
+	            pseudonymDTO = p.getFirst();
 	        }
 
             log.debug("Successfully retrieved the requested pseudonym-record.");
@@ -886,16 +932,16 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the pseudonym-record
-        List<Pseudonym> p = pseudonymDBAccessService.getRecord(domainName, null, null, psn, request);
+        List<PseudonymDTO> p = pseudonymDBAccessService.getPseudonym(domainName, null, psn, request);
         if (p != null && !p.isEmpty()) {
             // Successfully retrieved record(s), return it to the user as well as a 200-OK
         	PseudonymDTO pseudonymDTO = null;
 		
 	        // Determine whether or not a reduced standard view or a complete view is requested
 	        if (!authorizationService.currentRequestHasRole("complete-view")) {
-	            pseudonymDTO = new PseudonymDTO().assignPojoValues(p.getFirst()).toReducedStandardView();
+	            pseudonymDTO = p.getFirst().toReducedStandardView();
 	        } else {
-	            pseudonymDTO = new PseudonymDTO().assignPojoValues(p.getFirst());
+	            pseudonymDTO = p.getFirst();
 	        }
 
             log.debug("Successfully retrieved the requested pseudonym-record.");
@@ -930,7 +976,7 @@ public class PseudonymRESTController {
      * pseudonym, validFrom, validFromInherited, validTo, validToInherited).
      *
      * @param domainName (required) the name of the domain the pseudonyms are in
-     * @param recordDtoList (required) the list of necessary information, formatted as a JSON to match the recordDto
+     * @param pseudonymUpdateList (required) the list of necessary information, formatted as a JSON to match the recordDto
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status on success</li>
@@ -943,65 +989,61 @@ public class PseudonymRESTController {
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-update-batch')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> updateRecordBatch(@PathVariable("domain") String domainName,
-                                               @RequestBody List<PseudonymDTO> recordDtoList,
+                                               @RequestBody List<PseudonymUpdateDTO> pseudonymUpdateList,
                                                @RequestHeader(name = "accept", required = false) String responseContentType,
                                                HttpServletRequest request) {
         int ignored = 0;
-        List<Pseudonym> updateablePseudonyms = new ArrayList<>();
+        int updated = 0;
+        List<PseudonymUpdateDTO> updateablePseudonyms = new ArrayList<>();
 
         // Retrieve the domain the records belong to
         Domain d = domainDBAccessService.getDomainByName(domainName, null);
 
         if (d == null) {
             // The domain wasn't found; return a 404-NOT_FOUND
-            log.debug("The domain where the to-be-updated record should be searched couldn't be found.");
+            log.debug("The domain to which the batch update is scoped to couldn't be found.");
             return responseService.notFound(responseContentType);
         }
 
-        // Iterate over the recordDtos
-        for (int i = 0; i < recordDtoList.size(); i++) {
-            PseudonymDTO r = recordDtoList.get(i);
-            Pseudonym newPseudonym = new Pseudonym();
+        // Iterate over the recordDtos to create a list of updatable pseudonym-objects
+        for (int i = 0; i < pseudonymUpdateList.size(); i++) {
+        	PseudonymUpdateDTO p = pseudonymUpdateList.get(i);
+        	p.setOldDomain(d);
 
-            // Check if any of the attributes of a record is missing
-            if (Assertion.assertNotNullAll(r.getIdentifierItem().getIdentifier(), r.getIdentifierItem().getIdType(), r.getPsn(), r.getValidFrom(), r.getValidFromInherited(), r.getValidTo(), r.getValidToInherited())) {
-                // Everything that is needed is available. Create new pseudonym-record.
-//                newPseudonym.setIdentifier(r.getIdentifier());
-//                newPseudonym.setIdtype(r.getIdType());
-                newPseudonym.setPseudonym(r.getPsn());
-                newPseudonym.setValidfrom(r.getValidFrom());
-                newPseudonym.setValidfrominherited(r.getValidFromInherited());
-                newPseudonym.setValidto(r.getValidTo());
-                newPseudonym.setValidtoinherited(r.getValidToInherited());
-//                newPseudonym.setDomainid(d.getId());
-            } else {
-                // Missing attribute values. Log and ignore.
-                log.debug("The record with number " + (i + 1) + " is missing some attributes. This (part of the) request is ignored.");
+            // Check if any of the identifying attributes of a record is missing
+        	if (!p.hasIdentifyingInformation()) {
+        		log.debug("The record with batch-number " + (i + 1) + " is missing its identifying attributes. This part of the batch request is ignored.");
                 ignored++;
 
                 // Early "break"
                 continue;
-            }
-
-            // Add pseudonym object to a list of updatable objects
-            updateablePseudonyms.add(newPseudonym);
-
-        } // End for loop
+        	} else {
+        		// Everything that's needed is there, add the pseudonym object to a list of updatable objects
+        		updateablePseudonyms.add(p);
+        	}
+        }
 
         // Update records
-        List<Boolean> updateSuccess = pseudonymDBAccessService.updatePseudonymBatch(updateablePseudonyms, request);
+        List<Boolean> updateSuccess = pseudonymDBAccessService.updatePseudonyms(updateablePseudonyms, request);
         if (updateSuccess != null && !updateSuccess.isEmpty()) {
         	// Success. Return a status code 200-OK and a list of the updated pseudonyms.
         	List<PseudonymDTO> updatedPseudonyms = new ArrayList<>();
         	for (int i = 0; i < updateablePseudonyms.size(); i++) {
         		if (updateSuccess.get(i) != null && updateSuccess.get(i)) {
-        			Pseudonym updatedPseudonym = pseudonymDBAccessService.getRecordFromIdentifier(domainName, updateablePseudonyms.get(i).getIdentifier(), updateablePseudonyms.get(i).getIdtype(), null).getFirst();
-        			PseudonymDTO updatedDTO = new PseudonymDTO().assignPojoValues(updatedPseudonym);
-        			updatedPseudonyms.add(authorizationService.currentRequestHasRole("complete-view") ? updatedDTO : updatedDTO.toReducedStandardView());
+        			// Decide on which identifier item to use: the new one or the old one 
+        			IdentifierItem idItem = updateablePseudonyms.get(i).getNewIdentifierItem() != null ? updateablePseudonyms.get(i).getNewIdentifierItem() : updateablePseudonyms.get(i).getOldIdentifierItem();
+        			String psn = updateablePseudonyms.get(i).getNewPsn() != null ? updateablePseudonyms.get(i).getNewPsn() : updateablePseudonyms.get(i).getOldPsn();
+        			
+        			PseudonymDTO updatedPseudonym = pseudonymDBAccessService.getPseudonym(domainName, idItem, psn, null).getFirst();
+        			updatedPseudonyms.add(authorizationService.currentRequestHasRole("complete-view") ? updatedPseudonym : updatedPseudonym.toReducedStandardView());
+        			updated++;
+        		} else if (updateSuccess.get(i) != null && !updateSuccess.get(i)) {
+        			// An update failed
+        			ignored++;
         		}
         	}
         	
-            log.debug("Successfully updated the batch of " + recordDtoList.size() + " pseudonym-records, from which " + ignored + (ignored == 1 ? " was" : " were") + " ignored.");
+            log.debug("Successfully updated " + updated + " out of " + pseudonymUpdateList.size() + " pseudonym-records. " + ignored + (ignored == 1 ? " was" : " were") + " ignored.");
             return responseService.ok(responseContentType, updatedPseudonyms);
         } else {
             // Update failed. Return an error 422-UNPROCESSABLE_ENTITY.
@@ -1011,12 +1053,12 @@ public class PseudonymRESTController {
     }
 
     /**
-     * This method updates a pseudonym-record identified by its id and idType.
+     * This method updates a pseudonym-record identified by either its id and idType or its psn.
      *
      * @param oldDomainName (required) the name of the domain the record should be in
-     * @param pseudonymDTO (required) the record object
+     * @param pseudonymUpdateDTO (required) the update object containing the identifying and the new data
      * @param identifier (required) the identifier of the record that should be updated
-     * @param idType (required) the type of the identifier
+     * @param regeneratePseudonym (optional) a flag to keep or regenerate the psn when the identifierItem or the domain changed
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the <b>pseudonym</b> of the
@@ -1029,56 +1071,62 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
      * 				record failed</li>
      */
-    @PutMapping(value = "/domains/{domain}/pseudonym/complete", params = {"id", "idType"})
+    @PutMapping(value = "/domains/{domain}/pseudonym/complete")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'record-update-complete')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> updateRecordCompleteByIdentifier(@PathVariable("domain") String oldDomainName,
-                                                              @RequestBody PseudonymDTO pseudonymDTO,
-                                                              @RequestParam(name = "id", required = true) String identifier,
-                                                              @RequestParam(name = "idType", required = true) String idType,
-                                                              @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                              HttpServletRequest request) {
-        String newIdentifier = pseudonymDTO.getIdentifierItem().getIdentifier();
-        String newIdType = pseudonymDTO.getIdentifierItem().getIdType();
-        String newPsn = pseudonymDTO.getPsn();
-        Timestamp validFrom = pseudonymDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymDTO.getValidFrom()) : null;
-        Timestamp validTo = pseudonymDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymDTO.getValidTo()) : null;
-        Long validityTime = Utility.validityTimeToSeconds(pseudonymDTO.getValidityTime());
-        String newDomainName = pseudonymDTO.getDomainName();
-
+    public ResponseEntity<?> updateRecordComplete(@PathVariable("domain") String oldDomainName,
+                                                  @RequestBody PseudonymUpdateDTO pseudonymUpdateDTO,
+                                                  @RequestParam(name = "regeneratePseudonym", required = false) Boolean regeneratePseudonym,
+                                                  @RequestHeader(name = "accept", required = false) String responseContentType,
+                                                  HttpServletRequest request) {
+        String newIdentifier = pseudonymUpdateDTO.getNewIdentifierItem() == null ? null : pseudonymUpdateDTO.getNewIdentifierItem().getIdentifier();
+        String newIdType = pseudonymUpdateDTO.getNewIdentifierItem() == null ? null : pseudonymUpdateDTO.getNewIdentifierItem().getIdType();
+        String newPsn = pseudonymUpdateDTO.getNewPsn();
+        Timestamp validFrom = pseudonymUpdateDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymUpdateDTO.getValidFrom()) : null;
+        Timestamp validTo = pseudonymUpdateDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymUpdateDTO.getValidTo()) : null;
+        Long validityTime = Utility.validityTimeToSeconds(pseudonymUpdateDTO.getValidityTime());
+        String newDomainName = pseudonymUpdateDTO.getNewDomainName();
+        regeneratePseudonym = regeneratePseudonym == null ? DEFAULT_REGENERATE_PSEUDONYM : regeneratePseudonym;
+        
         if (Assertion.assertNullAll(newIdentifier, newIdType, newPsn, validFrom, validTo, validityTime, newDomainName)) {
             // An empty object was passed, so there is nothing to create.
             log.debug("The record DTO passed by the user was empty. Nothing to update.");
             return responseService.unprocessableEntity(responseContentType);
         }
 
+        // Ensure that we can somehow identify the object that is to be updated (either have (id and idType) or a psn)
+        if ((pseudonymUpdateDTO.getOldIdentifierItem() == null || pseudonymUpdateDTO.getOldIdentifierItem().getIdentifier() == null || pseudonymUpdateDTO.getOldIdentifierItem().getIdType() == null) && pseudonymUpdateDTO.getOldPsn() == null) {
+        	log.debug("For identifying the pseudonym that should be updated, either (identifier and idType) or the psn (or both) is needed.");
+            return responseService.unprocessableEntity(responseContentType);
+        }
+
         // Retrieve the domain the record belongs to
-        Domain domain = domainDBAccessService.getDomainByName(oldDomainName, null);
+        Domain oldDomain = domainDBAccessService.getDomainByName(oldDomainName, null);
 
         // Try to retrieve the updated domain (is null, when no new domain was given)
         Domain newDomain = domainDBAccessService.getDomainByName(newDomainName, null);
 
         // Retrieve the old record
-        List<Pseudonym> oldRecordList = pseudonymDBAccessService.getRecord(oldDomainName, identifier, idType, null, null);
-        if (oldRecordList == null || oldRecordList.size() == 0) {
+        List<PseudonymDTO> oldPseudonymList = pseudonymDBAccessService.getPseudonym(oldDomainName, pseudonymUpdateDTO.getOldIdentifierItem(), pseudonymUpdateDTO.getOldPsn(), null);
+        if (oldPseudonymList == null || oldPseudonymList.size() == 0) {
         	// Couldn't find the record that should be updated. Return a 404-NOT_FOUND
             log.debug("The pseudonym-record that should be updated couldn't be found.");
             return responseService.notFound(responseContentType);
-        } else if (oldRecordList.size() > 1) {
+        } else if (oldPseudonymList.size() > 1) {
         	// Found too many records.Return a 422-UNPROCESSABLE_ENTITY
         	log.debug("The update for the given identifier and idType would have affected more than one record. "
         			+ "Updating multiple records at once is only permitted via the batch-endpoint.");
         	return responseService.unprocessableEntity(responseContentType);
         }
-        
-        Pseudonym oldRecord = oldRecordList.get(0);
+
+        PseudonymDTO oldPseudonymRecord = oldPseudonymList.get(0);
 
         // Check if the retrieved values are null
-        if (domain == null) {
+        if (oldDomain == null) {
             // Couldn't find the domain. Return a 404-NOT_FOUND
             log.debug("The provided domain (\"" + oldDomainName + "\") couldn't be found.");
             return responseService.notFound(responseContentType);
-        } else if (oldRecord == null) {
+        } else if (oldPseudonymRecord == null) {
         	// Couldn't find the record that should be updated. Return a 404-NOT_FOUND
             log.debug("The pseudonym-record that should be updated couldn't be found.");
             return responseService.notFound(responseContentType);
@@ -1094,185 +1142,53 @@ public class PseudonymRESTController {
             return responseService.forbidden(responseContentType);
         }
 
-        // Determine what domain to use
-        Domain d = (newDomain != null) ? newDomain : domain;
-
-        // Create new pseudonym-record
-        Pseudonym newRecord = new Pseudonym();
-        newRecord.setIdentifier(newIdentifier);
-        newRecord.setIdtype(newIdType);
-        newRecord.setPseudonym(newPsn);
-        newRecord.setDomainid(d.getId());
-
-        // Determine the validity of the validFrom date if given by the user
-        if (validFrom != null) {
-            if (d.getEnforcestartdatevalidity()) {
-                // Ensure that the given start date isn't before the start date of the domain
-                newRecord.setValidfrom(validFrom.after(Timestamp.valueOf(d.getValidfrom())) ? validFrom.toLocalDateTime() : d.getValidfrom());
-                newRecord.setValidfrominherited(!validFrom.after(Timestamp.valueOf(d.getValidfrom())));
-            } else {
-                newRecord.setValidfrom(validFrom.toLocalDateTime());
-                newRecord.setValidfrominherited(false);
-            }
-        } else {
-            // Set the old value in the new record again to easier determine/calculate a potential validTo value
-            newRecord.setValidfrom(oldRecord.getValidfrom());
-        }
-
-        // Determine the validity of the validTo date if given by the user
-        if (validTo != null) {
-            // End date of validity period is given
-            if (d.getEnforceenddatevalidity()) {
-                // Ensure that the given end date isn't after the end date of the domain
-                newRecord.setValidto(validTo.before(Timestamp.valueOf(d.getValidto())) ? validTo.toLocalDateTime() : d.getValidto());
-                newRecord.setValidtoinherited(!validTo.before(Timestamp.valueOf(d.getValidto())));
-            } else {
-                newRecord.setValidto(validTo.toLocalDateTime());
-                newRecord.setValidtoinherited(false);
-            }
-        } else if (validTo == null && validityTime != null) {
-            // A validity period was given
-            if (d.getEnforceenddatevalidity()) {
-                // Ensure that the given validity period ends before the end date of the domain
-                newRecord.setValidto(newRecord.getValidfrom().plusSeconds(validityTime).isBefore(d.getValidto()) ? newRecord.getValidfrom().plusSeconds(validityTime) : d.getValidto());
-                newRecord.setValidtoinherited(!newRecord.getValidfrom().plusSeconds(validityTime).isBefore(d.getValidto()));
-            } else {
-                newRecord.setValidto(newRecord.getValidfrom().plusSeconds(validityTime));
-                newRecord.setValidtoinherited(false);
-            }
-        }
-
-        // Update record
-        if (pseudonymDBAccessService.updatePseudonym(oldRecord, newRecord, request)) {
-            // Update successful. Retrieve the updated record to show it to the user.
-            String id = (newIdentifier != null && !newIdentifier.trim().equals("")) ? newIdentifier : identifier;
-            String idT = (newIdType != null && !newIdType.trim().equals("")) ? newIdType : idType;
-            String p = (newPsn != null && !newPsn.trim().equals("")) ? newPsn : oldRecord.getPseudonym();
-            Pseudonym updatedRecord = pseudonymDBAccessService.getRecord(d.getName(), id, idT, p, null).get(0);
-            PseudonymDTO newRecordDto = null;
-
-            // Determine whether or not a reduced standard view or a complete view is requested
-            if (!authorizationService.currentRequestHasRole("complete-view")) {
-                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord).toReducedStandardView();
-            } else {
-                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord);
-            }
-
-            // Success. Return a status code 200 and the pseudonym-record as payload.
-            log.debug("Successfully updated a pseudonym-record.");
-            return responseService.ok(responseContentType, newRecordDto);
-        } else {
-            // Update failed. Return an error 422-UNPROCESSABLE_ENTITY.
-            log.error("The requested update of a pseudonym-record failed.");
-            return responseService.unprocessableEntity(responseContentType);
-        }
-    }
-
-    /**
-     * This method updates a pseudonym-record identified by its pseudonym.
-     *
-     * @param oldDomainName (required) the name of the domain the record should be in
-     * @param pseudonymDTO (required) the record object
-     * @param psn (required) the pseudonym of the record that should be updated
-     * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
-     * @return 	<li>a <b>200-OK</b> status and the <b>pseudonym</b> of the
-     * 				updated record on success</li>
-     * 			<li>a <b>400-BAD_REQUEST</b> when neither an identifier, nor
-     * 				a pseudonym were given</li>
-     * 			<li>a <b>404-NOT_FOUND</b> status when either the domain,
-     * 				the record that should be updated, or the new domain
-     * 				couldn't be found
-     * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
-     * 				record failed</li>
-     */
-    @PutMapping(value = "/domains/{domain}/pseudonym/complete", params = "psn")
-    @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'record-update-complete')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> updateRecordCompleteByPseudonym(@PathVariable("domain") String oldDomainName,
-                                                             @RequestBody PseudonymDTO pseudonymDTO,
-                                                             @RequestParam(name = "psn", required = true) String psn,
-                                                             @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                             HttpServletRequest request) {
-        String newIdentifier = pseudonymDTO.getIdentifierItem().getIdentifier();
-        String newIdType = pseudonymDTO.getIdentifierItem().getIdType();
-        String newPsn = pseudonymDTO.getPsn();
-        Timestamp validFrom = pseudonymDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymDTO.getValidFrom()) : null;
-        Timestamp validTo = pseudonymDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymDTO.getValidTo()) : null;
-        Long validityTime = Utility.validityTimeToSeconds(pseudonymDTO.getValidityTime());
-        String newDomainName = pseudonymDTO.getDomainName();
-
-        if (Assertion.assertNullAll(newIdentifier, newIdType, newPsn, validFrom, validTo, validityTime, newDomainName)) {
-            // An empty object was passed, so there is nothing to create.
-            log.debug("The record DTO passed by the user was empty. Nothing to create.");
-            return responseService.unprocessableEntity(responseContentType);
-        }
-
-        // Retrieve the domain the record belongs to
-        Domain domain = domainDBAccessService.getDomainByName(oldDomainName, null);
-
-        // Try to retrieve the updated domain (is null, when no new domain was given)
-        Domain newDomain = domainDBAccessService.getDomainByName(newDomainName, null);
-
-        // Retrieve the old record
-        List<Pseudonym> oldRecordList = pseudonymDBAccessService.getRecord(oldDomainName, null, null, psn, null);
-        if (oldRecordList == null || oldRecordList.size() == 0) {
-        	// Couldn't find the record that should be updated. Return a 404-NOT_FOUND
-            log.debug("The pseudonym-record that should be updated couldn't be found.");
-            return responseService.notFound(responseContentType);
-        } else if (oldRecordList.size() > 1) {
-        	// Found too many records.Return a 422-UNPROCESSABLE_ENTITY
-        	log.debug("The update for the given identifier and idType would have affected more than one record. "
-        			+ "Updating multiple records at once is only permitted via the batch-endpoint.");
-        	return responseService.unprocessableEntity(responseContentType);
-        }
+        // Determine which domain to use
+        Domain d = (newDomain != null) ? newDomain : oldDomain;
         
-        Pseudonym oldRecord = oldRecordList.get(0);
-
-        // Check if the retrieved values are null
-        if (domain == null) {
-            // Couldn't find the domain. Return a 404-NOT_FOUND
-            log.debug("The provided domain (\"" + oldDomainName + "\") couldn't be found.");
-            return responseService.notFound(responseContentType);
-        } else if (oldRecord == null) {
-        	// Couldn't find the record that should be updated. Return a 404-NOT_FOUND
-            log.debug("The pseudonym-record that should be updated couldn't be found.");
-            return responseService.notFound(responseContentType);
-        } else if (newDomainName != null && newDomain == null) {
-            // A new domain name was provided but it couldn't be found. Return a 404-NOT_FOUND
-            log.debug("The new domain for the pseudonym-record (\"" + newDomainName + "\") couldn't be found.");
-            return responseService.notFound(responseContentType);
+        // Determine which identifierItem to use
+        String id, idT;
+        if (newIdentifier == null || newIdType == null) {
+        	id = oldPseudonymRecord.getIdentifierItem().getIdentifier();
+        	idT = oldPseudonymRecord.getIdentifierItem().getIdType();
+        } else {
+        	id = newIdentifier;
+        	idT = newIdType;
         }
-
-        // Check if the requester has the permission for the newDomain if given
-        if (newDomain != null && !authorizationService.currentRequestHasRole(newDomain.getName())) {
-            log.error("The user requested to change the domain of a pseudonym-record to a domain the user has no rights for.");
-            return responseService.forbidden(responseContentType);
+        IdentifierItem idItem = IdentifierItem.builder().identifier(id).idType(idT).build();
+        
+        // Determine which psn to use
+        String p;
+        if ((!idItem.equals(oldPseudonymRecord.getIdentifierItem()) || !d.getName().equals(oldDomain.getName())) && regeneratePseudonym) {
+        	// New identifier and idType or new domain --> regenerate a pseudonym
+        	p = pseudonymize(idItem.getIdentifier(), idItem.getIdType(), d, false);
+        } else {
+        	// Keep the old pseudonym
+        	p = oldPseudonymRecord.getPsn();
         }
-
-        // Determine what domain to use
-        Domain d = (newDomain != null) ? newDomain : domain;
 
         // Create new pseudonym-record
-        Pseudonym newRecord = new Pseudonym();
-        newRecord.setIdentifier(newIdentifier);
-        newRecord.setIdtype(newIdType);
-        newRecord.setPseudonym(newPsn);
-        newRecord.setDomainid(d.getId());
+        PseudonymUpdateDTO updateDTO = new PseudonymUpdateDTO();
+        updateDTO.setOldIdentifierItem(oldPseudonymRecord.getIdentifierItem());
+        updateDTO.setOldPsn(oldPseudonymRecord.getPsn());
+        updateDTO.setOldDomain(oldDomain);
+        updateDTO.setNewIdentifierItem(idItem);
+        updateDTO.setNewPsn(p);
+        updateDTO.setNewDomain(d);
+        updateDTO.setNewDomainName(d.getName());
 
         // Determine the validity of the validFrom date if given by the user
         if (validFrom != null) {
             if (d.getEnforcestartdatevalidity()) {
                 // Ensure that the given start date isn't before the start date of the domain
-                newRecord.setValidfrom(validFrom.after(Timestamp.valueOf(d.getValidfrom())) ? validFrom.toLocalDateTime() : d.getValidfrom());
-                newRecord.setValidfrominherited(!validFrom.after(Timestamp.valueOf(d.getValidfrom())));
+            	updateDTO.setValidFrom(validFrom.after(Timestamp.valueOf(d.getValidfrom())) ? validFrom.toLocalDateTime() : d.getValidfrom());
+            	updateDTO.setValidFromInherited(!validFrom.after(Timestamp.valueOf(d.getValidfrom())));
             } else {
-                newRecord.setValidfrom(validFrom.toLocalDateTime());
-                newRecord.setValidfrominherited(false);
+            	updateDTO.setValidFrom(validFrom.toLocalDateTime());
+            	updateDTO.setValidFromInherited(false);
             }
         } else {
             // Set the old value in the new record again to easier determine/calculate a potential validTo value
-            newRecord.setValidfrom(oldRecord.getValidfrom());
+        	updateDTO.setValidFrom(oldPseudonymRecord.getValidFrom());
         }
 
         // Determine the validity of the validTo date if given by the user
@@ -1280,41 +1196,37 @@ public class PseudonymRESTController {
             // End date of validity period is given
             if (d.getEnforceenddatevalidity()) {
                 // Ensure that the given end date isn't after the end date of the domain
-                newRecord.setValidto(validTo.before(Timestamp.valueOf(d.getValidto())) ? validTo.toLocalDateTime() : d.getValidto());
-                newRecord.setValidtoinherited(!validTo.before(Timestamp.valueOf(d.getValidto())));
+            	updateDTO.setValidTo(validTo.before(Timestamp.valueOf(d.getValidto())) ? validTo.toLocalDateTime() : d.getValidto());
+            	updateDTO.setValidToInherited(!validTo.before(Timestamp.valueOf(d.getValidto())));
             } else {
-                newRecord.setValidto(validTo.toLocalDateTime());
-                newRecord.setValidtoinherited(false);
+            	updateDTO.setValidTo(validTo.toLocalDateTime());
+                updateDTO.setValidToInherited(false);
             }
         } else if (validTo == null && validityTime != null) {
             // A validity period was given
             if (d.getEnforceenddatevalidity()) {
                 // Ensure that the given validity period ends before the end date of the domain
-                newRecord.setValidto(newRecord.getValidfrom().plusSeconds(validityTime).isBefore(d.getValidto()) ? newRecord.getValidfrom().plusSeconds(validityTime) : d.getValidto());
-                newRecord.setValidtoinherited(!newRecord.getValidfrom().plusSeconds(validityTime).isBefore(d.getValidto()));
+                updateDTO.setValidTo(updateDTO.getValidFrom().plusSeconds(validityTime).isBefore(d.getValidto()) ? updateDTO.getValidFrom().plusSeconds(validityTime) : d.getValidto());
+                updateDTO.setValidToInherited(!updateDTO.getValidFrom().plusSeconds(validityTime).isBefore(d.getValidto()));
             } else {
-                newRecord.setValidto(newRecord.getValidfrom().plusSeconds(validityTime));
-                newRecord.setValidtoinherited(false);
+                updateDTO.setValidTo(updateDTO.getValidFrom().plusSeconds(validityTime));
+                updateDTO.setValidToInherited(false);
             }
         }
 
         // Update record
-        if (pseudonymDBAccessService.updatePseudonym(oldRecord, newRecord, request)) {
+        if (pseudonymDBAccessService.updatePseudonyms(List.of(updateDTO), request).getFirst()) {
             // Update successful. Retrieve the updated record to show it to the user.
-            String p = (newPsn != null && !newPsn.trim().equals("")) ? newPsn : psn;
-            Pseudonym updatedRecord = pseudonymDBAccessService.getRecord(d.getName(), null, null, p, null).get(0);
-            PseudonymDTO newRecordDto = null;
+            PseudonymDTO updatedRecord = pseudonymDBAccessService.getPseudonym(updateDTO.getNewDomainName(), updateDTO.getNewIdentifierItem(), updateDTO.getNewPsn(), null).get(0);
 
             // Determine whether or not a reduced standard view or a complete view is requested
             if (!authorizationService.currentRequestHasRole("complete-view")) {
-                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord).toReducedStandardView();
-            } else {
-                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord);
+            	updatedRecord.toReducedStandardView();
             }
 
             // Success. Return a status code 200 and the pseudonym-record as payload.
             log.debug("Successfully updated a pseudonym-record.");
-            return responseService.ok(responseContentType, newRecordDto);
+            return responseService.ok(responseContentType, updatedRecord);
         } else {
             // Update failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("The requested update of a pseudonym-record failed.");
@@ -1341,15 +1253,13 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
      * 				record failed</li>
      */
-    @PutMapping(value = "/domains/{domain}/pseudonym", params = {"id", "idType"})
+    @PutMapping("/domains/{domain}/pseudonym")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> updateRecordByIdentifier(@PathVariable("domain") String domainName,
-                                                      @RequestBody PseudonymDTO pseudonymDTO,
-                                                      @RequestParam(name = "id", required = true) String identifier,
-                                                      @RequestParam(name = "idType", required = true) String idType,
-                                                      @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                      HttpServletRequest request) {
+    public ResponseEntity<?> updateRecord(@PathVariable("domain") String domainName,
+                                          @RequestBody PseudonymUpdateDTO pseudonymDTO,
+                                          @RequestHeader(name = "accept", required = false) String responseContentType,
+                                          HttpServletRequest request) {
         Timestamp validFrom = pseudonymDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymDTO.getValidFrom()) : null;
         Timestamp validTo = pseudonymDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymDTO.getValidTo()) : null;
         Long validityTime = Utility.validityTimeToSeconds(pseudonymDTO.getValidityTime());
@@ -1364,7 +1274,7 @@ public class PseudonymRESTController {
         Domain d = domainDBAccessService.getDomainByName(domainName, null);
 
         // Retrieve the old record
-        List<Pseudonym> oldRecordList = pseudonymDBAccessService.getRecord(domainName, identifier, idType, null, null);
+        List<PseudonymDTO> oldRecordList = pseudonymDBAccessService.getPseudonym(domainName, pseudonymDTO.getOldIdentifierItem(), pseudonymDTO.getOldPsn(), null);
         if (oldRecordList == null || oldRecordList.size() == 0) {
         	// Couldn't find the record that should be updated. Return a 404-NOT_FOUND
             log.debug("The pseudonym-record that should be updated couldn't be found.");
@@ -1376,205 +1286,85 @@ public class PseudonymRESTController {
         	return responseService.unprocessableEntity(responseContentType);
         }
         
-        Pseudonym oldRecord = oldRecordList.get(0);
+        PseudonymDTO oldPseudonymRecord = oldRecordList.get(0);
 
         // Check if the retrieved values are null
         if (d == null) {
             // Couldn't find the domain. Return a 404-NOT_FOUND
             log.debug("The provided domain (\"" + domainName + "\") couldn't be found.");
             return responseService.notFound(responseContentType);
-        } else if (oldRecord == null) {
+        } else if (oldPseudonymRecord == null) {
             // Couldn't find the record that should be updated. Return a 404-NOT_FOUND
             log.debug("The pseudonym-record that should be updated couldn't be found.");
             return responseService.notFound(responseContentType);
         }
 
         // Create new pseudonym-record
-        Pseudonym newRecord = new Pseudonym();
+        PseudonymUpdateDTO updateDTO = new PseudonymUpdateDTO();
+        updateDTO.setOldIdentifierItem(oldPseudonymRecord.getIdentifierItem());
+        updateDTO.setOldPsn(oldPseudonymRecord.getPsn());
+        updateDTO.setOldDomain(d);
+        updateDTO.setNewIdentifierItem(oldPseudonymRecord.getIdentifierItem());
+        updateDTO.setNewPsn(oldPseudonymRecord.getPsn());
+        updateDTO.setNewDomain(d);
+        updateDTO.setNewDomainName(d.getName());
 
         // Determine the validity of the validFrom date if given by the user
         if (validFrom != null) {
             if (d.getEnforcestartdatevalidity()) {
                 // Ensure that the given start date isn't before the start date of the domain
-                newRecord.setValidfrom(validFrom.after(Timestamp.valueOf(d.getValidfrom())) ? validFrom.toLocalDateTime() : d.getValidfrom());
-                newRecord.setValidfrominherited(!validFrom.after(Timestamp.valueOf(d.getValidfrom())));
+                updateDTO.setValidFrom(validFrom.after(Timestamp.valueOf(d.getValidfrom())) ? validFrom.toLocalDateTime() : d.getValidfrom());
+                updateDTO.setValidFromInherited(!validFrom.after(Timestamp.valueOf(d.getValidfrom())));
             } else {
-                newRecord.setValidfrom(validFrom.toLocalDateTime());
-                newRecord.setValidfrominherited(false);
+                updateDTO.setValidFrom(validFrom.toLocalDateTime());
+                updateDTO.setValidFromInherited(false);
             }
         } else {
             // Set the old value in the new record again to easier determine/calculate a potential validTo value
-            newRecord.setValidfrom(oldRecord.getValidfrom());
+            updateDTO.setValidFrom(oldPseudonymRecord.getValidFrom());
         }
 
         // Determine the validity of the validTo date if given by the user
         if (validTo != null) {
             // End date of validity period is given
+        	
+        	if (validityTime != null && validityTime != 0) {
+        		log.debug("A validity time period was given in addition to an end date. The end date is preferred so that the given validity time is ignored.");
+        	}
+        	
             if (d.getEnforceenddatevalidity()) {
                 // Ensure that the given end date isn't after the end date of the domain
-                newRecord.setValidto(validTo.before(Timestamp.valueOf(d.getValidto())) ? validTo.toLocalDateTime() : d.getValidto());
-                newRecord.setValidtoinherited(!validTo.before(Timestamp.valueOf(d.getValidto())));
+                updateDTO.setValidTo(validTo.before(Timestamp.valueOf(d.getValidto())) ? validTo.toLocalDateTime() : d.getValidto());
+                updateDTO.setValidToInherited(!validTo.before(Timestamp.valueOf(d.getValidto())));
             } else {
-                newRecord.setValidto(validTo.toLocalDateTime());
-                newRecord.setValidtoinherited(false);
+                updateDTO.setValidTo(validTo.toLocalDateTime());
+                updateDTO.setValidToInherited(false);
             }
         } else if (validTo == null && validityTime != null) {
             // A validity period was given
             if (d.getEnforceenddatevalidity()) {
                 // Ensure that the given validity period ends before the end date of the domain
-                newRecord.setValidto(newRecord.getValidfrom().plusSeconds(validityTime).isBefore(d.getValidto()) ? newRecord.getValidfrom().plusSeconds(validityTime) : d.getValidto());
-                newRecord.setValidtoinherited(!newRecord.getValidfrom().plusSeconds(validityTime).isBefore(d.getValidto()));
+                updateDTO.setValidTo(updateDTO.getValidFrom().plusSeconds(validityTime).isBefore(d.getValidto()) ? updateDTO.getValidFrom().plusSeconds(validityTime) : d.getValidto());
+                updateDTO.setValidToInherited(!updateDTO.getValidFrom().plusSeconds(validityTime).isBefore(d.getValidto()));
             } else {
-                newRecord.setValidto(newRecord.getValidfrom().plusSeconds(validityTime));
-                newRecord.setValidtoinherited(false);
+                updateDTO.setValidTo(updateDTO.getValidFrom().plusSeconds(validityTime));
+                updateDTO.setValidToInherited(false);
             }
         }
 
         // Update record
-        if (pseudonymDBAccessService.updatePseudonym(oldRecord, newRecord, request)) {
-            // Update successful. Retrieve the updated record to show it to the user.
-            Pseudonym updatedRecord = pseudonymDBAccessService.getRecord(d.getName(), identifier, idType, oldRecord.getPseudonym(), null).get(0);
-            PseudonymDTO newRecordDto = null;
+        if (pseudonymDBAccessService.updatePseudonyms(List.of(updateDTO), request).getFirst()) {
+            // Update successful, retrieve the updated record to show it to the user
+            PseudonymDTO updatedRecord = pseudonymDBAccessService.getPseudonym(d.getName(), oldPseudonymRecord.getIdentifierItem(), oldPseudonymRecord.getPsn(), null).get(0);
 
             // Determine whether or not a reduced standard view or a complete view is requested
             if (!authorizationService.currentRequestHasRole("complete-view")) {
-                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord).toReducedStandardView();
-            } else {
-                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord);
+                updatedRecord.toReducedStandardView();
             }
 
             // Success. Return a status code 200 and the pseudonym-record as payload.
             log.debug("Successfully updated a pseudonym-record.");
-            return responseService.ok(responseContentType, newRecordDto);
-        } else {
-            // Update failed. Return an error 422-UNPROCESSABLE_ENTITY.
-            log.error("The requested update of a pseudonym-record failed.");
-            return responseService.unprocessableEntity(responseContentType);
-        }
-    }
-
-    /**
-     * This method updates a pseudonym-record with a reduced set of updatable attributes.
-     * The record is identified by its psn.
-     *
-     * @param domainName (required) the name of the domain the record should be in
-     * @param pseudonymDTO (required) the record object
-     * @param psn (optional) the pseudonym of the record that should be updated
-     * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
-     * @return 	<li>a <b>200-OK</b> status and the <b>pseudonym</b> on
-     * 				success</li>
-     * 			<li>a <b>400-BAD_REQUEST</b> when neither an identifier, nor
-     * 				a pseudonym were given</li>
-     * 			<li>a <b>404-NOT_FOUND</b> status when either the domain or
-     * 				the record that should be updated couldn't be found
-     * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
-     * 				record failed</li>
-     */
-    @PutMapping(value = "/domains/{domain}/pseudonym", params = "psn")
-    @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-update')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> updateRecordByPseudonym(@PathVariable("domain") String domainName,
-                                                     @RequestBody PseudonymDTO pseudonymDTO,
-                                                     @RequestParam(name = "psn", required = true) String psn,
-                                                     @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                     HttpServletRequest request) {
-        Timestamp validFrom = pseudonymDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymDTO.getValidFrom()) : null;
-        Timestamp validTo = pseudonymDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymDTO.getValidTo()) : null;
-        Long validityTime = Utility.validityTimeToSeconds(pseudonymDTO.getValidityTime());
-
-        if (Assertion.assertNullAll(validFrom, validTo, validityTime)) {
-            // An empty object was passed, so there is nothing to update.
-            log.debug("The record DTO passed by the user was empty. Nothing to update.");
-            return responseService.unprocessableEntity(responseContentType);
-        }
-
-        // Retrieve the domain the record belongs to
-        Domain d = domainDBAccessService.getDomainByName(domainName, null);
-
-        // Retrieve the old record
-        List<Pseudonym> oldRecordList = pseudonymDBAccessService.getRecord(domainName, null, null, psn, null);
-        if (oldRecordList == null || oldRecordList.size() == 0) {
-        	// Couldn't find the record that should be updated. Return a 404-NOT_FOUND
-            log.debug("The pseudonym-record that should be updated couldn't be found.");
-            return responseService.notFound(responseContentType);
-        } else if (oldRecordList.size() > 1) {
-        	// Found too many records.Return a 422-UNPROCESSABLE_ENTITY
-        	log.debug("The update for the given identifier and idType would have affected more than one record. "
-        			+ "Updating multiple records at once is only permitted via the batch-endpoint.");
-        	return responseService.unprocessableEntity(responseContentType);
-        }
-        
-        Pseudonym oldRecord = oldRecordList.get(0);
-
-        // Check if the retrieved values are null
-        if (d == null) {
-            // Couldn't find the domain. Return a 404-NOT_FOUND
-            log.debug("The provided domain (\"" + domainName + "\") couldn't be found.");
-            return responseService.notFound(responseContentType);
-        } else if (oldRecord == null) {
-            // Couldn't find the record that should be updated. Return a 404-NOT_FOUND
-            log.debug("The pseudonym-record that should be updated couldn't be found.");
-            return responseService.notFound(responseContentType);
-        }
-
-        // Create new pseudonym-record
-        Pseudonym newRecord = new Pseudonym();
-
-        // Determine the validity of the validFrom date if given by the user
-        if (validFrom != null) {
-            if (d.getEnforcestartdatevalidity()) {
-                // Ensure that the given start date isn't before the start date of the domain
-                newRecord.setValidfrom(validFrom.after(Timestamp.valueOf(d.getValidfrom())) ? validFrom.toLocalDateTime() : d.getValidfrom());
-                newRecord.setValidfrominherited(!validFrom.after(Timestamp.valueOf(d.getValidfrom())));
-            } else {
-                newRecord.setValidfrom(validFrom.toLocalDateTime());
-                newRecord.setValidfrominherited(false);
-            }
-        } else {
-            // Set the old value in the new record again to easier determine/calculate a potential validTo value
-            newRecord.setValidfrom(oldRecord.getValidfrom());
-        }
-
-        // Determine the validity of the validTo date if given by the user
-        if (validTo != null) {
-            // End date of validity period is given
-            if (d.getEnforceenddatevalidity()) {
-                // Ensure that the given end date isn't after the end date of the domain
-                newRecord.setValidto(validTo.before(Timestamp.valueOf(d.getValidto())) ? validTo.toLocalDateTime() : d.getValidto());
-                newRecord.setValidtoinherited(!validTo.before(Timestamp.valueOf(d.getValidto())));
-            } else {
-                newRecord.setValidto(validTo.toLocalDateTime());
-                newRecord.setValidtoinherited(false);
-            }
-        } else if (validTo == null && validityTime != null) {
-            // A validity period was given
-            if (d.getEnforceenddatevalidity()) {
-                // Ensure that the given validity period ends before the end date of the domain
-                newRecord.setValidto(newRecord.getValidfrom().plusSeconds(validityTime).isBefore(d.getValidto()) ? newRecord.getValidfrom().plusSeconds(validityTime) : d.getValidto());
-                newRecord.setValidtoinherited(!newRecord.getValidfrom().plusSeconds(validityTime).isBefore(d.getValidto()));
-            } else {
-                newRecord.setValidto(newRecord.getValidfrom().plusSeconds(validityTime));
-                newRecord.setValidtoinherited(false);
-            }
-        }
-
-        // Update record
-        if (pseudonymDBAccessService.updatePseudonym(oldRecord, newRecord, request)) {
-            // Update successful. Retrieve the updated record to show it to the user.
-            Pseudonym updatedRecord = pseudonymDBAccessService.getRecord(d.getName(), null, null, psn, null).get(0);
-            PseudonymDTO newRecordDto = null;
-
-            // Determine whether or not a reduced standard view or a complete view is requested
-            if (!authorizationService.currentRequestHasRole("complete-view")) {
-                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord).toReducedStandardView();
-            } else {
-                newRecordDto = new PseudonymDTO().assignPojoValues(updatedRecord);
-            }
-
-            // Success. Return a status code 200 and the pseudonym-record as payload.
-            log.debug("Successfully updated a pseudonym-record.");
-            return responseService.ok(responseContentType, newRecordDto);
+            return responseService.ok(responseContentType, updatedRecord);
         } else {
             // Update failed. Return an error 422-UNPROCESSABLE_ENTITY.
             log.error("The requested update of a pseudonym-record failed.");

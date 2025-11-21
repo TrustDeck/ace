@@ -146,7 +146,7 @@ public class OidcService implements InitializingBean {
             this.clientUUID = this.getClientResource().toRepresentation().getId();
             log.debug("OIDC client resource is available.");
         } catch (UnexpectedResultSizeException e) {
-            log.error("OIDC resource not available. Did not find exactly one client.\n\t" + e + " Expected: 1. Actual: " + e.getActualSize() + ".\n");
+            log.error("OIDC resource not available. Did not find exactly one client.\n\t" + e + " Expected: 1. Actual: " + e.getActual() + ".\n");
         }
 
         try {
