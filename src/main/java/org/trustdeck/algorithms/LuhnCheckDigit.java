@@ -35,6 +35,9 @@ public abstract class LuhnCheckDigit {
 	@Getter
 	private int mod;
 	
+	/** Represents the status of the standardization when the given prefix was not found in the input. */
+	private static final String PREFIX_NOT_FOUND = "PREFIX_NOT_FOUND";
+	
 	/**
 	 * Basic constructor. A list of allowed characters needs to be provided.
 	 * The list's length must be divisible by two.
@@ -65,7 +68,7 @@ public abstract class LuhnCheckDigit {
 		}
 		
 		// Remove the domain's prefix if it's there
-		String temp = input.startsWith(domainPrefix) ? input.substring(domainPrefix.length()) : input;
+		String temp = input.startsWith(domainPrefix) ? input.substring(domainPrefix.length()) : PREFIX_NOT_FOUND;
 		
 		// Remove white spaces and capitalize
 		return temp.trim().toUpperCase();
@@ -82,9 +85,11 @@ public abstract class LuhnCheckDigit {
 	public Character computeCheckDigit(String input, String domainPrefix) {
 		int factor = 2;
 		int sum = 0;
-		char[] inputChars = standardizeInput(input, domainPrefix).toCharArray();
+		
+		String standardizedInput = standardizeInput(input, domainPrefix);
+		char[] inputChars = standardizedInput.equals(PREFIX_NOT_FOUND) ? input.trim().toUpperCase().toCharArray() : standardizedInput.toCharArray();
 		char[] allowedChars = getAllowedCharacters().toCharArray();
-	 
+		
 		// Iterate over the input. Starting from the right and working leftwards 
 		// is easier since the initial "factor" will always be "2".
 		for (int i = inputChars.length - 1; i >= 0; i--) {
@@ -120,7 +125,7 @@ public abstract class LuhnCheckDigit {
 	}
 	
 	/**
-	 * Method to generate the check digit from the given input.
+	 * Method to validate the check digit from the given input.
 	 * 
 	 * @param input the unsanitized input string
 	 * @param domainPrefix the prefix of the domain where the input is in, including hyphens
@@ -131,7 +136,13 @@ public abstract class LuhnCheckDigit {
 	public Boolean validateCheckDigit(String input, String domainPrefix) {
 		int factor = 1;
 		int sum = 0;
-		char[] inputChars = standardizeInput(input, domainPrefix).toCharArray();
+
+		String standardizedInput = standardizeInput(input, domainPrefix);
+		if (standardizedInput.equals(PREFIX_NOT_FOUND)) {
+			return false;
+		}
+		
+		char[] inputChars = standardizedInput.toCharArray();
 		char[] allowedChars = getAllowedCharacters().toCharArray();
 
 		// Iterate over the input. Starting from the right and working leftwards 
