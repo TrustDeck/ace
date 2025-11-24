@@ -26,7 +26,6 @@ import lombok.Setter;
  * @author Armin Müller
  *
  */
-
 public class UnexpectedResultSizeException extends RuntimeException {
 
 	/** Exception UID. */
