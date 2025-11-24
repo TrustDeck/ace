@@ -35,6 +35,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.algorithms.PathFinder;
+import org.trustdeck.dto.DomainDTO;
 import org.trustdeck.dto.PseudonymDTO;
 import org.trustdeck.dto.PseudonymUpdateDTO;
 import org.trustdeck.exception.DomainNotFoundException;
@@ -151,6 +152,56 @@ public class DomainDBAccessService {
             log.error("Couldn't retrieve the domain with ID " + domainID + " from the database: " + e.getMessage() + "\n");
             return null;
         }
+    }
+    
+    /**
+     * Helper method that creates the subtree of a domain starting from the given domain.
+     *
+     * @param domainName a domain name from which the search should start
+     * @param request the request object that is needed for creating the audit database-entries. If no 
+     * auditing should be performed, you can pass {@code null}.
+     * @return a list of domain DTOs which represent all domains of the subtree starting with the given domain
+     */
+    @Transactional
+    public List<DomainDTO> getSubtreeFromDomainName(String domainName, HttpServletRequest request) {
+    	if (domainName == null) {
+    		log.debug("Could not search for a subtree since the domain ID was null.");
+    		return List.of();
+    	}
+    	
+    	/*
+	        WITH RECURSIVE tree_structure AS (
+	    	    SELECT * FROM DOMAIN WHERE name = :start_name
+	    	    UNION ALL
+	    	    SELECT domain.* FROM DOMAIN
+	    	    INNER JOIN tree_structure ON domain.superdomainid = tree_structure.id
+	    	)
+	    	SELECT * FROM tree_structure;
+        */
+    	
+    	// Build the query
+        CommonTableExpression<Record> treeStructure = name("tree_structure").as(
+        		select(DOMAIN.asterisk())
+                .from(DOMAIN)
+                .where(DOMAIN.NAME.equalIgnoreCase(domainName))
+                .unionAll(
+                		select(DOMAIN.asterisk())
+                        .from(DOMAIN)
+                        .innerJoin(name("tree_structure"))
+                        .on(DOMAIN.SUPERDOMAINID.eq(field(name("tree_structure", "id"), DOMAIN.ID.getDataType())))
+                )
+        );
+        
+        // Execute the query
+        try {
+        	return dslCtx.withRecursive(treeStructure)
+        			.selectFrom(treeStructure)
+        			.fetchInto(Domain.class)
+        			.stream().map(d -> new DomainDTO().assignPojoValues(d)).toList();
+		} catch (Exception e) {
+			log.error("Couldn't generate the subtree from the given domain: " + e.getClass() + ": " + e.getMessage());
+            return List.of();
+		}
     }
 
     /**
