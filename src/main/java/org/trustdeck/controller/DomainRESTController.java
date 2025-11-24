@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.dto.DomainDTO;
+import org.trustdeck.dto.DomainTreeDTO;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
@@ -50,7 +51,9 @@ import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class encapsulates the requests for domains in a controller for the REST-API.
@@ -977,6 +980,51 @@ public class DomainRESTController {
             return responseService.notFound(responseContentType);
         }
     }
+    
+    /**
+     * This method returns all domains from the database in a minimal version.
+     *
+     * @param responseContentType (optional) the response content type
+     * @param request the request object, injected by Spring Boot
+     * @return <li>a <b>200-OK</b> status and the <b>list of domains</b> 
+     * 		   when the query was successful</li>
+     * 		   <li>a <b>404-NOT_FOUND</b> status, when the given domain
+     * 		   could not be found</li>
+     */
+    @GetMapping("/domains/{domainName}/subtree")
+    @PreAuthorize("hasRole('domain-read-subtree')")
+    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    public ResponseEntity<?> getDomainSubtree(@PathVariable("domainName") String domainName,
+    										  @RequestHeader(name = "accept", required = false) String responseContentType,
+                                              HttpServletRequest request) {
+        List<DomainDTO> domains = domainDBAccessService.getSubtreeFromDomainName(domainName, request);
+        
+        if (domains == null || domains.size() == 0) {
+        	log.debug("The subtree search did not find anything.");
+        	return responseService.notFound(responseContentType);
+        }
+
+        // Determine whether or not a reduced standard view or a complete view is requested
+        boolean canSeeComplete = authorizationService.currentRequestHasRole("complete-view");
+
+        // Create a list of domains
+        for (int i = 0; i < domains.size(); i++) {
+        	if (!canSeeComplete) {
+        		domains.get(i).toReducedStandardView();
+        	}
+        }
+        
+        // Build the DTO with inlined children object
+        DomainTreeDTO tree = buildDomainTree(domains, domainName);
+        if (tree == null) {
+        	// Fallback if building fails --> use list-view
+            log.warn("Buidling the domain subtree failed.");
+            return responseService.ok(responseContentType, domains);
+        }
+
+        log.trace("Succesfully retrieved the subtree for domain \"" + domainName + "\".");
+        return responseService.ok(responseContentType, tree);
+    }
 
     /**
      * This method returns all domains from the database in a minimal version.
@@ -1423,5 +1471,57 @@ public class DomainRESTController {
         }
         
         return true;
+    }
+    
+    /**
+     * Helper method to transform a list of domain DTOs into a DTO-with-children-structure.
+     * 
+     * @param domains the list that should be transformed
+     * @param rootDomainName the name of the domain that acts as the root of this (sub-)tree
+     * @return a DTO that has its children as an inlined object
+     */
+    private DomainTreeDTO buildDomainTree(List<DomainDTO> domains, String rootDomainName) {
+        if (domains == null || domains.isEmpty()) {
+            return null;
+        }
+
+        // Create a node for each domain
+        Map<String, DomainTreeDTO> nodesByName = new HashMap<>();
+        for (DomainDTO dto : domains) {
+            nodesByName.put(dto.getName(), DomainTreeDTO.builder().domain(dto).build());
+        }
+
+        // Find the root node (i.e. the one matching the given root domain name)
+        DomainTreeDTO root = nodesByName.values().stream()
+                .filter(node -> node.getDomain().getName() != null && node.getDomain().getName().equalsIgnoreCase(rootDomainName))
+                .findFirst().orElse(null);
+
+        if (root == null) {
+            return null;
+        }
+
+        // Insert child-domains to their parents using superDomainName
+        for (DomainDTO dto : domains) {
+            DomainTreeDTO node = nodesByName.get(dto.getName());
+
+            // Skip root
+            if (node == root) {
+                continue;
+            }
+
+            // Check if the current domain is a child of one of the others
+            if (dto.getSuperDomainName() != null) {
+                // Current domain has a parent, search it in the given list
+            	DomainTreeDTO parent = nodesByName.get(dto.getSuperDomainName());
+                if (parent != null) {
+                	if (parent.getChildren() == null) {
+                		parent.setChildren(new ArrayList<>());
+                	}
+                    parent.getChildren().add(node);
+                }
+            }
+        }
+
+        return root;
     }
 }

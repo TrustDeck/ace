@@ -36,7 +36,7 @@ import org.trustdeck.utils.SpringBeanLocator;
 import java.time.LocalDateTime;
 
 /**
- * Object for the representation (transfer) in a response
+ * Data transfer object for the exchange of domain data.
  *
  * @author Armin Müller & Eric Wündisch
  */
