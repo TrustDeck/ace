@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * This service includes methods to retrieve group paths for a user, cache the group paths if not present,
  * flush and re-cache groups when a domain match is found, and handle concurrent access using write locks.
  *
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Service
 @Slf4j

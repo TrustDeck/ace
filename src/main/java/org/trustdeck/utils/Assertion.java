@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 /**
  * This class encapsulates utility functionalities.
  *
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Component
 public class Assertion {

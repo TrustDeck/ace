@@ -31,7 +31,7 @@ import java.io.PrintWriter;
 /**
  * Handles the output if the request contains an invalid token.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Slf4j
 @NoArgsConstructor

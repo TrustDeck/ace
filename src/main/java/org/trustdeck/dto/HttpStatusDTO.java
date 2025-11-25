@@ -26,7 +26,7 @@ import org.springframework.http.HttpStatus;
 /**
  * The HTTP status DTO.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Data
 @NoArgsConstructor

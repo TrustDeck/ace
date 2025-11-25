@@ -30,7 +30,7 @@ import java.io.PrintWriter;
 /**
  * Used to control incoming requests without an access token.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Slf4j
 public class CustomAuthenticationEntryPointHandler implements AuthenticationEntryPoint {

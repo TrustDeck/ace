@@ -27,7 +27,7 @@ import org.trustdeck.utils.Assertion;
 /**
  * This class allows for finding a path between two arbitrary domains, if there is one.
  *
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Slf4j
 public class PathFinder {

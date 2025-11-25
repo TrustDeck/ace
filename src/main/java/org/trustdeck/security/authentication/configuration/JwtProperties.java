@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * The configuration for the JWT properties.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Data
 @Configuration

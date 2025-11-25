@@ -39,7 +39,7 @@ import java.util.stream.Stream;
  * This class is used to convert a JWT token into readable information.
  * It extracts role names and the preferred username.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Slf4j
 @Component

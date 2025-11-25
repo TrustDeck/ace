@@ -36,7 +36,7 @@ import org.trustdeck.utils.Assertion;
 /**
  * This class encapsulates utility functionalities to check roles and relationships within a given OIDC token.
  *
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Slf4j
 @Component("auth")

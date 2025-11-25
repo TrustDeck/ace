@@ -28,7 +28,7 @@ import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuild
 /**
  * Testing complete scenarios.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 public class TestsScenariosServiceIT extends AssertWebRequestService {
 

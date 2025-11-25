@@ -45,7 +45,7 @@ import java.util.Arrays;
 /**
  * This class is used to define security settings for keycloak and other custom security options.
  *
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @RequiredArgsConstructor
 @Configuration

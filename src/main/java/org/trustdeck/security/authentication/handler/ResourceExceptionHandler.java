@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 /**
  * A resource exception handler which re-throws an AccessDeniedException.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Slf4j
 @ControllerAdvice

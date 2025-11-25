@@ -37,7 +37,7 @@ import java.util.Map;
  * This class is responsible for handling OIDC (OpenID Connect) related operations for domain-level interactions
  * within the application. E.g. for rights and roles management in Keycloak.
  *
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Slf4j
 @Service

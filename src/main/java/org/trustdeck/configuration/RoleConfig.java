@@ -49,7 +49,7 @@ import java.util.Map;
  *       - delete-roles
  * </pre>
  *
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Data
 @Configuration

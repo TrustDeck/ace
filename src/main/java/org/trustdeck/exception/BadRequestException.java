@@ -20,7 +20,7 @@ package org.trustdeck.exception;
 /**
  * This class represents an exception when a bad HTTP request was encountered.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  *
  */
 public class BadRequestException extends NullPointerException {

@@ -39,7 +39,7 @@ import java.util.Set;
 /**
  * Handles the responses depending on the response type requested by the user.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Service
 @Slf4j

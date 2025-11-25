@@ -30,7 +30,7 @@ import java.io.PrintWriter;
 /**
  * Handles access denied states and answers with a 403-FORBIDDEN status.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Slf4j
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
