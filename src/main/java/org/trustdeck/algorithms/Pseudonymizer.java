@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2024 Armin Müller and Eric Wündisch
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,7 +183,7 @@ public abstract class Pseudonymizer {
 	 * All other information will be directly retrieved from the provided domain object.
 	 * 
 	 * @param paddingWanted whether or not the pseudonyms should be padded to a certain length
-	 * @param domain the domain object containing the necessary configuration information
+	 * @param algorithm the algorithm object containing the necessary configuration information
 	 */
 	public Pseudonymizer(boolean paddingWanted, Algorithm algorithm) {
 		this.adbs = SpringBeanLocator.getBean(AlgorithmDBService.class);

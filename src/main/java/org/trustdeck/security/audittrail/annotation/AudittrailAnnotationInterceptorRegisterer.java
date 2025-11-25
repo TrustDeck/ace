@@ -25,7 +25,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 /**
  * This class is used to add the audittrail annotation interceptor in the interceptor registry.
  * 
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller and Eric Wündisch
  */
 @Configuration
 public class AudittrailAnnotationInterceptorRegisterer implements WebMvcConfigurer {

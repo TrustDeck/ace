@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2024 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ import java.util.List;
  * This class represents a REST-API controller encapsulating the requests for pseudonym-records.
  * This REST-API offers full access to the data items.
  *
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller and Eric Wündisch
  */
 @RestController
 @EnableMethodSecurity

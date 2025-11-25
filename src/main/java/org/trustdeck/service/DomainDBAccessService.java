@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2025 Armin Müller & Eric Wündisch
+ * Copyright 2022-2025 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ import static org.trustdeck.jooq.generated.Tables.PSEUDONYM;
 /**
  * This class is used to encapsulate all methods needed to access the database for handling domains.
  *
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller and Eric Wündisch
  */
 @Service
 @Slf4j
@@ -307,7 +307,7 @@ public class DomainDBAccessService {
 
     /**
      * Method to find pseudonym(s) linked to the given one in the provided domain.
-     * For that, either the identifier & idType or the psn of the starting record is needed.
+     * For that, either the identifier and idType or the psn of the starting record is needed.
      * 
      * @param sourceDomainName the name of the domain to start from
      * @param sourceIdentifier the identifier of the record to start the search from

@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2021-2025 Armin Müller & Eric Wündisch
+ * Copyright 2021-2025 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuild
 /**
  * This class offers tests that only work in a combination of updating or deleting different objects first.
  *
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller and Eric Wündisch
  */
 public class TestsCompositeServiceIT extends AssertWebRequestService {
 

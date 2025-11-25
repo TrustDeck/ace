@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2025 Armin Müller & Eric Wündisch
+ * Copyright 2022-2025 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ import java.util.Map;
  * This class encapsulates the requests for domains in a controller for the REST-API.
  * This REST-API offers full access to the data items.
  *
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller and Eric Wündisch
  */
 @RestController
 @EnableMethodSecurity

@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Configuration for the audit trail.
  * 
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller and Eric Wündisch
  */
 @Data
 @Configuration
