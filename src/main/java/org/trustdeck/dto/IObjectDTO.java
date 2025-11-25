@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Scope;
 /**
  * Interface for a proper representation object.
  *
- * @param <F> the type of the jOOQ-generated POJO backing this DTO
+ * @param <F> the type of the jOOQ-generated POJO that is backing this DTO
  * @param <T> the concrete DTO type implementing this interface
  *
  * @author Armin Müller and Eric Wündisch

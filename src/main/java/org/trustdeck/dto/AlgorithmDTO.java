@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-@Scope("prototype").
+@Scope("prototype")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlgorithmDTO implements IObjectDTO<Algorithm, AlgorithmDTO> {
 	
