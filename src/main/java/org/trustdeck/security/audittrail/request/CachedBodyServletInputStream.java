@@ -26,7 +26,7 @@ import jakarta.servlet.ServletInputStream;
 
 /**
  * Enables the servlet input stream to be read multiple times without being destroyed.
- * Adapted from {@link https://www.baeldung.com/spring-reading-httpservletrequest-multiple-times}.
+ * Adapted from <a href="https://www.baeldung.com/spring-reading-httpservletrequest-multiple-times">Baeldung: Reading HttpServletRequest Multiple Times</a>.
  * 
  * @author Baeldung, Armin Müller
  *
