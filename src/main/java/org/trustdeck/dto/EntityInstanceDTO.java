@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Data
 @NoArgsConstructor
-@Scope("prototype") // Ensures that an instance is deleted after a request.
+@Scope("prototype").
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Slf4j
 public class EntityInstanceDTO implements IObjectDTO<EntityInstance, EntityInstanceDTO> {
