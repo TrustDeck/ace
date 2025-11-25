@@ -241,6 +241,7 @@ public abstract class Pseudonymizer {
 	 * @param pseudonym the pseudonym for which a checksum should be generated
 	 * @param addInsteadOfLastChar decides whether the checksum should be included in the 
 	 * 			predefined length of the pseudonym or if it should be an additional character
+	 * @param domainName the name of this pseudonym's domain
 	 * @param domainPrefix the prefix for this pseudonym's domain (including the hyphen, if existing)
 	 * @return the pseudonym including the checksum
 	 */

@@ -56,7 +56,8 @@ public class SecurityConfig {
 	private final JwtAuthConverter jwtAuthConverter;
 
     /**
-     * Defines CORS settings (cf. {@link https://docs.spring.io/spring-security/reference/6.1/servlet/integrations/cors.html#page-title}).
+     * Defines CORS settings (cf. 
+     * <a href="https://docs.spring.io/spring-framework/reference/web/webmvc-cors.html#page-title">Spring: CORS</a>).
      *
      * @return the CORS configuration source
      */

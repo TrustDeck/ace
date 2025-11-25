@@ -67,7 +67,7 @@ public class PseudonymDBAccessService {
     @Autowired
     private DSLContext dslCtx;
 
-    /** Represents the duplication status of a requested insertion of an identifier & idType combination into the database. */
+    /** Represents the duplication status of a requested insertion of an identifier and idType combination into the database. */
     public static final String INSERTION_DUPLICATE_IDENTIFIER = "duplicate identifier";
     
     /** Represents the duplication status of a requested insertion of a pseudonym into the database. */
@@ -84,7 +84,7 @@ public class PseudonymDBAccessService {
      *
      * @param pseudonyms a list of pseudonyms to insert into the database
      * @param domainId the ID of the domain in which the pseudonyms should be created
-     * @param multiplePsnAllowed whether or not multiple pseudonyms per id&idType combination are allowed
+     * @param multiplePsnAllowed whether or not multiple pseudonyms per id &amp; idType combination are allowed
      * @param request the request object that is needed for creating the audit database-entries. If no 
      * auditing should be performed, you can pass {@code null}.
      * @return {@code INSERTION_SUCCESS} when the batch insertion was successful, {@code INSERTION_ERROR} otherwise

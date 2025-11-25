@@ -315,10 +315,9 @@ public class EntityTypeRESTController {
 	}
 	
 	/**
-	 * Endpoint to retrieve an entity type given it's name.
+	 * Endpoint to retrieve a base entity type given it's name.
 	 * 
-	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
-	 * @param entityTypeName the name of the entity type the user wants to retrieve
+	 * @param entityTypeName the name of the base entity type the user wants to retrieve
 	 * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the requested entity type on success</li>

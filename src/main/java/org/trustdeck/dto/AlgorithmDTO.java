@@ -97,6 +97,11 @@ public class AlgorithmDTO implements IObjectDTO<Algorithm, AlgorithmDTO> {
 	    return this;
 	}
 	
+	/**
+	 * Helper method that transforms an algorithm DTO object back into a POJO.
+	 * 
+	 * @return the POJO representation of this algorithm DTO
+	 */
 	@JsonIgnore
 	public Algorithm convertToPOJO() {
 		Algorithm algorithm = new Algorithm();

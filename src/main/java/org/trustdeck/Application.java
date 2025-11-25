@@ -40,7 +40,7 @@ public class Application {
 	 * The service's entry-point.
 	 * Starts the database-controller and the controller for the REST-API.
 	 * 
-	 * @param args
+	 * @param args the command line arguments
 	 */
 	public static void main(String[] args) {
 		// Starting the application. This also calls the necessary 

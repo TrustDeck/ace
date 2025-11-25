@@ -44,7 +44,7 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 	 * Constructor.
 	 * 
 	 * @param request the request that should be wrapped.
-	 * @throws IOException
+	 * @throws IOException when copying the body fails
 	 */
     public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);

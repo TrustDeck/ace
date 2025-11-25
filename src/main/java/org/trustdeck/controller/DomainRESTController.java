@@ -984,6 +984,7 @@ public class DomainRESTController {
     /**
      * This method returns all domains from the database in a minimal version.
      *
+     * @param domainName the domain's name
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status and the <b>list of domains</b> 

@@ -852,7 +852,7 @@ public class PseudonymRESTController {
     }
 
     /**
-     * This method retrieves a pseudonym-record through its identifier (id & idType).
+     * This method retrieves a pseudonym-record through its identifier (id &amp; idType).
      *
      * @param domainName (required) the name of the domain the record is in
      * @param identifier (required) the identifier to search for
@@ -1057,7 +1057,6 @@ public class PseudonymRESTController {
      *
      * @param oldDomainName (required) the name of the domain the record should be in
      * @param pseudonymUpdateDTO (required) the update object containing the identifying and the new data
-     * @param identifier (required) the identifier of the record that should be updated
      * @param regeneratePseudonym (optional) a flag to keep or regenerate the psn when the identifierItem or the domain changed
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
@@ -1240,8 +1239,6 @@ public class PseudonymRESTController {
      *
      * @param domainName (required) the name of the domain the record should be in
      * @param pseudonymDTO (required) the record object
-     * @param identifier (required) the identifier that should be updated
-     * @param idType (required) the type of the identifier
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the <b>pseudonym</b> on

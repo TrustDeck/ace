@@ -17,6 +17,9 @@
 
 package org.trustdeck.exception;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * This class represents an exception when a duplicate of a domain was found.
  * 
@@ -29,6 +32,8 @@ public class DuplicateDomainException extends RuntimeException {
 	private static final long serialVersionUID = 6391703398815926680L;
 	
 	/** The name of the domain that was duplicated. */
+	@Getter
+	@Setter
 	private String domainName;
 	
 	/** 
@@ -38,20 +43,6 @@ public class DuplicateDomainException extends RuntimeException {
 	public DuplicateDomainException(String domainName) {
 		super("A duplicate of the domain was found.");
 		
-		this.domainName = domainName;
-	}
-
-	/**
-	 * @return the domainName
-	 */
-	public String getDomainName() {
-		return domainName;
-	}
-
-	/**
-	 * @param domainName the domainName to set
-	 */
-	public void setDomainName(String domainName) {
 		this.domainName = domainName;
 	}
 }

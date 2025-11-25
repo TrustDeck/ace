@@ -17,6 +17,9 @@
 
 package org.trustdeck.exception;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * This class represents an exception when the update of a child domain failed.
  * 
@@ -29,6 +32,8 @@ public class FailedChildDomainUpdateException extends RuntimeException {
 	private static final long serialVersionUID = -2780694585237683527L;
 	
 	/** The name of the child domain that couldn't be updated. */
+	@Getter
+	@Setter
 	private String childName;
 	
 	/** 
@@ -38,20 +43,6 @@ public class FailedChildDomainUpdateException extends RuntimeException {
 	public FailedChildDomainUpdateException(String childName) {
 		super("The update of a child domain was unsuccessful.");
 		
-		this.childName = childName;
-	}
-
-	/**
-	 * @return the childName
-	 */
-	public String getChildName() {
-		return childName;
-	}
-
-	/**
-	 * @param childName the childName to set
-	 */
-	public void setChildName(String childName) {
 		this.childName = childName;
 	}
 }

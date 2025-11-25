@@ -37,6 +37,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CachingConfig {
 
+	/**
+	 * This method is used to initialize the hazelcast cache configuration object.
+	 * 
+	 * @return a configuration object to use for initializing a hazelcast instance
+	 */
     @Bean
     public Config hazelcastConfig() {
         Config config = new Config();

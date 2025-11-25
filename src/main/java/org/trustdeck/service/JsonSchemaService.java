@@ -259,8 +259,8 @@ public class JsonSchemaService {
 	 *   <li>Same type for shared attributes</li>
 	 *   <li>Constraints can only be stricter, never weaker:
 	 *     <ul>
-	 *       <li>numbers: min >= base.min; max <= base.max</li>
-	 *       <li>strings: minLength >= base.minLength; maxLength <= base.maxLength</li>
+	 *       <li>numbers: min &ge; base.min; max &le; base.max</li>
+	 *       <li>strings: minLength &ge; base.minLength; maxLength &le; base.maxLength</li>
 	 *       <li>pattern: require equality to base type</li>
 	 *     </ul>
 	 *   </li>

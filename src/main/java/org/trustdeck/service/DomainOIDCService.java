@@ -264,6 +264,7 @@ public class DomainOIDCService {
      *
      * @param oldDomainName the name of the domain to be updated
      * @param newDomainName the new name to be assigned to the domain-related roles and groups
+     * @param userId the ID of the user for which the groups and roles should be updated
      */
     public void updateDomainGroups(String oldDomainName, String newDomainName, String userId) {
         this.leaveAndDeleteDomainGroupsAndRoles(oldDomainName);

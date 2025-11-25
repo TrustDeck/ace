@@ -195,7 +195,7 @@ public class EntityTypeDBService {
      * name and projectID. Tuples of these are unique in the database.
      * Base types will have no projectID, so it can be null.
      * 
-     * @param name the entity type's name
+     * @param entityTypeId the entity type's ID
      * @param projectID the project to which the entity type is assigned to
      * @param request the http request object containing information necessary for the audit trail
      * @return the retrieved entity type when successfully found, or {@code null} when nothing was found.
@@ -257,7 +257,7 @@ public class EntityTypeDBService {
      * 
      * @param entityTypeDTO the entity type data transfer object containing the necessary data (at least name and projectID)
      * @param request the http request object containing information necessary for the audit trail
-     * @return
+     * @return the entity type as a DTO, or {@code null} if nothing was found or the search failed
      */
     @Transactional
     public EntityTypeDTO getEntityType(EntityTypeDTO entityTypeDTO, HttpServletRequest request) {

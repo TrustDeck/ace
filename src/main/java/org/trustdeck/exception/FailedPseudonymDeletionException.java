@@ -17,6 +17,9 @@
 
 package org.trustdeck.exception;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * This class represents an exception when the deletion of a pseudonym failed.
  * 
@@ -29,12 +32,18 @@ public class FailedPseudonymDeletionException extends RuntimeException {
 	private static final long serialVersionUID = -4508733941993130349L;
 	
 	/** The name of the domain where the pseudonym that can't be deleted is in. */
+	@Getter
+	@Setter
 	private String domainName;
 	
 	/** The identifier of the pseudonym that can't be deleted. */
+	@Getter
+	@Setter
 	private String identifier;
 	
 	/** The idType of the pseudonym that can't be deleted. */
+	@Getter
+	@Setter
 	private String idType;
 	
 	/** 
@@ -48,48 +57,6 @@ public class FailedPseudonymDeletionException extends RuntimeException {
 		
 		this.domainName = domainName;
 		this.identifier = identifier;
-		this.idType = idType;
-	}
-
-	/**
-	 * @return the domainName
-	 */
-	public String getDomainName() {
-		return domainName;
-	}
-
-	/**
-	 * @return the identifier
-	 */
-	public String getIdentifier() {
-		return identifier;
-	}
-
-	/**
-	 * @return the idType
-	 */
-	public String getIdType() {
-		return idType;
-	}
-
-	/**
-	 * @param domainName the domainName to set
-	 */
-	public void setDomainName(String domainName) {
-		this.domainName = domainName;
-	}
-
-	/**
-	 * @param identifier the identifier to set
-	 */
-	public void setIdentifier(String identifier) {
-		this.identifier = identifier;
-	}
-
-	/**
-	 * @param idType the idType to set
-	 */
-	public void setIdType(String idType) {
 		this.idType = idType;
 	}
 }

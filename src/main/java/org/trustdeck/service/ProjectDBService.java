@@ -224,7 +224,8 @@ public class ProjectDBService {
      * The deletion is a tombstoning operation where the 
      * end_date is set and no real deletion is performed. 
      * 
-     * @param abbreviation the name of the project that should be deleted
+     * @param project the DTO containing information about the project that should be deleted
+     * @param deleteDate the date which should be used for the end_date
      * @param request the http request object containing information necessary for the audit trail
      * @return {@code true} when the deletion was successful, {@code false} when the project object 
      * 			that should be deleted was not found
@@ -285,7 +286,7 @@ public class ProjectDBService {
     /**
      * This method updates a project identified by its name.
      * 
-     * @param abbreviation the abbreviation of the project that should be updated
+     * @param oldProject the project object containing information of the project that should be updated
      * @param updatedProject the project object containing the updated information
      * @param request the http request object containing information necessary for the audit trail
      * @return the ID of the updated project, or {@code null} if an error occurred

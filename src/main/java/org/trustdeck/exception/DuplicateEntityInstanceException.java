@@ -30,6 +30,8 @@ public class DuplicateEntityInstanceException extends RuntimeException {
 	
 	/** 
 	 * Constructor.
+	 * 
+	 * @param msg the message that should accompany this exception
 	 */
 	public DuplicateEntityInstanceException(String msg) {
 		super("A duplicate of the entity type was found: " + msg);
