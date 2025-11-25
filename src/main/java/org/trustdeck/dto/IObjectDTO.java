@@ -22,9 +22,12 @@ import org.springframework.context.annotation.Scope;
 /**
  * Interface for a proper representation object.
  *
+ * @param <F> the type of the jOOQ-generated POJO backing this DTO
+ * @param <T> the concrete DTO type implementing this interface
+ *
  * @author Armin Müller and Eric Wündisch
  */
-@Scope("prototype") // Ensures that an instance is deleted after a request
+@Scope("prototype")
 public interface IObjectDTO<F, T> {
 	
     /** Assigns values from the given POJO to the desired DTO. */
