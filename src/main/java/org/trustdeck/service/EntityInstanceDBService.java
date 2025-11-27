@@ -333,7 +333,7 @@ public class EntityInstanceDBService {
      * @return a list of entity instances that match the search query
      */
     @Transactional
-    public List<EntityInstanceDTO> searchEntityInstance(String query, HttpServletRequest request) {
+    public List<EntityInstanceDTO> searchEntityInstance(String query, Integer entityTypeId, HttpServletRequest request) {
     	if (Assertion.isNullOrEmpty(query)) {
             log.debug("Search query is empty.");
             return null;
@@ -368,6 +368,10 @@ public class EntityInstanceDBService {
 
         // Exclude deleted instances
         condition = condition.and(ENTITY_INSTANCE.IS_DELETED.eq(false));
+        
+        if (entityTypeId != null) {
+        	condition = condition.and(ENTITY_INSTANCE.ENTITY_TYPE_ID.eq(entityTypeId));
+        }
 
         // Execute the search
         List<EntityInstance> results;
