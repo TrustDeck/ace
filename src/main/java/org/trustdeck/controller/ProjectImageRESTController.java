@@ -82,7 +82,7 @@ public class ProjectImageRESTController {
 	/**
 	 * Endpoint to store a new image for a project.
 	 * 
-	 * @param abbreviation the abbreviation of the project to which the image belongs to
+	 * @param projectAbbreviation the abbreviation of the project to which the image belongs to
 	 * @param image the image that should be stored
 	 * @param responseContentType (optional) the response content type
 	 * @param request the request object, injected by Spring Boot
@@ -98,10 +98,10 @@ public class ProjectImageRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the image could not be 
      *         processed or creation failed</li>
 	 */
-	@PostMapping(path = "/projects/{abbreviation}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PostMapping(path = "/projects/{projectAbbreviation}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("hasRole('project-image-create')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> createProjectImage(@PathVariable(name = "abbreviation", required = true) String abbreviation,
+    public ResponseEntity<?> createProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
 												@RequestPart("image") MultipartFile image,
 												@RequestHeader(name = "accept", required = false) String responseContentType,
 												HttpServletRequest request) {
@@ -125,12 +125,12 @@ public class ProjectImageRESTController {
 		}
 		
 		// Retrieve the owning project
-		if (Assertion.isNullOrEmpty(abbreviation)) {
+		if (Assertion.isNullOrEmpty(projectAbbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
 		
-		ProjectDTO project = projectService.getProjectByAbbreviation(abbreviation, null);
+		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation, null);
 		
 		if (project == null) {
 			log.debug("Could not find the project.");
@@ -171,7 +171,7 @@ public class ProjectImageRESTController {
 	/**
 	 * Endpoint to retrieve the image of a project.
 	 * 
-	 * @param abbreviation the abbreviation of the project to which the image belongs to
+	 * @param projectAbbreviation the abbreviation of the project to which the image belongs to
 	 * @param responseContentType (optional) the response content type
 	 * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the image bytes and corresponding MIME type 
@@ -182,19 +182,19 @@ public class ProjectImageRESTController {
      *         <li>a <b>404-NOT_FOUND</b> status when the project or its image does not exist</li>
      *         <li>a <b>410-GONE</b> status when the project has already ended</li>
 	 */
-	@GetMapping(path = "/projects/{abbreviation}/image")
+	@GetMapping(path = "/projects/{projectAbbreviation}/image")
 	@PreAuthorize("hasRole('project-image-read')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-	public ResponseEntity<?> getProjectImage(@PathVariable(name = "abbreviation", required = true) String abbreviation,
+	public ResponseEntity<?> getProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
 											 @RequestHeader(name = "accept", required = false) String responseContentType,
 											 HttpServletRequest request) {
 		// Retrieve the owning project
-		if (Assertion.isNullOrEmpty(abbreviation)) {
+		if (Assertion.isNullOrEmpty(projectAbbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
 		
-		ProjectDTO project = projectService.getProjectByAbbreviation(abbreviation, null);
+		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation, null);
 		
 		if (project == null) {
 			log.debug("Could not find the project.");
@@ -222,7 +222,7 @@ public class ProjectImageRESTController {
 	/**
 	 * Endpoint to update a project image.
 	 * 
-	 * @param abbreviation the abbreviation of the project to which the updated image belongs to
+	 * @param projectAbbreviation the abbreviation of the project to which the updated image belongs to
 	 * @param image the updated image that should be stored
 	 * @param responseContentType (optional) the response content type
 	 * @param request the request object, injected by Spring Boot
@@ -238,20 +238,20 @@ public class ProjectImageRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the image could not be 
      *         processed or the update failed</li>
 	 */
-	@PutMapping(path = "/projects/{abbreviation}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PutMapping(path = "/projects/{projectAbbreviation}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("hasRole('project-image-update')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-	public ResponseEntity<?> updateProjectImage(@PathVariable(name = "abbreviation", required = true) String abbreviation,
+	public ResponseEntity<?> updateProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
 												@RequestPart("image") MultipartFile image,
 												@RequestHeader(name = "accept", required = false) String responseContentType,
 												HttpServletRequest request) {
 		// Retrieve the owning project
-		if (Assertion.isNullOrEmpty(abbreviation)) {
+		if (Assertion.isNullOrEmpty(projectAbbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
 		
-		ProjectDTO project = projectService.getProjectByAbbreviation(abbreviation, null);
+		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation, null);
 		
 		if (project == null) {
 			log.debug("Could not find the project.");
@@ -311,7 +311,7 @@ public class ProjectImageRESTController {
 	/**
 	 * Endpoint to delete an image from a project.
 	 * 
-	 * @param abbreviation the abbreviation of the project to which the image belongs to
+	 * @param projectAbbreviation the abbreviation of the project to which the image belongs to
 	 * @param responseContentType (optional) the response content type
 	 * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>204-NO_CONTENT</b> status when the project image was successfully 
@@ -322,19 +322,19 @@ public class ProjectImageRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the deletion failed or was 
      *         rolled back</li>
 	 */
-	@DeleteMapping(path = "/projects/{abbreviation}/image")
+	@DeleteMapping(path = "/projects/{projectAbbreviation}/image")
 	@PreAuthorize("hasRole('project-image-delete')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
-	public ResponseEntity<?> deleteProjectImage(@PathVariable(name = "abbreviation", required = true) String abbreviation,
+	public ResponseEntity<?> deleteProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
 												@RequestHeader(name = "accept", required = false) String responseContentType,
 												HttpServletRequest request) {
 		// Retrieve the owning project
-		if (Assertion.isNullOrEmpty(abbreviation)) {
+		if (Assertion.isNullOrEmpty(projectAbbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
 		
-		ProjectDTO project = projectService.getProjectByAbbreviation(abbreviation, null);
+		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation, null);
 		
 		if (project == null) {
 			log.debug("Could not find the project.");

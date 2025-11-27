@@ -65,7 +65,7 @@ import java.util.List;
 @RestController
 @EnableMethodSecurity
 @Slf4j
-@RequestMapping(value = "/api/pseudonymization")
+@RequestMapping(value = "/api")
 public class PseudonymRESTController {
 
     /** The default maximum allowed batch size. */
@@ -144,10 +144,10 @@ public class PseudonymRESTController {
      * 			<li>a <b>507-INSUFFICICENT_STORAGE</b> when the domain reached its 
      * 				filling point and we therefore only generated collisions.</li>
      */
-    @PostMapping("/domains/{domain}/pseudonyms")
+    @PostMapping("/domains/{domainName}/pseudonyms/batch")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-create-batch')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> createRecordBatch(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> createRecordBatch(@PathVariable("domainName") String domainName,
                                                @RequestParam(name = "omitPrefix", required = false, defaultValue = "false") Boolean omitPrefix,
                                                @RequestBody List<PseudonymDTO> recordDtoList,
                                                @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -361,10 +361,10 @@ public class PseudonymRESTController {
      * 			<li>a <b>507-INSUFFICICENT_STORAGE</b> when the domain reached its 
      * 				filling point and we therefore only generated collisions.</li>
      */
-    @PostMapping("/domains/{domain}/pseudonym")
+    @PostMapping("/domains/{domainName}/pseudonyms")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-create')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> createRecord(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> createRecord(@PathVariable("domainName") String domainName,
                                           @RequestBody PseudonymDTO pseudonymDTO,
                                           @RequestParam(name = "omitPrefix", required = false, defaultValue = "false") Boolean omitPrefix,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -561,10 +561,10 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the
      * 				records could not be deleted</li>
      */
-    @DeleteMapping("/domains/{domain}/pseudonyms")
+    @DeleteMapping("/domains/{domainName}/pseudonyms/batch")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-delete-batch')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> deleteRecordBatch(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> deleteRecordBatch(@PathVariable("domainName") String domainName,
                                                @RequestHeader(name = "accept", required = false) String responseContentType,
                                                HttpServletRequest request) {
         // Retrieve the domain the records belong to
@@ -625,10 +625,10 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the
      * 				record could not be deleted</li>
      */
-    @DeleteMapping("/domains/{domain}/pseudonym")
+    @DeleteMapping("/domains/{domainName}/pseudonyms")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-delete')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> deleteRecord(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> deleteRecord(@PathVariable("domainName") String domainName,
                                           @RequestParam(name = "id", required = false) String identifier,
                                           @RequestParam(name = "idType", required = false) String idType,
                                           @RequestParam(name = "psn", required = false) String psn,
@@ -780,10 +780,10 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the
      * 				records could not be retrieved</li>
      */
-    @GetMapping("/domains/{domain}/pseudonyms")
+    @GetMapping("/domains/{domainName}/pseudonyms/batch")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-read-batch')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> getRecordBatch(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> getRecordBatch(@PathVariable("domainName") String domainName,
                                             @RequestHeader(name = "accept", required = false) String responseContentType,
                                             HttpServletRequest request) {
         // Check that the batch size isn't too big.
@@ -864,10 +864,10 @@ public class PseudonymRESTController {
      * 			<li>a <b>404-NOT_FOUND</b> when no record was found for the
      * 				given identifier and idType</li>
      */
-    @GetMapping(value = "/domains/{domain}/pseudonym", params = {"id", "idType"})
+    @GetMapping(value = "/domains/{domainName}/pseudonyms", params = {"id", "idType"})
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> getRecordByIdentifier(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> getRecordByIdentifier(@PathVariable("domainName") String domainName,
                                                    @RequestParam(name = "id", required = true) String identifier,
                                                    @RequestParam(name = "idType", required = true) String idType,
                                                    @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -915,10 +915,10 @@ public class PseudonymRESTController {
      * 			<li>a <b>404-NOT_FOUND</b> when no record was found for the
      * 				given pseudonym</li>
      */
-    @GetMapping(value = "/domains/{domain}/pseudonym", params = "psn")
+    @GetMapping(value = "/domains/{domainName}/pseudonyms", params = "psn")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> getRecordByPseudonym(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> getRecordByPseudonym(@PathVariable("domainName") String domainName,
                                                   @RequestParam(name = "psn", required = true) String psn,
                                                   @RequestHeader(name = "accept", required = false) String responseContentType,
                                                   HttpServletRequest request) {
@@ -985,10 +985,10 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
      *	 			record failed</li>
      */
-    @PutMapping("/domains/{domain}/pseudonyms")
+    @PutMapping("/domains/{domainName}/pseudonyms/batch")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-update-batch')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> updateRecordBatch(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> updateRecordBatch(@PathVariable("domainName") String domainName,
                                                @RequestBody List<PseudonymUpdateDTO> pseudonymUpdateList,
                                                @RequestHeader(name = "accept", required = false) String responseContentType,
                                                HttpServletRequest request) {
@@ -1070,10 +1070,10 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
      * 				record failed</li>
      */
-    @PutMapping(value = "/domains/{domain}/pseudonym/complete")
+    @PutMapping(value = "/domains/{domainName}/pseudonyms/complete")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'record-update-complete')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> updateRecordComplete(@PathVariable("domain") String oldDomainName,
+    public ResponseEntity<?> updateRecordComplete(@PathVariable("domainName") String oldDomainName,
                                                   @RequestBody PseudonymUpdateDTO pseudonymUpdateDTO,
                                                   @RequestParam(name = "regeneratePseudonym", required = false) Boolean regeneratePseudonym,
                                                   @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -1250,10 +1250,10 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the update of the
      * 				record failed</li>
      */
-    @PutMapping("/domains/{domain}/pseudonym")
+    @PutMapping("/domains/{domainName}/pseudonyms")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> updateRecord(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> updateRecord(@PathVariable("domainName") String domainName,
                                           @RequestBody PseudonymUpdateDTO pseudonymDTO,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
                                           HttpServletRequest request) {
@@ -1380,10 +1380,10 @@ public class PseudonymRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> status if there is 
      * 				no check digit according to the domain</li>
      */
-    @GetMapping("/domains/{domain}/pseudonym/validation")
+    @GetMapping("/domains/{domainName}/pseudonyms/validation")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'record-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> validatePseudonym(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> validatePseudonym(@PathVariable("domainName") String domainName,
 								               @RequestParam(name = "psn", required = true) String psn,
 								               @RequestHeader(name = "accept", required = false) String responseContentType,
 								               HttpServletRequest request) {

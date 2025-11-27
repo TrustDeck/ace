@@ -104,7 +104,7 @@ public class EntityTypeRESTController {
      *         invalid or the type definition fails validation</li>
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when creation failed</li>
      */
-	@PostMapping("/entities")
+	@PostMapping("/entities/base-types")
 	@PreAuthorize("hasRole('base-entity-type-create')")
 	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> createBaseEntityType(@RequestBody EntityTypeDTO entityTypeDTO,
@@ -324,7 +324,7 @@ public class EntityTypeRESTController {
      *         <li>a <b>404-NOT_FOUND</b> status when the project or the entity type does not exist</li>
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
 	 */
-	@GetMapping("/entities/{entityTypeName}")
+	@GetMapping("/entities/base-types/{entityTypeName}")
 	@PreAuthorize("hasRole('base-entity-type-read')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> getBaseEntityType(@PathVariable("entityTypeName") String entityTypeName,
