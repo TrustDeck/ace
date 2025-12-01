@@ -1,0 +1,27 @@
+networks:
+  trustdeck:
+    name: trustdeck
+    external: true
+
+services:
+  trustdeck-backend:
+    container_name: trustdeck-backend
+    env_file:
+      - trustdeck.env
+    build:
+      context: .
+      dockerfile: Dockerfile_TrustDeck
+    image: trustdeck-backend:latest
+    networks:
+      - trustdeck
+    # Wait until Postgres + Keycloak are healthy
+    depends_on:
+      trustdeck-postgresql:
+        condition: service_healthy
+      trustdeck-keycloak:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://trustdeck-postgresql:5432/trustdeck
