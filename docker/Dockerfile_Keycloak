@@ -1,12 +1,19 @@
-# Add curl to keycloak to enable health checks; add certificates
-# Add environment variables
-ARG CHAIN_PEM_FILE_PATH
-ARG RSA_CRT_FILE_PATH
-ARG ECC_CRT_FILE_PATH
-ARG ORGANIZATION_CA_PEM_FILE_PATH
-
+# Add curl to keycloak to enable health checks; add certificats
 # Use image that includes a package manager
 FROM registry.access.redhat.com/ubi9 AS ubi-micro-build
+
+# Add proxy environment variables
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
+
+# Set proxy variables
+ENV http_proxy=${http_proxy}
+ENV https_proxy=${https_proxy}
+ENV no_proxy=${no_proxy}
+ENV HTTP_PROXY=${http_proxy}
+ENV HTTPS_PROXY=${https_proxy}
+ENV NO_PROXY=${no_proxy}
 
 # Switch to root user
 USER root
@@ -21,13 +28,13 @@ RUN dnf install --installroot /mnt/rootfs curl --releasever 9 --setopt install_w
 FROM quay.io/keycloak/keycloak:latest
 COPY --from=ubi-micro-build /mnt/rootfs /
 
-# Re-declare build arguments in this stage so they're available here
+# Add environment varibles for the certificate paths
 ARG CHAIN_PEM_FILE_PATH
 ARG RSA_CRT_FILE_PATH
 ARG ECC_CRT_FILE_PATH
 ARG ORGANIZATION_CA_PEM_FILE_PATH
 
-# Set environment variables so they can be used in the COPY statements
+# Set environment variables
 ENV CHAIN_PEM_FILE_PATH=${CHAIN_PEM_FILE_PATH}
 ENV RSA_CRT_FILE_PATH=${RSA_CRT_FILE_PATH}
 ENV ECC_CRT_FILE_PATH=${ECC_CRT_FILE_PATH}
