@@ -74,7 +74,7 @@ app:
     preferred-accept-mime-type: application/json
   datasource:
     trustdeck:
-      url: jdbc:postgresql://localhost:5432/trustdeck
+      url: jdbc:postgresql://${DATABASE_TRUSTDECK_HOST:localhost}:${DATABASE_TRUSTDECK_PORT:5432}/trustdeck
       username: ${DATABASE_TRUSTDECK_USER}
       password: ${DATABASE_TRUSTDECK_PASSWORD}
       configuration:
