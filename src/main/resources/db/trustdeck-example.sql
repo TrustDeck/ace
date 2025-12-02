@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 17.4 (Debian 17.4-1.pgdg120+2)
--- Dumped by pg_dump version 17.4 (Debian 17.4-1.pgdg120+2)
+-- Dumped from database version 17.5 (Debian 17.5-1.pgdg120+1)
+-- Dumped by pg_dump version 17.5 (Debian 17.5-1.pgdg120+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -43,6 +43,13 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+
 
 --
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
@@ -213,6 +220,8 @@ CREATE TABLE public.entity_instance (
     entity_type_id integer NOT NULL,
     data jsonb NOT NULL,
     full_text_search_vector tsvector GENERATED ALWAYS AS (jsonb_to_tsvector('simple'::regconfig, data, '["string"]'::jsonb)) STORED,
+    data_text text GENERATED ALWAYS AS ((data)::text) STORED,
+    data_sha256 bytea GENERATED ALWAYS AS (public.digest((data)::text, 'sha256'::text)) STORED,
     is_deleted boolean DEFAULT false NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
@@ -604,20 +613,6 @@ CREATE INDEX algorithm_name_uindex ON public.algorithm USING btree (name);
 --
 
 CREATE INDEX auditusernameidx ON public.auditevent USING btree (username);
-
-
---
--- Name: entity_instance_et_proj_id_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX entity_instance_et_proj_id_idx ON ONLY public.entity_instance USING btree (entity_type_id, project_id, id);
-
-
---
--- Name: entity_instance_fts_active_gin_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX entity_instance_fts_active_gin_idx ON ONLY public.entity_instance USING gin (full_text_search_vector) WHERE (is_deleted = false);
 
 
 --
