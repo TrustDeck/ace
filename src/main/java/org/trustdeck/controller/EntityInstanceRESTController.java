@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2025 Armin Müller & Eric Wündisch
+ * Copyright 2025 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -373,7 +373,10 @@ public class EntityInstanceRESTController {
 	
 	    	// Check if there are any errors
 	        if (!errors.isEmpty()) {
-	            log.debug("Instance payload validation failed.");
+	            log.debug("Instance payload validation failed" + (log.isTraceEnabled() ? ":" : "."));
+	            if (log.isTraceEnabled()) {
+	            	errors.forEach(e -> log.trace("\t" + e));
+	            }
 	            return responseService.badRequest(responseContentType);
 	        }
 	    }
@@ -535,7 +538,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Send query to the database
-		List<EntityInstanceDTO> foundInstances = entityInstanceDBService.searchEntityInstance(query, request);
+		List<EntityInstanceDTO> foundInstances = entityInstanceDBService.searchEntityInstance(query, entityType.getId(), request);
 		
 		// Evaluate findings
 		if (foundInstances == null || foundInstances.size() == 0) {

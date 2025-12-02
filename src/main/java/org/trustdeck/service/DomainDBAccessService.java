@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2025 Armin Müller & Eric Wündisch
+ * Copyright 2022-2025 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ import static org.trustdeck.jooq.generated.Tables.PSEUDONYM;
 /**
  * This class is used to encapsulate all methods needed to access the database for handling domains.
  *
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller and Eric Wündisch
  */
 @Service
 @Slf4j
@@ -307,7 +307,7 @@ public class DomainDBAccessService {
 
     /**
      * Method to find pseudonym(s) linked to the given one in the provided domain.
-     * For that, either the identifier & idType or the psn of the starting record is needed.
+     * For that, either the identifier and idType or the psn of the starting record is needed.
      * 
      * @param sourceDomainName the name of the domain to start from
      * @param sourceIdentifier the identifier of the record to start the search from
@@ -755,20 +755,14 @@ public class DomainDBAccessService {
      * auditing should be performed, you can pass {@code null}.
      * @return a list of domains, if nothing was found an empty list is returned.
      */
-    public List<Domain> listDomains(HttpServletRequest request) {
+    @Transactional
+    public List<DomainDTO> listDomains(HttpServletRequest request) {
         try {
-            List<Domain> domains = this.dslCtx.transactionResult(configuration -> {
-                // Retrieve a list of all domains in the database
-            	return DSL.using(configuration)
-                        .selectFrom(DOMAIN)
-                        .fetchInto(Domain.class);
-
-                // Implicit transaction commit here
-            });
-            
-            return domains;
+			return dslCtx.selectFrom(DOMAIN)
+					.fetchInto(Domain.class)
+                    .stream().map(d -> new DomainDTO().assignPojoValues(d)).toList();
         } catch (Exception e) {
-            log.error("Couldn't query the database: " + e.getMessage() + "\n");
+            log.error("Couldn't query the database: " + e.getClass() + ": " + e.getMessage());
             return null;
         }
     }
@@ -1003,7 +997,8 @@ public class DomainDBAccessService {
             log.error("Updating the OIDC rights and roles failed for the domain (" + i.getDomainName() + "). The update was therefore rolled back.");
             return null;
         } catch (Exception j) {
-            log.error("Couldn't update the domain: " + j.getMessage() + "\n");
+            log.error("Couldn't update the domain: " + j.getClass() + ": " + j.getMessage());
+            log.trace("", j);
             return null;
         }
     }

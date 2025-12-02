@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2024 Armin Müller and Eric Wündisch
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,11 @@ import org.springframework.http.HttpStatus;
 /**
  * The HTTP status DTO.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Data
 @NoArgsConstructor
-@Scope("prototype") // Ensures that an instance is deleted after a request.
+@Scope("prototype")
 public class HttpStatusDTO implements IObjectDTO<HttpStatus, HttpStatusDTO> {
 
     /** The HTTP status code number. */

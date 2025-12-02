@@ -20,7 +20,8 @@ package org.trustdeck.controller;
 import jakarta.ws.rs.NotFoundException;
 
 import org.jooq.DSLContext;
-import org.jooq.Record;
+import org.jooq.Field;
+import org.jooq.Record2;
 import org.jooq.Result;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -50,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @EnableMethodSecurity
 @Slf4j
-@RequestMapping(value = "/api/pseudonymization")
+@RequestMapping(value = "/api")
 public class DatabaseMaintenanceRESTController {
 
     /** References a jOOQ configuration object that configures jOOQ's behavior when executing queries. */
@@ -71,10 +72,10 @@ public class DatabaseMaintenanceRESTController {
      * @param tableName (required) the name of the table from which the user wants to read the table size
      * @return<li>a <b>200-OK</b> status and the table size on success</li>
      */
-    @GetMapping("/table/{table}/storage")
+    @GetMapping("/tables/{table}/storage")
     @PreAuthorize("@auth.currentRequestHasRole('read-table-storage')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL, message = "Retrieve table size from database.")
-    public ResponseEntity<?> monitorDatabaseSpace(@PathVariable("table") String tableName) {
+    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    public ResponseEntity<?> monitorDatabaseMetrics(@PathVariable("table") String tableName) {
     	TableMetrics metrics = getTableMetrics(tableName);
     	Long dbSize = getTotalDatabaseSize();
     	
@@ -97,10 +98,10 @@ public class DatabaseMaintenanceRESTController {
      * @param tableName (required) the name of the table the user wants to delete
      * @return <li>a <b>200-OK</b> status</li>
      */
-    @DeleteMapping("/table/{table}")
+    @DeleteMapping("/tables/{tableName}")
     @PreAuthorize("@auth.currentRequestHasRole('delete-table')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL, message = "Delete table from database.")
-    public ResponseEntity<?> clearTable(@PathVariable("table") String tableName) {
+    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+    public ResponseEntity<?> clearTable(@PathVariable("tableName") String tableName) {
     	try {
     		// Remove all records from table
 			dsl.deleteFrom(DSL.table(DSL.name(tableName))).execute();
@@ -108,7 +109,7 @@ public class DatabaseMaintenanceRESTController {
 			// Perform vacuum to free up space
 			dsl.execute("VACUUM FULL " + DSL.name(tableName).toString() + ";");
 		} catch (DataAccessException e) {
-			log.error("Deleting the table " + tableName + " from the database was unsuccessfull.\n\t" + e);
+			log.error("Deleting the table " + tableName + " from the database was unsuccessfull.", e);
 			return responseService.internalServerError(MediaType.TEXT_PLAIN_VALUE);
 		}
     	
@@ -122,17 +123,17 @@ public class DatabaseMaintenanceRESTController {
      * @param domainName (required) the name of the domain for which the user wants to remove the roles
      * @return <li>a <b>200-OK</b> status</li>
      */
-    @DeleteMapping("/roles/{domain}")
+    @DeleteMapping("/roles/{domainName}")
     @PreAuthorize("@auth.currentRequestHasRole('delete-roles')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL, message = "Delete all roles from database.")
-    public ResponseEntity<?> deleteDomainRightsAndRoles(@PathVariable("domain") String domainName) {
+    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+    public ResponseEntity<?> deleteDomainRightsAndRoles(@PathVariable("domainName") String domainName) {
 		try {
 		    // Remove all roles from table
 	        domainOidcService.leaveAndDeleteDomainGroupsAndRoles(domainName);
 		} catch (NotFoundException e) {
 		    // Domain does not exist. Nothing to do.
 		} catch (Exception f) {
-		    log.error("Deleting the roles for domain " + domainName + " from the database was unsuccessfull.\n\t" + f);
+		    log.error("Deleting the roles for domain " + domainName + " from the database was unsuccessfull.", f);
 		    return responseService.internalServerError(MediaType.TEXT_PLAIN_VALUE);
 		}
 
@@ -147,17 +148,18 @@ public class DatabaseMaintenanceRESTController {
      * @return the size in bytes or {@code null}, if unsuccessful
      */
     private TableMetrics getTableMetrics(String tableName) {
-		Result<Record> result;
+		Field<Long> totalSize = DSL.field("pg_total_relation_size({0}::regclass)", Long.class, DSL.val(tableName));
+    	
+		Result<Record2<Long, Integer>> result;
 		try {
-			String sql = "SELECT pg_total_relation_size(?), COUNT(*) FROM " + DSL.name(tableName).toString();
-			result = dsl.fetch(sql, DSL.name(tableName).toString());
+			result = dsl.select(totalSize, DSL.count()).from(DSL.table(DSL.name(tableName))).fetch();
 		} catch (DataAccessException e) {
-			log.debug("Retrieving the storage used by table " + tableName + " was unsuccessfull.\n\t" + e);
+			log.debug("Retrieving the storage used by table " + tableName + " was unsuccessfull.", e);
 			return null;
 		}
 		
-		long size = result.get(0).get(0, Long.class);
-		long recordCount = result.get(0).get(1, Long.class);
+		long size = result.get(0).component1();
+		int recordCount = result.get(0).component2();
 		
 		return new TableMetrics(size, recordCount);
     }
@@ -168,16 +170,17 @@ public class DatabaseMaintenanceRESTController {
      * @return the size in bytes or {@code null}, if unsuccessful
      */ 
     private Long getTotalDatabaseSize() {
-		String sql = "SELECT pg_database_size(current_database())";
-		Result<Record> result;
+    	Field<Long> dbSize = DSL.field("pg_database_size(current_database())", Long.class);
+
+    	Long size;
 		try {
-			result = dsl.fetch(sql);
+			size = dsl.select(dbSize).fetchOne(0, Long.class);
 		} catch (DataAccessException e) {
-			log.debug("Retrieving the storage used by the database was unsuccessfull.\n\t" + e);
+			log.debug("Retrieving the storage used by the database was unsuccessfull.", e);
 			return null;
 		}
 		
-		return result.get(0).get(0, Long.class);
+		return size;
     }
 
     /**

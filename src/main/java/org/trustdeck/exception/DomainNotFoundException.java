@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2024 Armin Müller and Eric Wündisch
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 
 package org.trustdeck.exception;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * This class represents an exception when a domain couldn't be found.
  * 
@@ -29,6 +32,8 @@ public class DomainNotFoundException extends RuntimeException {
 	private static final long serialVersionUID = 5207053811632277880L;
 	
 	/** The name of the domain that was requested. */
+	@Getter
+	@Setter
 	private String domainName;
 	
 	/** 
@@ -38,20 +43,6 @@ public class DomainNotFoundException extends RuntimeException {
 	public DomainNotFoundException(String domainName) {
 		super("The requested domain couldn't be found.");
 		
-		this.domainName = domainName;
-	}
-
-	/**
-	 * @return the domainName
-	 */
-	public String getDomainName() {
-		return domainName;
-	}
-
-	/**
-	 * @param domainName the domainName to set
-	 */
-	public void setDomainName(String domainName) {
 		this.domainName = domainName;
 	}
 }

@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2024-2025 Armin Müller & Eric Wündisch
+ * Copyright 2024-2025 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * This service includes methods to retrieve group paths for a user, cache the group paths if not present,
  * flush and re-cache groups when a domain match is found, and handle concurrent access using write locks.
  *
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Service
 @Slf4j

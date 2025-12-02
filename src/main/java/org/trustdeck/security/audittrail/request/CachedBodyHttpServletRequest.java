@@ -30,7 +30,7 @@ import org.springframework.util.StreamUtils;
 
 /**
  * Wrapper class that allows for multiple reads on the request body.
- * Adapted from {@link https://www.baeldung.com/spring-reading-httpservletrequest-multiple-times}.
+ * Adapted from <a href="https://www.baeldung.com/spring-reading-httpservletrequest-multiple-times">Baeldung: Reading HttpServletRequest Multiple Times</a>.
  * 
  * @author Baeldung, Armin Müller
  *
@@ -44,7 +44,7 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 	 * Constructor.
 	 * 
 	 * @param request the request that should be wrapped.
-	 * @throws IOException
+	 * @throws IOException when copying the body fails
 	 */
     public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);

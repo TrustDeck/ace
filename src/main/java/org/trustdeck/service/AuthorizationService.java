@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2024-2025 Armin Müller & Eric Wündisch
+ * Copyright 2024-2025 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import org.trustdeck.utils.Assertion;
 /**
  * This class encapsulates utility functionalities to check roles and relationships within a given OIDC token.
  *
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Slf4j
 @Component("auth")
@@ -107,7 +107,7 @@ public class AuthorizationService {
 
     /**
      * Method that checks if a token contains the given role names.
-     * @apiNote Currently unused. Nonetheless, do not remove.
+     * Note: Currently unused. Nonetheless, do not remove.
      *
      * @param roles the role names that should be searched for
      * @return {@code true} only if <b>all</b> given roles are contained in the token, {@code false} if at least one role is missing

@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2024 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,12 @@ import org.springframework.context.annotation.Scope;
 /**
  * Interface for a proper representation object.
  *
- * @author Armin Müller & Eric Wündisch
+ * @param <F> the type of the jOOQ-generated POJO that is backing this DTO
+ * @param <T> the concrete DTO type implementing this interface
+ *
+ * @author Armin Müller and Eric Wündisch
  */
-@Scope("prototype") // Ensures that an instance is deleted after a request
+@Scope("prototype")
 public interface IObjectDTO<F, T> {
 	
     /** Assigns values from the given POJO to the desired DTO. */

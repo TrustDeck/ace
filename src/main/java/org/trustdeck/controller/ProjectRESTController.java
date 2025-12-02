@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2025 Armin Müller & Eric Wündisch
+ * Copyright 2022-2025 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,27 +190,27 @@ public class ProjectRESTController {
 	 * Method to retrieve a certain project identified by its
 	 * abbreviation.
 	 * 
-	 * @param abbreviation the project's abbreviation
+	 * @param projectAbbreviation the project's abbreviation
 	 * @param responseContentType (optional) the response content type
 	 * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status with the requested project on success</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when the abbreviation is missing or empty</li>
      *         <li>a <b>404-NOT_FOUND</b> status when no project exists for the given abbreviation</li>
 	 */
-	@GetMapping("/projects/{abbreviation}")
-    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #abbreviation, 'project-read')")
+	@GetMapping("/projects/{projectAbbreviation}")
+    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #projectAbbreviation, 'project-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> getProject(@PathVariable(name = "abbreviation", required = true) String abbreviation,
+    public ResponseEntity<?> getProject(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
                                         @RequestHeader(name = "accept", required = false) String responseContentType,
                                         HttpServletRequest request) {
 		
 		// Null-check the given string
-		if (Assertion.isNullOrEmpty(abbreviation)) {
+		if (Assertion.isNullOrEmpty(projectAbbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
 		
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(abbreviation, request);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, request);
 		
 		if (project == null) {
 			log.debug("No project found for the given abbreviation.");
@@ -221,7 +221,7 @@ public class ProjectRESTController {
 		}
 		
 		// At this point a project was found, return it to the user
-		log.debug("Successfully retrieved a project for abbreviation \"" + abbreviation + "\".");
+		log.debug("Successfully retrieved a project for abbreviation \"" + projectAbbreviation + "\".");
 		return responseService.ok(responseContentType, project);
 	}
 	
@@ -229,15 +229,15 @@ public class ProjectRESTController {
 	 * Method to retrieve statistics about a certain project
 	 * identified by it's abbreviation.
 	 * 
-	 * @param abbreviation the project's abbreviation
+	 * @param projectAbbreviation the project's abbreviation
 	 * @param responseContentType (optional) the response content type
 	 * @param request the request object, injected by Spring Boot
      * @return <li>a <b>501-NOT_IMPLEMENTED</b> status (endpoint not implemented yet)</li>
 	 */
-	@GetMapping("projects/{abbreviation}/statistics")
-    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #abbreviation, 'project-read')")
+	@GetMapping("projects/{projectAbbreviation}/statistics")
+    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #projectAbbreviation, 'project-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> getProjectStatistics(@PathVariable("abbreviation") String abbreviation,
+    public ResponseEntity<?> getProjectStatistics(@PathVariable("projectAbbreviation") String projectAbbreviation,
                                 				  @RequestHeader(name = "accept", required = false) String responseContentType,
                                 				  HttpServletRequest request) {
 		
@@ -247,7 +247,7 @@ public class ProjectRESTController {
 	/**
 	 * Method to update a project identity identified by it's abbreviation.
 	 * 
-	 * @param abbreviation the abbreviation of the project that is to be updated
+	 * @param projectAbbreviation the abbreviation of the project that is to be updated
 	 * @param newProjectDTO (required) the project object containing all updated values, null-values will lead to keeping the old values
 	 * @param responseContentType (optional) the response content type
 	 * @param request the request object, injected by Spring Boot
@@ -255,16 +255,16 @@ public class ProjectRESTController {
      * 		   <li>a <b>404-NOT_FOUND</b> status when the project does not exist</li>
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the update failed</li>
 	 */
-	@PutMapping("/projects/{abbreviation}")
-    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #abbreviation, 'project-update')")
+	@PutMapping("/projects/{projectAbbreviation}")
+    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #projectAbbreviation, 'project-update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> updateProject(@PathVariable("abbreviation") String abbreviation,
+    public ResponseEntity<?> updateProject(@PathVariable("projectAbbreviation") String projectAbbreviation,
     									   @RequestBody ProjectDTO newProjectDTO,
     									   @RequestHeader(name = "accept", required = false) String responseContentType,
     									   HttpServletRequest request) {
 		
 		// Check if the original project exists
-		ProjectDTO oldProjectDTO = projectDBService.getProjectByAbbreviation(abbreviation, null);
+		ProjectDTO oldProjectDTO = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
 		if (oldProjectDTO == null) {
 			log.debug("The project that should be updated was not found.");
 			return responseService.notFound(responseContentType);
@@ -299,7 +299,7 @@ public class ProjectRESTController {
 	 * tombstoned, meaning the end-date will be set properly so that
 	 * retrieving, updating, inserting, etc. is not allowed anymore.
 	 * 
-	 * @param abbreviation the project's abbreviation
+	 * @param projectAbbreviation the project's abbreviation
 	 * @param deleteDate (optional) the date from which the project should be considered as deleted 
 	 * @param responseContentType (optional) the response content type
 	 * @param request the request object, injected by Spring Boot
@@ -308,15 +308,15 @@ public class ProjectRESTController {
      *         <li>a <b>404-NOT_FOUND</b> status when the project does not exist</li>
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the deletion failed</li>
 	 */
-	@DeleteMapping("/projects/{abbreviation}")
-    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #abbreviation, 'project-delete')")
+	@DeleteMapping("/projects/{projectAbbreviation}")
+    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #projectAbbreviation, 'project-delete')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> deleteProject(@PathVariable("abbreviation") String abbreviation,
+    public ResponseEntity<?> deleteProject(@PathVariable("projectAbbreviation") String projectAbbreviation,
     									   @RequestParam(name = "deleteDate", required = false) String deleteDate,
     									   @RequestHeader(name = "accept", required = false) String responseContentType,
                                            HttpServletRequest request) {
 		// Check if the original project exists
-		ProjectDTO projectDTO = projectDBService.getProjectByAbbreviation(abbreviation, null);
+		ProjectDTO projectDTO = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
 		if (projectDTO == null) {
 			log.debug("The project that should be deleted was not found.");
 			return responseService.notFound(responseContentType);
@@ -358,7 +358,7 @@ public class ProjectRESTController {
 		
 		// Evaluate the result
 		if (isDeleted) {
-			log.info("Project with abbreviation \"" + abbreviation + "\" was succesfully deleted (tombstoned).");
+			log.info("Project with abbreviation \"" + projectAbbreviation + "\" was succesfully deleted (tombstoned).");
 			return responseService.noContent(responseContentType);
 		} else {
 			log.debug("Project deletion was unsuccesful.");

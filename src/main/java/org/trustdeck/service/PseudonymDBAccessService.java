@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2024 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 /**
  * This class is used to encapsulate all methods needed to access the database for handling pseudonym-records.
  *
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller and Eric Wündisch
  */
 @Service
 @Slf4j
@@ -67,7 +67,7 @@ public class PseudonymDBAccessService {
     @Autowired
     private DSLContext dslCtx;
 
-    /** Represents the duplication status of a requested insertion of an identifier & idType combination into the database. */
+    /** Represents the duplication status of a requested insertion of an identifier and idType combination into the database. */
     public static final String INSERTION_DUPLICATE_IDENTIFIER = "duplicate identifier";
     
     /** Represents the duplication status of a requested insertion of a pseudonym into the database. */
@@ -84,7 +84,7 @@ public class PseudonymDBAccessService {
      *
      * @param pseudonyms a list of pseudonyms to insert into the database
      * @param domainId the ID of the domain in which the pseudonyms should be created
-     * @param multiplePsnAllowed whether or not multiple pseudonyms per id&idType combination are allowed
+     * @param multiplePsnAllowed whether or not multiple pseudonyms per id &amp; idType combination are allowed
      * @param request the request object that is needed for creating the audit database-entries. If no 
      * auditing should be performed, you can pass {@code null}.
      * @return {@code INSERTION_SUCCESS} when the batch insertion was successful, {@code INSERTION_ERROR} otherwise

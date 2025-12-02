@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2023-2024 Armin Müller & Eric Wündisch
+ * Copyright 2023-2024 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * The configuration for the JWT properties.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Data
 @Configuration

@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2024 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import java.util.Arrays;
 /**
  * This class is used to define security settings for keycloak and other custom security options.
  *
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @RequiredArgsConstructor
 @Configuration
@@ -56,7 +56,8 @@ public class SecurityConfig {
 	private final JwtAuthConverter jwtAuthConverter;
 
     /**
-     * Defines CORS settings (cf. {@link https://docs.spring.io/spring-security/reference/6.1/servlet/integrations/cors.html#page-title}).
+     * Defines CORS settings (cf. 
+     * <a href="https://docs.spring.io/spring-framework/reference/web/webmvc-cors.html#page-title">Spring: CORS</a>).
      *
      * @return the CORS configuration source
      */

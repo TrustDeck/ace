@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2025 Armin Müller & Eric Wündisch
+ * Copyright 2022-2025 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,19 +52,21 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class encapsulates the requests for domains in a controller for the REST-API.
  * This REST-API offers full access to the data items.
  *
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller and Eric Wündisch
  */
 @RestController
 @EnableMethodSecurity
 @Slf4j
-@RequestMapping(value = "/api/pseudonymization")
+@RequestMapping(value = "/api")
 public class DomainRESTController {
 
 	/** The default value for adding a check digit to the pseudonym. */
@@ -153,7 +155,7 @@ public class DomainRESTController {
      * 				digit should be calculated and the provided alphabet 
      * 				length is not an even number</li>
      */
-    @PostMapping("/domain/complete")
+    @PostMapping("/domains/complete")
     @PreAuthorize("hasRole('domain-create-complete')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> createDomainComplete(@RequestBody DomainDTO domainDTO,
@@ -505,7 +507,7 @@ public class DomainRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when the addition
      * 				of the domain failed or when the DTO was invalid</li>
      */
-    @PostMapping("/domain")
+    @PostMapping("/domains")
     @PreAuthorize("hasRole('domain-create')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> createDomain(@RequestBody DomainDTO domainDTO,
@@ -760,7 +762,7 @@ public class DomainRESTController {
      * 			<li>a <b>500-INTERNAL_SERVER_ERROR</b> status when the domain
      * 				could not be deleted</li>
      */
-    @DeleteMapping("/domain")
+    @DeleteMapping("/domains")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-delete')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> deleteDomain(@RequestParam(name = "name", required = true) String domainName,
@@ -808,10 +810,10 @@ public class DomainRESTController {
      * 				the given name or the when given attribute name 
      * 				wasn't found</li>
      */
-    @GetMapping("/domains/{domain}/{attribute}")
+    @GetMapping("/domains/{domainName}/{attribute}")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> getDomainAttribute(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> getDomainAttribute(@PathVariable("domainName") String domainName,
     											@PathVariable("attribute") String attributeName,
     		                                    @RequestHeader(name = "accept", required = false) String responseContentType,
     		                                    HttpServletRequest request) {
@@ -954,7 +956,7 @@ public class DomainRESTController {
      * 			<li>a <b>404-NOT_FOUND</b> when no domain was found for
      * 				the given name</li>
      */
-    @GetMapping("/domain")
+    @GetMapping("/domains")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getDomain(@RequestParam(name = "name", required = true) String domainName,
@@ -984,6 +986,7 @@ public class DomainRESTController {
     /**
      * This method returns all domains from the database in a minimal version.
      *
+     * @param domainName the domain's name
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status and the <b>list of domains</b> 
@@ -1027,36 +1030,45 @@ public class DomainRESTController {
     }
 
     /**
-     * This method returns all domains from the database in a minimal version.
+     * This method returns all domains from the database in a list of trees with each domains children inlined.
      *
      * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
-     * @return 	<li>a <b>200-OK</b> status and the <b>list of minimal
-     * 				domains</b> when the query was successful</li>
+     * @return 	<li>a <b>200-OK</b> status and the <b>list of domain 
+     * 			trees</b> when the query was successful</li>
      */
     @GetMapping(value = "/domains/hierarchy")
     @PreAuthorize("hasRole('domain-list-all')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> listDomainHierarchy(@RequestHeader(name = "accept", required = false) String responseContentType,
                                                  HttpServletRequest request) {
-        List<Domain> domains = domainDBAccessService.listDomains(request);
-
         // Determine whether or not a reduced standard view or a complete view is requested
         boolean canSeeComplete = authorizationService.currentRequestHasRole("complete-view");
-
-        List<DomainDTO> domainDTOs = new ArrayList<>();
-        // Create a list of domains
-        for (Domain domain : domains) {
-            DomainDTO domainDTO = new DomainDTO().assignPojoValues(domain);
-            
-            if (canSeeComplete) {
-                domainDTOs.add(domainDTO);
-            } else {
-                domainDTOs.add(domainDTO.toReducedStandardView());
-            }
+        
+        List<DomainDTO> domains = domainDBAccessService.listDomains(request);
+        
+        if (domains == null || domains.size() == 0) {
+        	log.debug("The domain search did not find anything.");
+        	return responseService.notFound(responseContentType);
         }
 
-        return responseService.ok(responseContentType, domainDTOs);
+        // Create a list of domains
+        for (int i = 0; i < domains.size(); i++) {
+        	if (!canSeeComplete) {
+        		domains.get(i).toReducedStandardView();
+        	}
+        }
+        
+        // Build the DTO with inlined children object
+        List<DomainTreeDTO> trees = buildDomainTree(domains);
+        if (trees == null) {
+        	// Fallback if building fails --> use list-view
+            log.warn("Buidling the domain subtree failed.");
+            return responseService.ok(responseContentType, domains);
+        }
+
+        log.trace("Succesfully retrieved the trees for the stored domains.");
+        return responseService.ok(responseContentType, trees);
     }
 
     /**
@@ -1075,7 +1087,7 @@ public class DomainRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when updating the domain
      * 				failed</li>
      */
-    @PutMapping("/domain/complete")
+    @PutMapping("/domains/complete")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update-complete')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> updateDomainComplete(@RequestParam(name = "name", required = true) String oldDomainName,
@@ -1252,7 +1264,7 @@ public class DomainRESTController {
      * 			<li> a <b>422-UNPROCESSABLE_ENTITY</b> when updating the domain
      * 				failed</li>
      */
-    @PutMapping("/domain")
+    @PutMapping("/domains")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> updateDomain(@RequestParam(name = "name", required = true) String oldDomainName,
@@ -1371,10 +1383,10 @@ public class DomainRESTController {
      * 			<li>a <b>422-UNPROCESSABLE_ENTITY</b> when updating the salt
      * 				value failed</li>
      */
-    @PutMapping("/domains/{domain}/salt")
+    @PutMapping("/domains/{domainName}/salt")
     @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-update-salt')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> updateSalt(@PathVariable("domain") String domainName,
+    public ResponseEntity<?> updateSalt(@PathVariable("domainName") String domainName,
                                         @RequestParam(name = "salt", required = true) String newSalt,
                                         @RequestParam(name = "allowEmpty", required = false, defaultValue = "false") Boolean allowEmpty,
                                         @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -1475,6 +1487,7 @@ public class DomainRESTController {
     
     /**
      * Helper method to transform a list of domain DTOs into a DTO-with-children-structure.
+     * Start from a given domain and only build its subtree.
      * 
      * @param domains the list that should be transformed
      * @param rootDomainName the name of the domain that acts as the root of this (sub-)tree
@@ -1500,7 +1513,7 @@ public class DomainRESTController {
             return null;
         }
 
-        // Insert child-domains to their parents using superDomainName
+        // Insert child-domains into their parents using superDomainName
         for (DomainDTO dto : domains) {
             DomainTreeDTO node = nodesByName.get(dto.getName());
 
@@ -1523,5 +1536,53 @@ public class DomainRESTController {
         }
 
         return root;
+    }
+    
+    /**
+     * Helper method to transform a list of domain DTOs into a DTO-with-children-structure.
+     * Keep all parent-less domains as their own subtrees.
+     * 
+     * @param domains the list that should be transformed
+     * @return a List of DTOs where each has its children as an inlined object
+     */
+    private List<DomainTreeDTO> buildDomainTree(List<DomainDTO> domains) {
+        if (domains == null || domains.isEmpty()) {
+            return null;
+        }
+
+        // Create a node for each domain
+        Map<String, DomainTreeDTO> nodesByName = new HashMap<>();
+        for (DomainDTO dto : domains) {
+            nodesByName.put(dto.getName(), DomainTreeDTO.builder().domain(dto).build());
+        }
+
+        // Start by assuming every node is a root, we’ll remove children later
+        Set<DomainTreeDTO> roots = new HashSet<>(nodesByName.values());
+
+        // Insert child-domains into their parents using superDomainName
+        for (DomainDTO dto : domains) {
+            String parentName = dto.getSuperDomainName();
+
+            // Domain has no parent, nothing to insert
+            if (parentName == null || parentName.isBlank()) {
+                continue;
+            }
+
+            // Domain has a parent --> insert it into its parent
+            DomainTreeDTO child = nodesByName.get(dto.getName());
+            DomainTreeDTO parent = nodesByName.get(parentName);
+
+            // If the parent is in the list, then attach the child and remove it from roots
+            if (parent != null) {
+                if (parent.getChildren() == null) {
+                    parent.setChildren(new ArrayList<>());
+                }
+                
+                parent.getChildren().add(child);
+                roots.remove(child);
+            }
+        }
+
+        return new ArrayList<>(roots);
     }
 }

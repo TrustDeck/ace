@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2023-2024 Armin Müller & Eric Wündisch
+ * Copyright 2023-2024 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import java.util.stream.Stream;
  * This class is used to convert a JWT token into readable information.
  * It extracts role names and the preferred username.
  * 
- * @author Eric Wündisch & Armin Müller
+ * @author Eric Wündisch and Armin Müller
  */
 @Slf4j
 @Component

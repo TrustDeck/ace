@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2024 Armin Müller & Eric Wündisch
+ * Copyright 2024 Armin Müller and Eric Wündisch
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CachingConfig {
 
+	/**
+	 * This method is used to initialize the hazelcast cache configuration object.
+	 * 
+	 * @return a configuration object to use for initializing a hazelcast instance
+	 */
     @Bean
     public Config hazelcastConfig() {
         Config config = new Config();

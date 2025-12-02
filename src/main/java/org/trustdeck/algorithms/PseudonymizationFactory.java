@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller & Eric Wündisch
+ * Copyright 2022-2024 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class PseudonymizationFactory {
 	 * Method for automatically creating the correct pseudonymizer 
 	 * depending on the desired algorithm.
 	 * 
-	 * @param algorithmName the name of the algorithm with which the inputs should be pseudonymized
+	 * @param algorithm the algorithm with which the inputs should be pseudonymized
 	 * @return the pre-configured pseudonymizer so that the pseudonymization step itself is easier to accomplish 
 	 */
 	public Pseudonymizer getPseudonymizer(Algorithm algorithm) {
@@ -86,7 +86,6 @@ public class PseudonymizationFactory {
 	 * Method for automatically creating the correct pseudonymizer 
 	 * depending on the desired algorithm.
 	 * 
-	 * @param algorithm the algorithm with which the inputs should be pseudonymized
 	 * @param domain the domain under which the pseudonyms should be stored in
 	 * @return the pre-configured pseudonymizer so that the pseudonymization step itself is easier to accomplish 
 	 */

@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2025 Armin Müller & Eric Wündisch
+ * Copyright 2025 Armin Müller and Eric Wündisch
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ public class DuplicateEntityInstanceException extends RuntimeException {
 	
 	/** 
 	 * Constructor.
+	 * 
+	 * @param msg the message that should accompany this exception
 	 */
 	public DuplicateEntityInstanceException(String msg) {
 		super("A duplicate of the entity type was found: " + msg);

@@ -20,7 +20,7 @@ package org.trustdeck.security.audittrail.event;
 /**
  * The type of an audit event.
  * 
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller and Eric Wündisch
  */
 public enum AuditEventType {
 

@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2025 Armin Müller & Eric Wündisch
+ * Copyright 2025 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class EntityTypeRESTController {
      *         invalid or the type definition fails validation</li>
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when creation failed</li>
      */
-	@PostMapping("/entities")
+	@PostMapping("/entities/base-types")
 	@PreAuthorize("hasRole('base-entity-type-create')")
 	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> createBaseEntityType(@RequestBody EntityTypeDTO entityTypeDTO,
@@ -315,17 +315,16 @@ public class EntityTypeRESTController {
 	}
 	
 	/**
-	 * Endpoint to retrieve an entity type given it's name.
+	 * Endpoint to retrieve a base entity type given it's name.
 	 * 
-	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
-	 * @param entityTypeName the name of the entity type the user wants to retrieve
+	 * @param entityTypeName the name of the base entity type the user wants to retrieve
 	 * @param responseContentType (optional) the response content type
      * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the requested entity type on success</li>
      *         <li>a <b>404-NOT_FOUND</b> status when the project or the entity type does not exist</li>
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
 	 */
-	@GetMapping("/entities/{entityTypeName}")
+	@GetMapping("/entities/base-types/{entityTypeName}")
 	@PreAuthorize("hasRole('base-entity-type-read')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> getBaseEntityType(@PathVariable("entityTypeName") String entityTypeName,

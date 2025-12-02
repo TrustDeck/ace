@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2021-2025 Armin Müller & Eric Wündisch
+ * Copyright 2021-2025 Armin Müller and Eric Wündisch
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class Application {
 	 * The service's entry-point.
 	 * Starts the database-controller and the controller for the REST-API.
 	 * 
-	 * @param args
+	 * @param args the command line arguments
 	 */
 	public static void main(String[] args) {
 		// Starting the application. This also calls the necessary 

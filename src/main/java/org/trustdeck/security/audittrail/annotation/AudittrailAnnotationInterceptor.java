@@ -31,7 +31,7 @@ import org.springframework.web.servlet.ModelAndView;
  * to the request-object to make it available for the filters where
  * the actual logging is triggered.
  * 
- * @author Armin Müller & Eric Wündisch
+ * @author Armin Müller and Eric Wündisch
  */
 @Component
 public class AudittrailAnnotationInterceptor implements HandlerInterceptor {

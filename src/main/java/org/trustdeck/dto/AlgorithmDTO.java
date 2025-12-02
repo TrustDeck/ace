@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-@Scope("prototype") // Ensures that an instance is deleted after a request.
+@Scope("prototype")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlgorithmDTO implements IObjectDTO<Algorithm, AlgorithmDTO> {
 	
@@ -97,6 +97,11 @@ public class AlgorithmDTO implements IObjectDTO<Algorithm, AlgorithmDTO> {
 	    return this;
 	}
 	
+	/**
+	 * Helper method that transforms an algorithm DTO object back into a POJO.
+	 * 
+	 * @return the POJO representation of this algorithm DTO
+	 */
 	@JsonIgnore
 	public Algorithm convertToPOJO() {
 		Algorithm algorithm = new Algorithm();
