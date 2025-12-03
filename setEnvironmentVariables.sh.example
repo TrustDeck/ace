@@ -2,7 +2,7 @@
 # with "sh ./setEnvironmentVariables.sh". The latter will have no effect 
 # as the commands would be executed in a separate shell process.
 
-#TrustDeck database settings
+# TrustDeck database settings
 export DATABASE_TRUSTDECK_HOST=localhost
 export DATABASE_TRUSTDECK_PORT=5432
 export DATABASE_TRUSTDECK_USER=trustdeck-manager
