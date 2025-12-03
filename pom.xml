@@ -9,7 +9,7 @@
         <keycloak.version>23.0.5</keycloak.version>
         <disruptor.version>3.4.4</disruptor.version>
         <blake3.version>0.2.2</blake3.version>
-        <lz4.version>1.8.0</lz4.version>
+        <lz4.version>1.10.0</lz4.version>
         <jooq.version>3.18.9</jooq.version> <!-- This has to be the same version that the spring-boot-starter-jooq uses. -->
         <springdoc.version>2.6.0</springdoc.version>
         <jar.finalName>ace</jar.finalName>
@@ -125,7 +125,7 @@
         <dependency>
             <!-- Provides a xxHash implementation as well as a JNI. -->
             <!-- License: Apache 2.0 -->
-            <groupId>org.lz4</groupId>
+            <groupId>at.yawk</groupId>
             <artifactId>lz4-java</artifactId>
             <version>${lz4.version}</version>
         </dependency>
