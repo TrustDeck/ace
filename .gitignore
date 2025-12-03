@@ -23,4 +23,4 @@ examples/certs/*
 .classpath
 Makefile
 setEnvironmentVariables.sh
-docker/trustdeck.env
+trustdeck.env

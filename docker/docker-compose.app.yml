@@ -9,8 +9,12 @@ services:
     env_file:
       - trustdeck.env
     build:
-      context: .
-      dockerfile: Dockerfile_TrustDeck
+      context: ..
+      dockerfile: docker/Dockerfile_TrustDeck
+      args:
+        HTTP_PROXY: ${HTTP_PROXY}
+        HTTPS_PROXY: ${HTTPS_PROXY}
+        NO_PROXY: ${NO_PROXY}
     image: trustdeck-backend:latest
     networks:
       - trustdeck
@@ -25,3 +29,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://trustdeck-postgresql:5432/trustdeck
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:8080/api/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 15

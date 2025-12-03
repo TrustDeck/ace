@@ -8,21 +8,45 @@ networks:
     external: true
 
 services:
+  trustdeck-postgresql:
+    image: postgres:latest
+    container_name: trustdeck-postgresql
+    networks:
+      - trustdeck
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_TRUSTDECK_USER} -d trustdeck"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DATABASE_TRUSTDECK_USER}
+      POSTGRES_PASSWORD: ${DATABASE_TRUSTDECK_PASSWORD}
+      POSTGRES_DB: trustdeck
+      TZ: Europe/Berlin
+    volumes:
+      - ../src/main/resources/db/trustdeck-example.sql:/docker-entrypoint-initdb.d/trustdeck-example.sql
+      - ../src/main/resources/db/keycloak-example.sql:/docker-entrypoint-initdb.d/keycloak-example.sql
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - trustdeck_postgresql_data:/var/lib/postgresql/data
+
   trustdeck-keycloak:
     container_name: trustdeck-keycloak
     build:
-      context: .
-      dockerfile: Dockerfile_Keycloak
+      context: ..
+      dockerfile: docker/Dockerfile_Keycloak
       args:
         CHAIN_PEM_FILE_PATH: ${CHAIN_PEM_PATH}
         RSA_CRT_FILE_PATH: ${RSA_CRT_PATH}
         ECC_CRT_FILE_PATH: ${ECC_CRT_PATH}
         ORGANIZATION_CA_PEM_FILE_PATH: ${ORGANIZATION_CA_PEM_PATH}
-        http_proxy: ${http_proxy}
-        https_proxy: ${https_proxy}
-        no_proxy: ${no_proxy}
+        http_proxy: ${HTTP_PROXY}
+        https_proxy: ${HTTPS_PROXY}
+        no_proxy: ${NO_PROXY}
       no_cache: true
-    image: keycloak-with-curl-and-certs:latest
+    image: keycloak-prod:latest
     depends_on:
       - trustdeck-postgresql
     networks:
@@ -62,26 +86,4 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
-  trustdeck-postgresql:
-    container_name: trustdeck-postgresql
-    image: postgres:latest
-    networks:
-      - trustdeck
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_TRUSTDECK_USER} -d trustdeck"]
-      interval: 10s
-      timeout: 5s
-      retries: 15
-    ports:
-      - "5432:5432"
-    environment:
-      - TZ=Europe/Berlin
-      - POSTGRES_USER=${DATABASE_TRUSTDECK_USER}
-      - POSTGRES_PASSWORD=${DATABASE_TRUSTDECK_PASSWORD}
-      - POSTGRES_DB=trustdeck
-    volumes:
-      - ../src/main/resources/db/trustdeck-example.sql:/docker-entrypoint-initdb.d/trustdeck-example.sql
-      - ../src/main/resources/db/keycloak-example.sql:/docker-entrypoint-initdb.d/keycloak-example.sql
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - trustdeck_postgresql_data:/var/lib/postgresql/data
+
