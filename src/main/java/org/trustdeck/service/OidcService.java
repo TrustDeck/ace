@@ -325,16 +325,31 @@ public class OidcService implements InitializingBean {
 
         // Ensure that the number of ACE specific groups matches the number of roles
         if (groupIds.size() != roleConfig.getACERoles().size() + roleConfig.getKINGRoles().size()) {
+		log.trace("\n# group IDs in Keycloak: " + groupIds.size()
+	            + "\n\t# ACE group IDs: " + aceGroupIds.size()
+	            + "\n\t# KING group IDs: " + kingGroupIds.size()
+	            + "\n# ACE roles in application.yml: " + roleConfig.getACERoles().size()
+	            + "\n# KING roles in application.yml: " + roleConfig.getKINGRoles().size());
         	throw new OIDCException("Could not find all groups and roles that should have been added.");
         }
         
         // Ensure that the number of domain specific groups matches the number of roles
         if (aceGroupIds.size() != roleConfig.getACERoles().size()) {
+		log.trace("\n# group IDs in Keycloak: " + groupIds.size()
+	            + "\n\t# ACE group IDs: " + aceGroupIds.size()
+	            + "\n\t# KING group IDs: " + kingGroupIds.size()
+	            + "\n# ACE roles in application.yml: " + roleConfig.getACERoles().size()
+	            + "\n# KING roles in application.yml: " + roleConfig.getKINGRoles().size());
         	throw new OIDCException("Could not find all domain specific groups and roles that should have been added.");
         }
 
         // Ensure that the number of project specific groups matches the number of roles
         if (kingGroupIds.size() != roleConfig.getKINGRoles().size()) {
+		log.trace("\n# group IDs in Keycloak: " + groupIds.size()
+	            + "\n\t# ACE group IDs: " + aceGroupIds.size()
+	            + "\n\t# KING group IDs: " + kingGroupIds.size()
+	            + "\n# ACE roles in application.yml: " + roleConfig.getACERoles().size()
+	            + "\n# KING roles in application.yml: " + roleConfig.getKINGRoles().size());
         	throw new OIDCException("Could not find all project specific groups and roles that should have been added.");
         }
 
