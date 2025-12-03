@@ -9,8 +9,12 @@ services:
     env_file:
       - trustdeck.env
     build:
-      context: .
-      dockerfile: Dockerfile_TrustDeck
+      context: ..
+      dockerfile: docker/Dockerfile_TrustDeck
+      args:
+        HTTP_PROXY: ${HTTP_PROXY}
+        HTTPS_PROXY: ${HTTPS_PROXY}
+        NO_PROXY: ${NO_PROXY}
     image: trustdeck-backend:latest
     networks:
       - trustdeck

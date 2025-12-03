@@ -1,6 +1,18 @@
 # temurin is available under the Apache-2.0-license; the OpenJDK only under the GNU GPL v2 license with Classpath Exception
 FROM eclipse-temurin:21-jre-jammy
 
+# Make proxy available during build
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+
+ENV HTTP_PROXY=${HTTP_PROXY} \
+    HTTPS_PROXY=${HTTPS_PROXY} \
+    NO_PROXY=${NO_PROXY} \
+    http_proxy=${HTTP_PROXY} \
+    https_proxy=${HTTPS_PROXY} \
+    no_proxy=${NO_PROXY}
+
 ENV PKI_CHAIN_DOWNLOAD_URL=https://pki.pca.dfn.de/dfn-ca-global-g2/pub/cacert/chain.txt
 ENV PKI_CHAIN_SHA256=3faab8a9915b567c25cd982c92daa6dbd65807d14436adec2f1040a78701522a
 
@@ -20,7 +32,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 # Add the TrustDeck jar file
 USER spring
 WORKDIR /home/spring
-ADD ../target/trustdeck*.jar trustdeck.jar
+COPY target/trustdeck*.jar trustdeck.jar
 
 # Set permissions
 USER root

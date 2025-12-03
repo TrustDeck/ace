@@ -11,8 +11,8 @@ services:
   trustdeck-keycloak:
     container_name: trustdeck-keycloak
     build:
-      context: .
-      dockerfile: Dockerfile_Keycloak
+      context: ..
+      dockerfile: docker/Dockerfile_Keycloak
       args:
         CHAIN_PEM_FILE_PATH: ${CHAIN_PEM_PATH}
         RSA_CRT_FILE_PATH: ${RSA_CRT_PATH}
