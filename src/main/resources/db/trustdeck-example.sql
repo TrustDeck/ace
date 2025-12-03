@@ -616,27 +616,6 @@ CREATE INDEX auditusernameidx ON public.auditevent USING btree (username);
 
 
 --
--- Name: entity_instance_data_trgm_gin_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX entity_instance_data_trgm_gin_idx ON ONLY public.entity_instance USING gin (data_text public.gin_trgm_ops) WHERE (is_deleted = false);
-
-
---
--- Name: entity_instance_et_proj_id_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX entity_instance_et_proj_id_idx ON ONLY public.entity_instance USING btree (entity_type_id, project_id, id);
-
-
---
--- Name: entity_instance_fts_active_gin_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE INDEX entity_instance_fts_active_gin_idx ON ONLY public.entity_instance USING gin (full_text_search_vector) WHERE (is_deleted = false);
-
-
---
 -- Name: entity_instance_uq_type_sha256; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
