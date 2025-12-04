@@ -50,7 +50,7 @@ spring:
           project-role-group-context-name: Project
           # Custom section ends
           jws-algorithm: RSA256
-          issuer-uri: ${spring.security.oauth2.resourceserver.jwt.server-uri}/realms/${spring.security.oauth2.resourceserver.jwt.realm}
+          issuer-uri: ${KEYCLOAK_HOSTNAME}/realms/${spring.security.oauth2.resourceserver.jwt.realm}
           jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
 
 audittrail:

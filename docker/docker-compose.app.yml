@@ -7,7 +7,7 @@ services:
   trustdeck-backend:
     container_name: trustdeck-backend
     env_file:
-      - trustdeck.env
+      - ../trustdeck.env
     build:
       context: ..
       dockerfile: docker/Dockerfile_TrustDeck
