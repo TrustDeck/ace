@@ -30,6 +30,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
+import org.trustdeck.dto.ProjectDTO;
 import org.trustdeck.security.authentication.configuration.JwtProperties;
 import org.trustdeck.utils.Assertion;
 
@@ -276,8 +277,12 @@ public class AuthorizationService {
      * @return {@code true} only if the given role and project have a relationship and are set as role, {@code false} if not
      */
     private Boolean hasAssignedProjectGroupPaths(List<String> groupPaths, String projectAbbreviation, String role) {
-    	String projectName = projectDBService.getProjectByAbbreviation(projectAbbreviation, null).getName();
-        String path = "/" + jwtProperties.getProjectRoleGroupContextName() + "/" + role + "/" + projectName;
+    	ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+    	if (project == null) {
+    		return false;
+    	}
+
+        String path = "/" + jwtProperties.getProjectRoleGroupContextName() + "/" + role + "/" + project.getName();
         return groupPaths.contains(path);
     }
 }
