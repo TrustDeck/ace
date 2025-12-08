@@ -106,6 +106,7 @@ app:
     KING:
       - project-create
       - project-read
+      - project-read-all
       - project-update
       - project-delete
       - project-image-create

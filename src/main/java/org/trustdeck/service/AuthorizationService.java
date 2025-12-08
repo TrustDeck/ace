@@ -70,7 +70,7 @@ public class AuthorizationService {
      *
      * @return the roles as a set of strings
      */
-    public static Set<String> getRolesFromAuthentication() {
+    public Set<String> getRolesFromAuthentication() {
         Authentication authentication = getAuthentication();
 
         return (authentication == null) ? Collections.emptySet() : getRolesFromAuthentication(authentication);
@@ -284,5 +284,26 @@ public class AuthorizationService {
 
         String path = "/" + jwtProperties.getProjectRoleGroupContextName() + "/" + role + "/" + project.getName();
         return groupPaths.contains(path);
+    }
+    
+    /**
+     * Helper method to extract a project name from a given path.
+     * 
+     * @param path the path to check
+     * @return the name of the project if available
+     */
+    public String extractProjectNameFromPath(String path) {
+        if (path == null || path.isBlank()) {
+            return null;
+        }
+
+        // Assume paths like this: /<context>/<role>/<projectName>
+        String[] segments = path.split("/");
+        if (segments.length < 4) {
+            return null;
+        }
+
+        // Return project name
+        return segments[3];
     }
 }
