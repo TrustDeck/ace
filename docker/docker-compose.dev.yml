@@ -29,7 +29,7 @@ services:
       - ../src/main/resources/db/keycloak-example.sql:/docker-entrypoint-initdb.d/keycloak-example.sql
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - trustdeck_postgresql_data:/var/lib/postgresql/data
+      - trustdeck_postgresql_data:/var/lib/postgresql
 
   trustdeck-keycloak:
     container_name: trustdeck-keycloak
