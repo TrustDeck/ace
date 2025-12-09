@@ -1148,7 +1148,7 @@ public class DomainRESTController {
         String domainName;
         if (newDomainName != null && !newDomainName.isBlank()) {
         	Domain d = domainDBAccessService.getDomainByName(newDomainName, null);
-        	domainName = d == null ? old.getName() : newDomainName.trim();
+        	domainName = d != null ? old.getName() : newDomainName.trim();
         } else {
         	domainName = old.getName();
         }
