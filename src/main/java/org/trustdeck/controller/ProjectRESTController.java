@@ -20,7 +20,6 @@ package org.trustdeck.controller;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.Period;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -211,18 +210,21 @@ public class ProjectRESTController {
         
         for (String path : groupPaths) {
         	if (path != null && path.startsWith(projectContextPrefix)) {
+        		// We found a project group --> extract the project name
         		String projectName = authorizationService.extractProjectNameFromPath(path);
         		if (Assertion.isNullOrEmpty(projectName)) {
         			continue;
         		}
         		
-        		ProjectDTO p = projectDBService.getProjectByName(projectName, null);
+        		// Add the project to the list
+        		ProjectDTO p = projectDBService.getProjectByName(projectName, request);
         		if (p != null) {
         			projects.add(p);
         		}
         	}
         }
-
+        
+        log.debug("Succesfully retrieved a list of " + projects.size() + (projects.size() == 1 ? " project" : " projects") + " where the requesting user has (read) access to.");
         return responseService.ok(responseContentType, projects);
 	}
 	
