@@ -20,6 +20,10 @@ package org.trustdeck.controller;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.Period;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +47,8 @@ import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
+import org.trustdeck.security.authentication.configuration.JwtProperties;
+import org.trustdeck.service.AuthorizationService;
 import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
@@ -69,6 +75,14 @@ public class ProjectRESTController {
     /** Enables access to the data base interaction methods. */
     @Autowired
     private ProjectDBService projectDBService;
+
+    /** Provides functionality to ensure proper rights and roles when accessing the endpoints. */
+    @Autowired
+    private AuthorizationService authorizationService;
+    
+    /** JWT properties. */
+    @Autowired
+    private JwtProperties jwtProperties;
     
     /** Default value for the project's validity time. */
     private static final Period DEFAULT_PROJECT_VALIDITY_TIME = Period.ofYears(10);
@@ -175,15 +189,43 @@ public class ProjectRESTController {
 	 * 
 	 * @param responseContentType (optional) the response content type
 	 * @param request the request object, injected by Spring Boot
-     * @return <li>a <b>501-NOT_IMPLEMENTED</b> status (endpoint not implemented yet)</li>
+     * @return <li>a <b>200-OK</b> status and a list of projects 
+     * 		   where the user has access to</li>
 	 */
 	@GetMapping("/projects")
     @PreAuthorize("hasRole('project-read-all')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getProjectsWithAccessTo(@RequestHeader(name = "accept", required = false) String responseContentType,
                                            			 HttpServletRequest request) {
-		// TODO
-		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+		
+		// Get a list of all groups the requesting user is in
+		List<String> groupPaths = authorizationService.getCachedGroupPaths();
+		if (groupPaths == null || groupPaths.isEmpty()) {
+            return responseService.ok(responseContentType, Collections.emptyList());
+        }
+
+        // Extract all project names from those paths and fill a list with ProjectDTOs
+		Set<ProjectDTO> projects = new HashSet<>();
+        String projectContextPrefix = "/" + jwtProperties.getProjectRoleGroupContextName() + "/";
+        
+        for (String path : groupPaths) {
+        	if (path != null && path.startsWith(projectContextPrefix)) {
+        		// We found a project group --> extract the project name
+        		String projectName = authorizationService.extractProjectNameFromPath(path);
+        		if (Assertion.isNullOrEmpty(projectName)) {
+        			continue;
+        		}
+        		
+        		// Add the project to the list
+        		ProjectDTO p = projectDBService.getProjectByName(projectName, request);
+        		if (p != null) {
+        			projects.add(p);
+        		}
+        	}
+        }
+        
+        log.debug("Succesfully retrieved a list of " + projects.size() + (projects.size() == 1 ? " project" : " projects") + " where the requesting user has (read) access to.");
+        return responseService.ok(responseContentType, projects);
 	}
 	
 	/**
