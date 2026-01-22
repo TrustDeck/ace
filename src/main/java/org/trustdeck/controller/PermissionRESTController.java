@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -39,13 +40,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.configuration.RoleConfig;
 import org.trustdeck.dto.UserDTO;
 import org.trustdeck.dto.PermissionDTO;
-import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
-import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.service.OidcService;
-import org.trustdeck.service.ProjectDBService;
+import org.trustdeck.service.PermissionService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
 import org.trustdeck.utils.Utility;
@@ -63,14 +62,6 @@ import org.trustdeck.utils.Utility;
 @RequestMapping(value = "/api/permissions")
 public class PermissionRESTController {
 
-	/** Enables the access to the domain specific database access methods. */
-	@Autowired
-	private DomainDBAccessService domainDBAccessService;
-
-	/** Enables the access to the project specific database access methods. */
-	@Autowired
-	private ProjectDBService projectDBService;
-
 	/** Enables services for better working with responses. */
 	@Autowired
 	private ResponseService responseService;
@@ -82,9 +73,13 @@ public class PermissionRESTController {
 	/** Configuration for roles and operations. This is used to validate the operations and permissions. */
 	@Autowired
 	private RoleConfig roleConfig;
-	
+
+    /** Provides functionality to handle permissions. */
+    @Autowired
+    private PermissionService permissionService;
+
 	/** The default number of maximum allowed query results. If a query would result in more records, the surplus is omitted. */
-    private static final int DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS = 20;
+	private static final int DEFAULT_MAX_NUMBER_OF_QUERY_RESULTS = 20;
 
 	/**
 	 * Searches for users based on a search term.
@@ -149,19 +144,46 @@ public class PermissionRESTController {
      *         <li>a <b>400-BAD_REQUEST</b> status when <i>domainName</i> 
      *         or <i>userId</i> is missing or empty</li>
 	 */
-	@GetMapping("/{domainName}")
+	@GetMapping("/domains/{domainName}")
 	@PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'permission-manager')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-	public ResponseEntity<?> getPermissions(@PathVariable("domainName") String domainName,
-											@RequestParam(name = "userId", required = true) String userId,
-											@RequestHeader(name = "accept", required = false) String responseContentType,
-											HttpServletRequest request) {
+	public ResponseEntity<?> getACEPermissions(@PathVariable("domainName") String domainName,
+											   @RequestParam(name = "userId", required = true) String userId,
+											   @RequestHeader(name = "accept", required = false) String responseContentType,
+											   HttpServletRequest request) {
 		// Sanitize
 		if (Assertion.isNullOrEmpty(domainName, userId)) {
 			return responseService.badRequest(responseContentType);
 		}
 		
-		return responseService.ok(responseContentType, getCurrentACEPermissions(domainName, userId));
+		return responseService.ok(responseContentType, permissionService.getCurrentACEPermissions(domainName, userId));
+	}
+
+	/**
+	 * Retrieves the permissions of a user for a specific project.
+	 *
+	 * @param projectAbbreviation the abbreviation of the project
+	 * @param userId the ID of the user
+	 * @param responseContentType (optional) the response content type
+     * @param request the request object, injected by Spring Boot
+     * @return <li>a <b>200-OK</b> status with the list of permissions 
+     * 		   for the user in the given domain</li>
+     *         <li>a <b>400-BAD_REQUEST</b> status when <i>domainName</i> 
+     *         or <i>userId</i> is missing or empty</li>
+	 */
+	@GetMapping("/projects/{projectAbbreviation}")
+	@PreAuthorize("@auth.hasProjectRoleRelationship(#root, #projectAbbreviation, 'permission-manager')")
+	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	public ResponseEntity<?> getKINGPermissions(@PathVariable("projectAbbreviation") String projectAbbreviation,
+												@RequestParam(name = "userId", required = true) String userId,
+												@RequestHeader(name = "accept", required = false) String responseContentType,
+												HttpServletRequest request) {
+		// Sanitize
+		if (Assertion.isNullOrEmpty(projectAbbreviation, userId)) {
+			return responseService.badRequest(responseContentType);
+		}
+		
+		return responseService.ok(responseContentType, permissionService.getCurrentKINGPermissions(projectAbbreviation, userId));
 	}
 
 	/**
@@ -179,7 +201,7 @@ public class PermissionRESTController {
      *         <li>a <b>404-NOT_FOUND</b> status when the specified domain does 
      *         not exist or cannot be resolved</li>
 	 */
-	@PutMapping("/{domainName}")
+	@PutMapping("/domains/{domainName}")
 	@PreAuthorize("hasRole('permission-manager')")
 	@Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> updateACEPermission(@PathVariable("domainName") String domainName,
@@ -196,7 +218,7 @@ public class PermissionRESTController {
 		// Retrieve the domain tree that includes the domain of interest as a list
 		List<String> domainNames;
 		try {
-			domainNames = getFlatDomainTree(domainName);
+			domainNames = permissionService.getFlatDomainTree(domainName);
 		} catch (IllegalArgumentException e) {
 			return responseService.notFound(responseContentType);
 		}
@@ -209,7 +231,7 @@ public class PermissionRESTController {
 			if (!domainNames.contains(permissionDTO.getDomainName())
 					|| !roleConfig.getACERoles().contains(permissionDTO.getRole())
 					|| !permissionDTO.getUserId().equals(userId)
-					|| !groupPaths.containsValue(permissionDTO.getDomainPath())) {
+					|| !groupPaths.containsValue(permissionService.getDomainPath(permissionDTO))) {
 				return responseService.badRequest(responseContentType);
 			}
 		}
@@ -217,38 +239,38 @@ public class PermissionRESTController {
 		// Get the current permissions of the user
 		List<PermissionDTO> currentPermissions;
 		try {
-			currentPermissions = getCurrentACEPermissions(domainName, userId);
+			currentPermissions = permissionService.getCurrentACEPermissions(domainName, userId);
 		} catch (IllegalArgumentException e) {
 			return responseService.notFound(responseContentType);
 		}
 
 		// Create missing permissions
 		for (PermissionDTO permissionDTO : permissions) {
-			if (!permissionDTO.isPermissionInList(currentPermissions)) {
+			if (!currentPermissions.contains(permissionDTO)) {
 				// Get the key from the group paths by the value
-				Map.Entry<String, String> domainEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getDomainPath());
-				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getRolePath());
+				Map.Entry<String, String> domainEntry = Utility.findGroupEntryByPath(groupPaths, permissionService.getDomainPath(permissionDTO));
+				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionService.getRolePath(permissionDTO));
 				
 				if (domainEntry != null && operationEntry != null) {
 					oidcService.addUserToGroup(domainEntry.getKey(), userId);
 					oidcService.addUserToGroup(operationEntry.getKey(), userId);
 				} else {
-					log.debug("No group found for path: " + permissionDTO.getDomainPath());
+					log.debug("No group found for path: " + permissionService.getDomainPath(permissionDTO));
 				}
 			}
 		}
 
 		// Delete permissions that are not in the new list
 		for (PermissionDTO permissionDTO : currentPermissions) {
-			if (!permissionDTO.isPermissionInList(permissions)) {
-				Map.Entry<String, String> domainEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getDomainPath());
-				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getRolePath());
+			if (!permissions.contains(permissionDTO)) {
+				Map.Entry<String, String> domainEntry = Utility.findGroupEntryByPath(groupPaths, permissionService.getDomainPath(permissionDTO));
+				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionService.getRolePath(permissionDTO));
 				
 				if (domainEntry != null && operationEntry != null) {
 					oidcService.removeUserFromGroup(domainEntry.getKey(), userId);
 					oidcService.removeUserFromGroup(operationEntry.getKey(), userId);
 				} else {
-					log.debug("No group found for path: " + permissionDTO.getDomainPath());
+					log.debug("No group found for path: " + permissionService.getDomainPath(permissionDTO));
 				}
 			}
 		}
@@ -259,7 +281,7 @@ public class PermissionRESTController {
 	/**
 	 * Updates the KING-specific permission for a user in a project.
 	 *
-	 * @param projectName the name of the project
+	 * @param projectAbbreviation the abbreviation of the project
 	 * @param userId the ID of the user
 	 * @param permissions the list of permissions to be created
 	 * @param responseContentType (optional) the response content type
@@ -271,10 +293,10 @@ public class PermissionRESTController {
      *         <li>a <b>404-NOT_FOUND</b> status when the specified domain does 
      *         not exist or cannot be resolved</li>
 	 */
-	@PutMapping("/{projectName}")
+	@PutMapping("/projects/{projectAbbreviation}")
 	@PreAuthorize("hasRole('permission-manager')")
 	@Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
-	public ResponseEntity<?> updateKINGPermission(@PathVariable("projectName") String projectName,
+	public ResponseEntity<?> updateKINGPermission(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												  @RequestParam(name = "userId", required = true) String userId,
 												  @RequestBody List<PermissionDTO> permissions,
 												  @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -298,39 +320,39 @@ public class PermissionRESTController {
 		// Get the current permissions of the user
 		List<PermissionDTO> currentPermissions;
 		try {
-			currentPermissions = getCurrentKINGPermissions(projectName, userId);
+			currentPermissions = permissionService.getCurrentKINGPermissions(projectAbbreviation, userId);
 		} catch (IllegalArgumentException e) {
 			return responseService.notFound(responseContentType);
 		}
 
 		// Create missing permissions
 		for (PermissionDTO permissionDTO : permissions) {
-			if (!permissionDTO.isPermissionInList(currentPermissions)) {
+			if (!currentPermissions.contains(permissionDTO)) {
 				// Get the key from the group paths by the value
 				// TODO
-				Map.Entry<String, String> projectEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getProjectPath());
-				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getRolePath());
+				Map.Entry<String, String> projectEntry = Utility.findGroupEntryByPath(groupPaths, permissionService.getProjectPath(permissionDTO));
+				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionService.getRolePath(permissionDTO));
 				
 				if (projectEntry != null && operationEntry != null) {
 					oidcService.addUserToGroup(projectEntry.getKey(), userId);
 					oidcService.addUserToGroup(operationEntry.getKey(), userId);
 				} else {
-					log.debug("No group found for path: " + permissionDTO.getProjectPath());
+					log.debug("No group found for path: " + permissionService.getProjectPath(permissionDTO));
 				}
 			}
 		}
 
 		// Delete permissions that are not in the new list
 		for (PermissionDTO permissionDTO : currentPermissions) {
-			if (!permissionDTO.isPermissionInList(permissions)) {
-				Map.Entry<String, String> projectEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getProjectPath());
-				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionDTO.getRolePath());
+			if (!permissions.contains(permissionDTO)) {
+				Map.Entry<String, String> projectEntry = Utility.findGroupEntryByPath(groupPaths, permissionService.getProjectPath(permissionDTO));
+				Map.Entry<String, String> operationEntry = Utility.findGroupEntryByPath(groupPaths, permissionService.getRolePath(permissionDTO));
 				
 				if (projectEntry != null && operationEntry != null) {
 					oidcService.removeUserFromGroup(projectEntry.getKey(), userId);
 					oidcService.removeUserFromGroup(operationEntry.getKey(), userId);
 				} else {
-					log.debug("No group found for path: " + permissionDTO.getProjectPath());
+					log.debug("No group found for path: " + permissionService.getProjectPath(permissionDTO));
 				}
 			}
 		}
@@ -338,83 +360,5 @@ public class PermissionRESTController {
 		return this.responseService.ok(responseContentType);
 	}
 
-	/**
-	* Retrieves a flat list of domain names for a given domain that represents the domain-
-	* tree that the given domain is in.
-	*
-	* @param domainName the name of the domain to retrieve the tree structure for
-	* @return a list of domain names in a flat structure
-	* @throws IllegalArgumentException when the domain or it's tree could not be retrieved
-	*/
-	private List<String> getFlatDomainTree(String domainName) throws IllegalArgumentException {
-		Domain domain = domainDBAccessService.getDomainByName(domainName, null);
-		List<Domain> domainTree = domainDBAccessService.getDomainTreeStructure(domain);
-
-		// Check if the tree has at least one domain in it
-		if (domainTree == null || domainTree.size() <= 0) {
-			throw new IllegalArgumentException("No domains found for the specified domain name.");
-		}
-
-		// Transform the flat tree of domain objects into one of domain names only
-		List<String> domainNames = new ArrayList<>();
-		for (Domain thisDomain : domainTree) {
-			domainNames.add(thisDomain.getName());
-		}
-
-		return domainNames;
-	}
-
-	/**
-	 * Retrieves a list of the current permissions of a user for a specific domain.
-	 *
-	 * @param domainName the name of the domain
-	 * @param userId the ID of the user
-	 * @return a list of current permissions for the user in the specified domain
-	 * @throws IllegalArgumentException when this exception was thrown inside of another method called from this method
-	 */
-	private List<PermissionDTO> getCurrentACEPermissions(String domainName, String userId) throws IllegalArgumentException {
-		// Retrieve the domain tree
-		List<String> domainNames = getFlatDomainTree(domainName);
-
-		// Extract permissions for the given domain from the list of all permissions
-		List<PermissionDTO> currentPermissions = new ArrayList<>();
-		List<String> groupPaths = Utility.extractGroupPaths(oidcService.getGroupsByUserId(userId), true);
-		for (String groupPath : groupPaths) {
-			// Transform group path into permission DTO
-			PermissionDTO permissionDTO = new PermissionDTO(groupPath, userId);
-
-			if (permissionDTO.validate() && domainNames.contains(permissionDTO.getDomainName())) {
-				currentPermissions.add(permissionDTO);
-			}
-		}
-
-		return currentPermissions;
-	}
-
-	/**
-	 * Retrieves a list of the current permissions of a user for a specific project.
-	 *
-	 * @param projectName the name of the project
-	 * @param userId the ID of the user
-	 * @return a list of current permissions for the user in the specified project
-	 * @throws IllegalArgumentException when this exception was thrown inside of another method called from this method
-	 */
-	private List<PermissionDTO> getCurrentKINGPermissions(String projectName, String userId) throws IllegalArgumentException {
-		// Retrieve the project names
-		List<String> projectNames = projectDBService.getAllProjectNames(null);
-
-		// Extract permissions for the given domain from the list of all permissions
-		List<PermissionDTO> currentPermissions = new ArrayList<>();
-		List<String> groupPaths = Utility.extractGroupPaths(oidcService.getGroupsByUserId(userId), true);
-		for (String groupPath : groupPaths) {
-			// Transform group path into permission DTO
-			PermissionDTO permissionDTO = new PermissionDTO(groupPath, userId);
-
-			if (permissionDTO.validate() && permissionDTO.getProjectName().equals(projectName) && projectNames.contains(projectName)) {
-				currentPermissions.add(permissionDTO);
-			}
-		}
-
-		return currentPermissions;
-	}
+	
 }

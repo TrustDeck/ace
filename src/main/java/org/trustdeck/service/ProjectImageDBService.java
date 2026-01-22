@@ -34,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * This class encapsulates the database access for project objects.
+ * 
+ * @author Armin Müller
  */
 @Slf4j
 @Service

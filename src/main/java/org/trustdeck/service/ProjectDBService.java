@@ -46,6 +46,8 @@ import static org.trustdeck.jooq.generated.Tables.PROJECT;
 
 /**
  * This class encapsulates the database access for project objects.
+ * 
+ * @author Armin Müller
  */
 @Slf4j
 @Service
