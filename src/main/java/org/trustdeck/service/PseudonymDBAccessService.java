@@ -138,14 +138,13 @@ public class PseudonymDBAccessService {
             	}
             }
             
-            // Check for duplicated pseudonyms (e.g. when using randomness-based algorithms and only a few unused pseudonyms left)
-            // Build list of (domain_id, pseudonym) pairs
+            // Check for duplicated pseudonyms (e.g. when using randomness-based algorithms and only a few unused pseudonyms are left)
             List<String> psns = new ArrayList<>(n);
             for (PseudonymDTO dto : pseudonyms) {
                 psns.add(dto.getPsn());
             }
 
-            // Fetch existing (domain_id, pseudonym) pairs
+            // Fetch existing pseudonyms in the domain of interest
             Set<String> existingPsns = new HashSet<>(dslCtx.select(PSEUDONYM.PSEUDONYM_)
                       .from(PSEUDONYM)
                       .where(PSEUDONYM.DOMAINID.eq(domainId))
