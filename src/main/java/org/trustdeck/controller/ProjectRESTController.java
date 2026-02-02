@@ -149,7 +149,7 @@ public class ProjectRESTController {
 		if (end.isBefore(start)) {
 			log.debug("Creating a new project failed due to an invalid start and/or end date of the project.");
 			log.trace("Start-time: " + start.toString() + ", end-time: " + end.toString());
-			responseService.badRequest(responseContentType);
+			return responseService.badRequest(responseContentType);
 		}
 		
 		p.setStartDate(start);

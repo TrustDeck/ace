@@ -43,8 +43,8 @@ spring:
           # Client-secret is only used in the tests
           client-secret: ${KEYCLOAK_CLIENT_SECRET}
           realm: ${KEYCLOAK_REALM_NAME}
-          admin-username: ${KEYCLOAK_CACHE_ADMIN_USER}
-          admin-password: ${KEYCLOAK_CACHE_ADMIN_PASSWORD}
+          admin-username: ${KEYCLOAK_ADMIN_USER}
+          admin-password: ${KEYCLOAK_ADMIN_PASSWORD}
           role-group-claim-name: groups
           domain-role-group-context-name: Domain
           project-role-group-context-name: Project
@@ -127,7 +127,7 @@ app:
       - project-entity-instance-delete
       - project-entity-instance-search
       - project-entity-instance-record-linkage
-      - permission-manager
+      #- permission-manager
     administrative:
       # Roles that are needed to manage other roles and rights
       - delete-roles
