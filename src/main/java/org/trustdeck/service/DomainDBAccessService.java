@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2025 Armin Müller and Eric Wündisch
+ * Copyright 2022-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ import org.jooq.Record;
 import org.jooq.SelectQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.data.util.Pair;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.algorithms.PathFinder;
@@ -39,12 +37,12 @@ import org.trustdeck.dto.DomainDTO;
 import org.trustdeck.dto.PseudonymDTO;
 import org.trustdeck.dto.PseudonymUpdateDTO;
 import org.trustdeck.exception.DomainNotFoundException;
-import org.trustdeck.exception.DomainOIDCException;
 import org.trustdeck.exception.DuplicateDomainException;
 import org.trustdeck.exception.FailedChildDomainDeletionException;
 import org.trustdeck.exception.FailedChildDomainUpdateException;
 import org.trustdeck.exception.FailedPseudonymDeletionException;
 import org.trustdeck.exception.FailedPseudonymUpdateException;
+import org.trustdeck.exception.PermissionManagementException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.daos.DomainDao;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
@@ -52,6 +50,7 @@ import org.trustdeck.jooq.generated.tables.pojos.Pseudonym;
 import org.trustdeck.jooq.generated.tables.records.PseudonymRecord;
 import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.utils.Assertion;
+import org.trustdeck.utils.Utility.Pair;
 
 import static org.jooq.impl.DSL.field;
 import static org.jooq.impl.DSL.name;
@@ -78,10 +77,10 @@ public class DomainDBAccessService {
     /** Enables the access to the domain specific database access methods. */
     @Autowired
     private PseudonymDBAccessService pseudonymDBAccessService;
-
-    /** Handles rights and roles for domains. */
+    
+    /** Enables access to the permission grants database methods. */
     @Autowired
-    private DomainOIDCService domainOidcService;
+    private PermissionDBService permissionDBService;
 
     /** Represents the duplication status of a requested insertion of a domain into the database. */
     public static final String INSERTION_DUPLICATE = "duplicate";
@@ -145,11 +144,14 @@ public class DomainDBAccessService {
                 // Implicit transaction commit here
             });
 
-            // At this point the retrieval was successful
-            log.trace("Successfully queried the database for the domain using the ID (ID " + domainID + " -> " + domain.getName() + ").");
-            return domain;
+            // Check result
+            if (domain == null) {
+            	return null;
+            } else {
+            	return domain;
+            }
         } catch (Exception e) {
-            log.error("Couldn't retrieve the domain with ID " + domainID + " from the database: " + e.getMessage() + "\n");
+            log.error("Couldn't retrieve the domain with ID " + domainID + " from the database: ", e.getMessage(), e);
             return null;
         }
     }
@@ -280,6 +282,32 @@ public class DomainDBAccessService {
         
         return result;
     }
+    
+    /**
+	* Retrieves a flat list of domain names for a given domain that represents the domain-
+	* tree that the given domain is in.
+	*
+	* @param domainName the name of the domain to retrieve the tree structure for
+	* @return a list of domain names in a flat structure
+	* @throws IllegalArgumentException when the domain or it's tree could not be retrieved
+	*/
+	public List<String> getFlatDomainTree(String domainName) throws IllegalArgumentException {
+		Domain domain = getDomainByName(domainName, null);
+		List<Domain> domainTree = domain == null ? null : getDomainTreeStructure(domain);
+
+		// Check if the tree has at least one domain in it
+		if (domainTree == null || domainTree.size() <= 0) {
+			throw new IllegalArgumentException("No domains found for the specified domain name.");
+		}
+
+		// Transform the flat tree of domain objects into one of domain names only
+		List<String> domainNames = new ArrayList<>();
+		for (Domain thisDomain : domainTree) {
+			domainNames.add(thisDomain.getName());
+		}
+
+		return domainNames;
+	}
 
 	/**
 	 * Retrieves the root domain from a list of domain nodes.
@@ -325,7 +353,7 @@ public class DomainDBAccessService {
 		Domain sourceDomain = getDomainByName(sourceDomainName, null);
 		Domain targetDomain = getDomainByName(targetDomainName, null);
 		IdentifierItem sourceII = IdentifierItem.builder().identifier(sourceIdentifier).idType(sourceIdType).build();
-		List<PseudonymDTO> sourceRecordList = pseudonymDBAccessService.getPseudonym(sourceDomainName, sourceII, sourcePsn, null);
+		List<PseudonymDTO> sourcePseudonymList = pseudonymDBAccessService.getPseudonym(sourceDomainName, sourceII, sourcePsn, null);
 		
 		// Check if the given information is sufficient to start the linking-process
         if (sourceDomain == null) {
@@ -334,12 +362,12 @@ public class DomainDBAccessService {
         } else if (targetDomain == null) {
         	log.debug("The domain to find the target in (\"" + targetDomainName + "\") was not found.");
             return null;
-        } else if (sourceRecordList == null || sourceRecordList.isEmpty()) {
+        } else if (sourcePseudonymList == null || sourcePseudonymList.isEmpty()) {
         	log.debug("The record to start the search from was not found.");
             return null;
         }
         
-        PseudonymDTO sourceRecord = sourceRecordList.getFirst();
+        PseudonymDTO sourcePseudonym = sourcePseudonymList.getFirst();
         
         // Generate the tree starting from the given source-domain and generate the path to the destination domain
         PathFinder pathFinder = new PathFinder(getDomainTreeStructure(sourceDomain));
@@ -398,7 +426,7 @@ public class DomainDBAccessService {
                 List<Pair<PseudonymDTO, PseudonymDTO>> pairList = new ArrayList<>();
                 for (Pseudonym r : resultList) {
                 	if (r != null) {
-                		pairList.add(Pair.of(sourceRecord, new PseudonymDTO().assignPojoValues(r)));
+                		pairList.add(new Pair<PseudonymDTO, PseudonymDTO>(sourcePseudonym, new PseudonymDTO().assignPojoValues(r)));
                 	}
                 }
                 
@@ -453,7 +481,7 @@ public class DomainDBAccessService {
      * @return a list of records stored in the given domain when successful, {@code null} otherwise
      */
 	@Transactional
-    public List<PseudonymDTO> getAllRecordsInDomain(String domainName, HttpServletRequest request) {
+    public List<PseudonymDTO> getAllPseudonymsInDomain(String domainName, HttpServletRequest request) {
         try {
             // Get domain
             Domain d = this.getDomainByName(domainName, null);
@@ -483,7 +511,7 @@ public class DomainDBAccessService {
      * auditing should be performed, you can pass {@code null}.
      * @return the counted number
      */
-    public Integer getAmountOfRecordsInDomain(String domainName, HttpServletRequest request) {
+    public Integer getAmountOfPseudonymsInDomain(String domainName, HttpServletRequest request) {
         try {
             Integer count = this.dslCtx.transactionResult(configuration -> {
                 // Get domain
@@ -600,7 +628,7 @@ public class DomainDBAccessService {
                 }
 
                 // Success; continue with the deletion process
-                log.debug("Successfully deleted all records in the domain \"" + domainName + "\".");
+                log.debug("Successfully deleted all records in the domain \"" + domain.getName() + "\".");
 
                 // Now delete the domain itself
                 int deletedDomains = DSL.using(configuration).deleteFrom(DOMAIN)
@@ -611,20 +639,14 @@ public class DomainDBAccessService {
                 if (deletedDomains != 1) {
                     // An unexpected number of records was affected. Log it and abort by throwing
                     // an exception (which will rollback everything from the transaction).
-                    log.error("Couldn't delete the domain \"" + domainName + "\" from the database.");
+                    log.error("Couldn't delete the domain \"" + domain.getName() + "\" from the database.");
                     throw new UnexpectedResultSizeException(1, deletedDomains);
                 }
                 
-                // Handle rights and roles
-                if (request != null) {
-	                // Check if the information needed for OIDC management are in the token
-                    JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
-                    if (token == null || token.getToken() == null || token.getToken().getSubject().isBlank()) {
-                        throw new DomainOIDCException(domain.getName());
-                    }
-
-                    // Remove the associated groups and roles for this domain from Keycloak
-                    domainOidcService.leaveAndDeleteDomainGroupsAndRoles(domainName);
+                // Handle permissions
+                if (!permissionDBService.removeDomainPermissionsForSubject(request, domain.getName())) {
+                	log.debug("Failed to remove the domain's permissions. Aborting.");
+                	throw new PermissionManagementException(domain.getName());
                 }
 
                 // Implicit transaction commit here
@@ -646,11 +668,11 @@ public class DomainDBAccessService {
             log.error("The deletion would have affected an unexpected number of database entries. It should only affect 1, "
                     + "but affected " + h.getActual() + " database entries.");
             return false;
-        } catch (DomainOIDCException i) {
-            log.error("Couldn't delete OIDC rights and roles of domain \"" + i.getDomainName() + "\".");
+        } catch (PermissionManagementException i) {
+            log.error("Couldn't delete permissions of domain \"" + i.getCausingResource() + "\".");
             return false;
         } catch (Exception j) {
-            log.error("Couldn't delete the record from the database: " + j.getMessage() + "\n");
+            log.error("Couldn't delete the record from the database: ", j.getMessage(), j);
             return false;
         }
     }
@@ -675,7 +697,7 @@ public class DomainDBAccessService {
                 }
 
                 // Insert the domain object into database
-                int insertedRecords = DSL.using(configuration)
+                Integer domainId = DSL.using(configuration)
                         .insertInto(DOMAIN, DOMAIN.NAME, DOMAIN.PREFIX, DOMAIN.VALIDFROM, DOMAIN.VALIDFROMINHERITED,
                                 DOMAIN.VALIDTO, DOMAIN.VALIDTOINHERITED, DOMAIN.ENFORCESTARTDATEVALIDITY,
                                 DOMAIN.ENFORCESTARTDATEVALIDITYINHERITED, DOMAIN.ENFORCEENDDATEVALIDITY,
@@ -701,26 +723,21 @@ public class DomainDBAccessService {
                                 domain.getLengthincludescheckdigitinherited(), domain.getDescription(), domain.getSalt(), 
                                 domain.getSaltlength(), 
                                 (domain.getSuperdomainid() == null || domain.getSuperdomainid() == 0) ? null : domain.getSuperdomainid())
-                        .execute();
+                        .returning(DOMAIN.ID)
+                        .fetchOne(DOMAIN.ID);
 
                 // Determine insertion success
-                if (insertedRecords != 1) {
+                if (domainId == null) {
                     // An unexpected number of records was affected. Log it and abort by throwing
                     // an exception (which will rollback everything from the transaction).
                     log.error("Couldn't insert the domain into the database.");
-                    throw new UnexpectedResultSizeException(1, insertedRecords);
+                    throw new UnexpectedResultSizeException(1, 0);
                 }
 
-                // Handle rights and roles
-                if (request != null) {
-                    // Check if the information needed for OIDC management are in the token
-                    JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
-                    if (token == null || token.getToken() == null || token.getToken().getSubject().isBlank()) {
-                        throw new DomainOIDCException(domain.getName());
-                    }
-
-                    // Create domain groups and roles and add the user that made this request to the new groups and roles
-                    domainOidcService.createDomainGroupsAndRolesAndJoin(domain.getName(), token.getToken().getSubject());
+                // Handle permissions
+                if (!permissionDBService.addDomainPermissionsForSubject(request, domainId)) {
+                	log.debug("Failed to add the domain's permissions. Aborting.");
+                	throw new PermissionManagementException(domain.getName());
                 }
 
                 // Implicit transaction commit here
@@ -739,11 +756,11 @@ public class DomainDBAccessService {
             log.error("The insertion would have affected an unexpected number of domains. It should only affect 1 domain, "
                     + "but affected " + g.getActual() + " domains.");
             return INSERTION_ERROR;
-        } catch (DomainOIDCException h) {
-            log.error("Creating OIDC rights and roles for the domain \"" + h.getDomainName() + "\" failed. No insertion performed.");
+        } catch (PermissionManagementException h) {
+            log.error("Creating permissions for the domain \"" + h.getCausingResource() + "\" failed. No insertion performed.");
             return INSERTION_ERROR;
         } catch (Exception i) {
-            log.error("Couldn't insert the domain into the database: " + i.getMessage());
+            log.error("Couldn't insert the domain into the database: " + i.getMessage(), i);
             return INSERTION_ERROR;
         }
     }
@@ -953,23 +970,17 @@ public class DomainDBAccessService {
                     }
                 } // End of recursive child-handling
                 
-                // Check if the OIDC rights and roles need to be adapted
-                if (newDomain.getName() != null && !oldDomain.getName().equals(newDomain.getName())
-                            && domainOidcService.canBeUsedAsDomainGroup(newDomain.getName())) {
-                	// The domain name has changed, so we need to update the OIDC rights and roles
-                	
-                	// Check if the required request object is available
-                	if (request != null) {
-                        JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
-                        
-                        if (token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()) {
-                            try {
-                                domainOidcService.updateDomainGroups(oldDomain.getName(), newDomain.getName(), token.getToken().getSubject());
-                            } catch (Exception e) {
-                                log.error("Updating OIDC rights and roles failed: " + e.getMessage());
-                                throw new DomainOIDCException("oldName: " + oldDomain.getName() + ", newName: " + newDomain.getName());
-                            }
-                        }
+                // Check if the permissions need to be adapted
+                if (newDomain.getName() != null && !oldDomain.getName().equals(newDomain.getName())) {
+                	// The domain name has changed, so we need to update the permissions
+                    if (!permissionDBService.removeDomainPermissionsForSubject(request, oldDomain.getName())) {
+                    	log.debug("Failed to remove the domain's permissions. Aborting.");
+                    	throw new PermissionManagementException(oldDomain.getName());
+                    }
+                    
+                    if (!permissionDBService.addDomainPermissionsForSubject(request, oldDomain.getId())) {
+                    	log.debug("Failed to add the domain's permissions. Aborting.");
+                    	throw new PermissionManagementException(newDomain.getName());
                     }
                 }
 
@@ -993,8 +1004,8 @@ public class DomainDBAccessService {
         } catch (FailedChildDomainUpdateException h) {
             log.error("Updating the child-domain \"" + h.getChildName() + "\" was unsuccessful and was therefore rolled back.");
             return null;
-        } catch (DomainOIDCException i) {
-            log.error("Updating the OIDC rights and roles failed for the domain (" + i.getDomainName() + "). The update was therefore rolled back.");
+        } catch (PermissionManagementException i) {
+            log.error("Updating the permissions failed for the domain (" + i.getCausingResource() + "). The update was therefore rolled back.");
             return null;
         } catch (Exception j) {
             log.error("Couldn't update the domain: " + j.getClass() + ": " + j.getMessage());

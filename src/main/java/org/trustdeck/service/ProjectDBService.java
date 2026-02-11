@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2025 Armin Müller
+ * Copyright 2025-2026 Armin Müller
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,11 @@ import org.jooq.exception.IntegrityConstraintViolationException;
 import org.jooq.exception.MappingException;
 import org.jooq.impl.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.dto.ProjectDTO;
 import org.trustdeck.exception.DuplicateProjectException;
-import org.trustdeck.exception.ProjectOIDCException;
+import org.trustdeck.exception.PermissionManagementException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Project;
 import org.trustdeck.jooq.generated.tables.records.ProjectRecord;
@@ -57,9 +56,9 @@ public class ProjectDBService {
     @Autowired
 	private DSLContext dsl;
     
-    /** Handles rights and roles for projects. */
+    /** Enables access to the permission grants database methods. */
     @Autowired
-    private ProjectOIDCService projectOidcService;
+    private PermissionDBService permissionDBService;
 
     /**
      * Method to insert a new project into the database table.
@@ -102,16 +101,10 @@ public class ProjectDBService {
 	    	return null;
 	    }
     	
-    	// Handle rights and roles
-        if (request != null) {
-            // Check if the information needed for OIDC management are in the token
-            JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
-            if (token == null || token.getToken() == null || token.getToken().getSubject().isBlank()) {
-                throw new ProjectOIDCException(project.getName());
-            }
-
-            // Create project groups and roles and add the user that made this request to the new groups and roles
-            projectOidcService.createProjectGroupsAndRolesAndJoin(project.getName(), token.getToken().getSubject());
+    	// Handle permissions
+        if (!permissionDBService.addProjectPermissionsForSubject(request, project.getAbbreviation())) {
+        	log.debug("Failed to add the project's permissions. Aborting.");
+        	throw new PermissionManagementException(project.getName());
         }
 	    
 	    // Return the project object
@@ -263,17 +256,11 @@ public class ProjectDBService {
                 throw new UnexpectedResultSizeException(1, deletedRecords);
             }
     	
-	    	// Handle rights and roles
-	        if (request != null) {
-	            // Check if the information needed for OIDC management are in the token
-	            JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
-	            if (token == null || token.getToken() == null || token.getToken().getSubject().isBlank()) {
-	                throw new ProjectOIDCException(project.getName());
-	            }
-	
-	            // Remove the associated groups and roles for this domain from Keycloak
-	            projectOidcService.leaveAndDeleteProjectGroupsAndRoles(project.getName());
-	        }
+            // Handle permissions
+            if (!permissionDBService.removeProjectPermissionsForSubject(request, project.getAbbreviation())) {
+            	log.debug("Failed to remove the project's permissions. Aborting.");
+            	throw new PermissionManagementException(project.getAbbreviation());
+            }
             
             // The project object was successfully deleted
             log.debug("Successfully removed the project object.");
@@ -325,7 +312,7 @@ public class ProjectDBService {
     	
     	// Built update object with sanitized values, depending on if the project is in use or not
 		ProjectRecord updatedProjectRecord;
-		String newName = null;
+		String newAbbreviation = null;
 		try {
 			if (usedBy != 0) {
 				log.debug("The project is currently in use and can therefore only be partially updated.");
@@ -348,8 +335,8 @@ public class ProjectDBService {
 						.returning()
 						.fetchOne();
 			} else {
-				newName = Assertion.isNotNullOrEmpty(updatedProject.getName()) ? updatedProject.getName() : oldProject.getName();
-				String newAbbreviation = Assertion.isNotNullOrEmpty(updatedProject.getAbbreviation())? updatedProject.getAbbreviation() : oldProject.getAbbreviation();
+				String newName = Assertion.isNotNullOrEmpty(updatedProject.getName()) ? updatedProject.getName() : oldProject.getName();
+				newAbbreviation = Assertion.isNotNullOrEmpty(updatedProject.getAbbreviation())? updatedProject.getAbbreviation() : oldProject.getAbbreviation();
 				OffsetDateTime newStart = updatedProject.getStartDate() != null ? updatedProject.getStartDate() : oldProject.getStartDate();
 				OffsetDateTime newEnd = updatedProject.getEndDate() != null ? updatedProject.getEndDate() : oldProject.getEndDate();
 
@@ -387,23 +374,17 @@ public class ProjectDBService {
             return null;
     	}
     	
-    	// Check if the OIDC rights and roles need to be adapted
-        if (newName != null && !oldProject.getName().equals(newName)
-                    && projectOidcService.canBeUsedAsProjectGroup(newName)) {
-        	// The project name has changed, so we need to update the OIDC rights and roles
-        	
-        	// Check if the required request object is available
-        	if (request != null) {
-                JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
-                
-                if (token != null && token.getToken() != null && !token.getToken().getSubject().isBlank()) {
-                    try {
-                    	projectOidcService.updateProjectGroups(oldProject.getName(), newName, token.getToken().getSubject());
-                    } catch (Exception e) {
-                        log.error("Updating OIDC rights and roles failed: " + e.getMessage());
-                        throw new ProjectOIDCException("oldName: " + oldProject.getName() + ", newName: " + newName);
-                    }
-                }
+    	// Check if the permissions need to be adapted
+        if (newAbbreviation != null && !oldProject.getName().equals(newAbbreviation)) {
+        	// The project abbreviation has changed, so we need to update the permissions
+            if (!permissionDBService.removeProjectPermissionsForSubject(request, oldProject.getAbbreviation())) {
+            	log.debug("Failed to remove the project's permissions. Aborting.");
+            	throw new PermissionManagementException(oldProject.getAbbreviation());
+            }
+            
+            if (!permissionDBService.addProjectPermissionsForSubject(request, newAbbreviation)) {
+            	log.debug("Failed to add the project's permissions. Aborting.");
+            	throw new PermissionManagementException(newAbbreviation);
             }
         }
 
