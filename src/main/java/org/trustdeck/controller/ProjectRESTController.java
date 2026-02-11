@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2025 Armin Müller and Eric Wündisch
+ * Copyright 2025-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ package org.trustdeck.controller;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.Period;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,6 +30,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,14 +43,14 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.trustdeck.dto.PermissionDTO;
 import org.trustdeck.dto.ProjectDTO;
 import org.trustdeck.exception.DuplicateProjectException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
-import org.trustdeck.security.authentication.configuration.JwtProperties;
-import org.trustdeck.service.AuthorizationService;
+import org.trustdeck.service.PermissionDBService;
 import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
@@ -75,14 +77,10 @@ public class ProjectRESTController {
     /** Enables access to the data base interaction methods. */
     @Autowired
     private ProjectDBService projectDBService;
-
-    /** Provides functionality to ensure proper rights and roles when accessing the endpoints. */
-    @Autowired
-    private AuthorizationService authorizationService;
     
-    /** JWT properties. */
+    /** Enables access to the permission grants database methods. */
     @Autowired
-    private JwtProperties jwtProperties;
+    private PermissionDBService permissionDBService;
     
     /** Default value for the project's validity time. */
     private static final Period DEFAULT_PROJECT_VALIDITY_TIME = Period.ofYears(10);
@@ -109,7 +107,7 @@ public class ProjectRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when creation failed</li>
 	 */
 	@PostMapping("/projects")
-    @PreAuthorize("hasRole('project-create')")
+    @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'project:create')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> createProject(@RequestBody ProjectDTO projectDTO,
                                            @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -193,36 +191,35 @@ public class ProjectRESTController {
      * 		   where the user has access to</li>
 	 */
 	@GetMapping("/projects")
-    @PreAuthorize("hasRole('project-read-all')")
+    @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'project:list-all')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getProjectsWithAccessTo(@RequestHeader(name = "accept", required = false) String responseContentType,
                                            			 HttpServletRequest request) {
-		
-		// Get a list of all groups the requesting user is in
-		List<String> groupPaths = authorizationService.getCachedGroupPaths();
-		if (groupPaths == null || groupPaths.isEmpty()) {
-            return responseService.ok(responseContentType, Collections.emptyList());
+		// Get subject/user from security context
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+        	log.debug("Could not retrieve the authentication from the security context.");
+        	return responseService.unprocessableEntity(responseContentType);
         }
-
-        // Extract all project names from those paths and fill a list with ProjectDTOs
-		Set<ProjectDTO> projects = new HashSet<>();
-        String projectContextPrefix = "/" + jwtProperties.getProjectRoleGroupContextName() + "/";
         
-        for (String path : groupPaths) {
-        	if (path != null && path.startsWith(projectContextPrefix)) {
-        		// We found a project group --> extract the project name
-        		String projectName = authorizationService.extractProjectNameFromPath(path);
-        		if (Assertion.isNullOrEmpty(projectName)) {
-        			continue;
-        		}
-        		
-        		// Add the project to the list
-        		ProjectDTO p = projectDBService.getProjectByName(projectName, request);
-        		if (p != null) {
-        			projects.add(p);
-        		}
-        	}
-        }
+		Object principal = authentication.getPrincipal();
+		if (!(principal instanceof Jwt jwt)) {
+			log.debug("The authentication principal was not a JWT.");
+        	return responseService.unprocessableEntity(responseContentType);
+		}
+        
+		// Get all permissions of the current subject/user
+		List<PermissionDTO> permissions = permissionDBService.getAllPermissionsForSubject(jwt.getSubject(), request);
+		
+		// Collect all projects with read-access into a list
+		Set<ProjectDTO> projects = new HashSet<>();
+		for (PermissionDTO p : permissions) {
+			if (p.getResourceType().equalsIgnoreCase("PROJECT") && p.getAction().equalsIgnoreCase("project:read")
+					&& p.getDecision().equalsIgnoreCase("ALLOW") && p.getValidFrom().isBefore(OffsetDateTime.now())
+					&& p.getValidTo().isAfter(OffsetDateTime.now())) {
+				projects.add(projectDBService.getProjectByID(p.getResourceId(), null));
+			}
+		}
         
         log.debug("Succesfully retrieved a list of " + projects.size() + (projects.size() == 1 ? " project" : " projects") + " where the requesting user has (read) access to.");
         return responseService.ok(responseContentType, projects);
@@ -240,7 +237,7 @@ public class ProjectRESTController {
      *         <li>a <b>404-NOT_FOUND</b> status when no project exists for the given abbreviation</li>
 	 */
 	@GetMapping("/projects/{projectAbbreviation}")
-    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #projectAbbreviation, 'project-read')")
+    @PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'project:read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getProject(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
                                         @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -277,7 +274,7 @@ public class ProjectRESTController {
      * @return <li>a <b>501-NOT_IMPLEMENTED</b> status (endpoint not implemented yet)</li>
 	 */
 	@GetMapping("projects/{projectAbbreviation}/statistics")
-    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #projectAbbreviation, 'project-read')")
+    @PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'project:statistics')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getProjectStatistics(@PathVariable("projectAbbreviation") String projectAbbreviation,
                                 				  @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -298,7 +295,7 @@ public class ProjectRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the update failed</li>
 	 */
 	@PutMapping("/projects/{projectAbbreviation}")
-    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #projectAbbreviation, 'project-update')")
+    @PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'project:update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> updateProject(@PathVariable("projectAbbreviation") String projectAbbreviation,
     									   @RequestBody ProjectDTO newProjectDTO,
@@ -351,7 +348,7 @@ public class ProjectRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the deletion failed</li>
 	 */
 	@DeleteMapping("/projects/{projectAbbreviation}")
-    @PreAuthorize("@auth.hasProjectRoleRelationship(#root, #projectAbbreviation, 'project-delete')")
+    @PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'project:delete')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> deleteProject(@PathVariable("projectAbbreviation") String projectAbbreviation,
     									   @RequestParam(name = "deleteDate", required = false) String deleteDate,

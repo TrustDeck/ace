@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2024-2025 Armin Müller and Eric Wündisch
+ * Copyright 2024-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.OffsetDateTime;
+
 import org.springframework.context.annotation.Scope;
+import org.trustdeck.jooq.generated.tables.interfaces.IPermissionGrant;
+import org.trustdeck.utils.Assertion;
 
 /**
  * Data Transfer Object (DTO) for permissions. This class represents the
@@ -39,27 +43,74 @@ import org.springframework.context.annotation.Scope;
 @Builder
 @Scope("prototype")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
+public class PermissionDTO implements IObjectDTO<IPermissionGrant, PermissionDTO> {
 
-	/** The domain this permission applies to. Either this or the projectName should be used. */
+	/** The (internal) ID of this permission. Do not expose it to users. */
+	@JsonIgnore
+	private Integer id;
+
+	/** The subject ID (from Keycloak) associated with the permission. */
+	private String subjectId;
+	
+	/** The type of the resource, e.g. Domain, Project */
+	private String resourceType;
+	
+	/** The internal database ID of the resource. */
+	@JsonIgnore
+	private Integer resourceId;
+	
+	/** The domain this permission applies to. Either this or the projectAbbreviation should be used. */
 	private String domainName;
 	
 	/** The project this permission applies to. Either this or the domainName should be used. */
-	private String projectName;
-
-	/** The role associated with the permission. */
-	private String role;
-
-	/** The user ID associated with the permission. */
-	private String userId;
+	private String projectAbbreviation;
 	
-	/**
-	 * Unused.
-	 */
+	/** The action that this permission represents on the resource, e.g. domain:read, pseudonym:create. */
+	private String action;
+	
+	/** The effective decision for the permission, e.g. ALLOW, DENY. */
+	private String decision;
+	
+	/** The start date from which this permission is valid. */
+	private OffsetDateTime validFrom;
+	
+	/** The end date up until this permission is valid. */
+	private OffsetDateTime validTo;
+	
+	/** The date when this permission was first created. */
+	private OffsetDateTime createdAt;
+	
+	/** The (Keycloak) ID of the user/account that initially granted this permission. */
+	private String createdBy;
+	
+	/** The date when this permission was last updated. */
+	private OffsetDateTime updatedAt;
+	
+	/** The (Keycloak) ID of the user/account that last updated this permission. */
+	private String updatedBy;
+	
 	@Override
-	public PermissionDTO assignPojoValues(String pojo) {
-		// Unused
-		return null;
+	@JsonIgnore
+	public PermissionDTO assignPojoValues(IPermissionGrant pojo) {
+		if (pojo == null) {
+	        return this;
+	    }
+
+	    this.setId(pojo.getId());
+
+	    this.setSubjectId(pojo.getSubjectId() != null ? pojo.getSubjectId() : "");
+	    this.setResourceType(pojo.getResourceType() != null ? pojo.getResourceType() : "");
+	    this.setResourceId(pojo.getResourceId());
+	    this.setAction(pojo.getAction() != null ? pojo.getAction() : "");
+	    this.setDecision(pojo.getDecision() != null ? pojo.getDecision() : "");
+	    this.setValidFrom(pojo.getValidFrom());
+	    this.setValidTo(pojo.getValidTo());
+	    this.setCreatedAt(pojo.getCreatedAt());
+	    this.setCreatedBy(pojo.getCreatedBy() != null ? pojo.getCreatedBy() : "");
+	    this.setUpdatedAt(pojo.getUpdatedAt());
+	    this.setUpdatedBy(pojo.getUpdatedBy() != null ? pojo.getUpdatedBy() : "");
+
+	    return this;
 	}
 
 	/**
@@ -94,18 +145,31 @@ public class PermissionDTO implements IObjectDTO<String, PermissionDTO> {
 	@JsonIgnore
 	public String toRepresentationString() {
 		String out = "";
+		
+		out += (this.getId() != null) ? "id: " + this.getId().toString() + ", " : "";
+	    out += (this.getSubjectId() != null) ? "subjectId: " + this.getSubjectId() + ", " : "";
+	    out += (this.getResourceType() != null) ? "resourceType: " + this.getResourceType() + ", " : "";
+	    out += (this.getResourceId() != null) ? "resourceId: " + this.getResourceId() + ", " : "";
+	    out += (this.getDomainName() != null) ? "domainName: " + this.getDomainName() + ", " : "";
+	    out += (this.getProjectAbbreviation() != null) ? "projectAbbreviation: " + this.getProjectAbbreviation() + ", " : "";
+	    out += (this.getAction() != null) ? "action: " + this.getAction() + ", " : "";
+	    out += (this.getDecision() != null) ? "decision: " + this.getDecision() + ", " : "";
+	    out += (this.getValidFrom() != null) ? "validFrom: " + this.getValidFrom().toString() + ", " : "";
+	    out += (this.getValidTo() != null) ? "validTo: " + this.getValidTo().toString() + ", " : "";
+	    out += (this.getCreatedAt() != null) ? "createdAt: " + this.getCreatedAt().toString() + ", " : "";
+	    out += (this.getCreatedBy() != null) ? "createdBy: " + this.getCreatedBy() + ", " : "";
+	    out += (this.getUpdatedAt() != null) ? "updatedAt: " + this.getUpdatedAt().toString() + ", " : "";
+	    out += (this.getUpdatedBy() != null) ? "updatedBy: " + this.getUpdatedBy() + ", " : "";
 
-		out += (this.getRole() != null) ? "role: " + this.getRole() + ", " : "";
-		out += (this.getDomainName() != null) ? "domainName: " + this.getDomainName() + ", " : "";
-		out += (this.getProjectName() != null) ? "projectName: " + this.getProjectName() + ", " : "";
-		out += (this.getUserId() != null) ? "userId: " + this.getUserId() + ", " : "";
 
 		return (out.endsWith(", ") ? out.substring(0, out.length() - 2) : out);
 	}
 
 	@Override
+	@JsonIgnore
 	public Boolean validate() {
-		// Unimplemented
-		return null;
+		// Should either be a domain-specific permission and needs a domain name or (XOR) is a project-specific one with a project name
+		return (this.getResourceType().equalsIgnoreCase("Domain") && Assertion.isNotNullOrEmpty(this.getDomainName()))
+			 ^ (this.getResourceType().equalsIgnoreCase("Project") && Assertion.isNotNullOrEmpty(this.getProjectAbbreviation()));
 	}
 }

@@ -44,10 +44,10 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
      * @param accessDeniedException the AccessDeniedException as object
      */
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) {
-    	log.debug("The access token could be parsed and is valid but it doesn't contain the required permissions.");
+    	log.debug("The requesting user is lacking the permission for accessing the endpoint.");
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            log.trace("Token: " + authHeader.substring("Bearer ".length()));
+            log.trace("Bearer token: " + authHeader.substring("Bearer ".length()));
         }
 
         if (!response.isCommitted()) {

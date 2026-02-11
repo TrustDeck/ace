@@ -34,11 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.trustdeck.dto.DomainDTO;
 import org.trustdeck.service.AssertWebRequestService;
-import org.trustdeck.service.DomainOIDCService;
 
 /**
  * This class offers tests to test only the domain endpoints.
@@ -47,10 +45,10 @@ import org.trustdeck.service.DomainOIDCService;
  */
 @Slf4j
 public class TestsDomainServiceIT extends AssertWebRequestService {
-
-	/** OIDC service for managing OpenID Connect operations such as token retrieval and validation. */
-    @Autowired
-    private DomainOIDCService domainOidcService;
+    
+    /** Enables access to the permission grants database methods. */
+//    @Autowired
+//    private PermissionDBService permissionDBService;
     
     /**
      * Test that tries to create a new domain with different given inputs
@@ -123,14 +121,16 @@ public class TestsDomainServiceIT extends AssertWebRequestService {
     public void triggerFailuresOnDomainsTest() throws Exception {
         String domainName = "TestStudie-Labor";
 
-        // Get domain without creating it first
+        // Test: get domain without creating it first
+        // Build get parameter
         Map<String, String> getParameter = new HashMap<>() {
         	private static final long serialVersionUID = -8173402790582999935L;
 		{
             put("name", domainName);
         }};
         
-        domainOidcService.createDomainGroupsAndRolesAndJoin(domainName, "3dfb6717-3def-493b-a237-b7345fc42718");
+        //permissionDBService.addDomainPermissionsForSubject(TODO, domainName);
+        //domainOidcService.createDomainGroupsAndRolesAndJoin(domainName, "3dfb6717-3def-493b-a237-b7345fc42718");
         this.assertNotFoundRequest("getDomainNotFoundDomainName", get("/api/pseudonymization/domain"), getParameter, null, this.getAccessToken());
 
         // Get salt without creating a domain first

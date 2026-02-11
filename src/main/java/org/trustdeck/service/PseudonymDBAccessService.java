@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller and Eric Wündisch
+ * Copyright 2022-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -448,7 +448,8 @@ public class PseudonymDBAccessService {
             	        .and(PSEUDONYM.DOMAINID.eq(p.getOldDomain().getId())));
             	
             	// Store the index of the original list
-            	originalIndex.add(j);            }
+            	originalIndex.add(j);
+			}
             
         	// Batch the update statements and execute the batch
             int[] result = dslCtx.batch(updates).execute();
@@ -511,7 +512,6 @@ public class PseudonymDBAccessService {
         }
     	
     	try {
-        	
         	// Create a list of delete statements
             List<DeleteConditionStep<PseudonymRecord>> deletions = new ArrayList<>(pseudonyms.size());
             for (PseudonymDTO p : pseudonyms) {

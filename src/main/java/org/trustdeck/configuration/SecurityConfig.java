@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2024 Armin Müller and Eric Wündisch
+ * Copyright 2022-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -36,7 +37,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.trustdeck.security.audittrail.AudittrailRequestFilter;
-import org.trustdeck.security.authentication.configuration.JwtAuthConverter;
+import org.trustdeck.security.authentication.JwtAuthConverter;
 import org.trustdeck.security.authentication.handler.CustomAccessDeniedHandler;
 import org.trustdeck.security.authentication.handler.CustomAuthenticationEntryPointHandler;
 
@@ -45,7 +46,7 @@ import java.util.Arrays;
 /**
  * This class is used to define security settings for keycloak and other custom security options.
  *
- * @author Eric Wündisch and Armin Müller
+ * @author Armin Müller and Eric Wündisch
  */
 @RequiredArgsConstructor
 @Configuration
@@ -95,8 +96,12 @@ public class SecurityConfig {
 		                      "/swagger-ui.html",
 		                      "/swagger-ui/**"
 		                  ).permitAll()
-		    		.requestMatchers("/domains/*", "/domain/*")
-		      		.authenticated().anyRequest().permitAll())
+		    		// Recommended for browser-based clients: allow CORS preflight requests
+		            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+		            // Optional: allow the actuator and health info endpoint
+		            // .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+		            // Everything else must be authenticated
+		            .anyRequest().authenticated())
 		      .sessionManagement(session -> session
 		              .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 		              .sessionAuthenticationStrategy(sessionAuthenticationStrategy()))

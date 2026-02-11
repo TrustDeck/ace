@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2025 Armin Müller and Eric Wündisch
+ * Copyright 2025-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public class EntityInstanceRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when creation failed</li>
 	 */
 	@PostMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}")
-	@PreAuthorize("hasRole('project-entity-instance-create')")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:create')")
 	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> createEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
 			   									  @PathVariable("entityTypeName") String entityTypeName,
@@ -259,7 +259,7 @@ public class EntityInstanceRESTController {
      *         is marked as deprecated</li>
 	 */
 	@GetMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
-	@PreAuthorize("hasRole('project-entity-instance-read')")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:read')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> getEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
 											   @PathVariable("entityTypeName") String entityTypeName,
@@ -321,7 +321,7 @@ public class EntityInstanceRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the update failed</li>
 	 */
 	@PutMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
-	@PreAuthorize("hasRole('project-entity-instance-update')")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:update')")
 	@Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> updateEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												  @PathVariable("entityTypeName") String entityTypeName,
@@ -432,7 +432,7 @@ public class EntityInstanceRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the deletion failed</li>
 	 */
 	@DeleteMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
-	@PreAuthorize("hasRole('project-entity-instance-delete')")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:delete')")
 	@Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> deleteEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												  @PathVariable("entityTypeName") String entityTypeName,
@@ -508,7 +508,7 @@ public class EntityInstanceRESTController {
      *         is marked as deprecated</li>
 	 */
 	@GetMapping(value = "/projects/{projectAbbreviation}/entities/{entityTypeName}", params = {"query"})
-	@PreAuthorize("hasRole('project-entity-instance-search')")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:search')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> searchEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												  @PathVariable("entityTypeName") String entityTypeName,
@@ -572,7 +572,7 @@ public class EntityInstanceRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the record-linkage search fails</li>
 	 */
 	@PostMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/record-linkage")
-	@PreAuthorize("hasRole('project-entity-instance-record-linkage')")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:record-linkage')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> recordLinkage(@PathVariable("projectAbbreviation") String projectAbbreviation,
 			   							   @PathVariable("entityTypeName") String entityTypeName,

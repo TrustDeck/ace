@@ -109,9 +109,9 @@ public class AssertWebRequestService {
     @Autowired
     private Environment env;
 
-    /** Handles rights and roles for domains. */
+    /** Enables access to the permission grants database methods. */
     @Autowired
-    private DomainOIDCService domainOidcService;
+    private PermissionDBService permissionDBService;
     
     /** The name of the database where TRUSTDECK stores its data. **/
     private static final String TRUSTDECK = "trustdeck";
@@ -163,8 +163,7 @@ public class AssertWebRequestService {
 	        
 	        // Remove all access rights and roles on domains (incl. orphaned ones, 
 	        // i.e. those roles that do not have a domain in the database anymore)
-	        domainOidcService.deleteAllDomainGroups();
-	        domainOidcService.deleteAllDomainRoles();
+	        permissionDBService.removeDomainPermissions();
 	        
 	        // Create the test domain DTO
 	        DomainDTO domainDTO = new DomainDTO();

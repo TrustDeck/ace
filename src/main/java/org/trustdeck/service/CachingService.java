@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2024-2025 Armin Müller and Eric Wündisch
+ * Copyright 2025-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,22 +22,18 @@ import com.hazelcast.map.IMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.trustdeck.utils.Utility;
+import org.trustdeck.dto.EffectivePermissionDTO;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
- * CachingService is a service class responsible for caching group paths for faster authentication.
+ * Caching service for caching permissions.
  * It uses Hazelcast as the underlying caching mechanism.
  *
- * This service includes methods to retrieve group paths for a user, cache the group paths if not present,
- * flush and re-cache groups when a domain match is found, and handle concurrent access using write locks.
- *
- * @author Eric Wündisch and Armin Müller
+ * @author Armin Müller
  */
 @Service
 @Slf4j
@@ -45,182 +41,158 @@ public class CachingService {
 
     /** Hazelcast instance used for caching data. */
     @Autowired
-    private HazelcastInstance hazelcastInstance;
+    private HazelcastInstance hazelcast;
 
-    /** OIDC service used for retrieving (group) information related to users. */
-    @Autowired
-    private OidcService oidcService;
+    /** Name of the Hazelcast cache for caching actions by context (subjectId, RESOURCE_TYPE, resourceId). */
+	private static final String MAP_ACTIONS_BY_CONTEXT = "permission-actions-by-context";
+    
+    /** Name of the Hazelcast cache for caching effective permissions by subject (subjectId). */
+    private static final String MAP_EFFECTIVE_PERMISSIONS_BY_SUBJECT = "effective-permissions-by-subject";
 
-    /** Name of the lock used to control write operations on the cache. */
-    private static final String WRITE_LOCK_NAME = "write-lock";
-
-    /** Name of the cache used in Hazelcast. */
-    private static final String CACHE_NAME = "hazelcast-instance";
-
-    /** Maximum time to wait for the lock to be released, in seconds. */
-    private static final long MAX_WAIT_TIME_SECONDS = 5;
+    /** The cache's time-to-live (after how many minutes the entries will get invalidated). */
+    private static final long TTL_MINUTES = 15;
 
     /**
-     * Retrieves the group paths for the given user ID from the cache.
-     * If the resource is currently locked, it waits for the lock to be released before trying to retrieve.
-     * If the group paths are not present in the cache, it retrieves them from the OIDC service and caches them.
-     *
-     * @param userId the ID of the user
-     * @return a list of group paths for the user
+     * Helper method to generate a context-key-String.
+     * 
+     * @param subjectId the subject's / user's (Keycloak) ID
+     * @param resourceType the type of the resource, e.g. "DOMAIN", "PROJECT", "GLOBAL"
+     * @param resourceId the (internal) database ID of the resource (or '0' for GLOBAL)
+     * @return a String that merges the given information and can be used as a key in the cache-lookup
      */
-    public List<String> getGroupPaths(String userId) {
-        IMap<String, List<String>> resourceCache = hazelcastInstance.getMap(CACHE_NAME);
+    private static String contextKey(String subjectId, String resourceType, Integer resourceId) {
+        return subjectId + "|" + resourceType.toUpperCase() + "|" + resourceId;
+    }
 
-        // Check if the write lock is currently held, and wait until it is released or timeout occurs
-        if (resourceCache.isLocked(WRITE_LOCK_NAME)) {
-            long startTime = System.currentTimeMillis();
+    /**
+     * Method to lookup all currently allowed actions for a specific (subject, resourceType, resourceId) in the cache.
+     * 
+     * @param subjectId the subject's / user's (Keycloak) ID
+     * @param resourceType the type of the resource, e.g. "DOMAIN", "PROJECT", "GLOBAL"
+     * @param resourceId the (internal) database ID of the resource (or '0' for GLOBAL)
+     * @param loader a function that tells the cache how to fetch the data if it's not already cached
+     * @return a set of the allowed actions for the given parameters
+     */
+    public Set<String> getAllowedActionsForContext(String subjectId, String resourceType, Integer resourceId, Supplier<Set<String>> loader) {
+        // Get the cache instance
+    	IMap<String, Set<String>> map = hazelcast.getMap(MAP_ACTIONS_BY_CONTEXT);
+        
+    	// Build the lookup key from the given parameters
+    	String key = contextKey(subjectId, resourceType, resourceId);
 
-            // Wait and check again until the max wait time is reached
-            while (System.currentTimeMillis() - startTime < MAX_WAIT_TIME_SECONDS * 1000) {
-
-                // If the lock is released, retrieve data from the cache
-                if (!resourceCache.isLocked(WRITE_LOCK_NAME)) {
-                    List<String> resource = resourceCache.get(userId);
-                    if (resource != null) {
-                        log.trace("Cache hit for user \"" + userId + "\".");
-                        return resource;
-                    }
-                }
-            }
+        // Check if the data is cached
+        Set<String> cached = map.get(key);
+        if (cached != null) {
+        	// Cache hit: return the data
+            return cached;
         }
 
-        // Retrieve data from the cache
-        List<String> resource = resourceCache.get(userId);
-        if (resource != null && !resource.isEmpty()) {
-            log.trace("Cache hit for user \"" + userId + "\".");
-        	return resource;
-        }
-
-        // Cache miss - retrieve data from OIDC service and store in the cache
-        return this.cacheGroups(userId);
-    }
-
-    /**
-     * Flushes and re-caches group paths for a user if the given domain occurs in the cached groups.
-     *
-     * @param userId the ID of the user
-     * @param domain the domain to check for
-     */
-    public void flushAndReCacheMatchingGroups(String userId, String domain) {
-        this.flushAndReCacheMatchingGroups(userId, domain, false);
-    }
-
-    /**
-     * Flushes and re-caches group paths for a user if the given domain occurs in the cached groups.
-     *
-     * @param userId the ID of the user
-     * @param domain the domain to check for
-     * @param force force deletion of groups from cache
-     */
-    public void flushAndReCacheMatchingGroups(String userId, String domain, boolean force) {
-        this.flushGroupIfDomainOccurs(userId, domain, force);
-        this.getGroupPaths(userId);
-    }
-
-    /**
-     * Retrieves group paths for the given user ID from the OIDC service, caches them,
-     * and returns the group paths.
-     *
-     * @param userId the ID of the user
-     * @return a list of group paths for the user
-     */
-    protected List<String> cacheGroups(String userId) {
-        IMap<String, List<String>> resourceCache = hazelcastInstance.getMap(CACHE_NAME);
-        List<String> groups = null;
-	AtomicBoolean lockAcquired = new AtomicBoolean(false);
-
+        // The data was not cached; lock the key while the data is being put into the cache
+        map.lock(key);
         try {
-            // Check if the cache can be write-locked. If not, wait.
-            if (resourceCache.isLocked(WRITE_LOCK_NAME)) {
-                Long start = System.currentTimeMillis();
-                while (resourceCache.isLocked(WRITE_LOCK_NAME)) {
-                    // Still locked. Do we wait, or not?
-                    if (System.currentTimeMillis() - start > MAX_WAIT_TIME_SECONDS * 1000) {
-                    	// Timeout reached, break without caching
-                    	break;
-                    }
-
-                    // Sleep for a short duration to avoid busy waiting
-                    Thread.sleep(50);
-                }
+            // Double-checke locking
+            cached = map.get(key);
+            if (cached != null) {
+            	// Cache hit: return the data
+                return cached;
             }
 
-            // Check lock again
-            if (!resourceCache.isLocked(WRITE_LOCK_NAME)) {
-                // Now it's available. Lock it and store data.
-                resourceCache.lock(WRITE_LOCK_NAME);
-                lockAcquired.set(true);
-
-                // Retrieve groups from OIDC service and convert to a flat list of group paths
-                groups = Utility.extractGroupPaths(oidcService.getGroupsByUserId(userId), true);
-
-                // Store the group paths in the cache with a 10-minute expiration time
-                //TODO make cache-time configurable
-                resourceCache.put(userId, groups, 10, TimeUnit.MINUTES);
-                log.trace("Insert into cache: USER-ID: " + userId + ", GROUPS: " + groups);
+            // Still a cache miss: user the loader function to get the needed data anyways
+            Set<String> loaded = loader.get();
+            
+            // Failed to retrieve the data: nothing to cache
+            if (loaded == null) {
+            	log.debug("Failed to retrieve the currently uncached data using the loader function.");
+                return null;
             }
-        } catch (NullPointerException | UnsupportedOperationException | InterruptedException e) {
-            // Handle cases where the group retrieval or caching fails
-            groups = new ArrayList<>();
+
+            // Add data to cache and return to user
+            map.put(key, loaded, TTL_MINUTES, TimeUnit.MINUTES);
+            return loaded;
         } finally {
-            // Unlock the cache when we successfully wrote to the cache and after the operation is complete
-        	if (lockAcquired.get()) {
-        		resourceCache.unlock(WRITE_LOCK_NAME);
-        	}
+            map.unlock(key);
         }
-
-        if (groups == null) {
-            // If the groups are still null, the cache was locked longer than the waiting time
-            groups = new ArrayList<>();
-            log.debug("Cache was busy longer than the maximum waiting time. No groups added to it.");
-        }
-
-        return groups;
     }
 
     /**
-     * Flushes the group paths from the cache if the specified domain is found in any of the group paths.
-     *
-     * @param domain the domain to check for in group paths
-     * @param userId the ID of the user
-     * @param force force deletion of groups from cache
+     * Method to lookup all currently effective permissions for a specific subject.
+     * 
+     * @param subjectId the subject's / user's (Keycloak) ID
+     * @param loader a function that tells the cache how to fetch the data if it's not already cached
+     * @return a set of the effective permissions for the given parameters
      */
-    public void flushGroupIfDomainOccurs(String userId, String domain, boolean force) {
-        IMap<String, List<String>> resourceCache = hazelcastInstance.getMap(CACHE_NAME);
+	public List<EffectivePermissionDTO> getEffectivePermissionsForSubject(String subjectId, Supplier<List<EffectivePermissionDTO>> loader) {
+		// Get the cache instance
+    	IMap<String, List<EffectivePermissionDTO>> map = hazelcast.getMap(MAP_EFFECTIVE_PERMISSIONS_BY_SUBJECT);
 
-        try {
-            // Lock the cache to ensure exclusive access during flush operation
-            resourceCache.lock(WRITE_LOCK_NAME);
-
-            // Iterate over the users (key: userID, value: the user's group paths)
-            for (Map.Entry<String, List<String>> entry : resourceCache.entrySet()) {
-                if (force) {
-                    // Lazy flushing: delete all group paths for the specified user
-                    if (entry.getKey().equals(userId)) {
-                        resourceCache.delete(entry.getKey());
-                    }
-                } else {
-                    // Check if the domain is actually part of the user's group paths
-                    List<String> groupPaths = entry.getValue();
-
-                    // Check if any group path ends with the specified domain
-                    if (groupPaths.stream().anyMatch(s -> s.endsWith("/" + domain))) {
-                        // Remove all group paths from the cache if the domain is found
-                        resourceCache.delete(entry.getKey());
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // Log any errors that occur during the flush operation
-            log.debug("Couldn't flush cache: " + e.getMessage());
-        } finally {
-            // Unlock the cache after flush operation is complete
-            resourceCache.unlock(WRITE_LOCK_NAME);
+    	// Check if the data is cached
+		List<EffectivePermissionDTO> cached = map.get(subjectId);
+		if (cached != null) {
+        	// Cache hit: return the data
+            return cached;
         }
+
+        // The data was not cached; lock the key while the data is being put into the cache
+		map.lock(subjectId);
+		try {
+            // Double-checke locking
+			cached = map.get(subjectId);
+			if (cached != null) {
+            	// Cache hit: return the data
+                return cached;
+            }
+
+            // Still a cache miss: user the loader function to get the needed data anyways
+			List<EffectivePermissionDTO> loaded = loader.get();
+
+            // Failed to retrieve the data: nothing to cache
+            if (loaded == null) {
+            	log.debug("Failed to retrieve the currently uncached data using the loader function.");
+                return null;
+            }
+
+            // Add data to cache and return to user
+			map.put(subjectId, loaded, TTL_MINUTES, TimeUnit.MINUTES);
+			return loaded;
+		} finally {
+			map.unlock(subjectId);
+		}
+	}
+
+    /**
+     * Invalidates a cache entry given the context.
+     * 
+     * @param subjectId the subject's / user's (Keycloak) ID
+     * @param resourceType the type of the resource, e.g. "DOMAIN", "PROJECT", "GLOBAL"
+     * @param resourceId the (internal) database ID of the resource (or '0' for GLOBAL)
+     */
+    public void invalidateContext(String subjectId, String resourceType, Integer resourceId) {
+    	// Get the cache instance
+    	IMap<String, Set<String>> map = hazelcast.getMap(MAP_ACTIONS_BY_CONTEXT);
+        
+    	// Remove from cache
+    	map.delete(contextKey(subjectId, resourceType, resourceId));
+    }
+
+    /**
+     * Invalidates a cache entry for effective permissions given the subject.
+     * 
+     * @param subjectId the subject's / user's (Keycloak) ID
+     */
+    public void invalidateSubject(String subjectId) {
+    	// Get the cache instance
+    	IMap<String, List<String>> map = hazelcast.getMap(MAP_EFFECTIVE_PERMISSIONS_BY_SUBJECT);
+
+    	// Remove from cache
+    	map.delete(subjectId);
+    }
+
+    /**
+     * Invalidates all cache entries for all caches.
+     * Useful for when all permissions get removed.
+     */
+    public void clearAllPermissionCaches() {
+    	hazelcast.getMap(MAP_ACTIONS_BY_CONTEXT).clear();
+    	hazelcast.getMap(MAP_EFFECTIVE_PERMISSIONS_BY_SUBJECT).clear();
     }
 }

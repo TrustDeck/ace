@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2024-2025 Armin Müller and contributors
+ * Copyright 2024-2026 Armin Müller and contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,8 +94,7 @@ public class AuditAnnotationAspect {
                 }
             }
         } catch (Throwable e) {
-        	log.debug("Audit trail information could not be stored: " + e.getClass().getSimpleName());
-            log.debug("", e);
+        	log.debug("Audit trail information could not be stored: ", e.getClass().getSimpleName(), e);
             
             // Throw an exception to terminate the transaction that surrounds the audit annotation processing.
             throw new AuditTrailException();

@@ -12,6 +12,7 @@ import org.trustdeck.jooq.generated.tables.Auditevent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
+import org.trustdeck.jooq.generated.tables.PermissionGrant;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.ProjectImage;
@@ -49,6 +50,11 @@ public class Tables {
      * The table <code>public.entity_type</code>.
      */
     public static final EntityType ENTITY_TYPE = EntityType.ENTITY_TYPE;
+
+    /**
+     * The table <code>public.permission_grant</code>.
+     */
+    public static final PermissionGrant PERMISSION_GRANT = PermissionGrant.PERMISSION_GRANT;
 
     /**
      * The table <code>public.pgp_armor_headers</code>.
