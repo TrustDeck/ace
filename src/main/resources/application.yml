@@ -37,17 +37,11 @@ spring:
           # Server-uri without /auth since keycloak 17
           principal-attribute: preferred_username
           server-uri: ${KEYCLOAK_SERVER_URI}
+          realm: ${KEYCLOAK_REALM_NAME}
           truststore: ${TRUSTSTORE_PATH}
           truststore-password: ${TRUSTSTORE_PASSWORD}
           client-id: ${KEYCLOAK_CLIENT_ID}
-          # Client-secret is only used in the tests
           client-secret: ${KEYCLOAK_CLIENT_SECRET}
-          realm: ${KEYCLOAK_REALM_NAME}
-          admin-username: ${KEYCLOAK_ADMIN_USER}
-          admin-password: ${KEYCLOAK_ADMIN_PASSWORD}
-          role-group-claim-name: groups
-          domain-role-group-context-name: Domain
-          project-role-group-context-name: Project
           # Custom section ends
           jws-algorithm: RSA256
           issuer-uri: ${KEYCLOAK_HOSTNAME}/realms/${spring.security.oauth2.resourceserver.jwt.realm}
@@ -82,54 +76,51 @@ app:
   roles:
     # Name of all possible rights -- used for rights and roles management
     ACE:
-      - domain-create
-      - domain-create-complete
-      - domain-delete
-      - domain-list-all
-      - domain-read
-      - domain-read-salt
-      - domain-read-subtree
-      - domain-update
-      - domain-update-complete
-      - domain-update-salt
-      - record-create
-      - record-create-batch
-      - record-delete
-      - record-delete-batch
-      - record-read
-      - record-read-batch
-      - record-update
-      - record-update-complete
-      - record-update-batch
-      - link-pseudonyms
+      - domain:delete
+      - domain:read
+      - domain:read-salt
+      - domain:read-subtree
+      - domain:update
+      - domain:update-complete
+      - domain:update-salt
+      - pseudonym:create
+      - pseudonym:create-batch
+      - pseudonym:delete
+      - pseudonym:delete-batch
+      - pseudonym:read
+      - pseudonym:read-batch
+      - pseudonym:update
+      - pseudonym:update-complete
+      - pseudonym:update-batch
+      - pseudonym:link
       - complete-view
-      - permission-manager
     KING:
-      - project-create
-      - project-read
-      - project-read-all
-      - project-update
-      - project-delete
-      - project-image-create
-      - project-image-read
-      - project-image-update
-      - project-image-delete
-      - base-entity-type-create
-      - base-entity-type-read
-      - project-entity-type-create
-      - project-entity-type-read
-      - project-entity-type-update
-      - project-entity-type-delete
-      - project-entity-type-search
-      - project-entity-instance-create
-      - project-entity-instance-read
-      - project-entity-instance-update
-      - project-entity-instance-delete
-      - project-entity-instance-search
-      - project-entity-instance-record-linkage
-      #- permission-manager
-    administrative:
-      # Roles that are needed to manage other roles and rights
-      - delete-roles
-      - delete-table
-      - read-table-storage
+      - project:read
+      - project:update
+      - project:delete
+      - image:create
+      - image:read
+      - image:update
+      - image:delete
+      - type:create
+      - type:read
+      - type:update
+      - type:delete
+      - type:search
+      - instance:create
+      - instance:read
+      - instance:update
+      - instance:delete
+      - instance:search
+      - instance:record-linkage
+    global:
+      - domain:create
+      - domain:create-complete
+      - domain:list-all
+      - project:create
+      - project:list-all
+      - base-type:create
+      - base-type:read
+      - roles:delete
+      - table:delete
+      - table:read-storage

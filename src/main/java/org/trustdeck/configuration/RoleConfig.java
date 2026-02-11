@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2024-2025 Armin Müller and Eric Wündisch
+ * Copyright 2024-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,19 +37,19 @@ import java.util.Map;
  * app:
  *   roles:
  *     ACE:
- *       - domain-create
- *       - domain-read
+ *       - domain:read
+ *       - domain:update
  *       ...
  *     KING:
- *       - project-create
- *       - project-read
+ *       - project:read
+ *       - project:delete
  *       ...
- *     administrative:
- *       - permission-manager
- *       - delete-roles
+ *     global:
+ *       - domain:create
+ *       - project:create
  * </pre>
  *
- * @author Eric Wündisch and Armin Müller
+ * @author Armin Müller and Eric Wündisch
  */
 @Data
 @Configuration
@@ -57,14 +57,14 @@ import java.util.Map;
 public class RoleConfig {
 
     /**
-     * List of operations defined for the application under `app.roles` in the yml-file.
+     * List of actions defined for the application under `app.roles` in the yml-file.
      * It represents the names of various rights and roles (e.g., create, read, update, delete) that the application
-     * will use to define roles and permissions in the Keycloak server.
+     * will use to define roles and permissions.
      */
     private Map<String, List<String>> roles;
     
     /** The key to extract the administrative roles from the yml. */
-    public static final String ADMINISTRATIVE_ROLES_GROUP_KEY = "administrative";
+    public static final String GLOBAL_ROLES_GROUP_KEY = "global";
     
     /** The key to extract the ACE-specific roles from the yml. */
     public static final String ACE_ROLES_GROUP_KEY = "ACE";
@@ -102,16 +102,16 @@ public class RoleConfig {
     }
     
     /**
-     * Retrieves the roles for for KING.
+     * Retrieves the roles that are neither ACE- nor KING-specific but global.
      * 
      * @return a list of roles found
      */
-    public List<String> getAdministrativeRoles() {
-        return getRoleSublist(ADMINISTRATIVE_ROLES_GROUP_KEY);
+    public List<String> getGlobalRoles() {
+        return getRoleSublist(GLOBAL_ROLES_GROUP_KEY);
     }
     
     /**
-     * Returns a list of all defined roles including all administrative roles.
+     * Returns a list of all defined roles including all global roles.
      * 
      * @return a list of all roles defined in the application.yml
      */
@@ -119,7 +119,7 @@ public class RoleConfig {
     	List<String> allRoles = new ArrayList<>();
     	allRoles.addAll(getACERoles());
     	allRoles.addAll(getKINGRoles());
-    	allRoles.addAll(getAdministrativeRoles());
+    	allRoles.addAll(getGlobalRoles());
     	
     	return allRoles;
     }
