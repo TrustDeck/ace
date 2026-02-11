@@ -23,8 +23,6 @@ import com.hazelcast.config.EvictionPolicy;
 import com.hazelcast.config.InMemoryFormat;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.config.MaxSizePolicy;
-import com.hazelcast.config.NearCacheConfig;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -41,33 +39,27 @@ public class CachingConfig {
 	 * This method is used to initialize the hazelcast cache configuration object.
 	 * 
 	 * @return a configuration object to use for initializing a hazelcast instance
-	 */
+	 */    
     @Bean
     public Config hazelcastConfig() {
         Config config = new Config();
+        config.setInstanceName("trustdeck-hazelcast");
 
-        String name = "group-path-cache";
+        EvictionConfig eviction = new EvictionConfig()
+                .setMaxSizePolicy(MaxSizePolicy.FREE_HEAP_SIZE)
+                .setEvictionPolicy(EvictionPolicy.LFU);
 
-        EvictionConfig evictionConfig = new EvictionConfig()
-        		.setMaxSizePolicy(MaxSizePolicy.FREE_HEAP_SIZE)
-        		.setEvictionPolicy(EvictionPolicy.LFU);
-
-        NearCacheConfig nearCacheConfig = new NearCacheConfig()
+        config.addMapConfig(new MapConfig()
+                .setName("permission-actions-by-context")
                 .setInMemoryFormat(InMemoryFormat.BINARY)
-                .setSerializeKeys(true)
-                .setInvalidateOnChange(false)
-                .setTimeToLiveSeconds(3600)
-                .setEvictionConfig(evictionConfig)
-                .setLocalUpdatePolicy(NearCacheConfig.LocalUpdatePolicy.CACHE_ON_UPDATE);
+                .setEvictionConfig(eviction)
+                .setTimeToLiveSeconds(15 * 60));
 
-        config.setInstanceName("hazelcast-instance")
-                .addMapConfig(new MapConfig()
-                        .setName(name)
-                        .setEvictionConfig(evictionConfig)
-                        .setNearCacheConfig(nearCacheConfig));
-
-        // Minimal value to remove the warning which creates a minimal cluster on a single node
-        config.getCPSubsystemConfig().setCPMemberCount(3).setGroupSize(3);
+        config.addMapConfig(new MapConfig()
+                .setName("effective-permissions-by-subject")
+                .setInMemoryFormat(InMemoryFormat.BINARY)
+                .setEvictionConfig(eviction)
+                .setTimeToLiveSeconds(15 * 60));
 
         return config;
     }
