@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2025 Armin Müller and Eric Wündisch
+ * Copyright 2025-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ public class EntityTypeRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when creation failed</li>
      */
 	@PostMapping("/entities/base-types")
-	@PreAuthorize("hasRole('base-entity-type-create')")
+	@PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'base-type:create')")
 	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> createBaseEntityType(@RequestBody EntityTypeDTO entityTypeDTO,
 											  	  @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -202,7 +202,7 @@ public class EntityTypeRESTController {
      *         is invalid/not a valid extension of the base type</li>
 	 */
 	@PostMapping("/projects/{projectAbbreviation}/entities/config")
-	@PreAuthorize("hasRole('project-entity-type-create')")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'type:create')")
 	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> createProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												 	 @RequestBody EntityTypeDTO entityTypeDTO,
@@ -325,7 +325,7 @@ public class EntityTypeRESTController {
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
 	 */
 	@GetMapping("/entities/base-types/{entityTypeName}")
-	@PreAuthorize("hasRole('base-entity-type-read')")
+	@PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'base-type:read')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> getBaseEntityType(@PathVariable("entityTypeName") String entityTypeName,
 											   @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -361,7 +361,7 @@ public class EntityTypeRESTController {
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
 	 */
 	@GetMapping("/projects/{projectAbbreviation}/entities/config/{entityTypeName}")
-	@PreAuthorize("hasRole('project-entity-type-read')")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'type:read')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> getProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
 											  	  @PathVariable("entityTypeName") String entityTypeName,
@@ -416,7 +416,7 @@ public class EntityTypeRESTController {
      *         updated type definition is invalid/not a valid extension of the base type</li>
 	 */
 	@PutMapping("/projects/{projectAbbreviation}/entities/config/{entityTypeName}")
-	@PreAuthorize("hasRole('project-entity-type-update')")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'type:update')")
 	@Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> updateEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
 											  @PathVariable("entityTypeName") String oldEntityTypeName,
@@ -563,7 +563,7 @@ public class EntityTypeRESTController {
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the deletion could not be performed</li>
 	 */
 	@DeleteMapping("/projects/{projectAbbreviation}/entities/config/{entityTypeName}")
-	@PreAuthorize("hasRole('project-entity-type-delete')")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'type:delete')")
 	@Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> deleteProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												 	 @PathVariable("entityTypeName") String entityTypeName,
@@ -614,7 +614,7 @@ public class EntityTypeRESTController {
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
 	 */
 	@GetMapping("/projects/{projectAbbreviation}/entities")
-	@PreAuthorize("hasRole('project-entity-type-search')")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'type:search')")
 	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> searchProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
 													 @RequestParam(name = "query", required = true) String query,

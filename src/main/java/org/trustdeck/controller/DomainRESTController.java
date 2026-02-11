@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2022-2025 Armin Müller and Eric Wündisch
+ * Copyright 2022-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -156,7 +157,7 @@ public class DomainRESTController {
      * 				length is not an even number</li>
      */
     @PostMapping("/domains/complete")
-    @PreAuthorize("hasRole('domain-create-complete')")
+    @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'domain:create-complete')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> createDomainComplete(@RequestBody DomainDTO domainDTO,
                                                   @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -467,7 +468,7 @@ public class DomainRESTController {
         if (result.equals(DomainDBAccessService.INSERTION_SUCCESS)) {
             // Return a 201-CREATED status and the location to the domain inside the response header.
         	DomainDTO createdDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
-            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            if (!authorizationService.hasDomainPermission(createdDomDTO.getName(), "complete-view")) {
             	createdDomDTO = createdDomDTO.toReducedStandardView();
             }
             
@@ -476,7 +477,7 @@ public class DomainRESTController {
         } else if (result.equals(DomainDBAccessService.INSERTION_DUPLICATE)) {
             // Nothing added since the entry is a duplicate. Return an 200-OK status.
         	DomainDTO existingDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
-            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            if (!authorizationService.hasDomainPermission(existingDomDTO.getName(), "complete-view")) {
             	existingDomDTO = existingDomDTO.toReducedStandardView();
             }
             
@@ -508,7 +509,7 @@ public class DomainRESTController {
      * 				of the domain failed or when the DTO was invalid</li>
      */
     @PostMapping("/domains")
-    @PreAuthorize("hasRole('domain-create')")
+    @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'domain:create')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> createDomain(@RequestBody DomainDTO domainDTO,
                                           @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -727,7 +728,7 @@ public class DomainRESTController {
         if (result.equals(DomainDBAccessService.INSERTION_SUCCESS)) {
             // Return a 201-CREATED status and the location to the domain inside the response header.
             DomainDTO createdDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
-            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            if (!authorizationService.hasDomainPermission(domain.getName(), "complete-view")) {
             	createdDomDTO = createdDomDTO.toReducedStandardView();
             }
             
@@ -736,7 +737,7 @@ public class DomainRESTController {
         } else if (result.equals(DomainDBAccessService.INSERTION_DUPLICATE)) {
             // Nothing added since the entry is a duplicate. Return an 200-OK status.
         	DomainDTO existingDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
-            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            if (!authorizationService.hasDomainPermission(domain.getName(), "complete-view")) {
             	existingDomDTO = existingDomDTO.toReducedStandardView();
             }
             
@@ -763,7 +764,7 @@ public class DomainRESTController {
      * 				could not be deleted</li>
      */
     @DeleteMapping("/domains")
-    @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-delete')")
+    @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'domain:delete')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> deleteDomain(@RequestParam(name = "name", required = true) String domainName,
                                           @RequestParam(name = "recursive", required = false) Boolean performRecursiveChanges,
@@ -811,14 +812,14 @@ public class DomainRESTController {
      * 				wasn't found</li>
      */
     @GetMapping("/domains/{domainName}/{attribute}")
-    @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')")
+    @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'domain:read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getDomainAttribute(@PathVariable("domainName") String domainName,
     											@PathVariable("attribute") String attributeName,
     		                                    @RequestHeader(name = "accept", required = false) String responseContentType,
     		                                    HttpServletRequest request) {
     	// Check if the user has the rights to access the requested attribute
-    	boolean canSeeComplete = authorizationService.currentRequestHasRole("complete-view");
+    	boolean canSeeComplete = authorizationService.hasGlobalPermission("complete-view");
     	
     	if (!"name, prefix, validfrom, validto, multiplepsnallowed, description".contains(attributeName.trim().toLowerCase()) && !canSeeComplete) {
     		log.debug("The user is trying to read protected attributes without the necessary permission.");
@@ -957,7 +958,7 @@ public class DomainRESTController {
      * 				the given name</li>
      */
     @GetMapping("/domains")
-    @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')")
+    @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'domain:read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getDomain(@RequestParam(name = "name", required = true) String domainName,
                                        @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -970,7 +971,7 @@ public class DomainRESTController {
             DomainDTO domainDTO = new DomainDTO().assignPojoValues(domain);
 
             // Determine whether or not a reduced standard view or a complete view is requested
-            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            if (!authorizationService.hasDomainPermission(domain.getName(), "complete-view")) {
                 domainDTO = domainDTO.toReducedStandardView();
             }
 
@@ -995,7 +996,7 @@ public class DomainRESTController {
      * 		   could not be found</li>
      */
     @GetMapping("/domains/{domainName}/subtree")
-    @PreAuthorize("hasRole('domain-read-subtree')")
+    @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'domain:read-subtree')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> getDomainSubtree(@PathVariable("domainName") String domainName,
     										  @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -1008,7 +1009,7 @@ public class DomainRESTController {
         }
 
         // Determine whether or not a reduced standard view or a complete view is requested
-        boolean canSeeComplete = authorizationService.currentRequestHasRole("complete-view");
+        boolean canSeeComplete = authorizationService.hasGlobalPermission("complete-view");
 
         // Create a list of domains
         for (int i = 0; i < domains.size(); i++) {
@@ -1038,12 +1039,12 @@ public class DomainRESTController {
      * 			trees</b> when the query was successful</li>
      */
     @GetMapping(value = "/domains/hierarchy")
-    @PreAuthorize("hasRole('domain-list-all')")
+    @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'domain:list-all')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> listDomainHierarchy(@RequestHeader(name = "accept", required = false) String responseContentType,
                                                  HttpServletRequest request) {
         // Determine whether or not a reduced standard view or a complete view is requested
-        boolean canSeeComplete = authorizationService.currentRequestHasRole("complete-view");
+        boolean canSeeComplete = authorizationService.hasGlobalPermission("complete-view");
         
         List<DomainDTO> domains = domainDBAccessService.listDomains(request);
         
@@ -1064,10 +1065,12 @@ public class DomainRESTController {
         if (trees == null) {
         	// Fallback if building fails --> use list-view
             log.warn("Buidling the domain subtree failed.");
+            domains.sort(Comparator.comparing(DomainDTO::getName));
             return responseService.ok(responseContentType, domains);
         }
 
         log.trace("Succesfully retrieved the trees for the stored domains.");
+        trees.sort(Comparator.comparing(d -> d.getDomain().getName()));
         return responseService.ok(responseContentType, trees);
     }
 
@@ -1088,13 +1091,13 @@ public class DomainRESTController {
      * 				failed</li>
      */
     @PutMapping("/domains/complete")
-    @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update-complete')")
+    @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #oldDomainName, 'domain:update-complete')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> updateDomainComplete(@RequestParam(name = "name", required = true) String oldDomainName,
-                                                       @RequestParam(name = "recursive", required = true) Boolean performRecursiveChanges,
-                                                       @RequestBody DomainDTO domainDTO,
-                                                       @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                       HttpServletRequest request) {
+                                                  @RequestParam(name = "recursive", required = true) Boolean performRecursiveChanges,
+                                                  @RequestBody DomainDTO domainDTO,
+                                                  @RequestHeader(name = "accept", required = false) String responseContentType,
+                                                  HttpServletRequest request) {
         String newDomainName = domainDTO.getName();
         String prefix = domainDTO.getPrefix();
         Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
@@ -1116,7 +1119,7 @@ public class DomainRESTController {
         Integer saltLength = domainDTO.getSaltLength();
         String description = domainDTO.getDescription();
         
-        if (domainDBAccessService.getAmountOfRecordsInDomain(oldDomainName, null) > 0) {
+        if (domainDBAccessService.getAmountOfPseudonymsInDomain(oldDomainName, null) > 0) {
         	log.warn("Changes to the domain configuration can introduce inconsistencies when creating further pseudonyms.");
         }
 
@@ -1236,7 +1239,7 @@ public class DomainRESTController {
         if (updatedDomain != null) {
             // Success. Return a 200-OK status.
         	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
-            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            if (!authorizationService.hasDomainPermission(updatedDomain.getName(), "complete-view")) {
             	updatedDomDTO = updatedDomDTO.toReducedStandardView();
             }
             
@@ -1265,7 +1268,7 @@ public class DomainRESTController {
      * 				failed</li>
      */
     @PutMapping("/domains")
-    @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #oldDomainName, 'domain-update')")
+    @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #oldDomainName, 'domain:update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> updateDomain(@RequestParam(name = "name", required = true) String oldDomainName,
                                           @RequestBody DomainDTO domainDTO,
@@ -1336,7 +1339,7 @@ public class DomainRESTController {
         updated.setDescription(description);
 
         // Allow the following changes only when the domain does not contain any records yet
-        if (domainDBAccessService.getAmountOfRecordsInDomain(old.getName(), null) == 0) {
+        if (domainDBAccessService.getAmountOfPseudonymsInDomain(old.getName(), null) == 0) {
             updated.setPrefix((prefix != null && !prefix.trim().equals("")) ? prefix.trim() : null);
             updated.setAlgorithm((algorithm != null && !algorithm.trim().equals("")) ? algorithm : null);
             updated.setAlgorithminherited((algorithm != null && !algorithm.trim().equals("")) ? false : null);
@@ -1354,7 +1357,7 @@ public class DomainRESTController {
         if (updatedDomain != null) {
             // Success. Return a 200-OK status.
         	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
-            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            if (!authorizationService.hasDomainPermission(updatedDomDTO.getName(), "complete-view")) {
             	updatedDomDTO = updatedDomDTO.toReducedStandardView();
             }
             
@@ -1384,7 +1387,7 @@ public class DomainRESTController {
      * 				value failed</li>
      */
     @PutMapping("/domains/{domainName}/salt")
-    @PreAuthorize("@auth.hasDomainRoleRelationship(#root, #domainName, 'domain-update-salt')")
+    @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'domain:update-salt')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> updateSalt(@PathVariable("domainName") String domainName,
                                         @RequestParam(name = "salt", required = true) String newSalt,
@@ -1418,7 +1421,7 @@ public class DomainRESTController {
         if (updatedDomain != null) {
             // Success. Return a 200-OK status.
         	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
-            if (!authorizationService.currentRequestHasRole("complete-view")) {
+            if (!authorizationService.hasDomainPermission(updatedDomDTO.getName(), "complete-view")) {
             	updatedDomDTO = updatedDomDTO.toReducedStandardView();
             }
             

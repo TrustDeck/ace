@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2024 Armin Müller and contributors
+ * Copyright 2024-2026 Armin Müller and contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 package org.trustdeck.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.NotFoundException;
 
 import org.jooq.DSLContext;
@@ -38,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
-import org.trustdeck.service.DomainOIDCService;
+import org.trustdeck.service.PermissionDBService;
 import org.trustdeck.service.ResponseService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -62,9 +63,9 @@ public class DatabaseMaintenanceRESTController {
     @Autowired
     private ResponseService responseService;
 
-    /** Handles rights and roles for domains. */
+    /** Enables access to the permission grants database methods. */
     @Autowired
-    private DomainOIDCService domainOidcService;
+    private PermissionDBService permissionDBService;
     
     /**
      * Endpoint to retrieve the size of a database table
@@ -73,7 +74,7 @@ public class DatabaseMaintenanceRESTController {
      * @return<li>a <b>200-OK</b> status and the table size on success</li>
      */
     @GetMapping("/tables/{table}/storage")
-    @PreAuthorize("@auth.currentRequestHasRole('read-table-storage')")
+    @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'table:read-storage')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> monitorDatabaseMetrics(@PathVariable("table") String tableName) {
     	TableMetrics metrics = getTableMetrics(tableName);
@@ -99,7 +100,7 @@ public class DatabaseMaintenanceRESTController {
      * @return <li>a <b>200-OK</b> status</li>
      */
     @DeleteMapping("/tables/{tableName}")
-    @PreAuthorize("@auth.currentRequestHasRole('delete-table')")
+    @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'table:delete')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> clearTable(@PathVariable("tableName") String tableName) {
     	try {
@@ -121,15 +122,17 @@ public class DatabaseMaintenanceRESTController {
      * Access to this method should be highly restricted.
      * 
      * @param domainName (required) the name of the domain for which the user wants to remove the roles
+     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status</li>
      */
     @DeleteMapping("/roles/{domainName}")
-    @PreAuthorize("@auth.currentRequestHasRole('delete-roles')")
+    @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'roles:delete')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> deleteDomainRightsAndRoles(@PathVariable("domainName") String domainName) {
+    public ResponseEntity<?> deleteDomainRightsAndRoles(@PathVariable("domainName") String domainName,
+    													HttpServletRequest request) {
 		try {
 		    // Remove all roles from table
-	        domainOidcService.leaveAndDeleteDomainGroupsAndRoles(domainName);
+			permissionDBService.removeDomainPermissionsForSubject(request, domainName);
 		} catch (NotFoundException e) {
 		    // Domain does not exist. Nothing to do.
 		} catch (Exception f) {
@@ -185,19 +188,9 @@ public class DatabaseMaintenanceRESTController {
 
     /**
      * Helper class that encapsulates the size and the amount of records from a table into one object.
+     * 
+     * @param size the of the table
+     * @param recordCount the number of records stored in a table
      */
-    private static class TableMetrics {
-		long size;
-		long recordCount;
-		
-		/**
-		 * Basic constructor.
-		 * @param size the size of a table
-		 * @param recordCount the number of records stored in a table
-		 */
-		TableMetrics(long size, long recordCount) {
-			this.size = size;
-			this.recordCount = recordCount;
-		}
-    }
+    private record TableMetrics(long size, long recordCount) {};
 }

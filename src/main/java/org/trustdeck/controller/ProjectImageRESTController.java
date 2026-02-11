@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2025 Armin Müller and Eric Wündisch
+ * Copyright 2025-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class ProjectImageRESTController {
      *         processed or creation failed</li>
 	 */
 	@PostMapping(path = "/projects/{projectAbbreviation}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	@PreAuthorize("hasRole('project-image-create')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'image:create')")
     @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
     public ResponseEntity<?> createProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
 												@RequestPart("image") MultipartFile image,
@@ -183,7 +183,7 @@ public class ProjectImageRESTController {
      *         <li>a <b>410-GONE</b> status when the project has already ended</li>
 	 */
 	@GetMapping(path = "/projects/{projectAbbreviation}/image")
-	@PreAuthorize("hasRole('project-image-read')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'image:read')")
     @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> getProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
 											 @RequestHeader(name = "accept", required = false) String responseContentType,
@@ -239,7 +239,7 @@ public class ProjectImageRESTController {
      *         processed or the update failed</li>
 	 */
 	@PutMapping(path = "/projects/{projectAbbreviation}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	@PreAuthorize("hasRole('project-image-update')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'image:update')")
     @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> updateProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
 												@RequestPart("image") MultipartFile image,
@@ -323,7 +323,7 @@ public class ProjectImageRESTController {
      *         rolled back</li>
 	 */
 	@DeleteMapping(path = "/projects/{projectAbbreviation}/image")
-	@PreAuthorize("hasRole('project-image-delete')") //TODO: maybe analogous to  @auth.hasDomainRoleRelationship(#root, #domainName, 'domain-read')
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'image:delete')")
     @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
 	public ResponseEntity<?> deleteProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
 												@RequestHeader(name = "accept", required = false) String responseContentType,
@@ -355,7 +355,7 @@ public class ProjectImageRESTController {
 		
 		// Evaluate deletion result
 		if (deleted) {
-			log.debug("Successfully deleted the project image.");
+			log.info("Successfully deleted the project image.");
 			return responseService.noContent(responseContentType);
 		} else {
 			log.debug("Project image deletion failed.");
