@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2025 Armin Müller and Eric Wündisch
+ * Copyright 2026 Armin Müller and Eric Wündisch
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,28 +21,27 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * This class represents an exception when handling OIDC 
- * rights and roles while handling a project went wrong.
+ * This class represents an exception when handling permissions.
  * 
  * @author Armin Müller
  */
-public class ProjectOIDCException extends RuntimeException {
+public class PermissionManagementException extends RuntimeException {
 
 	/** Exception UID. */
-	private static final long serialVersionUID = 1659840914095638965L;
-	
-	/** The name of the project where the error arose. */
+	private static final long serialVersionUID = 1560357341099711388L;
+
+	/** The name or abbreviation of the resource (e.g. a domain or a project) where the error arose. */
 	@Getter
 	@Setter
-	private String projectName;
+	private String causingResource;
 
 	/**
-	 * Constructor that also defines the name of the project causing the exception.
-	 * @param projectName the name of the exception-causing domain
+	 * Constructor that also defines the name of the domain causing the exception.
+	 * @param domainName the name of the exception-causing domain
 	 */
-	public ProjectOIDCException(String projectName) {
-		super("There was an error while handling OIDC rights and roles for the project.");
+	public PermissionManagementException(String causingResource) {
+		super("There was an error while handling permissions for resource \"" + causingResource + "\".");
 		
-		this.projectName = projectName;
+		this.causingResource = causingResource;
 	}
 }
