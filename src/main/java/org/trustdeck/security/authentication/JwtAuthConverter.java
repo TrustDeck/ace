@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2023-2024 Armin Müller and Eric Wündisch
+ * Copyright 2023-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.security.authentication.configuration;
+package org.trustdeck.security.authentication;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.stereotype.Component;
+import org.trustdeck.configuration.JwtProperties;
 
 import lombok.extern.slf4j.Slf4j;
 
