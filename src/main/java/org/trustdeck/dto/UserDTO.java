@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2024-2025 Armin Müller and Eric Wündisch
+ * Copyright 2024-2026 Armin Müller and Eric Wündisch
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.context.annotation.Scope;
 
@@ -39,7 +41,6 @@ import org.springframework.context.annotation.Scope;
 public class UserDTO implements IObjectDTO<UserRepresentation, UserDTO> {
 
 	/** A unique identifier of the user. */
-	@JsonIgnore
 	private String userId;
 
 	/** The username of the user. */
@@ -53,6 +54,12 @@ public class UserDTO implements IObjectDTO<UserRepresentation, UserDTO> {
 
 	/** The email address of the user. */
 	private String email;
+	
+	/** Keycloak client roles assigned to the user. */
+    private List<String> keycloakRoles;
+
+    /** Permissions the user has in the service. */
+    private List<EffectivePermissionDTO> effectivePermissions;
 
 	/** The name of the federation provider associated with the user. */
 	private String federationProviderName;
@@ -104,6 +111,8 @@ public class UserDTO implements IObjectDTO<UserRepresentation, UserDTO> {
 		out += (this.getFirstName() != null) ? "firstName: " + this.getFirstName() + ", " : "";
 		out += (this.getLastName() != null) ? "lastName: " + this.getLastName() + ", " : "";
 		out += (this.getEmail() != null) ? "email: " + this.getEmail() + ", " : "";
+		out += (this.getKeycloakRoles() != null) ? "keycloakRoles: " + this.getKeycloakRoles() + ", " : "";
+		out += (this.getEffectivePermissions() != null) ? "effectivePermissions: " + this.getEffectivePermissions() + ", " : "" ;
 		out += (this.getFederationProviderName() != null) ? "federationProviderName: " + this.getFederationProviderName() + ", " : "";
 		out += (this.getFederationProviderId() != null) ? "federationProviderId: " + this.getFederationProviderId() + ", " : "";
 
