@@ -432,6 +432,28 @@ public class EntityTypeDBService {
             log.debug("Search query is empty.");
             return null;
         }
+    	
+    	// Allow wildcard-search with '*'
+    	if (query.trim().equalsIgnoreCase("*")) {
+    		// Return all entity types for this project
+    		List<EntityType> results;
+            try {
+                results = dsl.selectFrom(ENTITY_TYPE)
+	            			.where(ENTITY_TYPE.PROJECT_ID.eq(projectId))
+	            			.and(ENTITY_TYPE.IS_DEPRECATED.eq(false))
+	            			.orderBy(ENTITY_TYPE.NAME.asc(), ENTITY_TYPE.VERSION.asc())
+	                        .fetchInto(EntityType.class);
+            } catch (MappingException e) {
+                log.debug("Could not map entity type search result.", e);
+                return null;
+            } catch (DataAccessException e) {
+                log.debug("Searching entity types failed.", e);
+                return null;
+            }
+    		
+            // Return all the types
+    		return results.stream().map(row -> new EntityTypeDTO().assignPojoValues(row)).toList();
+    	}
 
         // Split query-parts on whitespaces; every part should match at least one column
         String[] parts = query.trim().split("\\s+");
