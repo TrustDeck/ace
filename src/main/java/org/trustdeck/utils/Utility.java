@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -32,6 +33,9 @@ import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
+import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class offers a variety of utilities.
@@ -48,70 +52,140 @@ public class Utility {
     /** A flexible date-time-formatter that accepts a multitude of input variants. */
     private static final DateTimeFormatter FLEXIBLE_DATE_TIME_FORMATTER = buildFormatter();
 	
+	/** Regex to match time and unit of a time-period-string. */
+	private static final Pattern DURATION_PATTERN = Pattern.compile("^\\s*([+-]?\\d+)\\s*([a-zA-Z]+)\\s*\\.?\\s*$");
+	
 	/**
-	 * This method processes the given String, computes
-	 * the encoded time and returns it in seconds.
+	 * This method processes the given validity period String, computes
+	 * the encoded time and adds it to the initial time point.
 	 * 
 	 * @param validityTime the String containing the validity time
-	 * @return the computed validity time in seconds or {@code null} if something went wrong
+	 * @return the computed end time or {@code null} if something went wrong
 	 */
-	public static Long validityTimeToSeconds(String validityTime) {
-		if (validityTime == null) {
+	public static LocalDateTime plusValidityTime(LocalDateTime initialDateTime, String validityPeriod) {
+		if (Assertion.isNullOrEmpty(validityPeriod) || initialDateTime == null) {
+			log.debug("The given initialDateTime or the validityPeriod were null/empty. Using now() instead.");
 			return null;
 		}
 		
-		String vTime = validityTime.trim().toLowerCase();
+		// Normalize the given string
+		String vTime = validityPeriod.trim().toLowerCase();
 		
-		// Search for the start index of the unit aka the first non-number character
-		int indexOfUnit = 0;
-		for (int i = 0; i < vTime.length(); i++) {
-			if ("abcdefghijklmnopqrstuvwxyz".contains(String.valueOf(vTime.charAt(i)))) {
-				indexOfUnit = i;
-				break;
-			}
-			
-			if (i == vTime.length() - 1) {
-				// There was no unit found
-				return null;
-			}
-		}
+		// Match it against the regex
+		Matcher m = DURATION_PATTERN.matcher(vTime);
+	    if (!m.matches()) {
+	    	log.debug("The given validityPeriod was not properly formatted.");
+	    	return null;
+	    }
+
+	    long time;
+	    try {
+	        time = Long.parseLong(m.group(1));
+	    } catch (NumberFormatException e) {
+	        return null;
+	    }
+
+	    String unit = m.group(2).toLowerCase();
 		
-		// Extract unit and time
-		String unit = vTime.substring(indexOfUnit);
-		long time = 0L;
-		try {
-			time = Long.parseLong(vTime.substring(0, indexOfUnit).trim());
-		} catch (NumberFormatException e) {
-			return null;
-		}
-		
-		// Transform time into seconds
-		if (unit.contains("years") || unit.contains("year") || unit.contains("y")) {
-			return time * 365 * 24 * 60 * 60L;
-		}
-		
-		if (unit.contains("weeks") || unit.contains("week") || unit.contains("w")) {
-			return time * 7 * 24 * 60 * 60L;
-		}
-		
-		if (unit.contains("days") || unit.contains("day") || unit.contains("d")) {
-			return time * 24 * 60 * 60L;
-		}
-		
-		if (unit.contains("hours") || unit.contains("hour") || unit.contains("h")) {
-			return time * 60 * 60L;
-		}
-		
-		if (unit.contains("minutes") || unit.contains("minute") || unit.contains("mins") || unit.contains("min") || unit.contains("m")) {
-			return time * 60L;
-		}
-		
-		if (unit.contains("seconds") || unit.contains("second") || unit.contains("secs") || unit.contains("sec") || unit.contains("s")) {
-			return time;
-		}
-		
-		// If this point is reached, no validity time could be recognized.
-		return null;
+	    // Add the time depending on the given unit
+	    switch (unit) {
+	        // Years
+	        case "y":
+	        case "yr":
+        	case "yrs":
+    		case "year":
+    		case "years":
+    			return safePlus(() -> initialDateTime.plusYears(time));
+
+	        // Months
+	        case "mo":
+			case "mos":
+			case "mon":
+			case "mons":
+			case "mth":
+			case "mths":
+			case "month":
+			case "months":
+	            return safePlus(() -> initialDateTime.plusMonths(time));
+
+	        // Weeks
+	        case "w":
+			case "wk":
+			case "wks":
+			case "week":
+			case "weeks":
+	            return safePlus(() -> initialDateTime.plusWeeks(time));
+
+	        // Days
+	        case "d":
+			case "day":
+			case "days":
+	            return safePlus(() -> initialDateTime.plusDays(time));
+
+	        // Hours
+	        case "h":
+			case "hr":
+			case "hrs":
+			case "hour":
+			case "hours":
+	            return safePlus(() -> initialDateTime.plusHours(time));
+
+	        // Minutes
+	        case "m":
+			case "min":
+			case "mins":
+			case "minute":
+			case "minutes":
+	            return safePlus(() -> initialDateTime.plusMinutes(time));
+
+	        // Seconds
+	        case "s":
+			case "sec":
+			case "secs":
+			case "second":
+			case "seconds":
+	            return safePlus(() -> initialDateTime.plusSeconds(time));
+
+	        // Milliseconds
+	        case "ms":
+			case "msec":
+			case "msecs":
+			case "millis":
+			case "millisecond":
+			case "milliseconds":
+	            return safePlus(() -> initialDateTime.plusNanos(1000L * time));
+
+	        // Nanoseconds
+	        case "ns":
+			case "nsec":
+			case "nsecs":
+			case "nanosec":
+			case "nanosecs":
+			case "nanosecond":
+			case "nanoseconds":
+			case "nano":
+			case "nanos":
+	            return safePlus(() -> initialDateTime.plusNanos(time));
+
+	         // If this point is reached, no validity time could be recognized
+	        default:
+	            return null;
+	    }
+	}
+	
+	/**
+	 * Helper method to safely add a time amount to a given base time.
+	 * Handles possible exceptions.
+	 * 
+	 * @param op the plusXXX() method-call to add a time period to a time point
+	 * @return the result of the addition or {@code null}, when a DateTimeException was thrown
+	 */
+	private static LocalDateTime safePlus(Supplier<LocalDateTime> op) {
+	    try {
+	        return op.get();
+	    } catch (DateTimeException ex) {
+	        return null;
+	    }
 	}
 	
 	/**
