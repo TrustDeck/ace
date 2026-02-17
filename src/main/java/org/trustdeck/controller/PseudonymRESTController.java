@@ -235,7 +235,7 @@ public class PseudonymRESTController {
             	// validity period that has not already ended (e.g. domain.start is 2 weeks ago, validityTime is 1 week 
             	// --> the calculated period would be in the past) 
             	if (pseudonymDTO.getValidTo() == null && pseudonymDTO.getValidityTime() != null 
-            			&& domain.getValidfrom().plusSeconds(Utility.validityTimeToSeconds(pseudonymDTO.getValidityTime())).isBefore(LocalDateTime.now())
+            			&& Utility.plusValidityTime(domain.getValidfrom(), pseudonymDTO.getValidityTime()).isBefore(LocalDateTime.now())
             			&& LocalDateTime.now().isBefore(domain.getValidto())) {
             		log.debug("Using the domain validFrom-date plus the given validity time would result in an expired pseudonym. Using now() for the start instead.");
             		
@@ -260,14 +260,14 @@ public class PseudonymRESTController {
                 }
             } else if (pseudonymDTO.getValidTo() == null && pseudonymDTO.getValidityTime() != null) {
                 // A validity period was given
-                Long vTime = Utility.validityTimeToSeconds(pseudonymDTO.getValidityTime());
+                String vTime = pseudonymDTO.getValidityTime();
 
                 if (domain.getEnforceenddatevalidity()) {
                     // Ensure that the given validity period ends before the end date of the domain
-                    p.setValidTo((p.getValidFrom().plusSeconds(vTime).isBefore(domain.getValidto())) ? p.getValidFrom().plusSeconds(vTime) : domain.getValidto());
-                    p.setValidToInherited(!p.getValidFrom().plusSeconds(vTime).isBefore(domain.getValidto()));
+                    p.setValidTo((Utility.plusValidityTime(p.getValidFrom(), vTime).isBefore(domain.getValidto())) ? Utility.plusValidityTime(p.getValidFrom(), vTime) : domain.getValidto());
+                    p.setValidToInherited(!Utility.plusValidityTime(p.getValidFrom(), vTime).isBefore(domain.getValidto()));
                 } else {
-                    p.setValidTo(p.getValidFrom().plusSeconds(vTime));
+                    p.setValidTo(Utility.plusValidityTime(p.getValidFrom(), vTime));
                     p.setValidToInherited(false);
                 }
             } else {
@@ -380,7 +380,7 @@ public class PseudonymRESTController {
         String psn = pseudonymDTO.getPsn();
         Timestamp validFrom = pseudonymDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymDTO.getValidFrom()) : null;
         Timestamp validTo = pseudonymDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymDTO.getValidTo()) : null;
-        Long validityTime = Utility.validityTimeToSeconds(pseudonymDTO.getValidityTime());
+        String validityTime = pseudonymDTO.getValidityTime();
 
         if (Assertion.assertNullAll(identifier, idType, psn, validFrom, validTo, validityTime, domainName)) {
             // An empty object was passed, so there is nothing to create.
@@ -423,7 +423,7 @@ public class PseudonymRESTController {
         	// If no start and end date is given, ensure that the used start date plus a given validityTime results in a 
         	// validity period that has not already ended (e.g. domain.start is 2 weeks ago, validityTime is 1 week 
         	// --> the calculated period would be in the past) 
-        	if (validTo == null && validityTime != null && domain.getValidfrom().plusSeconds(validityTime).isBefore(LocalDateTime.now())
+        	if (validTo == null && validityTime != null && Utility.plusValidityTime(domain.getValidfrom(), validityTime).isBefore(LocalDateTime.now())
         			&& LocalDateTime.now().isBefore(domain.getValidto())) {
         		log.debug("Using the domain validFrom-date plus the given validity time would result in an expired pseudonym. Using now() for the start instead.");
         		
@@ -450,10 +450,10 @@ public class PseudonymRESTController {
             // A validity period was given
             if (domain.getEnforceenddatevalidity()) {
                 // Ensure that the given validity period ends before the end date of the domain
-                p.setValidTo((p.getValidFrom().plusSeconds(validityTime).isBefore(domain.getValidto())) ? p.getValidFrom().plusSeconds(validityTime) : domain.getValidto());
-                p.setValidToInherited(!p.getValidFrom().plusSeconds(validityTime).isBefore(domain.getValidto()));
+                p.setValidTo((Utility.plusValidityTime(p.getValidFrom(), validityTime).isBefore(domain.getValidto())) ? Utility.plusValidityTime(p.getValidFrom(), validityTime) : domain.getValidto());
+                p.setValidToInherited(!Utility.plusValidityTime(p.getValidFrom(), validityTime).isBefore(domain.getValidto()));
             } else {
-                p.setValidTo(p.getValidFrom().plusSeconds(validityTime));
+                p.setValidTo(Utility.plusValidityTime(p.getValidFrom(), validityTime));
                 p.setValidToInherited(false);
             }
         } else {
@@ -1077,7 +1077,7 @@ public class PseudonymRESTController {
         String newPsn = pseudonymUpdateDTO.getNewPsn();
         Timestamp validFrom = pseudonymUpdateDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymUpdateDTO.getValidFrom()) : null;
         Timestamp validTo = pseudonymUpdateDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymUpdateDTO.getValidTo()) : null;
-        Long validityTime = Utility.validityTimeToSeconds(pseudonymUpdateDTO.getValidityTime());
+        String validityTime = pseudonymUpdateDTO.getValidityTime();
         String newDomainName = pseudonymUpdateDTO.getNewDomainName();
         regeneratePseudonym = regeneratePseudonym == null ? DEFAULT_REGENERATE_PSEUDONYM : regeneratePseudonym;
         
@@ -1199,10 +1199,10 @@ public class PseudonymRESTController {
             // A validity period was given
             if (d.getEnforceenddatevalidity()) {
                 // Ensure that the given validity period ends before the end date of the domain
-                updateDTO.setValidTo(updateDTO.getValidFrom().plusSeconds(validityTime).isBefore(d.getValidto()) ? updateDTO.getValidFrom().plusSeconds(validityTime) : d.getValidto());
-                updateDTO.setValidToInherited(!updateDTO.getValidFrom().plusSeconds(validityTime).isBefore(d.getValidto()));
+                updateDTO.setValidTo(Utility.plusValidityTime(updateDTO.getValidFrom(), validityTime).isBefore(d.getValidto()) ? Utility.plusValidityTime(updateDTO.getValidFrom(), validityTime) : d.getValidto());
+                updateDTO.setValidToInherited(!Utility.plusValidityTime(updateDTO.getValidFrom(), validityTime).isBefore(d.getValidto()));
             } else {
-                updateDTO.setValidTo(updateDTO.getValidFrom().plusSeconds(validityTime));
+                updateDTO.setValidTo(Utility.plusValidityTime(updateDTO.getValidFrom(), validityTime));
                 updateDTO.setValidToInherited(false);
             }
         }
@@ -1253,7 +1253,7 @@ public class PseudonymRESTController {
                                           	 HttpServletRequest request) {
         Timestamp validFrom = pseudonymDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymDTO.getValidFrom()) : null;
         Timestamp validTo = pseudonymDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymDTO.getValidTo()) : null;
-        Long validityTime = Utility.validityTimeToSeconds(pseudonymDTO.getValidityTime());
+        String validityTime = pseudonymDTO.getValidityTime();
 
         if (Assertion.assertNullAll(validFrom, validTo, validityTime)) {
             // An empty object was passed, so there is nothing to update.
@@ -1319,7 +1319,7 @@ public class PseudonymRESTController {
         if (validTo != null) {
             // End date of validity period is given
         	
-        	if (validityTime != null && validityTime != 0) {
+        	if (validityTime != null && validityTime != null) {
         		log.debug("A validity time period was given in addition to an end date. The end date is preferred so that the given validity time is ignored.");
         	}
         	
@@ -1335,10 +1335,10 @@ public class PseudonymRESTController {
             // A validity period was given
             if (d.getEnforceenddatevalidity()) {
                 // Ensure that the given validity period ends before the end date of the domain
-                updateDTO.setValidTo(updateDTO.getValidFrom().plusSeconds(validityTime).isBefore(d.getValidto()) ? updateDTO.getValidFrom().plusSeconds(validityTime) : d.getValidto());
-                updateDTO.setValidToInherited(!updateDTO.getValidFrom().plusSeconds(validityTime).isBefore(d.getValidto()));
+                updateDTO.setValidTo(Utility.plusValidityTime(updateDTO.getValidFrom(), validityTime).isBefore(d.getValidto()) ? Utility.plusValidityTime(updateDTO.getValidFrom(), validityTime) : d.getValidto());
+                updateDTO.setValidToInherited(!Utility.plusValidityTime(updateDTO.getValidFrom(), validityTime).isBefore(d.getValidto()));
             } else {
-                updateDTO.setValidTo(updateDTO.getValidFrom().plusSeconds(validityTime));
+                updateDTO.setValidTo(Utility.plusValidityTime(updateDTO.getValidFrom(), validityTime));
                 updateDTO.setValidToInherited(false);
             }
         }

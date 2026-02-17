@@ -113,7 +113,7 @@ public class DomainRESTController {
     private static final int DEFAULT_SALT_LENGTH = 32;
 
     /** The default validity time in seconds. */
-    private static final long DEFAULT_VALIDITY_TIME_IN_SECONDS = 30 * 365 * 86400; // Ignores leap days.
+    private static final String DEFAULT_VALIDITY_TIME = "30 years";
 
     /** Enables the access to the domain specific database access methods. */
     @Autowired
@@ -167,7 +167,7 @@ public class DomainRESTController {
         String domainPrefix = domainDTO.getPrefix();
         Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
         Timestamp validTo = domainDTO.getValidTo() != null ? Timestamp.valueOf(domainDTO.getValidTo()) : null;
-        Long validityTime = Utility.validityTimeToSeconds(domainDTO.getValidityTime());
+        String validityTime = domainDTO.getValidityTime();
         Boolean enforceStartDateValidity = domainDTO.getEnforceStartDateValidity();
         Boolean enforceEndDateValidity = domainDTO.getEnforceEndDateValidity();
         String algorithm = domainDTO.getAlgorithm();
@@ -342,7 +342,7 @@ public class DomainRESTController {
             if (validTo != null) {
                 vTo = validTo.toLocalDateTime();
             } else if (validTo == null && validityTime != null) {
-                vTo = domain.getValidfrom().plusSeconds(validityTime);
+                vTo = Utility.plusValidityTime(domain.getValidfrom(), validityTime);
             } else {
                 vTo = parent.getValidto();
                 vToInh = true;
@@ -403,8 +403,8 @@ public class DomainRESTController {
             if (validTo == null && validityTime == null) {
                 // Both values are missing; inform user and use default
                 log.debug("For the domain \"" + domainName + "\" there was neither an end date nor a validity period given."
-                        + " The default of 30 years is used.");
-                validityTime = DEFAULT_VALIDITY_TIME_IN_SECONDS;
+                        + " The default of " + DEFAULT_VALIDITY_TIME + " is used.");
+                validityTime = DEFAULT_VALIDITY_TIME;
             }
 
             // Determine validFrom date if not given by the user
@@ -412,7 +412,7 @@ public class DomainRESTController {
             domain.setValidfrominherited(false);
 
             // Determine expiration date
-            domain.setValidto((validTo != null) ? validTo.toLocalDateTime() : domain.getValidfrom().plusSeconds(validityTime));
+            domain.setValidto((validTo != null) ? validTo.toLocalDateTime() : Utility.plusValidityTime(domain.getValidfrom(), validityTime));
             domain.setValidtoinherited(false);
 
             // Determine if the validFrom date correctness should be enforced
@@ -524,7 +524,7 @@ public class DomainRESTController {
         String domainPrefix = domainDTO.getPrefix();
         Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
         Timestamp validTo = domainDTO.getValidTo() != null ? Timestamp.valueOf(domainDTO.getValidTo()) : null;
-        Long validityTime = Utility.validityTimeToSeconds(domainDTO.getValidityTime());
+        String validityTime = domainDTO.getValidityTime();
         String algorithm = domainDTO.getAlgorithm();
         String alphabet = Utility.generateAlphabet(algorithm, null);
         Boolean multiplePsnAllowed = domainDTO.getMultiplePsnAllowed();
@@ -604,7 +604,7 @@ public class DomainRESTController {
             if (validTo != null) {
                 vTo = validTo.toLocalDateTime();
             } else if (validTo == null && validityTime != null) {
-                vTo = domain.getValidfrom().plusSeconds(validityTime);
+                vTo = Utility.plusValidityTime(domain.getValidfrom(), validityTime);
             } else {
                 vTo = parent.getValidto();
                 vToInh = true;
@@ -664,8 +664,8 @@ public class DomainRESTController {
             if (validTo == null && validityTime == null) {
                 // Both values are missing; inform user and use default
                 log.debug("For the domain \"" + domainName + "\" there was neither an end date nor a validity period given."
-                        + " The default of 30 years is used.");
-                validityTime = DEFAULT_VALIDITY_TIME_IN_SECONDS;
+                        + " The default of " + DEFAULT_VALIDITY_TIME + " is used.");
+                validityTime = DEFAULT_VALIDITY_TIME;
             }
 
             // Determine validFrom date if not given by the user
@@ -673,7 +673,7 @@ public class DomainRESTController {
             domain.setValidfrominherited(false);
 
             // Determine expiration date
-            domain.setValidto((validTo != null) ? validTo.toLocalDateTime() : domain.getValidfrom().plusSeconds(validityTime));
+            domain.setValidto((validTo != null) ? validTo.toLocalDateTime() : Utility.plusValidityTime(domain.getValidfrom(), validityTime));
             domain.setValidtoinherited(false);
 
             // Determine if the validFrom date correctness should be enforced
@@ -1102,7 +1102,7 @@ public class DomainRESTController {
         String prefix = domainDTO.getPrefix();
         Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
         Timestamp validTo = domainDTO.getValidTo() != null ? Timestamp.valueOf(domainDTO.getValidTo()) : null;
-        Long validityTime = domainDTO.getValidityTime() != null ? Utility.validityTimeToSeconds(domainDTO.getValidityTime()) : null;
+        String validityTime = domainDTO.getValidityTime();
         Boolean enforceStartDateValidity = domainDTO.getEnforceStartDateValidity();
         Boolean enforceEndDateValidity = domainDTO.getEnforceEndDateValidity();
         String algorithm = domainDTO.getAlgorithm();
@@ -1193,9 +1193,9 @@ public class DomainRESTController {
             vTo = validTo.toLocalDateTime();
         } else if (validTo == null && validityTime != null) {
         	if (validFrom == null) {
-        		vTo = old.getValidfrom().plusSeconds(validityTime);
+        		vTo = Utility.plusValidityTime(old.getValidfrom(), validityTime);
         	} else {
-        		vTo = validFrom.toLocalDateTime().plusSeconds(validityTime);
+        		vTo = Utility.plusValidityTime(validFrom.toLocalDateTime(), validityTime);
         	}
         }
 
@@ -1281,7 +1281,7 @@ public class DomainRESTController {
         String prefix = domainDTO.getPrefix();
         Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
         Timestamp validTo = domainDTO.getValidTo() != null ? Timestamp.valueOf(domainDTO.getValidTo()) : null;
-        Long validityTime = domainDTO.getValidityTime() != null ? Utility.validityTimeToSeconds(domainDTO.getValidityTime()) : null;
+        String validityTime = domainDTO.getValidityTime();
         String algorithm = domainDTO.getAlgorithm();
         Boolean multiplePsnAllowed = domainDTO.getMultiplePsnAllowed();
         String description = domainDTO.getDescription();
@@ -1323,9 +1323,9 @@ public class DomainRESTController {
             vTo = validTo.toLocalDateTime();
         } else if (validTo == null && validityTime != null) {
         	if (validFrom == null) {
-        		vTo = old.getValidfrom().plusSeconds(validityTime);
+        		vTo = Utility.plusValidityTime(old.getValidfrom(), validityTime);
         	} else {
-        		vTo = validFrom.toLocalDateTime().plusSeconds(validityTime);
+        		vTo = Utility.plusValidityTime(validFrom.toLocalDateTime(), validityTime);
         	}
         }
 
