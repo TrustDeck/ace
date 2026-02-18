@@ -113,6 +113,7 @@ app:
       - instance:delete
       - instance:search
       - instance:record-linkage
+      - instance:list-pseudonyms
     global:
       - domain:create
       - domain:create-complete
