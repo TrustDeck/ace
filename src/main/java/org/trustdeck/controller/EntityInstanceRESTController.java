@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.algorithms.PseudonymizationFactory;
 import org.trustdeck.algorithms.Pseudonymizer;
+import org.trustdeck.dto.DomainDTO;
 import org.trustdeck.dto.EntityInstanceDTO;
 import org.trustdeck.dto.EntityTypeDTO;
 import org.trustdeck.dto.ProjectDTO;
@@ -51,6 +52,7 @@ import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
+import org.trustdeck.service.AuthorizationService;
 import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.service.EntityInstanceDBService;
 import org.trustdeck.service.EntityTypeDBService;
@@ -59,6 +61,7 @@ import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.PseudonymDBAccessService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
+import org.trustdeck.utils.Utility.Pair;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.networknt.schema.JsonSchema;
@@ -104,6 +107,10 @@ public class EntityInstanceRESTController {
 	/** Enables access to the JSON schema validation functionalities. */
 	@Autowired
 	private JsonSchemaService jsonSchemaService;
+
+    /** Provides functionality to ensure proper rights and roles when accessing the endpoints. */
+    @Autowired
+    private AuthorizationService authorizationService;
 	
 	/** The maximum number of search results that will be returned to the caller. */
 	private final static int MAX_NUMBER_OF_SEARCH_RESULTS = 20; 
@@ -255,8 +262,8 @@ public class EntityInstanceRESTController {
 	 * @return <li>a <b>200-OK</b> status with the requested entity instance on success</li>
      *         <li>a <b>404-NOT_FOUND</b> status when the project, entity type, or 
      *         instance cannot be found</li>
-     *         <li>a <b>410-GONE</b> status when the project has ended or the entity type 
-     *         is marked as deprecated</li>
+     *         <li>a <b>410-GONE</b> status when the project has ended, the entity type 
+     *         is marked as deprecated, or the instance is marked as deleted</li>
 	 */
 	@GetMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:read')")
@@ -293,8 +300,11 @@ public class EntityInstanceRESTController {
 		
 		// Check result
 		if (instance == null) {
-			log.debug("No entity instance with the given TrustDeckID was found.");
+			log.debug("Entity instance with TrustDeckID\"" + trustDeckId + "\" was not found.");
 			return responseService.notFound(responseContentType);
+		} else if (instance.getIsDeleted()) {
+			log.debug("The entity instance is marked as deleted and cannot be used anymore.");
+			return responseService.gone(responseContentType);
 		}
 		
 		log.debug("Successfully retrieved an entity instance.");
@@ -551,6 +561,131 @@ public class EntityInstanceRESTController {
 			log.debug("Successfully queried the database and found " + foundInstances.size() + " search results.");
 			return responseService.ok(responseContentType, foundInstances);
 		}
+	}
+	
+	/**
+	 * Endpoint to retrieve all pseudonyms for an entity instance.
+	 * 
+	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
+	 * @param entityTypeName the name of the entity type associated with this instance
+	 * @param trustDeckId the unique UUID for this entity instance
+	 * @param responseContentType (optional) the response content type
+     * @param request the request object, injected by Spring Boot
+	 * @return <li>a <b>200-OK</b> status with the list of linked pseudonyms on 
+	 * 		   success</li>
+     *         <li>a <b>206-PARTIAL_CONTENT</b> status with a truncated result set when 
+     *         more than the maximum number of allowed resulting pseudonyms were found</li>
+     *         <li>a <b>403-FORBIDDEN</b> status when the rights to read or link 
+     *         pseudonyms in any of the involved domains is missing</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when the project, the entity type, or  
+     *         the entity instance cannot be found</li>
+     *         <li>a <b>410-GONE</b> status when the project has ended, the entity type 
+     *         is marked as deprecated, or the entity instance is marked as deleted</li>
+     *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when there was no domain 
+     *         associated with the entity type</li>
+	 */
+	@GetMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}/pseudonyms")
+	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:list-pseudonyms')")
+	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	public ResponseEntity<?> getAllPseudonymsForEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
+												  			   @PathVariable("entityTypeName") String entityTypeName,
+															   @PathVariable("trustDeckId") String trustDeckId,
+												  			   @RequestHeader(name = "accept", required = false) String responseContentType,
+												  			   HttpServletRequest request) {
+		
+		// Check if project exists and still active
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		if (project == null) {
+			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
+			return responseService.notFound(responseContentType);
+		} else if (project.getEndDate().isBefore(OffsetDateTime.now())) {
+			// Project end was in the past
+			log.debug("The project already ended so that no entity types can be retrieved from it.");
+			return responseService.gone(responseContentType);
+		}
+		
+		// Check if entity type exists and is still active
+		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), null);
+		if (entityType == null) {
+			log.debug("Entity type \"" + entityTypeName + "\" was not found.");
+			return responseService.notFound(responseContentType);
+		} else if (entityType.getIsDeprecated()) {
+			log.debug("The entity type is marked as deprecated and cannot be used anymore.");
+			return responseService.gone(responseContentType);
+		}
+		
+		// Check if entity instance exists and is still active
+		EntityInstanceDTO instance = entityInstanceDBService.getEntityInstance(trustDeckId, request);
+		if (instance == null) {
+			log.debug("Entity instance with TrustDeckID\"" + trustDeckId + "\" was not found.");
+			return responseService.notFound(responseContentType);
+		} else if (instance.getIsDeleted()) {
+			log.debug("The entity instance is marked as deleted and cannot be used anymore.");
+			return responseService.gone(responseContentType);
+		}
+		
+		// Retrieve domain
+		String domain = entityType.getAssociatedDomainName();
+		if (Assertion.isNullOrEmpty(domain)) {
+			log.debug("There was no domain associated with the type of the given entity instance.");
+			return responseService.unprocessableEntity(responseContentType);
+		}
+		
+		if (!authorizationService.hasDomainPermission(domain, "pseudonym:read")) {
+			log.debug("Read access to the pseudonyms in the associated domain was forbidden.");
+			return responseService.forbidden(responseContentType);
+		}
+		
+		// Retrieve direct pseudonyms
+		IdentifierItem ii = IdentifierItem.builder().identifier(trustDeckId).idType("TrustDeckID").build();
+		List<PseudonymDTO> pseudonyms = pdba.getPseudonymFromIdentifier(domain, ii, request);
+		
+		// Also retrieve secondary pseudonyms (pseudonyms of pseudonyms)
+		// Start by retrieving the domain subtree for the starting domain
+		List<DomainDTO> tree = ddba.getSubtreeFromDomainName(domain, null);
+		
+		// For every domain in the subtree, find the pseudonyms linked by psn-id-connection in it
+		List<Pair<PseudonymDTO, PseudonymDTO>> linkedPseudonyms = new ArrayList<>();
+		for (DomainDTO d : tree) {
+			if (d.getName().equalsIgnoreCase(domain)) {
+				// Ignore the already processed domain
+				continue;
+			}
+			
+			// Check permissions
+			if (!authorizationService.hasDomainPermission(domain, "pseudonym:link")
+					|| !authorizationService.hasDomainPermission(d.getName(), "pseudonym:read")
+					|| !authorizationService.hasDomainPermission(d.getName(), "pseudonym:link")) {
+				log.debug("Read or link access to the domains involved in searching linked pseudonyms was forbidden.");
+				return responseService.forbidden(responseContentType);
+			}
+			
+			// Get secondary pseudonyms for every pseudonym in the "root"-domain
+			for (PseudonymDTO p : pseudonyms) {
+				List<Pair<PseudonymDTO, PseudonymDTO>> linked = ddba.getLinkedPseudonyms(domain, p.getIdentifierItem().getIdentifier(),
+						p.getIdentifierItem().getIdType(), p.getPsn(), d.getName(), request);
+				
+				if (linked != null && !linked.isEmpty()) {
+					linkedPseudonyms.addAll(linked);
+				}
+			}
+		}
+		
+		// Add linked pseudonyms to result list
+		for (Pair<PseudonymDTO, PseudonymDTO> pair : linkedPseudonyms) {
+			// pair.first() is the source-pseudonym and is already part of the pseudonyms-list
+			pseudonyms.add(pair.second());
+		}
+		
+		// Ensure that we do not flood the user with too many pseudonyms
+		if (pseudonyms.size() > MAX_NUMBER_OF_SEARCH_RESULTS) {
+			log.debug("Successfully retrieved more than " + MAX_NUMBER_OF_SEARCH_RESULTS + " pseudonyms "
+					+ "for the given entity instance, so the result list was truncated.");
+			return responseService.partialContent(responseContentType, pseudonyms.subList(0, MAX_NUMBER_OF_SEARCH_RESULTS));
+		}
+		
+		log.debug("Successfully retrieved the pseudonyms connected to an entity instance.");
+		return responseService.ok(responseContentType, pseudonyms);
 	}
 	
 	/**
