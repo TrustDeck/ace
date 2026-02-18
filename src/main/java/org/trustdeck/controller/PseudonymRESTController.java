@@ -747,7 +747,7 @@ public class PseudonymRESTController {
         for (Pair<PseudonymDTO, PseudonymDTO> pair : pseudonyms) {
             List<PseudonymDTO> pseudonymPair = new ArrayList<>();
             
-            if (completeView) {
+            if (!completeView) {
             	pseudonymPair.add(pair.first().toReducedStandardView());
             	pseudonymPair.add(pair.second().toReducedStandardView());
             } else {
