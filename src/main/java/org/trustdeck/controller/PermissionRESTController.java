@@ -41,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.configuration.RoleConfig;
 import org.trustdeck.dto.UserDTO;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
+import org.trustdeck.dto.EffectivePermissionDTO;
 import org.trustdeck.dto.PermissionDTO;
 import org.trustdeck.dto.ProjectDTO;
 import org.trustdeck.security.audittrail.annotation.Audit;
@@ -624,6 +625,40 @@ public class PermissionRESTController {
             return responseService.notFound(responseContentType);
         }
 
+        return responseService.ok(responseContentType, permissions);
+    }
+    
+    /**
+     * Method for retrieving all permissions defined in the application.yml.
+     * This method is needed by the frontend to discover what roles are currently available.
+     * 
+	 * @param responseContentType (optional) the response content type
+     * @param request the request object, injected by Spring Boot
+     * @return <li>a <b>200-OK</b> status with the list of permissions 
+     * 		   for the user when successful</li>
+     */
+    @GetMapping
+    @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
+    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    public ResponseEntity<?> getAllPermissions(@RequestHeader(name = "accept", required = false) String responseContentType,
+                                               HttpServletRequest request) {
+    	List<EffectivePermissionDTO> permissions = new ArrayList<>();
+    	
+    	// Add domain-specific roles
+    	for (String aceRole : roleConfig.getACERoles()) {
+    		permissions.add(EffectivePermissionDTO.builder().resourceType("DOMAIN").action(aceRole).build());
+    	}
+    	
+    	// Add project-specific roles
+    	for (String kingRole : roleConfig.getKINGRoles()) {
+    		permissions.add(EffectivePermissionDTO.builder().resourceType("PROJECT").action(kingRole).build());
+    	}
+    	
+    	// Add global roles
+    	for (String globalRole : roleConfig.getGlobalRoles()) {
+    		permissions.add(EffectivePermissionDTO.builder().resourceType("GLOBAL").action(globalRole).build());
+    	}
+    	
         return responseService.ok(responseContentType, permissions);
     }
 
