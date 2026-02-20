@@ -68,12 +68,6 @@ import java.util.List;
 @RequestMapping(value = "/api")
 public class PseudonymRESTController {
 
-    /** The default maximum allowed batch size. */
-    private static final int DEFAULT_PSEUDONYM_BATCH_LENGTH = 50000;
-
-    /** The default for regenerating the pseudonym on updates that affect the identifierItem or the domain. */
-    private static final boolean DEFAULT_REGENERATE_PSEUDONYM = true;
-
     /** Enables the access to the domain specific database access methods. */
     @Autowired
     private DomainDBAccessService domainDBAccessService;
@@ -89,6 +83,15 @@ public class PseudonymRESTController {
     /** Provides functionality to ensure proper rights and roles when accessing the endpoints. */
     @Autowired
     private AuthorizationService authorizationService;
+
+    /** The default maximum allowed batch size. */
+    private static final int DEFAULT_PSEUDONYM_BATCH_LENGTH = 50000;
+
+    /** The default for regenerating the pseudonym on updates that affect the identifierItem or the domain. */
+    private static final boolean DEFAULT_REGENERATE_PSEUDONYM = true;
+    
+    /** The default maximum number of pseudonyms found by searching the DB that are returned to the user. */
+    private static final int MAX_NUMBER_OF_SEARCH_RESULTS = 30;
 	
     /**
      * Method to check if the current domain's filling rate exceeds a point where the generation of unseen
@@ -1445,4 +1448,56 @@ public class PseudonymRESTController {
     	
         return responseService.ok(responseContentType, valid.toString());
     }
+    
+    /**
+	 * Endpoint to search for pseudonyms.
+	 * Supports multi-word searches.
+	 * 
+	 * @param domainName the name of the domain to which the request is scoped to
+	 * @param query the search string that should be looked up 
+	 * @param responseContentType (optional) the response content type
+     * @param request the request object, injected by Spring Boot
+	 * @return <li>a <b>200-OK</b> status with the list of matching pseudonyms on 
+	 * 		   success</li>
+     *         <li>a <b>206-PARTIAL_CONTENT</b> status with a truncated result set when 
+     *         more than the maximum number of allowed results were found</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when the domain cannot be found, or 
+     *         when no pseudonyms match the query</li>
+     *         <li>a <b>410-GONE</b> status when the request is not during the domain's 
+     *         validity period</li>
+	 */
+	@GetMapping(value = "/domains/{domainName}/pseudonyms", params = {"query"})
+	@PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:search')")
+	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	public ResponseEntity<?> searchPseudonyms(@PathVariable("domainName") String domainName,
+											  @RequestParam(name = "query", required = true) String query,
+											  @RequestHeader(name = "accept", required = false) String responseContentType,
+											  HttpServletRequest request) {
+		// Check if the domain exists and is still active
+        Domain domain = domainDBAccessService.getDomainByName(domainName, null);
+        if (domain == null) {
+            log.debug("The domain where the pseudonym should be searched couldn't be found.");
+            return responseService.notFound(responseContentType);
+        }
+		
+		if (domain.getValidfrom().isAfter(LocalDateTime.now()) || domain.getValidto().isBefore(LocalDateTime.now())) {
+			log.debug("The domain's validity period has not yet started or has already ended, so that no pseudonyms can be retrieved from it.");
+			return responseService.gone(responseContentType);
+		}
+		
+		// Retrieve pseudonyms from the database
+		List<PseudonymDTO> pseudonyms = pseudonymDBAccessService.searchPseudonyms(query, domain.getId(), request);
+		
+		// Evaluate result
+		if (pseudonyms == null || pseudonyms.size() == 0) {
+			log.debug("No pseudonyms for the given query string were found.");
+			return responseService.notFound(responseContentType);
+		} else if (pseudonyms.size() > MAX_NUMBER_OF_SEARCH_RESULTS) {
+			log.debug("Successfully queried the database and found more than " + MAX_NUMBER_OF_SEARCH_RESULTS + " pseudonyms, so the result list was truncated.");
+			return responseService.partialContent(responseContentType, pseudonyms.subList(0, MAX_NUMBER_OF_SEARCH_RESULTS));
+		} else {
+			log.debug("Successfully found " + pseudonyms.size() + " pseudonyms.");
+			return responseService.ok(responseContentType, pseudonyms);
+		}
+	}
 }
