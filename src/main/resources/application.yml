@@ -93,6 +93,7 @@ app:
       - pseudonym:update-complete
       - pseudonym:update-batch
       - pseudonym:link
+      - pseudonym:search
       - complete-view
     KING:
       - project:read
