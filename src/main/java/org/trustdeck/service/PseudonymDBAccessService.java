@@ -20,11 +20,15 @@ package org.trustdeck.service;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.DeleteConditionStep;
+import org.jooq.Field;
 import org.jooq.Insert;
 import org.jooq.Row2;
 import org.jooq.UpdateConditionStep;
+import org.jooq.exception.DataAccessException;
+import org.jooq.exception.MappingException;
 import org.jooq.impl.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -65,7 +69,7 @@ public class PseudonymDBAccessService {
 
     /** References a jOOQ configuration object that configures jOOQ's behavior when executing queries. */
     @Autowired
-    private DSLContext dslCtx;
+    private DSLContext dsl;
 
     /** Represents the duplication status of a requested insertion of an identifier and idType combination into the database. */
     public static final String INSERTION_DUPLICATE_IDENTIFIER = "duplicate identifier";
@@ -121,7 +125,7 @@ public class PseudonymDBAccessService {
 	            }
 	            
 	            // Query the database and see if we find any of the user-provided identifier-idType-pairs already in there
-	            Map<Row2<String, String>, Boolean> existingIdMap = dslCtx.select(PSEUDONYM.IDENTIFIER, PSEUDONYM.IDTYPE)
+	            Map<Row2<String, String>, Boolean> existingIdMap = dsl.select(PSEUDONYM.IDENTIFIER, PSEUDONYM.IDTYPE)
 	            	       .from(PSEUDONYM)
 	            	       .where(DSL.row(PSEUDONYM.IDENTIFIER, PSEUDONYM.IDTYPE).in(idRows))
 	            	       .and(PSEUDONYM.DOMAINID.eq(domainId))
@@ -145,7 +149,7 @@ public class PseudonymDBAccessService {
             }
 
             // Fetch existing pseudonyms in the domain of interest
-            Set<String> existingPsns = new HashSet<>(dslCtx.select(PSEUDONYM.PSEUDONYM_)
+            Set<String> existingPsns = new HashSet<>(dsl.select(PSEUDONYM.PSEUDONYM_)
                       .from(PSEUDONYM)
                       .where(PSEUDONYM.DOMAINID.eq(domainId))
                       .and(PSEUDONYM.PSEUDONYM_.in(psns))
@@ -176,7 +180,7 @@ public class PseudonymDBAccessService {
 
                 // Prepare and add the insert query
                 PseudonymDTO dto = pseudonyms.get(i);
-                inserts.add(dslCtx.insertInto(PSEUDONYM)
+                inserts.add(dsl.insertInto(PSEUDONYM)
                     .set(PSEUDONYM.IDENTIFIER, dto.getIdentifierItem().getIdentifier())
                     .set(PSEUDONYM.IDTYPE, dto.getIdentifierItem().getIdType())
                     .set(PSEUDONYM.PSEUDONYM_, dto.getPsn())
@@ -197,7 +201,7 @@ public class PseudonymDBAccessService {
             }
             
             // Execute the batch 
-            int[] batchResult = dslCtx.batch(inserts).execute();
+            int[] batchResult = dsl.batch(inserts).execute();
             
             // Evaluate the results
             int inserted = 0;
@@ -301,7 +305,7 @@ public class PseudonymDBAccessService {
             }
         	
         	// Build and execute the query
-            List<Pseudonym> pseudonyms = dslCtx.selectFrom(PSEUDONYM)
+            List<Pseudonym> pseudonyms = dsl.selectFrom(PSEUDONYM)
                     .where(PSEUDONYM.IDENTIFIER.equal(identifierItem.getIdentifier()))
                     .and(PSEUDONYM.IDTYPE.equal(identifierItem.getIdType()))
                     .and(PSEUDONYM.DOMAINID.eq(d.getId()))
@@ -350,7 +354,7 @@ public class PseudonymDBAccessService {
             }
         	
         	// Build and execute the query
-            Pseudonym pseudonym = dslCtx.selectFrom(PSEUDONYM)
+            Pseudonym pseudonym = dsl.selectFrom(PSEUDONYM)
                     .where(PSEUDONYM.PSEUDONYM_.equal(psn))
                     .and(PSEUDONYM.DOMAINID.eq(d.getId()))
                     .fetchOneInto(Pseudonym.class);
@@ -433,7 +437,7 @@ public class PseudonymDBAccessService {
                 int domainId = (p.getNewDomain() != null) ? p.getNewDomain().getId() : p.getOldDomain().getId();
             	
             	// Add to batch update
-            	updates.add(dslCtx.update(PSEUDONYM)
+            	updates.add(dsl.update(PSEUDONYM)
                         .set(PSEUDONYM.IDENTIFIER, identifier)
                         .set(PSEUDONYM.IDTYPE, idType)
                         .set(PSEUDONYM.PSEUDONYM_, psn)
@@ -452,7 +456,7 @@ public class PseudonymDBAccessService {
 			}
             
         	// Batch the update statements and execute the batch
-            int[] result = dslCtx.batch(updates).execute();
+            int[] result = dsl.batch(updates).execute();
 
             // Process the result
             for (int i = 0; i < result.length; i++) {
@@ -515,7 +519,7 @@ public class PseudonymDBAccessService {
         	// Create a list of delete statements
             List<DeleteConditionStep<PseudonymRecord>> deletions = new ArrayList<>(pseudonyms.size());
             for (PseudonymDTO p : pseudonyms) {
-                deletions.add(dslCtx.delete(PSEUDONYM)
+                deletions.add(dsl.delete(PSEUDONYM)
                         .where(PSEUDONYM.IDENTIFIER.equal(p.getIdentifierItem().getIdentifier()))
                         .and(PSEUDONYM.IDTYPE.equal(p.getIdentifierItem().getIdType()))
                         .and(PSEUDONYM.PSEUDONYM_.equal(p.getPsn()))
@@ -523,7 +527,7 @@ public class PseudonymDBAccessService {
             }
 
             // Batch the delete statements and execute the batch
-            int[] result = dslCtx.batch(deletions).execute();
+            int[] result = dsl.batch(deletions).execute();
 
             // Process the result
             int deleted = 0;
@@ -566,5 +570,70 @@ public class PseudonymDBAccessService {
             log.error("Couldn't delete a batch of pseudonyms from the database: " + f.getClass() + ": " + f.getMessage());
             return null;
         }
+    }
+    
+    /**
+     * Method to search for pseudonyms.
+     * This search supports searching in the identifier, idType, and psn-value.
+     * 
+     * @param query the search query
+     * @param domainId the id of the domain in which to search for
+     * @param request the http request object containing information necessary for the audit trail
+     * @return a list of pseudonyms that match the search query
+     */
+    @Transactional
+    public List<PseudonymDTO> searchPseudonyms(String query, int domainId, HttpServletRequest request) {
+    	if (Assertion.isNullOrEmpty(query)) {
+            log.debug("Search query is empty.");
+            return null;
+        }
+
+        // Split query-parts on whitespaces; every part should match at least one column
+        String[] parts = query.trim().split("\\s+");
+        
+        // Built the search conditions statement
+        Condition condition = DSL.trueCondition();
+        for (String part : parts) {
+            String pattern = "%" + part + "%";
+
+            // Search across identifier, idType, and psn
+            Condition partCond = PSEUDONYM.IDENTIFIER.likeIgnoreCase(pattern)
+                .or(PSEUDONYM.IDTYPE.likeIgnoreCase(pattern))
+                .or(PSEUDONYM.PSEUDONYM_.likeIgnoreCase(pattern));
+
+            // AND-connect all search parts
+            condition = condition.and(partCond);
+        }
+
+        // Exclude pseudonyms which are not valid anymore
+        Field<LocalDateTime> now = DSL.currentLocalDateTime();
+        condition = condition.and(PSEUDONYM.VALIDFROM.le(now)).and(PSEUDONYM.VALIDTO.gt(now));
+        
+        // Only search in a domain scope
+        condition = condition.and(PSEUDONYM.DOMAINID.eq(domainId));
+
+        // Execute the search
+        List<Pseudonym> results;
+        try {
+            results = dsl.selectFrom(PSEUDONYM)
+                      .where(condition)
+                      .orderBy(PSEUDONYM.IDENTIFIER.asc(), PSEUDONYM.IDTYPE.asc())
+                      .fetchInto(Pseudonym.class);
+        } catch (MappingException e) {
+            log.debug("Could not map pseudonym search result.", e);
+            return null;
+        } catch (DataAccessException e) {
+            log.debug("Searching pseudonyms failed.", e);
+            return null;
+        }
+
+        // Evaluate the search results
+        if (results == null || results.isEmpty()) {
+            log.debug("No pseudonym matched the query \"" + query + "\".");
+            return null;
+        }
+
+        // Return the found types
+        return results.stream().map(row -> new PseudonymDTO().assignPojoValues(row)).toList();
     }
 }

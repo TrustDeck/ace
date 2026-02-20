@@ -639,11 +639,11 @@ public class EntityTypeRESTController {
 		
 		// Evaluate result
 		if (types == null || types.size() == 0) {
-			log.debug("No entity types for given query sring were found.");
+			log.debug("No entity types for the given query string were found.");
 			return responseService.notFound(responseContentType);
 		}
 		
-		log.debug("Successfully found entity types.");
+		log.debug("Successfully found " + types.size() + " entity types.");
 		return responseService.ok(responseContentType, types);
 	}
 	
