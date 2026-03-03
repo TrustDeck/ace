@@ -38,8 +38,6 @@ spring:
           principal-attribute: preferred_username
           server-uri: ${KEYCLOAK_SERVER_URI}
           realm: ${KEYCLOAK_REALM_NAME}
-          truststore: ${TRUSTSTORE_PATH}
-          truststore-password: ${TRUSTSTORE_PASSWORD}
           client-id: ${KEYCLOAK_CLIENT_ID}
           client-secret: ${KEYCLOAK_CLIENT_SECRET}
           # Custom section ends
