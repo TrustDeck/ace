@@ -76,6 +76,8 @@
 
         <!-- Other dependencies -->
         <dependency>
+	        <!-- Keycloak -->
+	        <!-- License: Apache 2.0 -->
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-spring-boot-starter</artifactId>
             <version>${keycloak.spring.starter.version}</version><!--$NO-MVN-MAN-VER$-->
@@ -86,9 +88,9 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- PostgreSQL JDBC driver. -->
-        <!-- License: BSD-2-Clause License (compatible with Apache 2.0; https://joinup.ec.europa.eu/licence/compatibility-check/BSD-2-Clause/Apache-2.0) -->
         <dependency>
+	        <!-- PostgreSQL JDBC driver. -->
+	        <!-- License: BSD-2-Clause License (compatible with Apache 2.0; https://joinup.ec.europa.eu/licence/compatibility-check/BSD-2-Clause/Apache-2.0) -->
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
@@ -158,6 +160,13 @@
 		    <groupId>com.networknt</groupId>
 		    <artifactId>json-schema-validator</artifactId>
 		    <version>1.5.9</version>
+		</dependency>
+	    <dependency>
+        	<!-- Needed for enitity type definition validation. -->
+        	<!-- License: Apache 2.0 -->
+		    <groupId>org.springframework.kafka</groupId>
+		    <artifactId>spring-kafka</artifactId>
+		    <version>4.0.3</version><!--$NO-MVN-MAN-VER$-->
 		</dependency>
 
         <!-- Dependencies for tests -->
