@@ -133,5 +133,3 @@ app:
     password: ${KAFKA_PASSWORD}
     security-protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
     sasl-mechanism: ${KAFKA_SASL_MECHANISM:PLAIN}
-    truststore: ${KAFKA_TRUSTSTORE_PATH}
-    truststore-password: ${KAFKA_TRUSTSTORE_PASSWORD}
