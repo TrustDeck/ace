@@ -327,5 +327,27 @@ public class Utility {
         }
     }
 	
+	/**
+	 * A method to truncate strings when they're getting too long.
+	 * A "...(truncated)" will be added when it was shortened.
+	 * 
+	 * @param s the string to check
+	 * @param maxLength the maximum allowed length for the given string
+	 * @return the original string if it's shorter than the maxLength or the truncated string
+	 */
+	public static String truncateWhenTooLong(String s, int maxLength) {
+		if (s == null || s.isBlank()) {
+			return null;
+		}
+		
+		return s.length() <= maxLength ? s : s.substring(0, maxLength) + "...(truncated)";
+	}
+	
+	/**
+	 * A data type that lets you store two data items that belong together.
+	 * 
+	 * @param <A> the first item, of type A
+	 * @param <B> the second item, of type B
+	 */
 	public record Pair<A, B>(A first, B second) {}
 }
