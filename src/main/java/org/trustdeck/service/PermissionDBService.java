@@ -542,7 +542,7 @@ public class PermissionDBService {
 				}
 				
 				// Assert that we have the information we need
-				if (Assertion.isNullOrEmpty(p.getSubjectId(), p.getResourceType(), p.getAction()) || p.getResourceId() == null || p.getResourceId() == 0) {
+				if (Assertion.isNullOrEmpty(p.getSubjectId(), p.getResourceType(), p.getAction()) || p.getResourceId() == null) {
 					// We are lacking information, see if an ID is given, so we can get the information first
 					if (p.getId() != null) {
 						// ID is given: overwrite the DTO with the data from the database 
@@ -734,7 +734,7 @@ public class PermissionDBService {
 						cachingService.invalidateContext(p.second().getSubjectId(), p.second().getResourceType(), p.second().getResourceId());
 					}
 				} else if (result[i] == 0) {
-					// Failed, due to e.g. not finding the record
+					// Failed, due to for example not finding the record
 					ignored++;
 					updateSuccess.set(originalIndex.get(i), false);
 				} else {
@@ -1237,7 +1237,7 @@ public class PermissionDBService {
 	 * @return the name (for domains) or the abbreviation (for projects) of the resource
 	 */
 	public String getResourceNameOrAbbreviationForID(String resourceType, int id) {
-		if (resourceType == null || id <= 0) {
+		if (resourceType == null || id < 0) {
 			log.trace("Invalid parameters for ID to resource name/abbreviation mapping.");
 			return null;
 		}
@@ -1248,6 +1248,8 @@ public class PermissionDBService {
 		} else if (resourceType.equalsIgnoreCase("PROJECT")) {
 			ProjectDTO p = pdba.getProjectByID(id, null);
 			return p == null ? null : p.getAbbreviation();
+		} else if (resourceType.equalsIgnoreCase("GLOBAL")) {
+			return null;
 		} else {
 			return null;
 		}
