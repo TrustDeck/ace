@@ -959,7 +959,7 @@ public class PseudonymRESTController {
      * @param omitPrefix determines whether or not the prefix should be added to the pseudonym
      * @return the generated pseudonym
      */
-    private String pseudonymize(String identifier, String idType, Domain domain, Boolean omitPrefix) {
+    public static String pseudonymize(String identifier, String idType, Domain domain, Boolean omitPrefix) {
         // Generate a new pseudonym
         String prefix = (omitPrefix != null && omitPrefix) ? "" : domain.getPrefix();
         
