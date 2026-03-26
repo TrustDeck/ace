@@ -25,7 +25,6 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -39,7 +38,6 @@ import org.springframework.kafka.listener.ContainerProperties;
  * @author Armin Müller
  */
 @Configuration
-@EnableConfigurationProperties(KafkaProperties.class)
 @ConditionalOnProperty(prefix = "app.kafka", name = "enabled", havingValue = "true")
 public class KafkaConsumerConfig {
 	
@@ -51,7 +49,7 @@ public class KafkaConsumerConfig {
 	 * @return the configured Kafka consumer factory bean
 	 */
 	@Bean
-	public ConsumerFactory<String, String> consumerFactory(KafkaProperties p) {
+	public ConsumerFactory<String, String> consumerFactory(KafkaConnectionProperties p) {
 		// Add all properties to a hashmap
 		Map<String, Object> props = new HashMap<>();
 

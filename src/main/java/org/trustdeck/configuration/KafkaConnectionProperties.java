@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Configuration;
 @Data
 @Configuration
 @ConfigurationProperties(prefix = "app.kafka")
-public class KafkaProperties {
+public class KafkaConnectionProperties {
 	
 	/** The flag determining whether the Kafka consumer should be activated/used or not. */
 	private boolean enabled;
