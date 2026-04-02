@@ -31,6 +31,7 @@ import org.trustdeck.dto.PseudonymDTO;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.kafka.KafkaPseudonymMessageParser;
 import org.trustdeck.model.IdentifierItem;
+import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.service.PseudonymDBAccessService;
 import org.trustdeck.utils.Assertion;
@@ -77,6 +78,7 @@ public class PseudonymKafkaListener {
 	 * @param ack handle for acknowledging the processing of the message
 	 */
 	@KafkaListener(topics = "${app.kafka.topic}", containerFactory = "kafkaListenerContainerFactory")
+	@Audit
 	public void onMessage(String payload, Acknowledgment ack) {
 		// Parse JSON into DTO
 		KafkaPseudonymMessageDTO kafkaDto;
@@ -102,7 +104,7 @@ public class PseudonymKafkaListener {
 		}
 		
 		// Retrieve the domain the pseudonym belongs to
-        Domain domain = ddba.getDomainByName(kafkaDto.getSourceDomain(), null);
+        Domain domain = ddba.getDomainByName(kafkaDto.getSourceDomain());
         if (domain == null) {
             log.warn("The domain in which the pseudonym from the Kafka message should be created couldn't be found.");
             
@@ -187,7 +189,7 @@ public class PseudonymKafkaListener {
         dto.setPsn(pseudonym);
         
         // Insert the pseudonym into the database
-        String result = pdba.createPseudonyms(List.of(dto), domain.getId(), domain.getMultiplepsnallowed(), null).getFirst();
+        String result = pdba.createPseudonyms(List.of(dto), domain.getId(), domain.getMultiplepsnallowed()).getFirst();
 		
         // If a random algorithm is used, check if we generated a duplicate. If so, retry.
         if (domain.getAlgorithm().toUpperCase().startsWith("RANDOM")) {
@@ -197,7 +199,7 @@ public class PseudonymKafkaListener {
         		if (result.equals(PseudonymDBAccessService.INSERTION_DUPLICATE_PSEUDONYM)) {
 	        		// Retry
 	        		dto.setPsn(PseudonymRESTController.pseudonymize(ii.getIdentifier(), ii.getIdType(), domain, false));
-	        		result = pdba.createPseudonyms(List.of(dto), domain.getId(), domain.getMultiplepsnallowed(), null).getFirst();
+	        		result = pdba.createPseudonyms(List.of(dto), domain.getId(), domain.getMultiplepsnallowed()).getFirst();
 				} else {
 					// Not a duplicate
 					break;
