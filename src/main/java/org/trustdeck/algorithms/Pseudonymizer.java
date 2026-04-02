@@ -123,7 +123,7 @@ public abstract class Pseudonymizer {
 	 */
 	public Pseudonymizer(String domainName) {
 		this.ddba = SpringBeanLocator.getBean(DomainDBAccessService.class);
-		Domain d = ddba.getDomainByName(domainName, null);
+		Domain d = ddba.getDomainByName(domainName);
 		this.alphabet = d.getAlphabet();
 		this.currentValue = null;
 		this.domainName = domainName;
@@ -146,7 +146,7 @@ public abstract class Pseudonymizer {
 	 */
 	public Pseudonymizer(boolean paddingWanted, int pseudonymValueLength, char paddingChar, String domainName) {
 		this.ddba = SpringBeanLocator.getBean(DomainDBAccessService.class);
-		Domain d = ddba.getDomainByName(domainName, null);
+		Domain d = ddba.getDomainByName(domainName);
 		this.alphabet = d.getAlphabet();
 		this.currentValue = null;
 		this.domainName = domainName;
@@ -253,7 +253,7 @@ public abstract class Pseudonymizer {
 			algo = algorithmName.toUpperCase();
 		} else {
 			// Use domain
-			Domain domain = ddba.getDomainByName(domainName, null);
+			Domain domain = ddba.getDomainByName(domainName);
 		
 			if (domain == null) {
 				return pseudonym;
