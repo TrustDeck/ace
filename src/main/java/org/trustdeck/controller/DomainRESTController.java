@@ -17,7 +17,6 @@
 
 package org.trustdeck.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -37,8 +36,6 @@ import org.trustdeck.dto.DomainDTO;
 import org.trustdeck.dto.DomainTreeDTO;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.security.audittrail.annotation.Audit;
-import org.trustdeck.security.audittrail.event.AuditEventType;
-import org.trustdeck.security.audittrail.usertype.AuditUserType;
 import org.trustdeck.service.AuthorizationService;
 import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.service.ResponseService;
@@ -142,7 +139,6 @@ public class DomainRESTController {
      *
      * @param domainDTO (required) the domain object
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>201-CREATED</b> status and the location to the
      * 				domain inside the response header on success</li>
      * 			<li>a <b>400-BAD_REQUEST</b> when both, the super-domain
@@ -158,10 +154,9 @@ public class DomainRESTController {
      */
     @PostMapping("/domains/complete")
     @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'domain:create-complete')")
-    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> createDomainComplete(@RequestBody DomainDTO domainDTO,
-                                                  @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                  HttpServletRequest request) {
+                                                  @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         String domainName = domainDTO.getName();
         String domainPrefix = domainDTO.getPrefix();
@@ -206,7 +201,7 @@ public class DomainRESTController {
         // Get parent information if provided
         Domain parent = null;
         if (superDomainName != null) {
-            parent = domainDBAccessService.getDomainByName(superDomainName, null);
+            parent = domainDBAccessService.getDomainByName(superDomainName);
 
             // Parent domain name was provided but not found, return a 404-NOT_FOUND 
             if (parent == null) {
@@ -463,11 +458,11 @@ public class DomainRESTController {
         }
 
         // Insert into database
-        String result = domainDBAccessService.insertDomain(domain, request);
+        String result = domainDBAccessService.insertDomain(domain);
         
         if (result.equals(DomainDBAccessService.INSERTION_SUCCESS)) {
             // Return a 201-CREATED status and the location to the domain inside the response header.
-        	DomainDTO createdDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+        	DomainDTO createdDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName()));
             if (!authorizationService.hasDomainPermission(createdDomDTO.getName(), "complete-view")) {
             	createdDomDTO = createdDomDTO.toReducedStandardView();
             }
@@ -476,7 +471,7 @@ public class DomainRESTController {
             return responseService.created(responseContentType, location, createdDomDTO);
         } else if (result.equals(DomainDBAccessService.INSERTION_DUPLICATE)) {
             // Nothing added since the entry is a duplicate. Return an 200-OK status.
-        	DomainDTO existingDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+        	DomainDTO existingDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName()));
             if (!authorizationService.hasDomainPermission(existingDomDTO.getName(), "complete-view")) {
             	existingDomDTO = existingDomDTO.toReducedStandardView();
             }
@@ -496,7 +491,6 @@ public class DomainRESTController {
      *
      * @param domainDTO (required) the domain object
      * @param responseContentType(optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status when the domain was already
      * 				in the database</li>
      * 			<li>a <b>201-CREATED</b> status and the location to the
@@ -510,10 +504,9 @@ public class DomainRESTController {
      */
     @PostMapping("/domains")
     @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'domain:create')")
-    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> createDomain(@RequestBody DomainDTO domainDTO,
-                                          @RequestHeader(name = "accept", required = false) String responseContentType,
-                                          HttpServletRequest request) {
+                                          @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         if (!domainDTO.validate() || !domainDTO.isValidStandardView()) {
         	log.debug("The given domain DTO is invalid, due to " + (!domainDTO.validate() ? "missing mandatory fields." : "having non-standard information."));
@@ -556,7 +549,7 @@ public class DomainRESTController {
         // Get parent information if provided
         Domain parent = null;
         if (superDomainName != null) {
-            parent = domainDBAccessService.getDomainByName(superDomainName, null);
+            parent = domainDBAccessService.getDomainByName(superDomainName);
 
             // Parent domain name was provided but not found, return a 404-NOT_FOUND 
             if (parent == null) {
@@ -723,11 +716,11 @@ public class DomainRESTController {
         }
 
         // Insert into database
-        String result = domainDBAccessService.insertDomain(domain, request);
+        String result = domainDBAccessService.insertDomain(domain);
         
         if (result.equals(DomainDBAccessService.INSERTION_SUCCESS)) {
             // Return a 201-CREATED status and the location to the domain inside the response header.
-            DomainDTO createdDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+            DomainDTO createdDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName()));
             if (!authorizationService.hasDomainPermission(domain.getName(), "complete-view")) {
             	createdDomDTO = createdDomDTO.toReducedStandardView();
             }
@@ -736,7 +729,7 @@ public class DomainRESTController {
             return responseService.created(responseContentType, location, createdDomDTO);
         } else if (result.equals(DomainDBAccessService.INSERTION_DUPLICATE)) {
             // Nothing added since the entry is a duplicate. Return an 200-OK status.
-        	DomainDTO existingDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName(), null));
+        	DomainDTO existingDomDTO = new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByName(domain.getName()));
             if (!authorizationService.hasDomainPermission(domain.getName(), "complete-view")) {
             	existingDomDTO = existingDomDTO.toReducedStandardView();
             }
@@ -756,7 +749,6 @@ public class DomainRESTController {
      * @param domainName (required) the name of the domain that should be deleted
      * @param performRecursiveChanges (optional) specifies whether or not changes should be cascaded to sub-domains
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>204-NO_CONTENT</b> status when the deletion was
      * 				successful</li>
      * 			<li>a <b>404-NOT_FOUND</b> when no domain was found for the given name</li>
@@ -765,13 +757,12 @@ public class DomainRESTController {
      */
     @DeleteMapping("/domains")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'domain:delete')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> deleteDomain(@RequestParam(name = "name", required = true) String domainName,
                                           @RequestParam(name = "recursive", required = false) Boolean performRecursiveChanges,
-                                          @RequestHeader(name = "accept", required = false) String responseContentType,
-                                          HttpServletRequest request) {
+                                          @RequestHeader(name = "accept", required = false) String responseContentType) {
         // Get domain
-        Domain domain = domainDBAccessService.getDomainByName(domainName, null);
+        Domain domain = domainDBAccessService.getDomainByName(domainName);
 
         // Check if a domain was found. If not, return a 404-NOT_FOUND
         if (domain == null) {
@@ -785,7 +776,7 @@ public class DomainRESTController {
         }
 
         // Perform deletion
-        if (domainDBAccessService.deleteDomain(domain.getName(), performRecursiveChanges, request)) {
+        if (domainDBAccessService.deleteDomain(domain.getName(), performRecursiveChanges)) {
             // Successfully deleted a domain, return a 204-NO_CONTENT
             log.info("Successfully deleted the domain \"" + domain.getName() + "\".");
             return responseService.noContent(responseContentType);
@@ -802,7 +793,6 @@ public class DomainRESTController {
      * @param domainName (required) the name of the domain
      * @param attributeName (required) the name of the attribute that should be retrieved from the domain
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the <b>attribute</b> when
      * 				it was found</li>
      * 			<li>a <b>403-FORBIDDEN</b> when the rights for accessing 
@@ -813,11 +803,10 @@ public class DomainRESTController {
      */
     @GetMapping("/domains/{domainName}/{attribute}")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'domain:read')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getDomainAttribute(@PathVariable("domainName") String domainName,
     											@PathVariable("attribute") String attributeName,
-    		                                    @RequestHeader(name = "accept", required = false) String responseContentType,
-    		                                    HttpServletRequest request) {
+    		                                    @RequestHeader(name = "accept", required = false) String responseContentType) {
     	// Check if the user has the rights to access the requested attribute
     	boolean canSeeComplete = authorizationService.hasGlobalPermission("complete-view");
     	
@@ -827,7 +816,7 @@ public class DomainRESTController {
     	}
     	
     	String attribute;
-    	Domain domain = domainDBAccessService.getDomainByName(domainName, request);
+    	Domain domain = domainDBAccessService.getDomainByName(domainName);
     	
     	// Check if the domain was found
     	if (domain == null) {
@@ -951,7 +940,6 @@ public class DomainRESTController {
      *
      * @param domainName (required) the name of the domain to search for
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the <b>domain</b> when
      * 				it was found</li>
      * 			<li>a <b>404-NOT_FOUND</b> when no domain was found for
@@ -959,12 +947,11 @@ public class DomainRESTController {
      */
     @GetMapping("/domains")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'domain:read')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getDomain(@RequestParam(name = "name", required = true) String domainName,
-                                       @RequestHeader(name = "accept", required = false) String responseContentType,
-                                       HttpServletRequest request) {
+                                       @RequestHeader(name = "accept", required = false) String responseContentType) {
         // Get domain
-        Domain domain = domainDBAccessService.getDomainByName(domainName, request);
+        Domain domain = domainDBAccessService.getDomainByName(domainName);
 
         if (domain != null) {
             // Successfully retrieved a domain, return it to the user
@@ -989,7 +976,6 @@ public class DomainRESTController {
      *
      * @param domainName the domain's name
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status and the <b>list of domains</b> 
      * 		   when the query was successful</li>
      * 		   <li>a <b>404-NOT_FOUND</b> status, when the given domain
@@ -997,11 +983,10 @@ public class DomainRESTController {
      */
     @GetMapping("/domains/{domainName}/subtree")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'domain:read-subtree')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getDomainSubtree(@PathVariable("domainName") String domainName,
-    										  @RequestHeader(name = "accept", required = false) String responseContentType,
-                                              HttpServletRequest request) {
-        List<DomainDTO> domains = domainDBAccessService.getSubtreeFromDomainName(domainName, request);
+    										  @RequestHeader(name = "accept", required = false) String responseContentType) {
+        List<DomainDTO> domains = domainDBAccessService.getSubtreeFromDomainName(domainName);
         
         if (domains == null || domains.size() == 0) {
         	log.debug("The subtree search did not find anything.");
@@ -1034,19 +1019,17 @@ public class DomainRESTController {
      * This method returns all domains from the database in a list of trees with each domains children inlined.
      *
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the <b>list of domain 
      * 			trees</b> when the query was successful</li>
      */
     @GetMapping(value = "/domains/hierarchy")
     @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'domain:list-all')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> listDomainHierarchy(@RequestHeader(name = "accept", required = false) String responseContentType,
-                                                 HttpServletRequest request) {
+    @Audit
+    public ResponseEntity<?> listDomainHierarchy(@RequestHeader(name = "accept", required = false) String responseContentType) {
         // Determine whether or not a reduced standard view or a complete view is requested
         boolean canSeeComplete = authorizationService.hasGlobalPermission("complete-view");
         
-        List<DomainDTO> domains = domainDBAccessService.listDomains(request);
+        List<DomainDTO> domains = domainDBAccessService.listDomains();
         
         if (domains == null || domains.size() == 0) {
         	log.debug("The domain search did not find anything.");
@@ -1081,7 +1064,6 @@ public class DomainRESTController {
      * @param performRecursiveChanges (required) specifies whether or not changes should be cascaded to sub-domains
      * @param domainDTO (required) the domain object
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status when the update was successful</li>
      * 			<li>a <b>404-NOT_FOUND</b> when the domain that should be
      * 				updated couldn't be found</li>
@@ -1092,12 +1074,11 @@ public class DomainRESTController {
      */
     @PutMapping("/domains/complete")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #oldDomainName, 'domain:update-complete')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> updateDomainComplete(@RequestParam(name = "name", required = true) String oldDomainName,
                                                   @RequestParam(name = "recursive", required = true) Boolean performRecursiveChanges,
                                                   @RequestBody DomainDTO domainDTO,
-                                                  @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                  HttpServletRequest request) {
+                                                  @RequestHeader(name = "accept", required = false) String responseContentType) {
         String newDomainName = domainDTO.getName();
         String prefix = domainDTO.getPrefix();
         Timestamp validFrom = domainDTO.getValidFrom() != null ? Timestamp.valueOf(domainDTO.getValidFrom()) : null;
@@ -1119,7 +1100,7 @@ public class DomainRESTController {
         Integer saltLength = domainDTO.getSaltLength();
         String description = domainDTO.getDescription();
         
-        if (domainDBAccessService.getAmountOfPseudonymsInDomain(oldDomainName, null) > 0) {
+        if (domainDBAccessService.getAmountOfPseudonymsInDomain(oldDomainName) > 0) {
         	log.warn("Changes to the domain configuration can introduce inconsistencies when creating further pseudonyms.");
         }
 
@@ -1138,7 +1119,7 @@ public class DomainRESTController {
         }
 
         // Get old domain object
-        Domain old = domainDBAccessService.getDomainByName(oldDomainName, null);
+        Domain old = domainDBAccessService.getDomainByName(oldDomainName);
 
         // Ensure that the old domain was found
         if (old == null) {
@@ -1150,7 +1131,7 @@ public class DomainRESTController {
         // Check if the new name is already in use
         String domainName;
         if (newDomainName != null && !newDomainName.isBlank()) {
-        	Domain d = domainDBAccessService.getDomainByName(newDomainName, null);
+        	Domain d = domainDBAccessService.getDomainByName(newDomainName);
         	domainName = d != null ? old.getName() : newDomainName.trim();
         } else {
         	domainName = old.getName();
@@ -1235,7 +1216,7 @@ public class DomainRESTController {
         updated.setDescription(description);
 
         // Execute update
-        Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, performRecursiveChanges, request);
+        Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, performRecursiveChanges);
         if (updatedDomain != null) {
             // Success. Return a 200-OK status.
         	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
@@ -1260,7 +1241,6 @@ public class DomainRESTController {
      * @param oldDomainName (required) the name of the domain that is to be updated
      * @param domainDTO (required) The domain object
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li> a <b>200-OK</b> status when the update was successful</li>
      * 			<li> a <b>404-NOT_FOUND</b> when the domain that should be
      * 				updated couldn't be found</li>
@@ -1269,13 +1249,12 @@ public class DomainRESTController {
      */
     @PutMapping("/domains")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #oldDomainName, 'domain:update')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> updateDomain(@RequestParam(name = "name", required = true) String oldDomainName,
                                           @RequestBody DomainDTO domainDTO,
-                                          @RequestHeader(name = "accept", required = false) String responseContentType,
-                                          HttpServletRequest request) {
+                                          @RequestHeader(name = "accept", required = false) String responseContentType) {
         // Get old domain object
-        Domain old = domainDBAccessService.getDomainByName(oldDomainName, null);
+        Domain old = domainDBAccessService.getDomainByName(oldDomainName);
 
         String newName = domainDTO.getName();
         String prefix = domainDTO.getPrefix();
@@ -1302,7 +1281,7 @@ public class DomainRESTController {
         // Check if the new name is already in use
         String domainName;
         if (newName != null && !newName.isBlank()) {
-        	Domain d = domainDBAccessService.getDomainByName(newName, null);
+        	Domain d = domainDBAccessService.getDomainByName(newName);
         	domainName = d == null ? old.getName() : newName.trim();
         } else {
         	domainName = old.getName();
@@ -1339,7 +1318,7 @@ public class DomainRESTController {
         updated.setDescription(description);
 
         // Allow the following changes only when the domain does not contain any records yet
-        if (domainDBAccessService.getAmountOfPseudonymsInDomain(old.getName(), null) == 0) {
+        if (domainDBAccessService.getAmountOfPseudonymsInDomain(old.getName()) == 0) {
             updated.setPrefix((prefix != null && !prefix.trim().equals("")) ? prefix.trim() : null);
             updated.setAlgorithm((algorithm != null && !algorithm.trim().equals("")) ? algorithm : null);
             updated.setAlgorithminherited((algorithm != null && !algorithm.trim().equals("")) ? false : null);
@@ -1353,7 +1332,7 @@ public class DomainRESTController {
         // All other domain attributes are null and are therefore correctly left as they are
 
         // Execute update
-        Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, DEFAULT_PERFORM_RECURSIVE_CHANGES, request);
+        Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, DEFAULT_PERFORM_RECURSIVE_CHANGES);
         if (updatedDomain != null) {
             // Success. Return a 200-OK status.
         	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
@@ -1377,7 +1356,6 @@ public class DomainRESTController {
      * @param newSalt (required) the new salt value
      * @param allowEmpty (optional) determines whether or not the given salt is allowed to be empty
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status when the update was successful</li>
      * 			<li>a <b>400-BAD_REQUEST</b> when the given salt value was
      * 				empty</li>
@@ -1388,12 +1366,11 @@ public class DomainRESTController {
      */
     @PutMapping("/domains/{domainName}/salt")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'domain:update-salt')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> updateSalt(@PathVariable("domainName") String domainName,
                                         @RequestParam(name = "salt", required = true) String newSalt,
                                         @RequestParam(name = "allowEmpty", required = false, defaultValue = "false") Boolean allowEmpty,
-                                        @RequestHeader(name = "accept", required = false) String responseContentType,
-                                        HttpServletRequest request) {
+                                        @RequestHeader(name = "accept", required = false) String responseContentType) {
 
     	// Validate the given salt value
         if (!this.validateSalt(newSalt, allowEmpty)) {
@@ -1402,7 +1379,7 @@ public class DomainRESTController {
         }
 
         // Retrieve old domain
-        Domain old = domainDBAccessService.getDomainByName(domainName, null);
+        Domain old = domainDBAccessService.getDomainByName(domainName);
 
         // Check if the retrieved domain is null
         if (old == null) {
@@ -1417,7 +1394,7 @@ public class DomainRESTController {
         updated.setSaltlength((allowEmpty && newSalt.isBlank()) ? 0 : newSalt.length());
 
         // Execute update
-        Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, false, request);
+        Domain updatedDomain = domainDBAccessService.updateDomain(old, updated, false);
         if (updatedDomain != null) {
             // Success. Return a 200-OK status.
         	DomainDTO updatedDomDTO = new DomainDTO().assignPojoValues(updatedDomain);
