@@ -166,7 +166,6 @@
         	<!-- License: Apache 2.0 -->
 		    <groupId>org.springframework.kafka</groupId>
 		    <artifactId>spring-kafka</artifactId>
-		    <version>4.0.3</version><!--$NO-MVN-MAN-VER$-->
 		</dependency>
 
         <!-- Dependencies for tests -->
