@@ -98,7 +98,7 @@ public class PseudonymDTO implements IObjectDTO<IPseudonym, PseudonymDTO> {
         this.setValidFromInherited(pojo.getValidfrominherited());
         this.setValidTo(pojo.getValidto() != null ? pojo.getValidto() : null);
         this.setValidToInherited(pojo.getValidtoinherited());
-        DomainDTO d = pojo.getDomainid() != null ? new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByID(pojo.getDomainid(), null)) : null;
+        DomainDTO d = pojo.getDomainid() != null ? new DomainDTO().assignPojoValues(domainDBAccessService.getDomainByID(pojo.getDomainid())) : null;
         this.setDomainName(d != null ? d.getName() : null);
         this.setDomain(d != null ? d : null);
 

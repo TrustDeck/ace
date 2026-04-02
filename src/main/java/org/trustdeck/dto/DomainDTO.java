@@ -199,7 +199,7 @@ public class DomainDTO implements IObjectDTO<IDomain, DomainDTO> {
         this.setSalt(pojo.getSalt());
         this.setSaltLength(pojo.getSaltlength());
         this.setDescription(Assertion.isNotNullOrEmpty(pojo.getDescription()) ? pojo.getDescription() : null);
-        Domain d = (pojo.getSuperdomainid() != null && pojo.getSuperdomainid() > 0) ? domainDBAccessService.getDomainByID(pojo.getSuperdomainid(), null) : null;
+        Domain d = (pojo.getSuperdomainid() != null && pojo.getSuperdomainid() > 0) ? domainDBAccessService.getDomainByID(pojo.getSuperdomainid()) : null;
         this.setSuperDomainName(d != null ? d.getName() : null);
         this.setSuperDomainID(d != null ? d.getId() : null);
         
