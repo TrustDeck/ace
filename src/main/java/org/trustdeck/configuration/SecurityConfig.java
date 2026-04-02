@@ -36,7 +36,7 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.trustdeck.security.audittrail.AudittrailRequestFilter;
+import org.trustdeck.security.RequestResponseCachingFilter;
 import org.trustdeck.security.authentication.JwtAuthConverter;
 import org.trustdeck.security.authentication.handler.CustomAccessDeniedHandler;
 import org.trustdeck.security.authentication.handler.CustomAuthenticationEntryPointHandler;
@@ -87,7 +87,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         log.debug("Creating default security filter chain ...");
         
-    	http.addFilterAfter(new AudittrailRequestFilter(), BasicAuthenticationFilter.class)
+    	http.addFilterAfter(new RequestResponseCachingFilter(), BasicAuthenticationFilter.class)
 		      .csrf(csrf -> csrf.disable()) // CSRF will be disabled since this API will mainly be used by services not browsers or individual users
 		      .authorizeHttpRequests(auth -> auth
 		    		// Permit all requests to Swagger UI and API documentation
