@@ -44,7 +44,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import static org.trustdeck.jooq.generated.Tables.ENTITY_TYPE;
@@ -79,7 +78,6 @@ public class EntityTypeDBService {
      * Method to insert a new entity type into the database.
      * 
      * @param entityTypeDTO the entity type data transfer object containing the necessary data
-     * @param request the http request object containing information necessary for the audit trail 
      * @return The newly inserted entity type object when the insertion was successful,
      * 		   the original entity type object if the given one was a duplicate, and
      * 		   {@code null} when the insertion failed.
@@ -88,7 +86,7 @@ public class EntityTypeDBService {
 	 * @throws DuplicateEntityTypeException when an entity type with the same name already exists
      */
     @Transactional
-    public EntityTypeDTO createEntityType(EntityTypeDTO entityTypeDTO, HttpServletRequest request) throws CreationException, DuplicateEntityTypeException {
+    public EntityTypeDTO createEntityType(EntityTypeDTO entityTypeDTO) throws CreationException, DuplicateEntityTypeException {
     	// Create the record and send it to the database
     	EntityTypeRecord createdEntityType;
     	try {
@@ -137,11 +135,10 @@ public class EntityTypeDBService {
      * 
      * @param name the entity type's name
      * @param projectID the project to which the entity type is assigned to
-     * @param request the http request object containing information necessary for the audit trail
      * @return the retrieved entity type when successfully found, or {@code null} when nothing was found.
      */
     @Transactional
-    public EntityTypeDTO getEntityTypeByName(String name, Integer projectID, HttpServletRequest request) {
+    public EntityTypeDTO getEntityTypeByName(String name, Integer projectID) {
     	// Check if all the necessary arguments are available
     	if (Assertion.isNullOrEmpty(name)) {
     		log.debug("For retrieving the entity type, there is an argument missing or empty.");
@@ -197,11 +194,10 @@ public class EntityTypeDBService {
      * 
      * @param entityTypeId the entity type's ID
      * @param projectID the project to which the entity type is assigned to
-     * @param request the http request object containing information necessary for the audit trail
      * @return the retrieved entity type when successfully found, or {@code null} when nothing was found.
      */
     @Transactional
-    public EntityTypeDTO getEntityTypeById(int entityTypeId, Integer projectID, HttpServletRequest request) {
+    public EntityTypeDTO getEntityTypeById(int entityTypeId, Integer projectID) {
     	// Check if all the necessary arguments are available
     	if (entityTypeId <= 0) {
     		log.debug("For retrieving the entity type, there is an argument missing or empty.");
@@ -256,20 +252,19 @@ public class EntityTypeDBService {
      * these are unique in the database.
      * 
      * @param entityTypeDTO the entity type data transfer object containing the necessary data (at least name and projectID)
-     * @param request the http request object containing information necessary for the audit trail
      * @return the entity type as a DTO, or {@code null} if nothing was found or the search failed
      */
     @Transactional
-    public EntityTypeDTO getEntityType(EntityTypeDTO entityTypeDTO, HttpServletRequest request) {
+    public EntityTypeDTO getEntityType(EntityTypeDTO entityTypeDTO) {
     	// Check if all the necessary arguments are available
     	if (entityTypeDTO == null) {
     		return null;
     	}
     	
     	if (entityTypeDTO.getId() != null) {
-    		return getEntityTypeById(entityTypeDTO.getId(), entityTypeDTO.getProjectId(), request);
+    		return getEntityTypeById(entityTypeDTO.getId(), entityTypeDTO.getProjectId());
     	} else if (entityTypeDTO.getName() != null) {
-    		return getEntityTypeByName(entityTypeDTO.getName(), entityTypeDTO.getProjectId(), request);
+    		return getEntityTypeByName(entityTypeDTO.getName(), entityTypeDTO.getProjectId());
     	} else {
     		log.debug("Neither name, nor ID were given to search for in the database.");
     		return null;
@@ -280,12 +275,11 @@ public class EntityTypeDBService {
      * Method to delete an entity type. Only possible if the entity type is not used anywhere.
      * 
      * @param type the entity type's DTO including the name and the projectID
-     * @param request the http request object containing information necessary for the audit trail
      * @return {@code true} when deletion was successful, {@code false} when anything went wrong during the deletion
      * @throws UnexpectedResultSizeException when the deletion would have affected an unexpected number of database entries
      */
     @Transactional
-    public boolean deleteEntityType(EntityTypeDTO type, HttpServletRequest request) throws UnexpectedResultSizeException {
+    public boolean deleteEntityType(EntityTypeDTO type) throws UnexpectedResultSizeException {
     	// Check if all the necessary arguments are available
     	if (Assertion.isNullOrEmpty(type.getName()) || type.getProjectId() == null) {
     		log.debug("For retrieving the entity type, there is an argument missing or empty.");
@@ -352,20 +346,19 @@ public class EntityTypeDBService {
      * 
      * @param oldEntityTypeDTO the entity type data transfer object containing the necessary data to identify the type that should be updated
      * @param newEntityTypeDTO the entity type object containing the data to use for the update; null-values lead to keeping the old values
-     * @param request the http request object containing information necessary for the audit trail
      * @return the updated entity type object when successful, {@code null} when anything went wrong
      */
     @Transactional
-    public EntityTypeDTO updateEntityType(EntityTypeDTO oldEntityTypeDTO, EntityTypeDTO newEntityTypeDTO, HttpServletRequest request) {
+    public EntityTypeDTO updateEntityType(EntityTypeDTO oldEntityTypeDTO, EntityTypeDTO newEntityTypeDTO) {
     	// Ensure that all necessary information is given --> retrieve the database version of the old record
-    	EntityTypeDTO oldType = getEntityType(oldEntityTypeDTO, null);
+    	EntityTypeDTO oldType = getEntityType(oldEntityTypeDTO);
     	
     	if (oldType == null) {
     		return null;
     	}
     	
     	// Check that the project in which this type is defined is not yet deleted
-    	if (projectDBService.getProjectByID(oldType.getProjectId(), null).getEndDate().isBefore(OffsetDateTime.now())) {
+    	if (projectDBService.getProjectByID(oldType.getProjectId()).getEndDate().isBefore(OffsetDateTime.now())) {
     		log.debug("The project, in which this type is defined, is already deleted. No updates to the type are allowed.");
     		return null;
     	}
@@ -423,11 +416,10 @@ public class EntityTypeDBService {
      * 
      * @param query the (multi-word) search query
      * @param projectId the id of the project
-     * @param request the http request object containing information necessary for the audit trail
      * @return a list of entity types that match the search query
      */
     @Transactional
-    public List<EntityTypeDTO> searchEntityType(String query, int projectId, HttpServletRequest request) {
+    public List<EntityTypeDTO> searchEntityType(String query, int projectId) {
     	if (Assertion.isNullOrEmpty(query)) {
             log.debug("Search query is empty.");
             return null;
@@ -595,7 +587,7 @@ public class EntityTypeDBService {
      * @return the ID of the domain or {@code null} when the name was empty or not found
      */
     private Integer getDomainIdFromName(String domainName) {
-    	Domain d = Assertion.isNullOrEmpty(domainName) ? null : ddba.getDomainByName(domainName, null);
+    	Domain d = Assertion.isNullOrEmpty(domainName) ? null : ddba.getDomainByName(domainName);
     	return d == null ? null : d.getId();
 	}
     
