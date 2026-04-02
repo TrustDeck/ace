@@ -8,7 +8,7 @@ import org.jooq.Configuration;
 import org.jooq.Field;
 import org.jooq.Result;
 import org.trustdeck.jooq.generated.tables.Algorithm;
-import org.trustdeck.jooq.generated.tables.Auditevent;
+import org.trustdeck.jooq.generated.tables.AuditEvent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
@@ -32,9 +32,9 @@ public class Tables {
     public static final Algorithm ALGORITHM = Algorithm.ALGORITHM;
 
     /**
-     * The table <code>public.auditevent</code>.
+     * The table <code>public.audit_event</code>.
      */
-    public static final Auditevent AUDITEVENT = Auditevent.AUDITEVENT;
+    public static final AuditEvent AUDIT_EVENT = AuditEvent.AUDIT_EVENT;
 
     /**
      * The table <code>public.domain</code>.

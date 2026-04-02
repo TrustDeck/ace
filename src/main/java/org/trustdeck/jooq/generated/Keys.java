@@ -10,7 +10,7 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 import org.trustdeck.jooq.generated.tables.Algorithm;
-import org.trustdeck.jooq.generated.tables.Auditevent;
+import org.trustdeck.jooq.generated.tables.AuditEvent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
@@ -19,7 +19,7 @@ import org.trustdeck.jooq.generated.tables.Project;
 import org.trustdeck.jooq.generated.tables.ProjectImage;
 import org.trustdeck.jooq.generated.tables.Pseudonym;
 import org.trustdeck.jooq.generated.tables.records.AlgorithmRecord;
-import org.trustdeck.jooq.generated.tables.records.AuditeventRecord;
+import org.trustdeck.jooq.generated.tables.records.AuditEventRecord;
 import org.trustdeck.jooq.generated.tables.records.DomainRecord;
 import org.trustdeck.jooq.generated.tables.records.EntityInstanceRecord;
 import org.trustdeck.jooq.generated.tables.records.EntityTypeRecord;
@@ -42,7 +42,7 @@ public class Keys {
 
     public static final UniqueKey<AlgorithmRecord> ALGORITHM_NAME_ALPHABET_RANDOMALGORITHMDESIREDSIZE_RANDOMAL_KEY = Internal.createUniqueKey(Algorithm.ALGORITHM, DSL.name("algorithm_name_alphabet_randomalgorithmdesiredsize_randomal_key"), new TableField[] { Algorithm.ALGORITHM.NAME, Algorithm.ALGORITHM.ALPHABET, Algorithm.ALGORITHM.RANDOMALGORITHMDESIREDSIZE, Algorithm.ALGORITHM.RANDOMALGORITHMDESIREDSUCCESSPROBABILITY, Algorithm.ALGORITHM.PSEUDONYMLENGTH, Algorithm.ALGORITHM.PADDINGCHARACTER, Algorithm.ALGORITHM.ADDCHECKDIGIT, Algorithm.ALGORITHM.LENGTHINCLUDESCHECKDIGIT }, true);
     public static final UniqueKey<AlgorithmRecord> ALGORITHM_PKEY = Internal.createUniqueKey(Algorithm.ALGORITHM, DSL.name("algorithm_pkey"), new TableField[] { Algorithm.ALGORITHM.ID }, true);
-    public static final UniqueKey<AuditeventRecord> AUDITEVENT_PKEY = Internal.createUniqueKey(Auditevent.AUDITEVENT, DSL.name("auditevent_pkey"), new TableField[] { Auditevent.AUDITEVENT.ID }, true);
+    public static final UniqueKey<AuditEventRecord> AUDIT_EVENT_PKEY = Internal.createUniqueKey(AuditEvent.AUDIT_EVENT, DSL.name("audit_event_pkey"), new TableField[] { AuditEvent.AUDIT_EVENT.ID }, true);
     public static final UniqueKey<DomainRecord> DOMAIN_NAME_KEY = Internal.createUniqueKey(Domain.DOMAIN, DSL.name("domain_name_key"), new TableField[] { Domain.DOMAIN.NAME }, true);
     public static final UniqueKey<DomainRecord> DOMAIN_PKEY = Internal.createUniqueKey(Domain.DOMAIN, DSL.name("domain_pkey"), new TableField[] { Domain.DOMAIN.ID }, true);
     public static final UniqueKey<EntityInstanceRecord> ENTITY_INSTANCE_ENTITY_TYPE_ID_TRUSTDECK_ID_KEY = Internal.createUniqueKey(EntityInstance.ENTITY_INSTANCE, DSL.name("entity_instance_entity_type_id_trustdeck_id_key"), new TableField[] { EntityInstance.ENTITY_INSTANCE.ENTITY_TYPE_ID, EntityInstance.ENTITY_INSTANCE.TRUSTDECK_ID }, true);
