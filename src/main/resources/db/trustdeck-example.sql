@@ -107,26 +107,30 @@ ALTER SEQUENCE public.algorithm_id_seq OWNED BY public.algorithm.id;
 
 
 --
--- Name: auditevent; Type: TABLE; Schema: public; Owner: trustdeck-manager
+-- Name: audit_event; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
-CREATE TABLE public.auditevent (
+CREATE TABLE public.audit_event (
     id bigint NOT NULL,
-    requesttime timestamp without time zone NOT NULL,
-    username text NOT NULL,
-    requesterip text NOT NULL,
-    requesturl text NOT NULL,
-    requestbody text
+    request_time timestamp without time zone NOT NULL,
+    user_name text NOT NULL,
+    requester_ip text,
+    request_url text,
+    request_body text,
+    source_system text,
+    topic text,
+    partition integer,
+    record_offset bigint
 );
 
 
-ALTER TABLE public.auditevent OWNER TO "trustdeck-manager";
+ALTER TABLE public.audit_event OWNER TO "trustdeck-manager";
 
 --
--- Name: auditevent_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
+-- Name: audit_event_id_seq; Type: SEQUENCE; Schema: public; Owner: trustdeck-manager
 --
 
-CREATE SEQUENCE public.auditevent_id_seq
+CREATE SEQUENCE public.audit_event_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -134,13 +138,13 @@ CREATE SEQUENCE public.auditevent_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.auditevent_id_seq OWNER TO "trustdeck-manager";
+ALTER SEQUENCE public.audit_event_id_seq OWNER TO "trustdeck-manager";
 
 --
--- Name: auditevent_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
+-- Name: audit_event_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: trustdeck-manager
 --
 
-ALTER SEQUENCE public.auditevent_id_seq OWNED BY public.auditevent.id;
+ALTER SEQUENCE public.audit_event_id_seq OWNED BY public.audit_event.id;
 
 
 --
@@ -294,91 +298,6 @@ ALTER SEQUENCE public.entity_type_id_seq OWNER TO "trustdeck-manager";
 --
 
 ALTER SEQUENCE public.entity_type_id_seq OWNED BY public.entity_type.id;
-
-
---
--- Name: entityinstance_t1; Type: TABLE; Schema: public; Owner: trustdeck-manager
---
-
-CREATE TABLE public.entityinstance_t1 (
-    id bigint DEFAULT nextval('public.entity_instance_id_seq'::regclass) NOT NULL,
-    trustdeck_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    project_id integer NOT NULL,
-    entity_type_id integer NOT NULL,
-    data jsonb NOT NULL,
-    full_text_search_vector tsvector GENERATED ALWAYS AS (jsonb_to_tsvector('simple'::regconfig, data, '["string"]'::jsonb)) STORED,
-    data_text text GENERATED ALWAYS AS ((data)::text) STORED,
-    data_sha256 bytea GENERATED ALWAYS AS (public.digest((data)::text, 'sha256'::text)) STORED,
-    is_deleted boolean DEFAULT false NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-ALTER TABLE public.entityinstance_t1 OWNER TO "trustdeck-manager";
-
---
--- Name: entityinstance_t2; Type: TABLE; Schema: public; Owner: trustdeck-manager
---
-
-CREATE TABLE public.entityinstance_t2 (
-    id bigint DEFAULT nextval('public.entity_instance_id_seq'::regclass) NOT NULL,
-    trustdeck_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    project_id integer NOT NULL,
-    entity_type_id integer NOT NULL,
-    data jsonb NOT NULL,
-    full_text_search_vector tsvector GENERATED ALWAYS AS (jsonb_to_tsvector('simple'::regconfig, data, '["string"]'::jsonb)) STORED,
-    data_text text GENERATED ALWAYS AS ((data)::text) STORED,
-    data_sha256 bytea GENERATED ALWAYS AS (public.digest((data)::text, 'sha256'::text)) STORED,
-    is_deleted boolean DEFAULT false NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-ALTER TABLE public.entityinstance_t2 OWNER TO "trustdeck-manager";
-
---
--- Name: entityinstance_t4; Type: TABLE; Schema: public; Owner: trustdeck-manager
---
-
-CREATE TABLE public.entityinstance_t4 (
-    id bigint DEFAULT nextval('public.entity_instance_id_seq'::regclass) NOT NULL,
-    trustdeck_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    project_id integer NOT NULL,
-    entity_type_id integer NOT NULL,
-    data jsonb NOT NULL,
-    full_text_search_vector tsvector GENERATED ALWAYS AS (jsonb_to_tsvector('simple'::regconfig, data, '["string"]'::jsonb)) STORED,
-    data_text text GENERATED ALWAYS AS ((data)::text) STORED,
-    data_sha256 bytea GENERATED ALWAYS AS (public.digest((data)::text, 'sha256'::text)) STORED,
-    is_deleted boolean DEFAULT false NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-ALTER TABLE public.entityinstance_t4 OWNER TO "trustdeck-manager";
-
---
--- Name: entityinstance_t7; Type: TABLE; Schema: public; Owner: trustdeck-manager
---
-
-CREATE TABLE public.entityinstance_t7 (
-    id bigint DEFAULT nextval('public.entity_instance_id_seq'::regclass) NOT NULL,
-    trustdeck_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    project_id integer NOT NULL,
-    entity_type_id integer NOT NULL,
-    data jsonb NOT NULL,
-    full_text_search_vector tsvector GENERATED ALWAYS AS (jsonb_to_tsvector('simple'::regconfig, data, '["string"]'::jsonb)) STORED,
-    data_text text GENERATED ALWAYS AS ((data)::text) STORED,
-    data_sha256 bytea GENERATED ALWAYS AS (public.digest((data)::text, 'sha256'::text)) STORED,
-    is_deleted boolean DEFAULT false NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-ALTER TABLE public.entityinstance_t7 OWNER TO "trustdeck-manager";
 
 --
 -- Name: permission_grant; Type: TABLE; Schema: public; Owner: trustdeck-manager
@@ -546,34 +465,6 @@ ALTER SEQUENCE public.pseudonym_id_seq OWNED BY public.pseudonym.id;
 
 
 --
--- Name: entityinstance_t1; Type: TABLE ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entity_instance ATTACH PARTITION public.entityinstance_t1 FOR VALUES IN (1);
-
-
---
--- Name: entityinstance_t2; Type: TABLE ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entity_instance ATTACH PARTITION public.entityinstance_t2 FOR VALUES IN (2);
-
-
---
--- Name: entityinstance_t4; Type: TABLE ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entity_instance ATTACH PARTITION public.entityinstance_t4 FOR VALUES IN (4);
-
-
---
--- Name: entityinstance_t7; Type: TABLE ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entity_instance ATTACH PARTITION public.entityinstance_t7 FOR VALUES IN (7);
-
-
---
 -- Name: algorithm id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
 --
 
@@ -581,10 +472,10 @@ ALTER TABLE ONLY public.algorithm ALTER COLUMN id SET DEFAULT nextval('public.al
 
 
 --
--- Name: auditevent id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
+-- Name: audit_event id; Type: DEFAULT; Schema: public; Owner: trustdeck-manager
 --
 
-ALTER TABLE ONLY public.auditevent ALTER COLUMN id SET DEFAULT nextval('public.auditevent_id_seq'::regclass);
+ALTER TABLE ONLY public.audit_event ALTER COLUMN id SET DEFAULT nextval('public.audit_event_id_seq'::regclass);
 
 
 --
@@ -653,11 +544,11 @@ ALTER TABLE ONLY public.algorithm
 
 
 --
--- Name: auditevent auditevent_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+-- Name: audit_event audit_event_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
-ALTER TABLE ONLY public.auditevent
-    ADD CONSTRAINT auditevent_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.audit_event
+    ADD CONSTRAINT audit_event_pkey PRIMARY KEY (id);
 
 
 --
@@ -698,70 +589,6 @@ ALTER TABLE ONLY public.entity_instance
 
 ALTER TABLE ONLY public.entity_type
     ADD CONSTRAINT entity_type_pkey PRIMARY KEY (id);
-
-
---
--- Name: entityinstance_t1 entityinstance_t1_entity_type_id_trustdeck_id_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entityinstance_t1
-    ADD CONSTRAINT entityinstance_t1_entity_type_id_trustdeck_id_key UNIQUE (entity_type_id, trustdeck_id);
-
-
---
--- Name: entityinstance_t1 entityinstance_t1_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entityinstance_t1
-    ADD CONSTRAINT entityinstance_t1_pkey PRIMARY KEY (entity_type_id, id);
-
-
---
--- Name: entityinstance_t2 entityinstance_t2_entity_type_id_trustdeck_id_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entityinstance_t2
-    ADD CONSTRAINT entityinstance_t2_entity_type_id_trustdeck_id_key UNIQUE (entity_type_id, trustdeck_id);
-
-
---
--- Name: entityinstance_t2 entityinstance_t2_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entityinstance_t2
-    ADD CONSTRAINT entityinstance_t2_pkey PRIMARY KEY (entity_type_id, id);
-
-
---
--- Name: entityinstance_t4 entityinstance_t4_entity_type_id_trustdeck_id_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entityinstance_t4
-    ADD CONSTRAINT entityinstance_t4_entity_type_id_trustdeck_id_key UNIQUE (entity_type_id, trustdeck_id);
-
-
---
--- Name: entityinstance_t4 entityinstance_t4_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entityinstance_t4
-    ADD CONSTRAINT entityinstance_t4_pkey PRIMARY KEY (entity_type_id, id);
-
-
---
--- Name: entityinstance_t7 entityinstance_t7_entity_type_id_trustdeck_id_key; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entityinstance_t7
-    ADD CONSTRAINT entityinstance_t7_entity_type_id_trustdeck_id_key UNIQUE (entity_type_id, trustdeck_id);
-
-
---
--- Name: entityinstance_t7 entityinstance_t7_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
---
-
-ALTER TABLE ONLY public.entityinstance_t7
-    ADD CONSTRAINT entityinstance_t7_pkey PRIMARY KEY (entity_type_id, id);
 
 
 --
@@ -847,7 +674,7 @@ CREATE INDEX algorithm_name_uindex ON public.algorithm USING btree (name);
 -- Name: auditusernameidx; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
-CREATE INDEX auditusernameidx ON public.auditevent USING btree (username);
+CREATE INDEX auditusernameidx ON public.audit_event USING btree (user_name);
 
 
 --
@@ -890,34 +717,6 @@ CREATE UNIQUE INDEX entity_type_name_proj_uq ON public.entity_type USING btree (
 --
 
 CREATE INDEX entity_type_type_definition_gin_idx ON public.entity_type USING gin (type_definition);
-
-
---
--- Name: entityinstance_t1_project_id_entity_type_id_digest_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE UNIQUE INDEX entityinstance_t1_project_id_entity_type_id_digest_idx ON public.entityinstance_t1 USING btree (project_id, entity_type_id, public.digest((data)::text, 'sha256'::text)) WHERE (is_deleted = false);
-
-
---
--- Name: entityinstance_t2_project_id_entity_type_id_digest_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE UNIQUE INDEX entityinstance_t2_project_id_entity_type_id_digest_idx ON public.entityinstance_t2 USING btree (project_id, entity_type_id, public.digest((data)::text, 'sha256'::text)) WHERE (is_deleted = false);
-
-
---
--- Name: entityinstance_t4_project_id_entity_type_id_digest_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE UNIQUE INDEX entityinstance_t4_project_id_entity_type_id_digest_idx ON public.entityinstance_t4 USING btree (project_id, entity_type_id, public.digest((data)::text, 'sha256'::text)) WHERE (is_deleted = false);
-
-
---
--- Name: entityinstance_t7_project_id_entity_type_id_digest_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
---
-
-CREATE UNIQUE INDEX entityinstance_t7_project_id_entity_type_id_digest_idx ON public.entityinstance_t7 USING btree (project_id, entity_type_id, public.digest((data)::text, 'sha256'::text)) WHERE (is_deleted = false);
 
 
 --
@@ -967,90 +766,6 @@ CREATE UNIQUE INDEX metadataidx ON public.domain USING btree (name);
 --
 
 CREATE UNIQUE INDEX uq_permission_grant ON public.permission_grant USING btree (subject_id, resource_type, resource_id, action);
-
-
---
--- Name: entityinstance_t1_entity_type_id_trustdeck_id_key; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_entity_type_id_trustdeck_id_key ATTACH PARTITION public.entityinstance_t1_entity_type_id_trustdeck_id_key;
-
-
---
--- Name: entityinstance_t1_pkey; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_pkey ATTACH PARTITION public.entityinstance_t1_pkey;
-
-
---
--- Name: entityinstance_t1_project_id_entity_type_id_digest_idx; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_uq_type_sha256 ATTACH PARTITION public.entityinstance_t1_project_id_entity_type_id_digest_idx;
-
-
---
--- Name: entityinstance_t2_entity_type_id_trustdeck_id_key; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_entity_type_id_trustdeck_id_key ATTACH PARTITION public.entityinstance_t2_entity_type_id_trustdeck_id_key;
-
-
---
--- Name: entityinstance_t2_pkey; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_pkey ATTACH PARTITION public.entityinstance_t2_pkey;
-
-
---
--- Name: entityinstance_t2_project_id_entity_type_id_digest_idx; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_uq_type_sha256 ATTACH PARTITION public.entityinstance_t2_project_id_entity_type_id_digest_idx;
-
-
---
--- Name: entityinstance_t4_entity_type_id_trustdeck_id_key; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_entity_type_id_trustdeck_id_key ATTACH PARTITION public.entityinstance_t4_entity_type_id_trustdeck_id_key;
-
-
---
--- Name: entityinstance_t4_pkey; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_pkey ATTACH PARTITION public.entityinstance_t4_pkey;
-
-
---
--- Name: entityinstance_t4_project_id_entity_type_id_digest_idx; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_uq_type_sha256 ATTACH PARTITION public.entityinstance_t4_project_id_entity_type_id_digest_idx;
-
-
---
--- Name: entityinstance_t7_entity_type_id_trustdeck_id_key; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_entity_type_id_trustdeck_id_key ATTACH PARTITION public.entityinstance_t7_entity_type_id_trustdeck_id_key;
-
-
---
--- Name: entityinstance_t7_pkey; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_pkey ATTACH PARTITION public.entityinstance_t7_pkey;
-
-
---
--- Name: entityinstance_t7_project_id_entity_type_id_digest_idx; Type: INDEX ATTACH; Schema: public; Owner: trustdeck-manager
---
-
-ALTER INDEX public.entity_instance_uq_type_sha256 ATTACH PARTITION public.entityinstance_t7_project_id_entity_type_id_digest_idx;
 
 
 --
