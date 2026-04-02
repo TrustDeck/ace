@@ -30,7 +30,7 @@ public enum AuditUserType {
     /** Human user type. */
     HUMAN("HUMAN", 2),
 	
-    /** Represents no user type. */
+    /** Represents the no-auditing user type. */
 	NONE("NONE", 3),
     
     /** Technical user type. */
