@@ -279,7 +279,9 @@ public class AlgorithmDBService {
      * @return the algorithm object that was found when searching for the given attributes, or {@code null} when nothing was found
      */
     @Transactional
-    public Algorithm getAlgorithmByValues(String name, String alphabet, Long randomAlgoDesiredSize, Double randomAlgoDesiredSuccessProbability, Integer pseudonymLength, String paddingChar, Boolean addCheckDigit, Boolean lengthIncludesCheckDigit, String salt, Integer saltLength) {
+    public Algorithm getAlgorithmByValues(String name, String alphabet, Long randomAlgoDesiredSize, 
+    		Double randomAlgoDesiredSuccessProbability, Integer pseudonymLength, String paddingChar, 
+    		Boolean addCheckDigit, Boolean lengthIncludesCheckDigit, String salt, Integer saltLength) {
     	// Build the query based on the given non-null attributes
         Condition condition = DSL.trueCondition();
         if (name != null) {

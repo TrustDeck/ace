@@ -48,4 +48,7 @@ public class KafkaMessageProperties {
 	
 	/** The JSON property descriptor/name that indicates the validity period's end value. */
 	private String validToDescriptor;
+	
+	/** The JSON property descriptor/name that indicates the username of the user that sent the message. */
+	private String usernameDescriptor;
 }

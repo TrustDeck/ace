@@ -59,6 +59,9 @@ public class KafkaPseudonymMessageDTO {
 
 	/** The validity period's end value for this pseudonym object. */
 	private String validTo;
+	
+	/** The username of the user that sent the message. */
+	private String username;
 
 	/** Used as a catch-all object for all JSON fields during deserialization. */
 	@JsonIgnore

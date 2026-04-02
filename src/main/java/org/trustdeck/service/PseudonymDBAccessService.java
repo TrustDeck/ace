@@ -17,7 +17,6 @@
 
 package org.trustdeck.service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import org.jooq.Condition;
@@ -89,12 +88,10 @@ public class PseudonymDBAccessService {
      * @param pseudonyms a list of pseudonyms to insert into the database
      * @param domainId the ID of the domain in which the pseudonyms should be created
      * @param multiplePsnAllowed whether or not multiple pseudonyms per id &amp; idType combination are allowed
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return {@code INSERTION_SUCCESS} when the batch insertion was successful, {@code INSERTION_ERROR} otherwise
      */
     @Transactional
-    public List<String> createPseudonyms(List<PseudonymDTO> pseudonyms, int domainId, boolean multiplePsnAllowed, HttpServletRequest request) {
+    public List<String> createPseudonyms(List<PseudonymDTO> pseudonyms, int domainId, boolean multiplePsnAllowed) {
     	// Check if there is something to do
     	if (pseudonyms == null || pseudonyms.isEmpty()) {
             return List.of();
@@ -246,24 +243,22 @@ public class PseudonymDBAccessService {
      * @param domainName the name of the domain to search in
      * @param identifierItem the identifierItem to search for
      * @param psn the pseudonym to search for
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return the pseudonymization data element referring to the given information, or
      * {@code null} when nothing is found or an error occurs
      */
     @Transactional
-    public List<PseudonymDTO> getPseudonym(String domainName, IdentifierItem identifierItem, String psn, HttpServletRequest request) {
+    public List<PseudonymDTO> getPseudonym(String domainName, IdentifierItem identifierItem, String psn) {
     	// Decide on which get-method to use depending on the given information
     	if (identifierItem != null && identifierItem.isNotNullNorEmpty() && psn == null) {
     		// Retrieve pseudonym through the identifier
-    		return getPseudonymFromIdentifier(domainName, identifierItem, request);
+    		return getPseudonymFromIdentifier(domainName, identifierItem);
     	} else if ((identifierItem == null || identifierItem.isNullOrEmpty()) && psn != null) {
     		// Retrieve pseudonym through the pseudonym
-    		PseudonymDTO p = getPseudonymFromPsn(domainName, psn, request);
+    		PseudonymDTO p = getPseudonymFromPsn(domainName, psn);
     		return p == null ? null : List.of(p);
     	} else if (identifierItem != null && Assertion.isNotNullOrEmpty(identifierItem.getIdentifier(), identifierItem.getIdType(), psn)) {
     		// The identifier, idType, and pseudonym were given, check that all attributes are correct
-    		List<PseudonymDTO> pseudonyms = getPseudonymFromIdentifier(domainName, identifierItem, request);
+    		List<PseudonymDTO> pseudonyms = getPseudonymFromIdentifier(domainName, identifierItem);
     		
     		if (pseudonyms == null) {
     			log.debug("Nothing was found for the given parameter configuration.");
@@ -289,16 +284,14 @@ public class PseudonymDBAccessService {
      *
      * @param domainName the name of the domain to search in
      * @param identifierItem the identifierItem to search for
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return the pseudonymization data element referring to the given identifier, or
      * {@code null} when nothing is found or an error occurs
      */
     @Transactional
-    public List<PseudonymDTO> getPseudonymFromIdentifier(String domainName, IdentifierItem identifierItem, HttpServletRequest request) {
+    public List<PseudonymDTO> getPseudonymFromIdentifier(String domainName, IdentifierItem identifierItem) {
         try {
             // Check that the domain name is valid
-        	Domain d = domainDBAccessService.getDomainByName(domainName, null);
+        	Domain d = domainDBAccessService.getDomainByName(domainName);
             if (d == null) {
                 log.debug("The domain to search the pseudonym in, wasn't found.");
                 return null;
@@ -338,16 +331,14 @@ public class PseudonymDBAccessService {
      *
      * @param domainName the name of the domain to search in
      * @param psn the pseudonym to search for
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return the pseudonymization data element referring to the given pseudonym, or
      * {@code null} when nothing is found or an error occurs
      */
     @Transactional
-    public PseudonymDTO getPseudonymFromPsn(String domainName, String psn, HttpServletRequest request) {
+    public PseudonymDTO getPseudonymFromPsn(String domainName, String psn) {
         try {
         	// Check that the domain name is valid
-            Domain d = domainDBAccessService.getDomainByName(domainName, null);
+            Domain d = domainDBAccessService.getDomainByName(domainName);
             if (d == null) {
                 log.debug("The domain to search the pseudonym in, wasn't found.");
                 return null;
@@ -381,12 +372,10 @@ public class PseudonymDBAccessService {
      * Can also update a single pseudonym (given as a list).
      *
      * @param pseudonymUpdates a list of pseudonyms that are to be updated in the database
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return List of {@code true} when the individual update was successful, {@code false} otherwise
      */
     @Transactional
-    public List<Boolean> updatePseudonyms(List<PseudonymUpdateDTO> pseudonymUpdates, HttpServletRequest request) {
+    public List<Boolean> updatePseudonyms(List<PseudonymUpdateDTO> pseudonymUpdates) {
         // Check if there is something to do
     	if (pseudonymUpdates == null || pseudonymUpdates.isEmpty()) {
             return List.of();
@@ -411,7 +400,7 @@ public class PseudonymDBAccessService {
             	PseudonymUpdateDTO p = pseudonymUpdates.get(j);
             	
             	// Check if the pseudonym record to be updated exists
-            	List<PseudonymDTO> found = getPseudonym(p.getOldDomain().getName(), p.getOldIdentifierItem(), p.getOldPsn(), null);
+            	List<PseudonymDTO> found = getPseudonym(p.getOldDomain().getName(), p.getOldIdentifierItem(), p.getOldPsn());
             	if (found == null || found.size() == 0 || found.getFirst() == null) {
             		log.debug("The pseudonym record was not found in the database, so this update is ignored.");
             		ignored++;
@@ -503,12 +492,10 @@ public class PseudonymDBAccessService {
      *
      * @param pseudonyms a list of pseudonyms that are to be deleted from the database
      * @param domainId the ID of the domain in which the pseudonym should be updated
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return {@code true} when the batch deletion was successful, {@code false} otherwise
      */
     @Transactional
-    public List<Boolean> deletePseudonyms(List<PseudonymDTO> pseudonyms, int domainId, HttpServletRequest request) {
+    public List<Boolean> deletePseudonyms(List<PseudonymDTO> pseudonyms, int domainId) {
     	List<Boolean> deleteSuccess = new ArrayList<>();
     	
     	if (pseudonyms == null || pseudonyms.isEmpty()) {
@@ -578,11 +565,10 @@ public class PseudonymDBAccessService {
      * 
      * @param query the search query
      * @param domainId the id of the domain in which to search for
-     * @param request the http request object containing information necessary for the audit trail
      * @return a list of pseudonyms that match the search query
      */
     @Transactional
-    public List<PseudonymDTO> searchPseudonyms(String query, int domainId, HttpServletRequest request) {
+    public List<PseudonymDTO> searchPseudonyms(String query, int domainId) {
     	if (Assertion.isNullOrEmpty(query)) {
             log.debug("Search query is empty.");
             return null;

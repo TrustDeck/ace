@@ -112,9 +112,9 @@ public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	        return null;
 	    }
 		
-		EntityTypeDTO baseType = pojo.getBaseTypeId() == null ? null : etdbs.getEntityTypeById(pojo.getBaseTypeId(), null, null);
-		Domain domain = pojo.getAssociatedDomainId() == null ? null : ddba.getDomainByID(pojo.getAssociatedDomainId(), null);
-		ProjectDTO project = pojo.getProjectId() == null ? null : pdbs.getProjectByID(pojo.getProjectId(), null);
+		EntityTypeDTO baseType = pojo.getBaseTypeId() == null ? null : etdbs.getEntityTypeById(pojo.getBaseTypeId(), null);
+		Domain domain = pojo.getAssociatedDomainId() == null ? null : ddba.getDomainByID(pojo.getAssociatedDomainId());
+		ProjectDTO project = pojo.getProjectId() == null ? null : pdbs.getProjectByID(pojo.getProjectId());
 		
 	    this.setId(pojo.getId());
 	    this.setName(pojo.getName());

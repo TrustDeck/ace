@@ -76,7 +76,7 @@ public class ProjectImageDTO implements IObjectDTO<ProjectImage, ProjectImageDTO
 			return null;
 		}
 		
-		ProjectDTO project = pdbs.getProjectByID(pojo.getProjectId(), null);
+		ProjectDTO project = pdbs.getProjectByID(pojo.getProjectId());
 
 		this.setId(pojo.getId());
 		this.setProjectId(pojo.getProjectId());

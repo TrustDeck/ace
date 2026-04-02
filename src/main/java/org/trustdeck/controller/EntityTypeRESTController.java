@@ -40,8 +40,6 @@ import org.trustdeck.dto.ProjectDTO;
 import org.trustdeck.exception.DuplicateEntityTypeException;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.security.audittrail.annotation.Audit;
-import org.trustdeck.security.audittrail.event.AuditEventType;
-import org.trustdeck.security.audittrail.usertype.AuditUserType;
 import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.service.EntityTypeDBService;
 import org.trustdeck.service.JsonSchemaService;
@@ -50,7 +48,6 @@ import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -97,7 +94,6 @@ public class EntityTypeRESTController {
      * 
      * @param entityTypeDTO the DTO containing the type definition and some meta data
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status with the base entity type when it was already existing</li>
      * 		   <li>a <b>201-CREATED</b> status with the created base entity type on success</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when the name/version is 
@@ -106,10 +102,9 @@ public class EntityTypeRESTController {
      */
 	@PostMapping("/entities/base-types")
 	@PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'base-type:create')")
-	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> createBaseEntityType(@RequestBody EntityTypeDTO entityTypeDTO,
-											  	  @RequestHeader(name = "accept", required = false) String responseContentType,
-											  	  HttpServletRequest request) {
+											  	  @RequestHeader(name = "accept", required = false) String responseContentType) {
 
 		// Collect DTO values
 		String name = entityTypeDTO.getName();
@@ -168,10 +163,10 @@ public class EntityTypeRESTController {
 		// Create type
 		EntityTypeDTO createdType;
 		try {
-			createdType = entityTypeDBService.createEntityType(createDTO, request);
+			createdType = entityTypeDBService.createEntityType(createDTO);
 		} catch (DuplicateEntityTypeException e) {
 			log.info("While creating an entity type, an identical one was found and will be used instead.");
-			return responseService.ok(responseContentType, entityTypeDBService.getEntityTypeByName(name, projectID, null));
+			return responseService.ok(responseContentType, entityTypeDBService.getEntityTypeByName(name, projectID));
 		}
 		
 		// Evaluate success
@@ -192,7 +187,6 @@ public class EntityTypeRESTController {
 	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
 	 * @param entityTypeDTO the DTO containing the type definition and some meta data
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>201-CREATED</b> status with the created project-specific entity type on success</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when required fields are missing, name/version is 
      *         invalid</li>
@@ -203,13 +197,12 @@ public class EntityTypeRESTController {
 	 */
 	@PostMapping("/projects/{projectAbbreviation}/entities/config")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'type:create')")
-	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> createProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												 	 @RequestBody EntityTypeDTO entityTypeDTO,
-												 	 @RequestHeader(name = "accept", required = false) String responseContentType,
-												 	 HttpServletRequest request) {
+												 	 @RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -253,7 +246,7 @@ public class EntityTypeRESTController {
     	}
 
 		// Retrieve base definition
-		EntityTypeDTO baseType = entityTypeDBService.getEntityTypeByName(baseTypeName, null, null);
+		EntityTypeDTO baseType = entityTypeDBService.getEntityTypeByName(baseTypeName, null);
 		if (baseType == null) {
 			log.debug("Could not find base type.");
 			return responseService.notFound(responseContentType);
@@ -291,17 +284,17 @@ public class EntityTypeRESTController {
 		createDTO.setTypeDefinition(projectEntityTypeDef);
 		createDTO.setBaseTypeName(baseType.getName());
 		createDTO.setBaseTypeId(baseType.getId());
-		createDTO.setAssociatedDomainName(associatedDomainName == null ? null : ddba.getDomainByName(associatedDomainName, null).getName());
+		createDTO.setAssociatedDomainName(associatedDomainName == null ? null : ddba.getDomainByName(associatedDomainName).getName());
 		createDTO.setProjectName(project.getName());
 		createDTO.setProjectId(project.getId());
 		
 		// Create type
 		EntityTypeDTO createdType;
 		try {
-			createdType = entityTypeDBService.createEntityType(createDTO, request);
+			createdType = entityTypeDBService.createEntityType(createDTO);
 		} catch (DuplicateEntityTypeException e) {
 			log.info("While creating an entity type, an identical one was found and will be used instead.");
-			return responseService.ok(responseContentType, entityTypeDBService.getEntityTypeByName(typeName, project.getId(), null));
+			return responseService.ok(responseContentType, entityTypeDBService.getEntityTypeByName(typeName, project.getId()));
 		}
 		
 		// Evaluate success
@@ -319,20 +312,18 @@ public class EntityTypeRESTController {
 	 * 
 	 * @param entityTypeName the name of the base entity type the user wants to retrieve
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the requested entity type on success</li>
      *         <li>a <b>404-NOT_FOUND</b> status when the project or the entity type does not exist</li>
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
 	 */
 	@GetMapping("/entities/base-types/{entityTypeName}")
 	@PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'base-type:read')")
-	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> getBaseEntityType(@PathVariable("entityTypeName") String entityTypeName,
-											   @RequestHeader(name = "accept", required = false) String responseContentType,
-											   HttpServletRequest request) {
+											   @RequestHeader(name = "accept", required = false) String responseContentType) {
 		
 		// Retrieve base type from the database
-		EntityTypeDTO type = entityTypeDBService.getEntityTypeByName(entityTypeName, null, request);
+		EntityTypeDTO type = entityTypeDBService.getEntityTypeByName(entityTypeName, null);
 		
 		// Evaluate result
 		if (type == null) {
@@ -355,21 +346,19 @@ public class EntityTypeRESTController {
 	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
 	 * @param entityTypeName the name of the entity type the user wants to retrieve
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the requested entity type on success</li>
      *         <li>a <b>404-NOT_FOUND</b> status when the project or the entity type does not exist</li>
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
 	 */
 	@GetMapping("/projects/{projectAbbreviation}/entities/config/{entityTypeName}")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'type:read')")
-	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> getProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
 											  	  @PathVariable("entityTypeName") String entityTypeName,
-											  	  @RequestHeader(name = "accept", required = false) String responseContentType,
-											  	  HttpServletRequest request) {
+											  	  @RequestHeader(name = "accept", required = false) String responseContentType) {
 		
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -382,7 +371,7 @@ public class EntityTypeRESTController {
 		}
 		
 		// Retrieve type from the database
-		EntityTypeDTO type = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), request);
+		EntityTypeDTO type = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId());
 		
 		// Evaluate result
 		if (type == null) {
@@ -404,7 +393,6 @@ public class EntityTypeRESTController {
 	 * @param oldEntityTypeName the name of the entity type the user wants to update
 	 * @param newEntityTypeDTO the DTO containing the updated information
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the updated entity type on success</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when no updatable attributes are provided, 
      *         name/version is invalid</li>
@@ -417,14 +405,13 @@ public class EntityTypeRESTController {
 	 */
 	@PutMapping("/projects/{projectAbbreviation}/entities/config/{entityTypeName}")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'type:update')")
-	@Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> updateEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
 											  @PathVariable("entityTypeName") String oldEntityTypeName,
 											  @RequestBody EntityTypeDTO newEntityTypeDTO,
-											  @RequestHeader(name = "accept", required = false) String responseContentType,
-											  HttpServletRequest request) {
+											  @RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -453,7 +440,7 @@ public class EntityTypeRESTController {
 		}
 
 		// Retrieve old entity type
-		EntityTypeDTO oldType = entityTypeDBService.getEntityTypeByName(oldEntityTypeName, project.getId(), null);
+		EntityTypeDTO oldType = entityTypeDBService.getEntityTypeByName(oldEntityTypeName, project.getId());
 		if (oldType == null) {
 			log.debug("Old entity type was not found.");
 			return responseService.notFound(responseContentType);
@@ -477,7 +464,7 @@ public class EntityTypeRESTController {
     	}
 		
 		// Retrieve project
-		ProjectDTO projectDTO = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO projectDTO = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (projectDTO == null) {
 			log.debug("Could not find the given project.");
 			return responseService.badRequest(responseContentType);
@@ -486,7 +473,7 @@ public class EntityTypeRESTController {
 		// Check if the type definition should be updated
 		if (newEntityTypeDef != null) {
 			// Retrieve base type definition
-			EntityTypeDTO baseType = entityTypeDBService.getEntityTypeByName(oldType.getBaseTypeName(), null, null);
+			EntityTypeDTO baseType = entityTypeDBService.getEntityTypeByName(oldType.getBaseTypeName(), null);
 			if (baseType == null) {
 				log.debug("Could not find base type.");
 				return responseService.notFound(responseContentType);
@@ -519,7 +506,7 @@ public class EntityTypeRESTController {
 		// Update associated domain
 		String newDomainName = null;
 		if (Assertion.isNotNullOrEmpty(newAssociatedDomainName)) {
-			Domain d = ddba.getDomainByName(newAssociatedDomainName, null);
+			Domain d = ddba.getDomainByName(newAssociatedDomainName);
 			newDomainName = d == null ? null : d.getName();
 		}
 
@@ -537,7 +524,7 @@ public class EntityTypeRESTController {
 		updateDTO.setProjectId(null);
 		
 		// Update type
-		EntityTypeDTO updatedType = entityTypeDBService.updateEntityType(oldType, updateDTO, request);
+		EntityTypeDTO updatedType = entityTypeDBService.updateEntityType(oldType, updateDTO);
 		
 		// Evaluate success
 		if (updatedType == null) {
@@ -556,7 +543,6 @@ public class EntityTypeRESTController {
 	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
 	 * @param entityTypeName the name of the entity type the user wants to delete
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>204-NO_CONTENT</b> status when the entity type was successfully tombstoned</li>
      *         <li>a <b>404-NOT_FOUND</b> status when the project or the entity type does not exist</li>
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
@@ -564,13 +550,12 @@ public class EntityTypeRESTController {
 	 */
 	@DeleteMapping("/projects/{projectAbbreviation}/entities/config/{entityTypeName}")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'type:delete')")
-	@Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> deleteProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												 	 @PathVariable("entityTypeName") String entityTypeName,
-												 	 @RequestHeader(name = "accept", required = false) String responseContentType,
-												 	 HttpServletRequest request) {
+												 	 @RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -583,14 +568,14 @@ public class EntityTypeRESTController {
 		}
 		
 		// Check if the entity type can be found at all
-		EntityTypeDTO deleteDTO = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), null);
+		EntityTypeDTO deleteDTO = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId());
 		if (deleteDTO == null) {
 			log.debug("Entity type \"" + entityTypeName + "\" was not found.");
 			return responseService.notFound(responseContentType);
 		}
 		
 		// Delete the entity type by setting the is_deprecated flag
-		if (entityTypeDBService.deleteEntityType(deleteDTO, request)) {
+		if (entityTypeDBService.deleteEntityType(deleteDTO)) {
 			log.info("Successfully deleted the entity type.");
 			log.info("Successfully deleted entity type \"" + deleteDTO.getName() + "\".");
 			return responseService.noContent(responseContentType);
@@ -608,21 +593,19 @@ public class EntityTypeRESTController {
 	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
 	 * @param query the search string that should be used to find entity types
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the list of matching entity types on success</li>
      *         <li>a <b>404-NOT_FOUND</b> status when no entity types match the query or the project does not exist</li>
      *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
 	 */
 	@GetMapping("/projects/{projectAbbreviation}/entities")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'type:search')")
-	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> searchProjectEntityType(@PathVariable("projectAbbreviation") String projectAbbreviation,
 													 @RequestParam(name = "query", required = true) String query,
-													 @RequestHeader(name = "accept", required = false) String responseContentType,
-													 HttpServletRequest request) {
+													 @RequestHeader(name = "accept", required = false) String responseContentType) {
 		
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -635,7 +618,7 @@ public class EntityTypeRESTController {
 		}
 		
 		// Retrieve types from the database
-		List<EntityTypeDTO> types = entityTypeDBService.searchEntityType(query, project.getId(), request);
+		List<EntityTypeDTO> types = entityTypeDBService.searchEntityType(query, project.getId());
 		
 		// Evaluate result
 		if (types == null || types.size() == 0) {

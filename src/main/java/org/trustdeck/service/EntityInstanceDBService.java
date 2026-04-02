@@ -43,7 +43,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import static org.trustdeck.jooq.generated.Tables.ENTITY_INSTANCE;
@@ -69,13 +68,12 @@ public class EntityInstanceDBService {
      * Method to insert a new entity instance into the database.
      * 
      * @param entityInstanceDTO the entity instance data transfer object containing the necessary data
-     * @param request the http request object containing information necessary for the audit trail 
      * @return The newly inserted entity instance object when the insertion was successful,
      * 		   the original entity instance object if the given one was a duplicate, and
      * 		   {@code null} when the insertion failed.
      */
     @Transactional
-    public EntityInstanceDTO createEntityInstance(EntityInstanceDTO entityInstanceDTO, HttpServletRequest request) {
+    public EntityInstanceDTO createEntityInstance(EntityInstanceDTO entityInstanceDTO) {
     	// Create the insert statement and execute it
     	EntityInstanceRecord createdEntityInstance;
     	try {
@@ -114,11 +112,10 @@ public class EntityInstanceDBService {
      * trustDeckID, which is unique in the database.
      * 
      * @param trustDeckID the entity instance's publicly accessible TrustDeck ID
-     * @param request the http request object containing information necessary for the audit trail
      * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found.
      */
     @Transactional
-    public EntityInstanceDTO getEntityInstance(UUID trustDeckID, HttpServletRequest request) {
+    public EntityInstanceDTO getEntityInstance(UUID trustDeckID) {
     	// Check if all the necessary arguments are available
     	if (trustDeckID == null) {
     		log.debug("Could not retrieve the entity instance, because the TrustDeckID is missing or empty.");
@@ -155,11 +152,10 @@ public class EntityInstanceDBService {
      * trustDeckID as a String, which is unique in the database.
      * 
      * @param trustDeckID the entity instance's publicly accessible TrustDeck ID as a String
-     * @param request the http request object containing information necessary for the audit trail
      * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found.
      */
     @Transactional
-    public EntityInstanceDTO getEntityInstance(String trustDeckID, HttpServletRequest request) {
+    public EntityInstanceDTO getEntityInstance(String trustDeckID) {
     	// Check if all the necessary arguments are available
     	if (Assertion.isNullOrEmpty(trustDeckID)) {
     		log.debug("Could not retrieve the entity instance, because to the TrustDeckID is missing or empty.");
@@ -175,18 +171,17 @@ public class EntityInstanceDBService {
 			return null;
 		}
     	
-    	return getEntityInstance(tdid, request);
+    	return getEntityInstance(tdid);
     }
 
     /**
      * Method to retrieve an entity instance from the database by providing the data JSON.
      * 
      * @param data the entity instance's data object
-     * @param request the http request object containing information necessary for the audit trail
      * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found.
      */
     @Transactional
-    public EntityInstanceDTO getEntityInstanceByData(JSONB data, HttpServletRequest request) {
+    public EntityInstanceDTO getEntityInstanceByData(JSONB data) {
     	// Check if all the necessary arguments are available
     	if (data == null) {
     		log.debug("Could not retrieve the entity instance, because the data-object is missing or empty.");
@@ -223,23 +218,22 @@ public class EntityInstanceDBService {
      * Internally it uses only the trustDeckID, which is unique in the database.
      * 
      * @param entityInstance the DTO containing at least the instance's publicly accessible TrustDeck ID
-     * @param request the http request object containing information necessary for the audit trail
      * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found.
      */
     @Transactional
-    public EntityInstanceDTO getEntityInstance(EntityInstanceDTO entityInstance, HttpServletRequest request) {
+    public EntityInstanceDTO getEntityInstance(EntityInstanceDTO entityInstance) {
     	// Check if all the necessary arguments are available
     	if (entityInstance == null || entityInstance.getTrustdeckID() == null) {
     		// No trustDeckId available --> try identification via the data object
     		if (entityInstance != null && entityInstance.getData() != null) {
-    			return getEntityInstanceByData(toJSONB(entityInstance.getData()), request);
+    			return getEntityInstanceByData(toJSONB(entityInstance.getData()));
     		} else {
 	    		log.debug("Could not retrieve the entity instance, because an argument is missing or empty.");
 	    		return null;
     		}
     	} else {
     		// Use trustDeckId to find the instance
-    		return getEntityInstance(entityInstance.getTrustdeckID(), request);
+    		return getEntityInstance(entityInstance.getTrustdeckID());
     	}
     }
     
@@ -249,12 +243,11 @@ public class EntityInstanceDBService {
      * by actually removing the record from the database.
      * 
      * @param trustDeckID the entity instance's publicly accessible TrustDeck ID
-     * @param request the http request object containing information necessary for the audit trail
      * @return {@code true} when deletion was successful, {@code false} when anything went wrong during the deletion
      * @throws UnexpectedResultSizeException when the deletion would have affected an unexpected number of database entries
      */
     @Transactional
-    public boolean deleteEntityInstance(UUID trustDeckID, HttpServletRequest request) throws UnexpectedResultSizeException {
+    public boolean deleteEntityInstance(UUID trustDeckID) throws UnexpectedResultSizeException {
     	// Check if all the necessary arguments are available
     	if (trustDeckID == null) {
     		log.debug("For retrieving the entity instance, there is an argument missing or empty.");
@@ -292,11 +285,10 @@ public class EntityInstanceDBService {
      * 
      * @param oldInstanceID the entity instance database id that is needed to identify the instance that should be updated
      * @param newEntityInstanceDTO the entity instance object containing the data to use for the update
-     * @param request the http request object containing information necessary for the audit trail
      * @return the updated entity instance object when successful, {@code null} when anything went wrong
      */
     @Transactional
-    public EntityInstanceDTO updateEntityInstance(long oldInstanceID, EntityInstanceDTO newEntityInstanceDTO, HttpServletRequest request) {
+    public EntityInstanceDTO updateEntityInstance(long oldInstanceID, EntityInstanceDTO newEntityInstanceDTO) {
     	// Create the update-record and send it to the database
         EntityInstanceRecord updatedRecord = null;
     	try {
@@ -329,11 +321,10 @@ public class EntityInstanceDBService {
      * as well as multiple words.
      * 
      * @param query the (multi-word) search query
-     * @param request the http request object containing information necessary for the audit trail
      * @return a list of entity instances that match the search query
      */
     @Transactional
-    public List<EntityInstanceDTO> searchEntityInstance(String query, Integer entityTypeId, HttpServletRequest request) {
+    public List<EntityInstanceDTO> searchEntityInstance(String query, Integer entityTypeId) {
     	if (Assertion.isNullOrEmpty(query)) {
             log.debug("Search query is empty.");
             return null;
@@ -407,11 +398,10 @@ public class EntityInstanceDBService {
      * @param entityTypeId the id of the instance's type
      * @param linkageValues a map of attribute-value-combinations that should be searched for
      * @param limit the maximum amount of matches that should be returned
-     * @param request the http request object containing information necessary for the audit trail
      * @return a list of entity instances that match the given linkage values
      */
     @Transactional(readOnly = true)
-    public List<EntityInstanceDTO> searchRecordLinkageCandidates(int projectId, int entityTypeId, Map<String, JsonNode> linkageValues, int limit, HttpServletRequest request) {
+    public List<EntityInstanceDTO> searchRecordLinkageCandidates(int projectId, int entityTypeId, Map<String, JsonNode> linkageValues, int limit) {
     	if (linkageValues == null) {
             log.debug("Missing linkage values.");
             return null;

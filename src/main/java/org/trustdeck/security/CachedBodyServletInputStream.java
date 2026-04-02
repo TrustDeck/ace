@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.security.audittrail.request;
+package org.trustdeck.security;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

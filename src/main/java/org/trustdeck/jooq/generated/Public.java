@@ -14,7 +14,7 @@ import org.jooq.Result;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 import org.trustdeck.jooq.generated.tables.Algorithm;
-import org.trustdeck.jooq.generated.tables.Auditevent;
+import org.trustdeck.jooq.generated.tables.AuditEvent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
@@ -45,9 +45,9 @@ public class Public extends SchemaImpl {
     public final Algorithm ALGORITHM = Algorithm.ALGORITHM;
 
     /**
-     * The table <code>public.auditevent</code>.
+     * The table <code>public.audit_event</code>.
      */
-    public final Auditevent AUDITEVENT = Auditevent.AUDITEVENT;
+    public final AuditEvent AUDIT_EVENT = AuditEvent.AUDIT_EVENT;
 
     /**
      * The table <code>public.domain</code>.
@@ -140,7 +140,7 @@ public class Public extends SchemaImpl {
     public final List<Table<?>> getTables() {
         return Arrays.asList(
             Algorithm.ALGORITHM,
-            Auditevent.AUDITEVENT,
+            AuditEvent.AUDIT_EVENT,
             Domain.DOMAIN,
             EntityInstance.ENTITY_INSTANCE,
             EntityType.ENTITY_TYPE,

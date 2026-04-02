@@ -18,7 +18,11 @@
 package org.trustdeck.utils;
 
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.DateTimeException;
@@ -342,6 +346,32 @@ public class Utility {
 		
 		return s.length() <= maxLength ? s : s.substring(0, maxLength) + "...(truncated)";
 	}
+	
+	/**
+	 * Provides access to the current request.
+	 * 
+	 * @return the request that is currently active
+	 */
+	public static HttpServletRequest getCurrentRequest() {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        
+        if (attributes instanceof ServletRequestAttributes servletRequestAttributes) {
+            return servletRequestAttributes.getRequest();
+        }
+        
+        return null;
+    }
+	
+	/**
+     * Checks whether a request is a multipart request.
+     *
+     * @param request the current request
+     * @return {@code true} if the request is multipart, otherwise {@code false}
+     */
+    public static boolean isMultipartRequest(HttpServletRequest request) {
+        String contentType = request.getContentType();
+        return contentType != null && contentType.toLowerCase().startsWith("multipart/");
+    }
 	
 	/**
 	 * A data type that lets you store two data items that belong together.

@@ -133,9 +133,13 @@ app:
     password: ${KAFKA_PASSWORD}
     security-protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
     sasl-mechanism: ${KAFKA_SASL_MECHANISM:PLAIN}
+    trust-store-location: ${KAFKA_TRUSTSTORE_LOCATION}
+    trust-store-password: ${KAFKA_TRUSTSTORE_PASSWORD}
+    trust-store-type: ${KAFKA_TRUSTSTORE_TYPE:JKS}
     message:
       identifier-descriptor: ${KAFKA_MESSAGE_IDENTIFIER_DESCRIPTOR}
       idType-descriptor: ${KAFKA_MESSAGE_IDTYPE_DESCRIPTOR}
       psn-descriptor: ${KAFKA_MESSAGE_PSN_DESCRIPTOR}
       source-system-descriptor: ${KAFKA_MESSAGE_SOURCE_SYSTEM_DESCRIPTOR}
       valid-from-descriptor: ${KAFKA_MESSAGE_VALID_FROM_DESCRIPTOR}
+      username-descriptor: ${KAFKA_MESSAGE_USERNAME_DESCRIPTOR}
