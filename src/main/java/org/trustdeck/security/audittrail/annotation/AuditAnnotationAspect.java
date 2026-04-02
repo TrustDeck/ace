@@ -26,16 +26,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.trustdeck.exception.AuditTrailException;
-import org.trustdeck.jooq.generated.tables.daos.AuditeventDao;
-import org.trustdeck.jooq.generated.tables.pojos.Auditevent;
+import org.trustdeck.jooq.generated.tables.daos.AuditEventDao;
+import org.trustdeck.jooq.generated.tables.pojos.AuditEvent;
+import org.trustdeck.security.audittrail.context.AuditInformationObject;
+import org.trustdeck.security.audittrail.context.AuditInformationResolver;
 import org.trustdeck.security.audittrail.event.AuditEventBuilder;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Class that automatically intercepts the audit annotation and stores the collected information 
- * using the same transaction as the database method.
+ * Class that automatically intercepts @Audit annotations and stores 
+ * the collected information using the same transaction as the database method.
+ * Works for REST endpoints and Kafka consumer methods.
  * 
  * @author Armin Müller
  */
@@ -44,13 +46,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AuditAnnotationAspect {
 
-	/** The request object containing information needed for the audit trail. */
-    @Autowired
-    private HttpServletRequest request;
-
 	/** The builder that creates a coherent audit object out of the collected information. */
     @Autowired
     private AuditEventBuilder auditEventBuilder;
+    
+    /** Resolver for current audit information. */
+    @Autowired
+    private AuditInformationResolver auditInformationResolver;
 
 	/** The database context. */
     @Autowired
@@ -61,9 +63,9 @@ public class AuditAnnotationAspect {
      *
      * @return the audit event DAO
      */
-    private AuditeventDao getAuditeventDao() {
+    private AuditEventDao getAuditeventDao() {
     	// Attaches DAO to the current transactional context
-    	return new AuditeventDao(this.dsl.configuration());
+    	return new AuditEventDao(this.dsl.configuration());
     }
 
     /**
@@ -71,7 +73,7 @@ public class AuditAnnotationAspect {
      * and writes the audit trail to the database.
      * 
      * @param joinPoint the point where the process execution should proceed from
-     * @param auditAnnotation the audit annotation object that includes some audit information
+     * @param auditAnnotation the audit annotation object that contains some audit information
      * @return the result of proceeding
      * @throws AuditTrailException if anything goes wrong while the audit trail is written, this exception
      * 			is thrown in order to abort the current transaction and roll back to a consistent database state.
@@ -84,22 +86,29 @@ public class AuditAnnotationAspect {
         try {
             // Proceed with the original method
             result = joinPoint.proceed();
-
-            // Create audit event object, if request-object is available
-            if (request != null) {
-                Auditevent auditEvent = auditEventBuilder.build(request);
-                if (auditEvent != null) {
-                	// Write audit information into database
-                	this.getAuditeventDao().insert(auditEvent);
-                }
-            }
-        } catch (Throwable e) {
-        	log.debug("Audit trail information could not be stored: ", e.getClass().getSimpleName(), e);
             
-            // Throw an exception to terminate the transaction that surrounds the audit annotation processing.
+            // Gather information
+            AuditInformationObject aio = auditInformationResolver.resolve(joinPoint);
+            
+            // Check if we have any information, or if we should skip auditing
+            if (aio == null) {
+                log.trace("No REST or Kafka audit information available. Skip auditing.");
+                return result;
+            }
+
+            // Create audit event object
+            AuditEvent auditEvent = auditEventBuilder.build(auditAnnotation, aio);
+            if (auditEvent != null) {
+            	// Write audit information into database
+            	this.getAuditeventDao().insert(auditEvent);
+            }
+            
+            return result;
+        } catch (Throwable e) {
+        	log.debug("Audit trail information could not be stored: ", e);
+            
+            // Throw an exception to terminate the transaction that surrounds the audit annotation processing
             throw new AuditTrailException();
         }
-
-        return result;
     }
 }
