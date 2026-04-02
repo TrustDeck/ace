@@ -63,6 +63,7 @@ public class KafkaPseudonymMessageDTOMapper {
 		dto.setSourceDomain(get.apply(kmp.getSourceSystemDescriptor()));
 		dto.setValidFrom(get.apply(kmp.getValidFromDescriptor()));
 		dto.setValidTo(get.apply(kmp.getValidToDescriptor()));
+		dto.setUsername(get.apply(kmp.getUsernameDescriptor()));
 
 		return dto;
 	}

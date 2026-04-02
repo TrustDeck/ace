@@ -54,4 +54,13 @@ public class KafkaConnectionProperties {
 	
 	/** The authentication mechanism used in SASL (default: PLAIN). */
 	private String saslMechanism = "PLAIN";
+	
+	/** The truststore location for the Kafka connection. Contains the certs needed to trust to access the topic. */
+	private String trustStoreLocation;
+
+	/** The password for the Kafka truststore. */
+	private String trustStorePassword;
+
+	/** The type of the Kafka truststore. */
+	private String trustStoreType = "JKS";
 }

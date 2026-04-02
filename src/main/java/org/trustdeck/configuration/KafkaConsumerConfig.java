@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -65,6 +66,9 @@ public class KafkaConsumerConfig {
 		String jaas = String.format("org.apache.kafka.common.security.plain.PlainLoginModule required "
 				+ "username=\"%s\" password=\"%s\";", p.getUsername(), p.getPassword());
 		props.put(SaslConfigs.SASL_JAAS_CONFIG, jaas);
+		props.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, p.getTrustStoreLocation());
+		props.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, p.getTrustStorePassword());
+		props.put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, p.getTrustStoreType());
 
 		return new DefaultKafkaConsumerFactory<>(props);
 	}
