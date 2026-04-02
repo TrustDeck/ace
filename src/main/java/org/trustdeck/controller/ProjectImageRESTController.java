@@ -40,14 +40,11 @@ import org.trustdeck.dto.ProjectDTO;
 import org.trustdeck.dto.ProjectImageDTO;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.security.audittrail.annotation.Audit;
-import org.trustdeck.security.audittrail.event.AuditEventType;
-import org.trustdeck.security.audittrail.usertype.AuditUserType;
 import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.ProjectImageDBService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -85,7 +82,6 @@ public class ProjectImageRESTController {
 	 * @param projectAbbreviation the abbreviation of the project to which the image belongs to
 	 * @param image the image that should be stored
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>201-CREATED</b> status when the project image was successfully stored</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when no image was provided, the abbreviation 
      *         is missing, or the image is otherwise invalid</li>
@@ -100,11 +96,10 @@ public class ProjectImageRESTController {
 	 */
 	@PostMapping(path = "/projects/{projectAbbreviation}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'image:create')")
-    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> createProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
 												@RequestPart("image") MultipartFile image,
-												@RequestHeader(name = "accept", required = false) String responseContentType,
-												HttpServletRequest request) {
+												@RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Check that the given file is not null
 		if (image == null || image.isEmpty()) {
 			log.debug("No image provided.");
@@ -130,7 +125,7 @@ public class ProjectImageRESTController {
 			return responseService.badRequest(responseContentType);
 		}
 		
-		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation);
 		
 		if (project == null) {
 			log.debug("Could not find the project.");
@@ -156,7 +151,7 @@ public class ProjectImageRESTController {
 		imageDTO.setMimeType(image.getContentType());
 		
 		// Create the image in the DB
-		ProjectImageDTO dto = imageService.createProjectImage(imageDTO, request);
+		ProjectImageDTO dto = imageService.createProjectImage(imageDTO);
 		
 		// Check if the creation was successful
 		if (dto == null) {
@@ -173,7 +168,6 @@ public class ProjectImageRESTController {
 	 * 
 	 * @param projectAbbreviation the abbreviation of the project to which the image belongs to
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the image bytes and corresponding MIME type 
 	 * 		   on success</li>
      *         <li>a <b>204-NO_CONTENT</b> status when an image entry exists but contains no 
@@ -184,17 +178,16 @@ public class ProjectImageRESTController {
 	 */
 	@GetMapping(path = "/projects/{projectAbbreviation}/image")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'image:read')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
 	public ResponseEntity<?> getProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
-											 @RequestHeader(name = "accept", required = false) String responseContentType,
-											 HttpServletRequest request) {
+											 @RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Retrieve the owning project
 		if (Assertion.isNullOrEmpty(projectAbbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
 		
-		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation);
 		
 		if (project == null) {
 			log.debug("Could not find the project.");
@@ -205,7 +198,7 @@ public class ProjectImageRESTController {
 		}
 		
 		// Retrieve the image from the database		
-		ProjectImageDTO dto = imageService.getProjectImageByProjectId(project.getId(), request);
+		ProjectImageDTO dto = imageService.getProjectImageByProjectId(project.getId());
 		
 		if (dto == null) {
 			log.debug("Could not find the project's image.");
@@ -225,7 +218,6 @@ public class ProjectImageRESTController {
 	 * @param projectAbbreviation the abbreviation of the project to which the updated image belongs to
 	 * @param image the updated image that should be stored
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status when the project image was successfully updated</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when no image was provided or the 
      *         abbreviation is missing</li>
@@ -240,18 +232,17 @@ public class ProjectImageRESTController {
 	 */
 	@PutMapping(path = "/projects/{projectAbbreviation}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'image:update')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    @Audit
 	public ResponseEntity<?> updateProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
 												@RequestPart("image") MultipartFile image,
-												@RequestHeader(name = "accept", required = false) String responseContentType,
-												HttpServletRequest request) {
+												@RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Retrieve the owning project
 		if (Assertion.isNullOrEmpty(projectAbbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
 		
-		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation);
 		
 		if (project == null) {
 			log.debug("Could not find the project.");
@@ -296,7 +287,7 @@ public class ProjectImageRESTController {
 		imageDTO.setMimeType(image.getContentType());
 		
 		// Update the image in the DB
-		ProjectImageDTO dto = imageService.updateProjectImage(project.getId(), imageDTO, request);
+		ProjectImageDTO dto = imageService.updateProjectImage(project.getId(), imageDTO);
 		
 		// Check if the creation was successful
 		if (dto == null) {
@@ -313,7 +304,6 @@ public class ProjectImageRESTController {
 	 * 
 	 * @param projectAbbreviation the abbreviation of the project to which the image belongs to
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>204-NO_CONTENT</b> status when the project image was successfully 
 	 * 		   deleted</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when the abbreviation is missing</li>
@@ -324,17 +314,16 @@ public class ProjectImageRESTController {
 	 */
 	@DeleteMapping(path = "/projects/{projectAbbreviation}/image")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'image:delete')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+    @Audit
 	public ResponseEntity<?> deleteProjectImage(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
-												@RequestHeader(name = "accept", required = false) String responseContentType,
-												HttpServletRequest request) {
+												@RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Retrieve the owning project
 		if (Assertion.isNullOrEmpty(projectAbbreviation)) {
 			log.debug("No project abbreviation was given.");
 			return responseService.badRequest(responseContentType);
 		}
 		
-		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectService.getProjectByAbbreviation(projectAbbreviation);
 		
 		if (project == null) {
 			log.debug("Could not find the project.");
@@ -347,7 +336,7 @@ public class ProjectImageRESTController {
 		// Perform deletion
 		boolean deleted;
 		try {
-			deleted = imageService.deleteProjectImage(project.getId(), request);
+			deleted = imageService.deleteProjectImage(project.getId());
 		} catch (UnexpectedResultSizeException e) {
 			log.warn("Project image deletion would affect an unexpected amount of records and was therefore rolled back.");
 			return responseService.unprocessableEntity(responseContentType);

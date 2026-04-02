@@ -73,14 +73,14 @@ public class AuthorizationService {
 		}
         
         // Get database ID for the domain 
-		Domain d = domainDBService.getDomainByName(domainName, null);
+		Domain d = domainDBService.getDomainByName(domainName);
         Integer id = d == null ? null : d.getId();
         if (id == null || id <= 0) {
         	log.trace("Could not retrieve the domain's ID.");
         	return false;
         }
         
-        return permissionDBService.isActionAllowed(jwt.getSubject(), "DOMAIN", id, action, null);
+        return permissionDBService.isActionAllowed(jwt.getSubject(), "DOMAIN", id, action);
     }
 
     /**
@@ -107,14 +107,14 @@ public class AuthorizationService {
 		}
         
         // Get database ID for the domain
-		Domain d = domainDBService.getDomainByName(domainName, null);
+		Domain d = domainDBService.getDomainByName(domainName);
         Integer id = d == null ? null : d.getId();
         if (id == null || id <= 0) {
         	log.trace("Could not retrieve the domain's ID.");
         	return false;
         }
         
-        return permissionDBService.isActionAllowed(jwt.getSubject(), "DOMAIN", id, action, null);
+        return permissionDBService.isActionAllowed(jwt.getSubject(), "DOMAIN", id, action);
     }
 
     /**
@@ -141,14 +141,14 @@ public class AuthorizationService {
 		}
         
         // Get database ID for the project
-		ProjectDTO p = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO p = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		Integer id = p == null ? null : p.getId();
         if (id == null || id <= 0) {
         	log.trace("Could not retrieve the project's ID.");
         	return false;
         }
         
-        return permissionDBService.isActionAllowed(jwt.getSubject(), "PROJECT", id, action, null);
+        return permissionDBService.isActionAllowed(jwt.getSubject(), "PROJECT", id, action);
     }
 
     /**
@@ -175,14 +175,14 @@ public class AuthorizationService {
 		}
         
         // Get database ID for the project
-		ProjectDTO p = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO p = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		Integer id = p == null ? null : p.getId();
         if (id == null || id <= 0) {
         	log.trace("Could not retrieve the project's ID.");
         	return false;
         }
         
-        return permissionDBService.isActionAllowed(jwt.getSubject(), "PROJECT", id, action, null);
+        return permissionDBService.isActionAllowed(jwt.getSubject(), "PROJECT", id, action);
     }
 
     /**
@@ -208,7 +208,7 @@ public class AuthorizationService {
 			return false;
 		}
         
-        return permissionDBService.isActionAllowed(jwt.getSubject(), "GLOBAL", 0, action, null);
+        return permissionDBService.isActionAllowed(jwt.getSubject(), "GLOBAL", 0, action);
     }
 
     /**
@@ -234,6 +234,6 @@ public class AuthorizationService {
 			return false;
 		}
         
-        return permissionDBService.isActionAllowed(jwt.getSubject(), "GLOBAL", 0, action, null);
+        return permissionDBService.isActionAllowed(jwt.getSubject(), "GLOBAL", 0, action);
     }
 }
