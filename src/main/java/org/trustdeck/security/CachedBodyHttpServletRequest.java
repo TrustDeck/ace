@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.security.audittrail.request;
+package org.trustdeck.security;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -27,6 +27,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 
 import org.springframework.util.StreamUtils;
+import org.trustdeck.utils.Utility;
 
 /**
  * Wrapper class that allows for multiple reads on the request body.
@@ -49,13 +50,9 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
     public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);
         
-        // Get the type of content that was sent with the request --> check if it was a file (represented as a multipart)
-        String contentType = request.getContentType();
-        boolean isMultipart = contentType != null && contentType.toLowerCase().startsWith("multipart/");
-        
         // Only copy the request body when it's not a multipart request as calling getInputStream() 
         // is mutually exclusive to calling getParts, which happens later by Spring
-		if (!isMultipart) {
+		if (!Utility.isMultipartRequest(request)) {
 			this.cachedBody = StreamUtils.copyToByteArray(request.getInputStream());
 		} else {
 			this.cachedBody = new byte[0];
