@@ -3,45 +3,141 @@
   "$id": "urn:trustdeck:schema:meta:definition:1.0",
   "type": "object",
   "additionalProperties": false,
-  "required": ["typeName", "version", "attributes"],
+  "required": ["attributes"],
   "properties": {
     "typeName": {
-		"type": "string",
-		"minLength": 1,
-		"pattern": "^[a-zA-Z0-9_-]+$"
-	},
-    "version": { "type": "string", "minLength": 1 },
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "layout": {
+      "type": "string",
+      "enum": ["row", "col", "group"]
+    },
+    "repeatable": {
+      "type": "boolean"
+    },
     "attributes": {
+      "$ref": "#/$defs/attributesArray"
+    }
+  },
+  "patternProperties": {
+    "^label_[A-Za-z]{2}$": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "attributesArray": {
       "type": "array",
       "minItems": 1,
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["name", "type", "required", "linkage"],
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "pattern": "^[a-zA-Z0-9_-]+$"
-          },
-          "type": {
-            "type": "string",
-            "enum": ["string", "integer", "number", "boolean", "date", "datetime"]
-          },
-          "required": { "type": "boolean" },
-          "linkage": { "type": "boolean" },
-
-          "minimum": { "type": "number" },
-          "maximum": { "type": "number" },
-          "minLength": { "type": "integer", "minimum": 0 },
-          "maxLength": { "type": "integer", "minimum": 0 },
-          "pattern": { "type": "string" },
-          "enum": {
-            "type": "array",
-            "minItems": 1,
-            "uniqueItems": true,
-            "items": { "type": ["string", "number", "integer", "boolean"] }
+        "$ref": "#/$defs/node"
+      }
+    },
+    "node": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/containerNode"
+        },
+        {
+          "$ref": "#/$defs/leafNode"
+        }
+      ]
+    },
+    "containerNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layout", "attributes"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "layout": {
+          "type": "string",
+          "enum": ["row", "col", "group"]
+        },
+        "repeatable": {
+          "type": "boolean"
+        },
+        "attributes": {
+          "$ref": "#/$defs/attributesArray"
+        }
+      },
+      "patternProperties": {
+        "^label_[A-Za-z]{2}$": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "leafNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "required", "linkage"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "integer", "number", "boolean", "date", "datetime", "enum"]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "linkage": {
+          "type": "boolean"
+        },
+        "repeatable": {
+          "type": "boolean"
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "minLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "enum": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": ["string", "number", "integer", "boolean"]
           }
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "patternProperties": {
+        "^label_[A-Za-z]{2}$": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }
