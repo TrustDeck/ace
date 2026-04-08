@@ -29,6 +29,7 @@ import org.trustdeck.utils.SpringBeanLocator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor
 @Scope("prototype")
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({"name", "version", "isDeprecated", "isBaseType", "baseTypeName", "projectName", "associatedDomainName", "typeDefinition"})
 @Slf4j
 public class EntityTypeDTO implements IObjectDTO<EntityType, EntityTypeDTO> {
 	
