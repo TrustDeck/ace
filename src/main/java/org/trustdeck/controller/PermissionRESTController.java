@@ -50,6 +50,7 @@ import org.trustdeck.service.PermissionDBService;
 import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
+import org.trustdeck.utils.Utility.Pair;
 
 /**
  * Provides the REST API for the permission endpoints.
@@ -228,7 +229,7 @@ public class PermissionRESTController {
 		}
 
 		// Batch insert
-		List<PermissionDTO> created = permissionDBService.createPermissions(validated);
+		List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissions(validated);
 		if (created == null) {
 			log.debug("Failed to insert any permissions.");
 			return responseService.badRequest(responseContentType);
@@ -237,16 +238,23 @@ public class PermissionRESTController {
 		// Map the list of created permissions back into original order
 	    for (int j = 0; j < created.size(); j++) {
 	        int idx = originalIndex.get(j);
-	        result.set(idx, created.get(j));
+	        result.set(idx, created.get(j).first());
 	    }
 	    
 	    // Return the results; decide on the proper status code
-	    log.debug("Successfully created " + created.stream().filter(e -> e != null).count() + " domain "
+	    log.debug("Successfully created " + created.stream().filter(e -> e != null && e.first() != null).count() + " domain "
     			+ "permission(s) out of " + created.size() + " requested permissions for user " + userId 
     			+ " in domain " + domain.getName() + ".");
-	    if (created.contains(null)) {
-	    	// There were either duplicates or errors --> partial success
+
+	    boolean hasErrors = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_ERROR.equals(p.second()));
+	    boolean hasDuplicates = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_DUPLICATE_PERMISSION.equals(p.second()));
+	    
+	    if (hasErrors) {
+	    	// There were errors --> partial success
 	    	return responseService.partialContent(responseContentType, result);
+	    } else if (hasDuplicates) {
+	    	// There were duplicates --> return code 200
+	    	return responseService.ok(responseContentType, result);
 	    } else {
 	    	// All requested permissions were created
 	    	return responseService.created(responseContentType, result);
@@ -351,7 +359,7 @@ public class PermissionRESTController {
 		}
 
 		// Batch insert
-		List<PermissionDTO> created = permissionDBService.createPermissions(validated);
+		List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissions(validated);
 		if (created == null) {
 			log.debug("Failed to insert any permissions.");
 			return responseService.badRequest(responseContentType);
@@ -360,16 +368,23 @@ public class PermissionRESTController {
 		// Map the list of created permissions back into original order
 	    for (int j = 0; j < created.size(); j++) {
 	        int idx = originalIndex.get(j);
-	        result.set(idx, created.get(j));
+	        result.set(idx, created.get(j).first());
 	    }
 	    
 	    // Return the results; decide on the proper status code
-	    log.debug("Successfully created " + created.stream().filter(e -> e != null).count() + " project "
+	    log.debug("Successfully created " + created.stream().filter(e -> e != null && e.first() != null).count() + " project "
     			+ "permission(s) out of " + created.size() + " requested permissions for user " + userId 
     			+ " in project " + project.getAbbreviation() + ".");
-	    if (created.contains(null)) {
-	    	// There were either duplicates or errors --> partial success
+
+	    boolean hasErrors = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_ERROR.equals(p.second()));
+	    boolean hasDuplicates = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_DUPLICATE_PERMISSION.equals(p.second()));
+	    
+	    if (hasErrors) {
+	    	// There were errors --> partial success
 	    	return responseService.partialContent(responseContentType, result);
+	    } else if (hasDuplicates) {
+	    	// There were duplicates
+	    	return responseService.ok(responseContentType, result);
 	    } else {
 	    	// All requested permissions were created
 	    	return responseService.created(responseContentType, result);
@@ -464,7 +479,7 @@ public class PermissionRESTController {
 	    }
 
 		// Batch insert
-	    List<PermissionDTO> created = permissionDBService.createPermissions(validated);
+	    List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissions(validated);
 	    if (created == null) {
 			log.debug("Failed to insert any permissions.");
 	        return responseService.badRequest(responseContentType);
@@ -473,15 +488,22 @@ public class PermissionRESTController {
 		// Map the list of created permissions back into original order
 	    for (int j = 0; j < created.size(); j++) {
 	        int idx = originalIndex.get(j);
-	        result.set(idx, created.get(j));
+	        result.set(idx, created.get(j).first());
 	    }
 	    
 	    // Return the results; decide on the proper status code
-	    log.debug("Successfully created " + created.stream().filter(e -> e != null).count() + " global "
+	    log.debug("Successfully created " + created.stream().filter(e -> e != null && e.first() != null).count() + " global "
     			+ "permission(s) out of " + created.size() + " requested permissions for user " + userId + ".");
-	    if (created.contains(null)) {
-	    	// There were either duplicates or errors --> partial success
+
+	    boolean hasErrors = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_ERROR.equals(p.second()));
+	    boolean hasDuplicates = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_DUPLICATE_PERMISSION.equals(p.second()));
+	    
+	    if (hasErrors) {
+	    	// There were errors --> partial success
 	    	return responseService.partialContent(responseContentType, result);
+	    } else if (hasDuplicates) {
+	    	// There were duplicates --> return code 200
+	    	return responseService.ok(responseContentType, result);
 	    } else {
 	    	// All requested permissions were created
 	    	return responseService.created(responseContentType, result);
@@ -1052,7 +1074,7 @@ public class PermissionRESTController {
     @DeleteMapping("/projects/{projectAbbreviation}")
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
     @Audit
-    public ResponseEntity<?> deleteProjectPermissions(@PathVariable("domainName") String projectAbbreviation,
+    public ResponseEntity<?> deleteProjectPermissions(@PathVariable("projectAbbreviation") String projectAbbreviation,
     												  @RequestParam(name = "userId") String userId,
                                                       @RequestBody List<PermissionDTO> permissions,
                                                       @RequestHeader(name = "accept", required = false) String responseContentType) {

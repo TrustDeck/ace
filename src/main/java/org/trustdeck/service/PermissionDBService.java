@@ -109,18 +109,22 @@ public class PermissionDBService {
      * Method to insert multiple permissions at once in a batch. Duplicates will be ignored.
      * 
      * @param permissions a list of permissions to insert into the database
-     * @return a list of the created permissions, {@code null} for duplicates and errors
-     */
+     * @return a list of result pairs in the same order as the input list.
+	 *         For each entry, {@code first()} contains the created or duplicated permission
+	 *         (or {@code null} on error), and {@code second()} contains one of: {@link #INSERTION_SUCCESS}, 
+	 *         {@link #INSERTION_DUPLICATE_PERMISSION}, or {@link #INSERTION_ERROR}. Returns an empty list 
+	 *         if no permissions were given, and {@code null} if the batch operation failed completely.
+	 */
     @Transactional
-    public List<PermissionDTO> createPermissions(List<PermissionDTO> permissions) {
+    public List<Pair<PermissionDTO, String>> createPermissions(List<PermissionDTO> permissions) {
     	// Check if there is something to do
     	if (permissions == null || permissions.isEmpty()) {
     	    return Collections.emptyList();
     	}
     	
     	int n = permissions.size();
-    	List<PermissionDTO> results = new ArrayList<>(n);
-
+    	List<Pair<PermissionDTO, String>> results = new ArrayList<>(n);
+    	
     	// Prefill the result list with nulls
     	for (int i = 0; i < n; i++) {
     		results.add(null);
@@ -146,25 +150,44 @@ public class PermissionDBService {
 				idRows.add(DSL.row(dto.getSubjectId(), dto.getResourceType(), dto.getResourceId(), dto.getAction()));
 			}
 			// Query the database and see if we find any of the user-provided permissions already in there
-            Map<Row4<String, String, Integer, String>, Boolean> existingMap = 
-            		dsl.select(PERMISSION_GRANT.SUBJECT_ID, PERMISSION_GRANT.RESOURCE_TYPE, PERMISSION_GRANT.RESOURCE_ID, PERMISSION_GRANT.ACTION)
-            		.from(PERMISSION_GRANT)
+            Map<Row4<String, String, Integer, String>, PermissionDTO> existingMap = 
+            		dsl.selectFrom(PERMISSION_GRANT)
 					.where(DSL.row(PERMISSION_GRANT.SUBJECT_ID, PERMISSION_GRANT.RESOURCE_TYPE, PERMISSION_GRANT.RESOURCE_ID, PERMISSION_GRANT.ACTION).in(idRows))
-					.fetchMap(r -> DSL.row(r.get(PERMISSION_GRANT.SUBJECT_ID), r.get(PERMISSION_GRANT.RESOURCE_TYPE), r.get(PERMISSION_GRANT.RESOURCE_ID), r.get(PERMISSION_GRANT.ACTION)), r -> Boolean.TRUE);
+					.fetchMap(r -> DSL.row(r.get(PERMISSION_GRANT.SUBJECT_ID), r.get(PERMISSION_GRANT.RESOURCE_TYPE), r.get(PERMISSION_GRANT.RESOURCE_ID), r.get(PERMISSION_GRANT.ACTION)),
+							r -> {
+								PermissionDTO p = new PermissionDTO().assignPojoValues(r.into(PermissionGrant.class));
+								
+								if ("DOMAIN".equalsIgnoreCase(r.getResourceType())) {
+									Domain d = ddba.getDomainByID(r.getResourceId());
+									p.setDomainName(d == null ? null : d.getName());
+								} else if ("PROJECT".equalsIgnoreCase(r.getResourceType())) {
+									ProjectDTO proj = pdba.getProjectByID(r.getResourceId());
+									p.setProjectAbbreviation(proj == null ? null : proj.getAbbreviation());
+								}
+
+								return p;
+							});
             
             // Mark duplicates in original order; marking null-permissions as "exists" will lead to them getting skipped later
-			for (int i = 0; i < n; i++) {
-				if (permissions.get(i) == null) {
+            int rowIndex = 0;
+            for (int i = 0; i < n; i++) {
+            	PermissionDTO dto = permissions.get(i);
+            	
+            	if (dto == null) {
 					existsFlags.set(i, Boolean.TRUE);
 					continue;
 				}
 
-				boolean isDuplicate = existingMap.containsKey(idRows.get(i));
+				PermissionDTO duplicate = existingMap.get(idRows.get(rowIndex));
+				boolean isDuplicate = duplicate != null;
 				existsFlags.set(i, isDuplicate);
 				
 				if (isDuplicate) {
-					results.set(i, null);
+					results.set(i, new Pair<PermissionDTO, String>(duplicate, INSERTION_DUPLICATE_PERMISSION));
 				}
+				
+				// This index will only increased when the checked DTO was not null, so we can always assume that there is an accompanying idRow available
+				rowIndex++;
 			}
 
 			// Prepare batch inserts for non-duplicates
@@ -227,13 +250,13 @@ public class PermissionDBService {
 					// Add created permission to the result list
 					PermissionDTO p = permissions.get(originalIndex);
 					PermissionDTO created = getPermission(p.getSubjectId(), p.getResourceType(), p.getResourceId(), p.getAction());
-					results.set(originalIndex, created);
+					results.set(originalIndex, new Pair<PermissionDTO, String>(created, INSERTION_SUCCESS));
 				} else if (individualResult == 0) {
 					ignored++;
 					
 					// Only mark error if it wasn't already marked duplicate
 					if (results.get(originalIndex) == null) {
-						results.set(originalIndex, null);
+						results.set(originalIndex, new Pair<PermissionDTO, String>(null, INSERTION_ERROR));
 					}
 				} else {
                     // Unexpected result size: abort
@@ -246,7 +269,7 @@ public class PermissionDBService {
 			Set<String> affectedContexts = new HashSet<>();
 
 			for (int i = 0; i < results.size(); i++) {
-			    PermissionDTO created = results.get(i);
+			    PermissionDTO created = results.get(i).first();
 			    if (created == null) {
 			    	continue;
 			    }
@@ -790,12 +813,12 @@ auditing should be performed, you can pass {@code null}.
 		
 		// Add the permissions
 		log.trace("Adding " + permissions.size() + " permissions for the domain with id: " + domainId);
-		List<PermissionDTO> results = createPermissions(permissions);
+		List<Pair<PermissionDTO, String>> results = createPermissions(permissions);
 		
 		if (results == null || results.isEmpty()) {
 			log.error("Could not create any permissions for domain with id \"" + domainId + "\", so the process was aborted.");
 			return false;
-		} else if (results.contains(null)) {
+		} else if (results.contains(new Pair<PermissionDTO, String>(null, INSERTION_ERROR))) {
 			log.warn("Could not add all permissions for domain with id \"" + domainId + "\". The permissions might be incomplete.");
 			return true;
 		}
@@ -837,12 +860,12 @@ auditing should be performed, you can pass {@code null}.
 		
 		// Add the permissions
 		log.trace("Adding " + permissions.size() + " permissions for the project \"" + projectAbbreviation + "\".");
-		List<PermissionDTO> results = createPermissions(permissions);
+		List<Pair<PermissionDTO, String>> results = createPermissions(permissions);
 		
 		if (results == null || results.isEmpty()) {
 			log.error("Could not create any permissions for project \"" + projectAbbreviation + "\", so the process was aborted.");
 			return false;
-		} else if (results.contains(null)) {
+		} else if (results.contains(new Pair<PermissionDTO, String>(null, INSERTION_ERROR))) {
 			log.warn("Could not add all permissions for project \"" + projectAbbreviation + "\". The permissions might be incomplete.");
 			return true;
 		}
@@ -1173,8 +1196,8 @@ auditing should be performed, you can pass {@code null}.
             	}
             	
             	// Call the create method
-            	List<PermissionDTO> result = createPermissions(inserts);
-            	if (result == null || result.contains(null)) {
+            	List<Pair<PermissionDTO, String>> result = createPermissions(inserts);
+            	if (result == null || result.contains(new Pair<PermissionDTO, String>(null, INSERTION_ERROR))) {
             		log.debug("Could not properly add the actions that were required. Aborting.");
             		throw new PermissionManagementException(resourceType + ":" + resourceId.toString());
             	}
