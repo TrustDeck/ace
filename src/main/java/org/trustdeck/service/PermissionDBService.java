@@ -297,12 +297,58 @@ public class PermissionDBService {
 			return null;
 		}
 	}
+	
+	/**
+	 * Creates permissions after enforcing bounded delegation for the requesting user.
+	 * 
+	 * @param permissions a list of the permissions to create
+	 * @return the creation results in the same order as the given list, or {@code null} on failure
+	 */
+	@Transactional
+	public List<Pair<PermissionDTO, String>> createPermissionsSecured(List<PermissionDTO> permissions) {
+		if (permissions == null || permissions.isEmpty()) {
+			return Collections.emptyList();
+		}
+		
+		// Get the requesting subject from the current request object
+		String requester = subjectIdFromRequest();
+		
+		// Create a list of validated permissions
+		List<PermissionDTO> validated = new ArrayList<>();
+		for (PermissionDTO p : permissions) {
+			// Check that we have all the necessary information
+			if (p == null) {
+				continue;
+			}
+			
+			if (Assertion.isNullOrEmpty(p.getSubjectId(), p.getResourceType(), p.getAction()) || p.getResourceId() == null) {
+				log.trace("Skipping permission creation because mandatory data was missing.");
+				continue;
+			}
+			
+			// Check if the requesting subject/user is allowed to grant the permission
+			if (!isBoundedDelegationAllowed(requester, p.getResourceType(), p.getResourceId(), p.getAction())) {
+				log.debug("Permission creation denied because requester \"" + requester + "\" is not allowed to "
+						+ "grant action \"" + p.getAction() + "\" for resource (type = " + p.getResourceType() 
+						+ ", id = " + p.getResourceId() + ").");
+				continue;
+			}
+			
+			validated.add(p);
+		}
+		
+		if (validated.isEmpty()) {
+			log.trace("No permissions remained after bounded-delegation checks.");
+			return Collections.emptyList();
+		}
+		
+		return createPermissions(validated);
+	}
     
     /**
      * Method to retrieve all permissions a given subject has.
      * 
      * @param subjectId the (Keycloak) ID of the subject
-auditing should be performed, you can pass {@code null}.
      * @return a list of all the permissions found
      */
     @Transactional
@@ -631,6 +677,53 @@ auditing should be performed, you can pass {@code null}.
 			log.error("Couldn't delete a batch of permissions from the database: " + f.getClass() + ": " + f.getMessage(), f);
 			return null;
 		}
+	}
+	
+	/**
+	 * Deletes permissions after enforcing bounded delegation for the requesting user.
+	 * 
+	 * @param permissions a list of the permissions to delete
+	 * @return the deletion results in the same order as the given list, or {@code null} on failure
+	 */
+	@Transactional
+	public List<Boolean> deletePermissionsSecured(List<PermissionDTO> permissions) {
+		if (permissions == null || permissions.isEmpty()) {
+			return Collections.emptyList();
+		}
+		
+		// Get the requesting subject from the current request object
+		String requester = subjectIdFromRequest();
+		
+		// Create a list of validated permissions
+		List<PermissionDTO> validated = new ArrayList<>();
+		for (PermissionDTO p : permissions) {
+			// Check that we have all the necessary information
+			if (p == null) {
+				continue;
+			}
+			
+			if (Assertion.isNullOrEmpty(p.getSubjectId(), p.getResourceType(), p.getAction()) || p.getResourceId() == null) {
+				log.trace("Skipping permission deletion because mandatory data was missing.");
+				continue;
+			}
+
+			// Check if the requesting subject/user is allowed to revoke the permission
+			if (!isBoundedDelegationAllowed(requester, p.getResourceType(), p.getResourceId(), p.getAction())) {
+				log.debug("Permission deletion denied because requester \"" + requester + "\" is not allowed to "
+						+ "manage action \"" + p.getAction() + "\" for resource (type = " + p.getResourceType() 
+						+ ", id = " + p.getResourceId() + ").");
+				continue;
+			}
+			
+			validated.add(p);
+		}
+		
+		if (validated.isEmpty()) {
+			log.debug("No permissions remained to delete after bounded-delegation checks.");
+			return Collections.emptyList();
+		}
+		
+		return deletePermissions(validated);
 	}
 		
 	/**
@@ -1123,6 +1216,81 @@ auditing should be performed, you can pass {@code null}.
 	}
 	
 	/**
+	 * Checks whether a subject is allowed to manage permissions for the given resource.
+	 * 
+	 * @param subjectId the subject's Keycloak ID
+	 * @param resourceType the resource type
+	 * @param resourceId the resource ID
+	 * @return {@code true} if the subject may manage permissions for that resource, {@code false} otherwise
+	 */
+	private boolean isPermissionManagementAllowed(String subjectId, String resourceType, Integer resourceId) {
+		if (Assertion.isNullOrEmpty(resourceType) || resourceId == null) {
+			return false;
+		}
+		
+		// Get the action for the resourceType that is affected
+		String action = null;		
+		if (resourceType.equalsIgnoreCase("DOMAIN")) {
+			action = "domain:manage-permissions";
+		} else if (resourceType.equalsIgnoreCase("PROJECT")) {
+			action = "project:manage-permissions";
+		} else if (resourceType.equalsIgnoreCase("GLOBAL")) {
+			action = "global:manage-permissions";
+		} else {
+			log.debug("Unrecognized resourceType: " + resourceType);
+			return false;
+		}
+		
+		return Assertion.isNullOrEmpty(action) ? false : isActionAllowed(subjectId, resourceType, resourceId, action);
+	}
+	
+	/**
+	 * Checks whether a subject is allowed to grant a specific action for the given resource.
+	 * This is the bounded delegation rule: 
+	 * 1. the assigning subject must be allowed to manage permissions on the resource
+	 * 2. the assigning subject must already have the exact action that should be granted
+	 * 
+	 * @param subjectId the assigning subject's Keycloak ID
+	 * @param resourceType the resource type
+	 * @param resourceId the resource ID
+	 * @param action the action to grant
+	 * @return {@code true} when granting is allowed, {@code false} otherwise
+	 */
+	private boolean isBoundedDelegationAllowed(String subjectId, String resourceType, Integer resourceId, String action) {
+		if (Assertion.isNullOrEmpty(subjectId, resourceType, action) || resourceId == null) {
+			return false;
+		}
+		
+		// The action must match the given resource type
+		if (resourceType.equalsIgnoreCase("DOMAIN") && !roleConfig.getACERoles().contains(action)) {
+			log.trace("Bounded delegation not allowed, as the given action (" + action + ") is not domain-scoped, as the resourceType suggested.");
+			return false;
+		} else if (resourceType.equalsIgnoreCase("PROJECT") && !roleConfig.getKINGRoles().contains(action)) {
+			log.trace("Bounded delegation not allowed, as the given action (" + action + ") is not project-scoped, as the resourceType suggested.");
+			return false;
+		} else if (resourceType.equalsIgnoreCase("GLOBAL") && !roleConfig.getGlobalRoles().contains(action)) {
+			log.trace("Bounded delegation not allowed, as the given action (" + action + ") is not global-scoped, as the resourceType suggested.");
+			return false;
+		}
+		
+		// The assigning subject must be allowed to manage permissions on this resource
+		if (!isPermissionManagementAllowed(subjectId, resourceType, resourceId)) {
+			log.trace("The assigning subject is not allowed to grant actions for this resourceType (" + resourceType + 
+					") and resource (ID = " + resourceId + ").");
+			return false;
+		}
+		
+		// The assigning subject must already have the exact action they want to delegate
+		if (!isActionAllowed(subjectId, resourceType, resourceId, action)) {
+			log.trace("The assigning subject itself does not have the permission that should be granted, "
+					+ "so it can't be granted to someone else.");
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	/**
 	 * Replaces the ALLOWed-permissions for (subjectId, resourceType, resourceId) with exactly the provided actions.
      * After this method, the database will contain exactly one ALLOWed grant per action in {@code actions}.
      * Existing DENY grants are left untouched (if there are any).
@@ -1220,6 +1388,55 @@ auditing should be performed, you can pass {@code null}.
             log.debug("Replacing permissions failed: ", f.getMessage(), f);
             return false;
 		}
+	}
+	
+	/**
+	 * Replaces all permissions for a resource after enforcing bounded delegation with the list of given permissions.
+	 * The requester may only grant actions that they already hold on the same resource,
+	 * and only if they also hold the corresponding *:manage-permissions action.
+	 * 
+	 * @param subjectId the target subject for whom permissions should be replaced
+	 * @param resourceType the resource type
+	 * @param resourceId the resource ID
+	 * @param actions the desired target set of allowed actions
+	 * @return {@code true} when the replacement was successful, {@code false} otherwise
+	 */
+	@Transactional
+	public boolean replacePermissionsForResourceSecured(String subjectId, String resourceType, Integer resourceId, List<String> actions) {
+		if (!Assertion.isNotNullOrEmpty(subjectId, resourceType) || resourceId == null || actions == null) {
+			log.debug("Missing parameters.");
+			return false;
+		}
+		
+		// Get the requesting subject from the current request object
+		String requester = subjectIdFromRequest();
+		
+		// Check that the requester is allowed to manage permissions on this resource
+		if (!isPermissionManagementAllowed(requester, resourceType, resourceId)) {
+			log.debug("Permission replacement denied because requester \"" + requester + "\" is not allowed "
+					+ "to manage permissions for resource (type = " + resourceType + ", id = " + resourceId + ").");
+			return false;
+		}
+		
+		// Normalize the action strings and remove duplicates
+		List<String> normalizedRequestedActions = actions.stream()
+				.filter(Objects::nonNull)
+				.map(String::trim)
+				.filter(s -> !s.isBlank())
+				.distinct()
+				.toList();
+		
+		// Check if there are any permissions in the list that the requester is not allowed to grant to others
+		boolean areAllActionsGrantable = normalizedRequestedActions.stream()
+				.allMatch(a -> isBoundedDelegationAllowed(requester, resourceType, resourceId, a));
+		
+		if (!areAllActionsGrantable) {
+			log.debug("Permission replacement denied because at least one requested action was not "
+					+ "grantable by requester \"" + requester + "\".");
+			return false;
+		}
+		
+		return replacePermissionsForResource(subjectId, resourceType, resourceId, normalizedRequestedActions);
 	}
 
 	/**
