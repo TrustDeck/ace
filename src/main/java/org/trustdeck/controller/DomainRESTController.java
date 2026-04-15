@@ -68,49 +68,49 @@ import java.util.Set;
 public class DomainRESTController {
 
 	/** The default value for adding a check digit to the pseudonym. */
-	private static final boolean DEFAULT_ADD_CHECK_DIGIT = true;
+	public static final boolean DEFAULT_ADD_CHECK_DIGIT = true;
 	
 	/** The default value for allowing multiple pseudonyms per id&idType pair. */
-	private static final boolean DEFAULT_ALLOW_MULTIPLE_PSN = false;
+	public static final boolean DEFAULT_ALLOW_MULTIPLE_PSN = false;
 	
     /** The default value for enforcing the validTo date correctness. */
-    private static final boolean DEFAULT_ENFORCE_END_DATE_VALIDITY = true;
+	public static final boolean DEFAULT_ENFORCE_END_DATE_VALIDITY = true;
 
     /** The default value for enforcing the validFrom date correctness. */
-    private static final boolean DEFAULT_ENFORCE_START_DATE_VALIDITY = true;
+	public static final boolean DEFAULT_ENFORCE_START_DATE_VALIDITY = true;
     
     /** The default value for determining if the check digit should be included in the defined pseudonym length. */
-    private static final boolean DEFAULT_LENGTH_INCLUDES_CHECK_DIGIT = false;
+	public static final boolean DEFAULT_LENGTH_INCLUDES_CHECK_DIGIT = false;
     
 	/** Determines the default number of retries when a generated random number is already in use. */
 	private static final int DEFAULT_NUMBER_OF_RETRIES = 3;
 
     /** The default character used for padding pseudonyms if necessary. */
-    private static final char DEFAULT_PADDING_CHARACTER = '0';
+	public static final char DEFAULT_PADDING_CHARACTER = '0';
 
     /** The default value for performing a recursive update of possible child domains. */
     private static final boolean DEFAULT_PERFORM_RECURSIVE_CHANGES = true;
 
     /** The default pseudonymization algorithm. */
-    private static final String DEFAULT_PSEUDONYMIZATION_ALGO = "RANDOM_LET";
+    public static final String DEFAULT_PSEUDONYMIZATION_ALGO = "RANDOM_LET";
     
     /** The default alphabet (A-Z0-9) used for the pseudonymization process. */
-    private static final String DEFAULT_PSEUDONYMIZATION_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    public static final String DEFAULT_PSEUDONYMIZATION_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     /** The default pseudonym length. */
-    private static final int DEFAULT_PSEUDONYM_LENGTH = 16;
+    public static final int DEFAULT_PSEUDONYM_LENGTH = 16;
     
     /** The default number of pseudonyms a user wants to be able to create. */
-    private static final long DEFAULT_RANDOM_ALGORITHM_DESIRED_SIZE = 100000000L;
+    public static final long DEFAULT_RANDOM_ALGORITHM_DESIRED_SIZE = 100000000L;
     
     /** The default success probability with which a user wants to create a new pseudonym. */
-    private static final double DEFAULT_RANDOM_ALGORITHM_DESIRED_SUCCESS_PROBABILITY = 0.99999998d;
+    public static final double DEFAULT_RANDOM_ALGORITHM_DESIRED_SUCCESS_PROBABILITY = 0.99999998d;
 
     /** The default length of a salt. */
-    private static final int DEFAULT_SALT_LENGTH = 32;
+    public static final int DEFAULT_SALT_LENGTH = 32;
 
     /** The default validity time in seconds. */
-    private static final String DEFAULT_VALIDITY_TIME = "30 years";
+    public static final String DEFAULT_VALIDITY_TIME = "30 years";
 
     /** Enables the access to the domain specific database access methods. */
     @Autowired
@@ -215,15 +215,7 @@ public class DomainRESTController {
 
         // Create a salt if not already given
         if (salt == null || salt.trim().length() < MINIMUM_SALT_LENGTH || salt.trim().length() > MAXIMUM_SALT_LENGTH) {
-        	String saltAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_+";
-	        SecureRandom rnd = new SecureRandom();
-	        StringBuilder sb = new StringBuilder(saltLength);
-	
-	        for (int i = 0; i < saltLength; i++) {
-	            sb.append(saltAlphabet.charAt(rnd.nextInt(saltAlphabet.length())));
-	        }
-	
-	        salt = sb.toString();
+        	salt = generateSalt(saltLength);
         }
         
         // Sanitize the alphabet
@@ -559,15 +551,7 @@ public class DomainRESTController {
         }
         
         // Create a salt
-        String saltAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_+";
-        SecureRandom rnd = new SecureRandom();
-        StringBuilder sb = new StringBuilder(DEFAULT_SALT_LENGTH);
-
-        for (int i = 0; i < DEFAULT_SALT_LENGTH; i++) {
-            sb.append(saltAlphabet.charAt(rnd.nextInt(saltAlphabet.length())));
-        }
-
-        String salt = sb.toString();
+        String salt = generateSalt(DEFAULT_SALT_LENGTH);
 
         // Ensure that a valid counter for the consecutive numbering pseudonymization algorithm is present
         long consecVal = 1L;
@@ -1434,6 +1418,24 @@ public class DomainRESTController {
 		double psnLength = Math.ceil(Math.log(k)/Math.log(alphabet.length()));
 		
 		return (int) psnLength;
+	}
+	
+	/**
+	 * Method to generate a random salt value of a given length.
+	 * 
+	 * @param saltLength the desired length of the salt value
+	 * @return a randomly generated string of the desired length
+	 */
+	public static String generateSalt(int saltLength) {
+		String saltAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_+";
+        SecureRandom rnd = new SecureRandom();
+        StringBuilder sb = new StringBuilder(saltLength);
+
+        for (int i = 0; i < saltLength; i++) {
+            sb.append(saltAlphabet.charAt(rnd.nextInt(saltAlphabet.length())));
+        }
+
+        return sb.toString();
 	}
 
     /**
