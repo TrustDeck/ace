@@ -23,14 +23,18 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.header.Header;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -142,26 +146,48 @@ public class AuditInformationResolver {
     private AuditInformationObject resolveFromKafkaArguments(Object[] args) {
         // Check that we actually have arguments
     	if (args == null || args.length == 0) {
-            // No arguments found
+    		log.trace("No arguments provided.");
     		return null;
         }
 
     	// Check if any of the arguments can be used to create the audit information object
         for (Object arg : args) {
-            // Check if the argument is a consumer record
-        	if (arg instanceof ConsumerRecord consumerRecord) {
-                return buildFromConsumerRecord(consumerRecord);
+        	if (arg == null) {
+                continue;
             }
 
-        	// Check if the argument is a consumer record wrapped in a message
+            // Single record
+            if (arg instanceof ConsumerRecord<?, ?> record) {
+                return buildFromConsumerRecord(record);
+            }
+
+            // Batch of records
+            if (arg instanceof ConsumerRecords<?, ?> records) {
+                for (ConsumerRecord<?, ?> r : records) {
+                	// The first record is enough for processing the audit context
+                    return buildFromConsumerRecord(r);
+                }
+            }
+
+            // Spring Message carrying either ConsumerRecord or plain payload + Kafka headers
             if (arg instanceof Message<?> message) {
-                if (message.getPayload() instanceof ConsumerRecord consumerRecord) {
-                    return buildFromConsumerRecord(consumerRecord);
+                AuditInformationObject fromMessage = buildFromSpringMessage(message);
+                if (fromMessage != null) {
+                    return fromMessage;
+                }
+            }
+
+            // Some listeners receive a collection in batch mode
+            if (arg instanceof Collection<?> collection) {
+                for (Object item : collection) {
+                    if (item instanceof ConsumerRecord<?, ?> record) {
+                        return buildFromConsumerRecord(record);
+                    }
                 }
             }
         }
 
-        // No usable arguments were found
+        log.trace("No usable arguments were found.");
         return null;
     }
 
@@ -204,6 +230,71 @@ public class AuditInformationResolver {
                 .topic(record.topic())
                 .partition(record.partition())
                 .recordOffset(record.offset())
+                .build();
+    }
+    
+    /**
+     * Builds the audit information object from a Spring Message object.
+     * 
+     * @param message the Spring Message object in which the information needed for auditing is contained
+     * @return the audit information object built from the Spring Message
+     */
+    private AuditInformationObject buildFromSpringMessage(Message<?> message) {
+        if (message == null) {
+            return null;
+        }
+
+        // Check if the payload itself is a ConsumerRecord
+        if (message.getPayload() instanceof ConsumerRecord<?, ?> record) {
+            return buildFromConsumerRecord(record);
+        }
+
+        // Get the headers from the message
+        MessageHeaders headers = message.getHeaders();
+        
+        // Extract Kafka information from the headers, if possible
+        String topic = asString(headers.get(KafkaHeaders.RECEIVED_TOPIC));
+        Integer partition = asInteger(headers.get(KafkaHeaders.RECEIVED_PARTITION));
+        Long offset = asLong(headers.get(KafkaHeaders.OFFSET));
+
+        // If there are no Kafka headers, this probably is not a Kafka-triggered Spring Message
+        if (topic == null && partition == null && offset == null) {
+            return null;
+        }
+
+        // Get the payload as a String
+        Object rawPayload = message.getPayload();
+        String payload = rawPayload != null ? String.valueOf(rawPayload) : null;
+        
+        // Try parsing the payload into a KafkaDTO
+        KafkaPseudonymMessageDTO kafkaDto = null;
+		try {
+			kafkaDto = kafkaParser.parse(payload);
+		} catch (ClassCastException | JsonProcessingException e) {
+			// Ignored
+		}
+
+		// Try extracting the username from the payload-as-DTO
+    	String username = kafkaDto != null ? kafkaDto.getUsername() : null;
+		
+        // Try extracting the username from the headers, fallback to "KAFKA" if nothing was found
+        username = Assertion.isNullOrEmpty(username) ? asString(headers.get("username")) : username;
+        username = Assertion.isNullOrEmpty(username) ? "KAFKA" : username;
+
+        // Build string that contains the message target
+        String target = "[KAFKA] topic=" + topic + ", partition=" + partition + ", offset=" + offset;
+
+        // Build and return the information object
+        return AuditInformationObject.builder()
+                .auditSourceSystem(AuditSourceSystem.KAFKA)
+                .username(username)
+                .userType(AuditUserType.TECHNICAL)
+                .requesterIp("KAFKA")
+                .target(target)
+                .payload(normalizePayload(payload))
+                .topic(topic)
+                .partition(partition)
+                .recordOffset(offset)
                 .build();
     }
 
@@ -403,5 +494,67 @@ public class AuditInformationResolver {
         }
 
         return AuditUserType.UNKNOWN;
+    }
+    
+    /**
+     * Helper to parse an object into a String if possible.
+     * 
+     * @param value the object to parse
+     * @return the parsed object or {@code null} if parsing was not possible
+     */
+    private String asString(Object value) {
+        return value != null ? String.valueOf(value) : null;
+    }
+
+    /**
+     * Helper to parse an object into an Integer if possible.
+     * 
+     * @param value the object to parse
+     * @return the parsed object or {@code null} if parsing was not possible
+     */
+    private Integer asInteger(Object value) {
+        if (value instanceof Integer i) {
+            return i;
+        }
+        
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+        
+        if (value != null) {
+            try {
+                return Integer.valueOf(value.toString());
+            } catch (NumberFormatException e) {
+            	// Ignored
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Helper to parse an object into a Long if possible.
+     * 
+     * @param value the object to parse
+     * @return the parsed object or {@code null} if parsing was not possible
+     */
+    private Long asLong(Object value) {
+        if (value instanceof Long l) {
+            return l;
+        }
+        
+        if (value instanceof Number n) {
+            return n.longValue();
+        }
+        
+        if (value != null) {
+            try {
+                return Long.valueOf(value.toString());
+            } catch (NumberFormatException e) {
+            	// Ignored
+            }
+        }
+        
+        return null;
     }
 }
