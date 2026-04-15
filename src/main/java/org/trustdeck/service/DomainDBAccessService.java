@@ -27,6 +27,8 @@ import org.jooq.impl.DSL;
 import org.jooq.JoinType;
 import org.jooq.Record;
 import org.jooq.SelectQuery;
+import org.jooq.exception.DataAccessException;
+import org.jooq.exception.MappingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -71,7 +73,7 @@ public class DomainDBAccessService {
 
     /** References a jOOQ configuration object that configures jOOQ's behavior when executing queries. */
     @Autowired
-    private DSLContext dslCtx;
+    private DSLContext dsl;
 
     /** Enables the access to the domain specific database access methods. */
     @Autowired
@@ -97,7 +99,7 @@ public class DomainDBAccessService {
      */
     private DomainDao getDomainDao() {
     	// Attaches DAO to the current transactional context
-    	return new DomainDao(dslCtx.configuration());
+    	return new DomainDao(dsl.configuration());
     }
 
     /**
@@ -106,22 +108,39 @@ public class DomainDBAccessService {
      * @param domainName the name of the domain you want to get
      * @return the retrieved domain as a jOOQ Domain object, or {@code null} if nothing was found
      */
+    @Transactional
     public Domain getDomainByName(String domainName) {
+    	// Check if all the necessary arguments are available
+    	if (Assertion.isNullOrEmpty(domainName.trim())) {
+    		log.trace("The given domain name is null or empty.");
+    		return null;
+    	}
+    	
+    	// Build and execute the query
+    	List<Domain> domains = null;
     	try {
-            Domain domain = this.dslCtx.transactionResult(configuration -> {
-                // Get domain
-                return this.getDomainDao().fetchOneByName(domainName);
-
-                // Implicit transaction commit here
-            });
-
-            // At this point the retrieval was successful
-            log.trace("Successfully queried the database for the domain using the name (" + domainName + ").");
-            return domain;
-        } catch (Exception e) {
-            log.error("Couldn't retrieve the domain " + domainName + " from the database: " + e.getMessage() + "\n");
-            return null;
+			domains = dsl.selectFrom(DOMAIN)
+					.where(DOMAIN.NAME.equalIgnoreCase(domainName.trim()))
+					.fetchInto(Domain.class);
+        } catch (MappingException e) {
+        	log.debug("Could not map the domain search result into the Domain-POJO.", e);
+        	return null;
+        } catch (DataAccessException f) {
+        	log.debug("Searching for the domain in the database failed.", f);
+        	return null;
         }
+    	
+    	// Check if the search was successful
+    	if (domains == null || domains.size() == 0) {
+    		log.debug("No domain for name \"" + domainName + "\" found.");
+            return null;
+    	} else if (domains.size() > 1) {
+        	log.debug("Too many domains with name \"" + domainName + "\" were found.");
+        	return null;
+        }
+
+    	log.trace("Successfully queried the database for the domain using the name (" + domainName + ").");
+        return domains.getFirst();
     }
 
     /**
@@ -132,7 +151,7 @@ public class DomainDBAccessService {
      */
     public Domain getDomainByID(int domainID) {
     	try {
-            Domain domain = this.dslCtx.transactionResult(configuration -> {
+            Domain domain = this.dsl.transactionResult(configuration -> {
                 // Get domain
                 return this.getDomainDao().fetchOneById(domainID);
 
@@ -189,7 +208,7 @@ public class DomainDBAccessService {
         
         // Execute the query
         try {
-        	return dslCtx.withRecursive(treeStructure)
+        	return dsl.withRecursive(treeStructure)
         			.selectFrom(treeStructure)
         			.fetchInto(Domain.class)
         			.stream().map(d -> new DomainDTO().assignPojoValues(d)).toList();
@@ -260,7 +279,7 @@ public class DomainDBAccessService {
         // Execute the query
         List<Domain> result = null;
         try {
-			result = this.dslCtx.transactionResult(configuration -> {
+			result = this.dsl.transactionResult(configuration -> {
 			    List<Domain> r = DSL.using(configuration).withRecursive(findRoot, treeStructure)
 			            .select()
 			            .from(name("tree_structure")).fetchInto(Domain.class);
@@ -378,9 +397,9 @@ public class DomainDBAccessService {
         }
 
         try {
-            List<Pair<PseudonymDTO, PseudonymDTO>> result = dslCtx.transactionResult(configuration -> {
+            List<Pair<PseudonymDTO, PseudonymDTO>> result = dsl.transactionResult(configuration -> {
                 // Start building the query
-            	SelectQuery<Record> query = dslCtx.select(PSEUDONYM.as("p" + pathSize).asterisk()).getQuery();
+            	SelectQuery<Record> query = dsl.select(PSEUDONYM.as("p" + pathSize).asterisk()).getQuery();
                 query.addFrom(PSEUDONYM.as("p1"));
 
                 // Iterate over the path to find all the pseudonyms along the path
@@ -441,7 +460,7 @@ public class DomainDBAccessService {
      */
 	public List<String> getAllPseudonymValuesInDomain(String domainName) {
 		try {
-			List<String> pseudonyms = this.dslCtx.transactionResult(configuration -> {
+			List<String> pseudonyms = this.dsl.transactionResult(configuration -> {
 				// Retrieve all pseudonyms from the domain
 				return DSL.using(configuration)
 						.select(PSEUDONYM.PSEUDONYM_)
@@ -474,7 +493,7 @@ public class DomainDBAccessService {
             Domain d = this.getDomainByName(domainName);
 
             // Retrieve all records from a domain
-            List<PseudonymDTO> ps = dslCtx.selectFrom(PSEUDONYM)
+            List<PseudonymDTO> ps = dsl.selectFrom(PSEUDONYM)
                     .where(PSEUDONYM.DOMAINID.eq(d.getId()))
                     .fetchInto(Pseudonym.class)
                     .stream()
@@ -498,7 +517,7 @@ public class DomainDBAccessService {
      */
     public Integer getAmountOfPseudonymsInDomain(String domainName) {
         try {
-            Integer count = this.dslCtx.transactionResult(configuration -> {
+            Integer count = this.dsl.transactionResult(configuration -> {
                 // Get domain
                 Domain d = this.getDomainByName(domainName);
                 
@@ -539,7 +558,7 @@ public class DomainDBAccessService {
      */
     public boolean deleteDomain(String domainName, boolean recursiveDeletion) {
         try {
-            this.dslCtx.transaction(configuration -> {
+            this.dsl.transaction(configuration -> {
                 // Retrieve the domain object
                 Domain domain = getDomainByName(domainName);
 
@@ -670,7 +689,7 @@ public class DomainDBAccessService {
      */
     public String insertDomain(Domain domain) {
         try {
-            this.dslCtx.transaction(configuration -> {
+            this.dsl.transaction(configuration -> {
                 // Check if the domain is already in the database
                 if (getDomainByName(domain.getName()) != null) {
                     // Record is already in the DB. Use exception to break the transaction.
@@ -754,7 +773,7 @@ public class DomainDBAccessService {
     @Transactional
     public List<DomainDTO> listDomains() {
         try {
-			return dslCtx.selectFrom(DOMAIN)
+			return dsl.selectFrom(DOMAIN)
 					.fetchInto(Domain.class)
                     .stream().map(d -> new DomainDTO().assignPojoValues(d)).toList();
         } catch (Exception e) {
@@ -772,7 +791,7 @@ public class DomainDBAccessService {
      */
     public boolean updateCounter(Long counter, String domainName) {
     	try {
-            this.dslCtx.transaction(configuration -> {
+            this.dsl.transaction(configuration -> {
                 // Create and execute the update query
                 int updatedDomain = DSL.using(configuration).update(DOMAIN)
                         .set(DOMAIN.CONSECUTIVEVALUECOUNTER, counter)
@@ -814,7 +833,7 @@ public class DomainDBAccessService {
      */
     public Domain updateDomain(Domain oldDomain, Domain newDomain, boolean recursiveChanges) {
         try {
-            this.dslCtx.transaction(configuration -> {
+            this.dsl.transaction(configuration -> {
                 // Check if the domain to be updated exists
                 if (!getDomainDao().exists(oldDomain)) {
                     // Domain is not in the DB. Use exception to break the transaction.
