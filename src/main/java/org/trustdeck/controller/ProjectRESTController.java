@@ -48,15 +48,12 @@ import org.trustdeck.dto.ProjectDTO;
 import org.trustdeck.exception.DuplicateProjectException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.security.audittrail.annotation.Audit;
-import org.trustdeck.security.audittrail.event.AuditEventType;
-import org.trustdeck.security.audittrail.usertype.AuditUserType;
 import org.trustdeck.service.PermissionDBService;
 import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
 import org.trustdeck.utils.Utility;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -99,7 +96,6 @@ public class ProjectRESTController {
 	 * 
 	 * @param projectDTO (required) the project object
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status with the existing project when a duplicate was detected</li>
      *         <li>a <b>201-CREATED</b> status with the created project and a <b>Location</b> header on success</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when the name/abbreviation is missing or dates are invalid</li>
@@ -108,10 +104,9 @@ public class ProjectRESTController {
 	 */
 	@PostMapping("/projects")
     @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'project:create')")
-    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> createProject(@RequestBody ProjectDTO projectDTO,
-                                           @RequestHeader(name = "accept", required = false) String responseContentType,
-                                           HttpServletRequest request) {
+                                           @RequestHeader(name = "accept", required = false) String responseContentType) {
 		ProjectDTO p = new ProjectDTO();
 		
 		// Sanitize all the necessary attributes are given and store them in p
@@ -165,10 +160,10 @@ public class ProjectRESTController {
 		// Create the project in the database
 		ProjectDTO createdProject;
 		try {
-			createdProject = projectDBService.createProject(p, request);
+			createdProject = projectDBService.createProject(p);
 		} catch (DuplicateProjectException e) {
 			log.debug("Encountered a project duplicate. Return the original.");
-			return responseService.ok(responseContentType, projectDBService.getProjectByName(name, null));
+			return responseService.ok(responseContentType, projectDBService.getProjectByName(name));
 		}
 		
 		// Evaluate creation result
@@ -186,15 +181,13 @@ public class ProjectRESTController {
 	 * requesting user has access to.
 	 * 
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status and a list of projects 
      * 		   where the user has access to</li>
 	 */
 	@GetMapping("/projects")
     @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'project:list-all')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> getProjectsWithAccessTo(@RequestHeader(name = "accept", required = false) String responseContentType,
-                                           			 HttpServletRequest request) {
+    @Audit
+    public ResponseEntity<?> getProjectsWithAccessTo(@RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Get subject/user from security context
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
@@ -209,7 +202,7 @@ public class ProjectRESTController {
 		}
         
 		// Get all permissions of the current subject/user
-		List<PermissionDTO> permissions = permissionDBService.getAllPermissionsForSubject(jwt.getSubject(), request);
+		List<PermissionDTO> permissions = permissionDBService.getAllPermissionsForSubject(jwt.getSubject());
 		
 		// Collect all projects with read-access into a list
 		Set<ProjectDTO> projects = new HashSet<>();
@@ -217,7 +210,7 @@ public class ProjectRESTController {
 			if (p.getResourceType().equalsIgnoreCase("PROJECT") && p.getAction().equalsIgnoreCase("project:read")
 					&& p.getDecision().equalsIgnoreCase("ALLOW") && p.getValidFrom().isBefore(OffsetDateTime.now())
 					&& p.getValidTo().isAfter(OffsetDateTime.now())) {
-				projects.add(projectDBService.getProjectByID(p.getResourceId(), null));
+				projects.add(projectDBService.getProjectByID(p.getResourceId()));
 			}
 		}
         
@@ -231,17 +224,15 @@ public class ProjectRESTController {
 	 * 
 	 * @param projectAbbreviation the project's abbreviation
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status with the requested project on success</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when the abbreviation is missing or empty</li>
      *         <li>a <b>404-NOT_FOUND</b> status when no project exists for the given abbreviation</li>
 	 */
 	@GetMapping("/projects/{projectAbbreviation}")
     @PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'project:read')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getProject(@PathVariable(name = "projectAbbreviation", required = true) String projectAbbreviation,
-                                        @RequestHeader(name = "accept", required = false) String responseContentType,
-                                        HttpServletRequest request) {
+                                        @RequestHeader(name = "accept", required = false) String responseContentType) {
 		
 		// Null-check the given string
 		if (Assertion.isNullOrEmpty(projectAbbreviation)) {
@@ -249,7 +240,7 @@ public class ProjectRESTController {
 			return responseService.badRequest(responseContentType);
 		}
 		
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, request);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		
 		if (project == null) {
 			log.debug("No project found for the given abbreviation.");
@@ -270,15 +261,13 @@ public class ProjectRESTController {
 	 * 
 	 * @param projectAbbreviation the project's abbreviation
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
      * @return <li>a <b>501-NOT_IMPLEMENTED</b> status (endpoint not implemented yet)</li>
 	 */
 	@GetMapping("projects/{projectAbbreviation}/statistics")
     @PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'project:statistics')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getProjectStatistics(@PathVariable("projectAbbreviation") String projectAbbreviation,
-                                				  @RequestHeader(name = "accept", required = false) String responseContentType,
-                                				  HttpServletRequest request) {
+                                				  @RequestHeader(name = "accept", required = false) String responseContentType) {
 		
 		return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
 	}
@@ -289,21 +278,19 @@ public class ProjectRESTController {
 	 * @param projectAbbreviation the abbreviation of the project that is to be updated
 	 * @param newProjectDTO (required) the project object containing all updated values, null-values will lead to keeping the old values
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status with the updated project on success</li>
      * 		   <li>a <b>404-NOT_FOUND</b> status when the project does not exist</li>
      *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when the update failed</li>
 	 */
 	@PutMapping("/projects/{projectAbbreviation}")
     @PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'project:update')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> updateProject(@PathVariable("projectAbbreviation") String projectAbbreviation,
     									   @RequestBody ProjectDTO newProjectDTO,
-    									   @RequestHeader(name = "accept", required = false) String responseContentType,
-    									   HttpServletRequest request) {
+    									   @RequestHeader(name = "accept", required = false) String responseContentType) {
 		
 		// Check if the original project exists
-		ProjectDTO oldProjectDTO = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO oldProjectDTO = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (oldProjectDTO == null) {
 			log.debug("The project that should be updated was not found.");
 			return responseService.notFound(responseContentType);
@@ -319,7 +306,7 @@ public class ProjectRESTController {
 		newProjectDTO.setName(name);
 		
 		// Send the DTO to the database service
-		ProjectDTO updatedDTO = projectDBService.updateProject(oldProjectDTO, newProjectDTO, request);
+		ProjectDTO updatedDTO = projectDBService.updateProject(oldProjectDTO, newProjectDTO);
 		
 		// Check success of the update
 		if (updatedDTO == null) {
@@ -341,7 +328,6 @@ public class ProjectRESTController {
 	 * @param projectAbbreviation the project's abbreviation
 	 * @param deleteDate (optional) the date from which the project should be considered as deleted 
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
      * @return <li>a <b>204-NO_CONTENT</b> status when the project was successfully deleted/tombstoned</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when the abbreviation is missing or empty</li>
      *         <li>a <b>404-NOT_FOUND</b> status when the project does not exist</li>
@@ -349,13 +335,12 @@ public class ProjectRESTController {
 	 */
 	@DeleteMapping("/projects/{projectAbbreviation}")
     @PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'project:delete')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> deleteProject(@PathVariable("projectAbbreviation") String projectAbbreviation,
     									   @RequestParam(name = "deleteDate", required = false) String deleteDate,
-    									   @RequestHeader(name = "accept", required = false) String responseContentType,
-                                           HttpServletRequest request) {
+    									   @RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Check if the original project exists
-		ProjectDTO projectDTO = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO projectDTO = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (projectDTO == null) {
 			log.debug("The project that should be deleted was not found.");
 			return responseService.notFound(responseContentType);
@@ -389,7 +374,7 @@ public class ProjectRESTController {
 		// Delete the project
 		boolean isDeleted;
 		try {
-			isDeleted = projectDBService.deleteProject(projectDTO, end, request);
+			isDeleted = projectDBService.deleteProject(projectDTO, end);
 		} catch (UnexpectedResultSizeException e) {
 			log.debug("Deletion attempt failed and was rolled back.", e);
 			return responseService.unprocessableEntity(responseContentType);

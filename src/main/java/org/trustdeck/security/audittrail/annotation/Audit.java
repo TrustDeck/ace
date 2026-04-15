@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2023 Armin Müller and contributors
+ * Copyright 2023-2026 Armin Müller and contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,11 @@ import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
 
 /**
- * Annotation that enables an audit trail for the annotated method and collects some data for it.
- * The actual storing of the audit information happens in the AuditAnnotationAspect.
+ * Enables an audit trail for the annotated method.
+ * Via {@code auditFor}, you can restrict for which user type the method access 
+ * should be audited, the default being {@code auditFor = AuditUserType.ALL}
+ * An AuditAnnotationAspect performs the actual storing in the database and 
+ * piggybacks the existing transaction.
  *
  * @author Armin Müller
  */

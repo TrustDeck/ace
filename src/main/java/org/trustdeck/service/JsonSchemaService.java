@@ -1,6 +1,6 @@
 /*
  * Trust Deck Services
- * Copyright 2024-2025 Armin Müller
+ * Copyright 2025-2026 Armin Müller
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -111,38 +112,9 @@ public class JsonSchemaService {
 		}
 
 		// Check additional constraints that cannot (easily) be defined in the schema
-		List<String> errors = new ArrayList<>();
-		Set<String> seenNames = new HashSet<>();
+		Set<String> seenPaths = new HashSet<>();
 
-		// Iterate over the nodes in the schema definition (which itself is also a JSON)
-		for (JsonNode attr : definition.get("attributes")) {
-			String name = attr.get("name").asText();
-			String type = attr.get("type").asText();
-
-			// Check for duplicated attribute names
-			if (!seenNames.add(name)) {
-				log.trace("Found a duplicated attribute name in the JSON Schema: " + name);
-				errors.add("Duplicated attribute name: \"" + name + "\".");
-			}
-
-			// Ensure that there are no string-constraints used on non-string fields
-			if (!"string".equalsIgnoreCase(type)) {
-				// Non-string type
-				if (attr.has("minLength")) {
-					errors.add("minLength only valid for string (attribute \"" + name + "\").");
-				}
-
-				if (attr.has("maxLength")) {
-					errors.add("maxLength only valid for string (attribute \"" + name + "\").");
-				}
-
-				if (attr.has("pattern")) {
-					errors.add("pattern only valid for string (attribute \"" + name + "\").");
-				}
-			}
-		}
-
-		return errors;
+		return validateAttributes(definition.get("attributes"), "", seenPaths);
 	}
 
 	/**
@@ -154,81 +126,8 @@ public class JsonSchemaService {
 	 */
 	public JsonNode buildInstanceSchema(JsonNode definition) {
 		// Build schema object from the JsonNode type
-		ObjectNode schema = om.createObjectNode();
+		ObjectNode schema = buildObjectSchemaFromAttributes(definition.get("attributes"));
 		schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
-		schema.put("$id",
-				"urn:schema:" + definition.get("typeName").asText() + ":" + definition.get("version").asText());
-		schema.put("type", "object");
-		schema.put("additionalProperties", false);
-
-		// Add entries for the attributes into the schema
-		ObjectNode properties = om.createObjectNode();
-		ArrayNode required = om.createArrayNode();
-
-		// Iterate over all attributes in the given definition and create a new
-		// schema-attribute
-		for (JsonNode defAttribute : definition.get("attributes")) {
-			String name = defAttribute.get("name").asText();
-			String type = defAttribute.get("type").asText();
-
-			// Set the attributes\"s type
-			ObjectNode attribute = om.createObjectNode();
-			switch (type) {
-			case "string": {
-				attribute.put("type", "string");
-				break;
-			}
-			case "integer": {
-				attribute.put("type", "integer");
-				break;
-			}
-			case "number": {
-				attribute.put("type", "number");
-				break;
-			}
-			case "boolean": {
-				attribute.put("type", "boolean");
-				break;
-			}
-			case "date": {
-				attribute.put("type", "string");
-				attribute.put("format", "date");
-				break;
-			}
-			case "datetime": {
-				attribute.put("type", "string");
-				attribute.put("format", "date-time");
-				break;
-			}
-			default:
-				throw new IllegalArgumentException("Unsupported type: " + type);
-			}
-
-			// Add constraints to the attribute if there are any in the original definition
-			copyIfPresent(defAttribute, attribute, "minimum");
-			copyIfPresent(defAttribute, attribute, "maximum");
-			copyIfPresent(defAttribute, attribute, "minLength");
-			copyIfPresent(defAttribute, attribute, "maxLength");
-			copyIfPresent(defAttribute, attribute, "pattern");
-			copyIfPresent(defAttribute, attribute, "enum");
-
-			// Store the new attribute in the properties nodes
-			properties.set(name, attribute);
-
-			// Add the attribute to the list of required attributes if needed
-			if (defAttribute.get("required").asBoolean()) {
-				required.add(name);
-			}
-		}
-
-		// Add the property-nodes to the schema
-		schema.set("properties", properties);
-
-		// Add required flags if there are any
-		if (required.size() > 0) {
-			schema.set("required", required);
-		}
-
 		return schema;
 	}
 	
@@ -274,20 +173,13 @@ public class JsonSchemaService {
 		List<String> errors = new ArrayList<>();
 
 		// Map attributes by name
-		Map<String, JsonNode> baseAttributes = new HashMap<>();
-		for (JsonNode attribute : baseDef.get("attributes")) {
-			baseAttributes.put(attribute.get("name").asText(), attribute);
-		}
-
-		Map<String, JsonNode> projectAttributes = new HashMap<>();
-		for (JsonNode attribute : projectDef.get("attributes")) {
-			projectAttributes.put(attribute.get("name").asText(), attribute);
-		}
+		Map<String, JsonNode> baseAttributes = flattenLeafNodes(baseDef);
+		Map<String, JsonNode> projectAttributes = flattenLeafNodes(projectDef);
 
 		// Ensure that there are no attribute deletions: project must contain all base attributes
-		for (String name : baseAttributes.keySet()) {
-			if (!projectAttributes.containsKey(name)) {
-				errors.add("Project specific type definition is missing base attribute \"" + name + "\".");
+		for (String path : baseAttributes.keySet()) {
+			if (!projectAttributes.containsKey(path)) {
+				errors.add("Project specific type definition is missing base attribute \"" + path + "\".");
 			}
 		}
 		
@@ -295,28 +187,75 @@ public class JsonSchemaService {
 			return errors;
 
 		// For shared attributes, ensure type equality, constraints not weaker
-		for (String attributeName : baseAttributes.keySet()) {
-			JsonNode b = baseAttributes.get(attributeName);
-			JsonNode p = projectAttributes.get(attributeName);
+		for (String path : baseAttributes.keySet()) {
+			JsonNode b = baseAttributes.get(path);
+			JsonNode p = projectAttributes.get(path);
 
-			// Check if the types are identical
-			String bType = b.get("type").asText();
-			String pType = p.get("type").asText();
-			
+			// Check type equality
+			String bType = normalizeType(b);
+			String pType = normalizeType(p);
+
 			if (!bType.equals(pType)) {
-				errors.add("Attribute \"" + attributeName + "\" changes type from \"" + bType + "\" to \"" + pType + "\".");
+				errors.add("Attribute \"" + path + "\" changes type from \"" + bType + "\" to \"" + pType + "\".");
 				continue;
+			}
+			
+			// Check equal repeatability
+			boolean bRepeatable = b.path("repeatable").asBoolean(false);
+			boolean pRepeatable = p.path("repeatable").asBoolean(false);
+			if (bRepeatable != pRepeatable) {
+				errors.add("Attribute \"" + path + "\" changes repeatable from \"" + bRepeatable + "\" to \"" + pRepeatable + "\".");
+			}
+
+			// Check equal required-status
+			boolean bRequired = b.path("required").asBoolean(false);
+			boolean pRequired = p.path("required").asBoolean(false);
+			if (bRequired && !pRequired) {
+				errors.add("Attribute \"" + path + "\" is required in the base type and must remain required.");
+			}
+
+			// Check that constraints are equal or stricter
+			if (b.has("minimum")) {
+				if (!p.has("minimum") || p.get("minimum").asDouble() < b.get("minimum").asDouble()) {
+					errors.add("Attribute \"" + path + "\": project minimum must be >= base minimum.");
+				}
+			}
+
+			if (b.has("maximum")) {
+				if (!p.has("maximum") || p.get("maximum").asDouble() > b.get("maximum").asDouble()) {
+					errors.add("Attribute \"" + path + "\": project maximum must be <= base maximum.");
+				}
+			}
+
+			if (b.has("minLength")) {
+				if (!p.has("minLength") || p.get("minLength").asInt() < b.get("minLength").asInt()) {
+					errors.add("Attribute \"" + path + "\": project minLength must be >= base minLength.");
+				}
+			}
+
+			if (b.has("maxLength")) {
+				if (!p.has("maxLength") || p.get("maxLength").asInt() > b.get("maxLength").asInt()) {
+					errors.add("Attribute \"" + path + "\": project maxLength must be <= base maxLength.");
+				}
 			}
 
 			// Ensure string constraints are kept
-			if (bType.equals("string")) {
-				// Ensure regex patterns are kept
-				if (b.has("pattern")) {
-					if (!p.has("pattern")) {
-						errors.add("Attribute \"" + attributeName + "\": base has a pattern; project must keep the same pattern.");
-					} else if (!b.get("pattern").asText().equals(p.get("pattern").asText())) {
-						errors.add("Attribute \"" + attributeName + "\": project pattern must equal base pattern (\"" + b.get("pattern").asText() + "\").");
-					}
+			if (b.has("pattern")) {
+				if (!p.has("pattern")) {
+					errors.add("Attribute \"" + path + "\": base has a pattern; project must keep the same pattern.");
+				} else if (!b.get("pattern").asText().equals(p.get("pattern").asText())) {
+					errors.add("Attribute \"" + path + "\": project pattern must equal base pattern (\"" + b.get("pattern").asText() + "\").");
+				}
+			}
+			
+			// Check the allowed values (for enums)
+			Set<String> baseAllowed = extractAllowedValues(b);
+			Set<String> projectAllowed = extractAllowedValues(p);
+			if (baseAllowed != null) {
+				if (projectAllowed == null) {
+					errors.add("Attribute \"" + path + "\": base defines allowed values; project must keep allowed values.");
+				} else if (!baseAllowed.containsAll(projectAllowed)) {
+					errors.add("Attribute \"" + path + "\": project allowed values must be equal to or a subset of the base allowed values.");
 				}
 			}
 		}
@@ -447,6 +386,7 @@ public class JsonSchemaService {
 			synchronized (compiledCache) {
 				cached = compiledCache.get(key);
 			}
+			
 			if (cached != null) {
 				log.trace("Cache hit: using compiled schema from cache.");
 				return cached;
@@ -469,12 +409,476 @@ public class JsonSchemaService {
 				}
 				
 				// Add to cache
-				log.trace("Added compiled schema to cache.");
 				compiledCache.put(key, compiled);
+				log.trace("Added compiled schema to cache.");
 			}
 		}
 		
 		return compiled;
+	}
+	
+	/**
+	 * Validate attribute nodes in an attribute array. 
+	 * 
+	 * @param attributes the JsonNode representation of the attribute-array
+	 * @param currentPath the path of the attributes in the JSON object
+	 * @param seenPaths the list of paths that were already validated
+	 * @return a list of encountered errors
+	 */
+	private List<String> validateAttributes(JsonNode attributes, String currentPath, Set<String> seenPaths) {
+		List<String> errors = new ArrayList<>();
+		
+		// Check if it's actually an array attribute
+		if (attributes == null || !attributes.isArray()) {
+			return errors;
+		}
+
+		for (JsonNode attr : attributes) {
+			errors.addAll(validateAttributeNode(attr, currentPath, seenPaths));
+		}
+		
+		return errors;
+	}
+
+	/**
+	 * Method to validate individual attributes.
+	 * 
+	 * @param attr the attribute to validate
+	 * @param currentPath the path of the attribute in the JSON object
+	 * @param errors the list of encountered errors
+	 * @param seenPaths the list of paths that were already validated
+	 */
+	private List<String> validateAttributeNode(JsonNode attr, String currentPath, Set<String> seenPaths) {
+		List<String> errors = new ArrayList<>();
+		
+		// Check if the node is a container for nested nodes
+		if (isContainerNode(attr)) {
+			// The current node is a container and therefore defines a layout; extract the layout, name, and repeatability
+			String layout = attr.path("layout").asText("");
+			String name = getOptionalName(attr);
+			boolean repeatable = attr.path("repeatable").asBoolean(false);
+
+			// Check if we have a name
+			if (("row".equalsIgnoreCase(layout) || "col".equalsIgnoreCase(layout)) && name != null) {
+				errors.add("layout \"" + layout + "\" must not define a name.");
+			}
+
+			// Ensure that repeatability is not set to 'true' for rows or columns
+			if (("row".equalsIgnoreCase(layout) || "col".equalsIgnoreCase(layout)) && repeatable) {
+				errors.add("repeatable is not allowed for layout \"" + layout + "\".");
+			}
+
+			if (repeatable && name == null) {
+				errors.add("repeatable is only allowed on named groups or leaf attributes.");
+			}
+
+			// If the current attribute is a group, append the group name to the path that is used for the next validation step
+			String nextPath = currentPath;
+			if (isNamedGroup(attr)) {
+				String groupPath = appendPath(currentPath, attr.get("name").asText());
+				if (!seenPaths.add(groupPath)) {
+					errors.add("Duplicated attribute name/path: \"" + groupPath + "\".");
+				}
+				
+				nextPath = groupPath;
+			}
+
+			// Recursively check nested attributes
+			errors.addAll(validateAttributes(attr.get("attributes"), nextPath, seenPaths));
+			return errors;
+		}
+
+		String name = attr.get("name").asText();
+		String type = attr.get("type").asText();
+		String fullPath = appendPath(currentPath, name);
+
+		if (!seenPaths.add(fullPath)) {
+			log.trace("Found a duplicated attribute path in the JSON Schema: " + fullPath);
+			errors.add("Duplicated attribute name/path: \"" + fullPath + "\".");
+		}
+
+		// Check the allowed values and constraints when the attribute is an enum
+		if ("enum".equalsIgnoreCase(type)) {
+			if (!hasAllowedValues(attr)) {
+				errors.add("values (or enum) must be provided for enum attribute \"" + fullPath + "\".");
+			}
+
+			if (attr.has("minimum")) {
+				errors.add("minimum only valid for number/integer (attribute \"" + fullPath + "\").");
+			}
+			
+			if (attr.has("maximum")) {
+				errors.add("maximum only valid for number/integer (attribute \"" + fullPath + "\").");
+			}
+			
+			if (attr.has("minLength")) {
+				errors.add("minLength only valid for string (attribute \"" + fullPath + "\").");
+			}
+			
+			if (attr.has("maxLength")) {
+				errors.add("maxLength only valid for string (attribute \"" + fullPath + "\").");
+			}
+			
+			if (attr.has("pattern")) {
+				errors.add("pattern only valid for string (attribute \"" + fullPath + "\").");
+			}
+			
+			return errors;
+		}
+
+		// Ensure that we do not have an orphaned values-field
+		if (attr.has("values")) {
+			errors.add("values only valid for enum (attribute \"" + fullPath + "\").");
+		}
+
+		// Ensure proper constraints for non-string types
+		if (!"string".equalsIgnoreCase(type)) {
+			if (attr.has("minLength")) {
+				errors.add("minLength only valid for string (attribute \"" + fullPath + "\").");
+			}
+			if (attr.has("maxLength")) {
+				errors.add("maxLength only valid for string (attribute \"" + fullPath + "\").");
+			}
+			if (attr.has("pattern")) {
+				errors.add("pattern only valid for string (attribute \"" + fullPath + "\").");
+			}
+		}
+
+		// Ensure proper constraints for non-number types
+		if (!"integer".equalsIgnoreCase(type) && !"number".equalsIgnoreCase(type)) {
+			if (attr.has("minimum")) {
+				errors.add("minimum only valid for number/integer (attribute \"" + fullPath + "\").");
+			}
+			if (attr.has("maximum")) {
+				errors.add("maximum only valid for number/integer (attribute \"" + fullPath + "\").");
+			}
+		}
+
+		// Ensure semantic correctness of constraints
+		if (attr.has("minLength") && attr.has("maxLength")
+				&& attr.get("minLength").asInt() > attr.get("maxLength").asInt()) {
+			errors.add("minLength must be <= maxLength (attribute \"" + fullPath + "\").");
+		}
+
+		if (attr.has("minimum") && attr.has("maximum")
+				&& attr.get("minimum").asDouble() > attr.get("maximum").asDouble()) {
+			errors.add("minimum must be <= maximum (attribute \"" + fullPath + "\").");
+		}
+		
+		return errors;
+	}
+
+	/**
+	 * Build a schema object from the attributes of a node.
+	 * 
+	 * @param attributes the attributes of a given object/node
+	 * @return the schema for the given object/node
+	 */
+	private ObjectNode buildObjectSchemaFromAttributes(JsonNode attributes) {
+		ObjectNode schema = om.createObjectNode();
+		schema.put("type", "object");
+		schema.put("additionalProperties", false);
+
+		ObjectNode properties = om.createObjectNode();
+		ArrayNode required = om.createArrayNode();
+
+		// Traverse all child attribute definitions and convert them into JSON Schema properties of the current object schema
+		if (attributes != null && attributes.isArray()) {
+			for (JsonNode defAttribute : attributes) {
+				// Container nodes may either become a nested group property or be flattened into the current 
+				// object, depending on their layout/name
+				if (isContainerNode(defAttribute)) {
+					ObjectNode childObjectSchema = buildObjectSchemaFromAttributes(defAttribute.get("attributes"));
+
+					// Named groups become real nested properties in the instance schema: 
+					// { "name": "address", "layout": "group", ... }  becomes "address": { "type": "object", ... }
+					if (isNamedGroup(defAttribute)) {
+						String groupName = defAttribute.get("name").asText();
+						JsonNode groupSchema = childObjectSchema;
+
+						// Repeatable groups are represented as arrays of objects
+						if (defAttribute.path("repeatable").asBoolean(false)) {
+							groupSchema = wrapArraySchema(childObjectSchema);
+						}
+
+						properties.set(groupName, groupSchema);
+						continue;
+					}
+
+					// All other container nodes (row, col, unnamed group) are layout-only wrappers, they should not  
+					// create another nesting level in the stored instance data. Instead, their child properties are  
+					// merged directly into the surrounding object schema.
+					JsonNode childPropertiesNode = childObjectSchema.get("properties");
+					if (childPropertiesNode != null && childPropertiesNode.isObject()) {
+						Iterator<Map.Entry<String, JsonNode>> fields = childPropertiesNode.fields();
+						
+						while (fields.hasNext()) {
+							Map.Entry<String, JsonNode> entry = fields.next();
+							properties.set(entry.getKey(), entry.getValue());
+						}
+					}
+
+					// If the child contains required fields, they also need to be propagated to the parent 
+					// because the container itself was flattened into the current object
+					JsonNode childRequiredNode = childObjectSchema.get("required");
+					if (childRequiredNode != null && childRequiredNode.isArray()) {
+						for (JsonNode req : childRequiredNode) {
+							required.add(req.asText());
+						}
+					}
+					
+					continue;
+				}
+				
+				// Leaf attributes become direct properties of the current object schema
+				String name = defAttribute.get("name").asText();
+				properties.set(name, buildLeafSchema(defAttribute));
+				
+				if (defAttribute.path("required").asBoolean(false)) {
+					required.add(name);
+				}
+			}
+		}
+
+		schema.set("properties", properties);
+		if (required.size() > 0) {
+			schema.set("required", required);
+		}
+
+		return schema;
+	}
+
+	/**
+	 * Builds the JSON Schema fragment for a non-container attribute / leaf attribute definition.
+	 * 
+	 * @param defAttribute the leaf attribute definition from the type definition
+	 * @return a JSON Schema node representing the given leaf attribute
+	 * @throws IllegalArgumentException if the attribute uses a type that is not supported by the schema generator
+	 */
+	private JsonNode buildLeafSchema(JsonNode defAttribute) {
+		ObjectNode attribute = om.createObjectNode();
+		String type = defAttribute.get("type").asText();
+
+		// Handle the type
+		switch (type) {
+			case "string":
+				attribute.put("type", "string");
+				break;
+			case "integer":
+				attribute.put("type", "integer");
+				break;
+			case "number":
+				attribute.put("type", "number");
+				break;
+			case "boolean":
+				attribute.put("type", "boolean");
+				break;
+			case "date":
+				attribute.put("type", "string");
+				attribute.put("format", "date");
+				break;
+			case "datetime":
+				attribute.put("type", "string");
+				attribute.put("format", "date-time");
+				break;
+			case "enum":
+				attribute.put("type", "string");
+				
+				ArrayNode allowedValues = extractAllowedValuesArray(defAttribute);
+				if (allowedValues != null) {
+					attribute.set("enum", allowedValues);
+				}
+				
+				break;
+			default:
+				throw new IllegalArgumentException("Unsupported type: " + type);
+		}
+
+		// Add the constraints if there are any
+		copyIfPresent(defAttribute, attribute, "minimum");
+		copyIfPresent(defAttribute, attribute, "maximum");
+		copyIfPresent(defAttribute, attribute, "minLength");
+		copyIfPresent(defAttribute, attribute, "maxLength");
+		copyIfPresent(defAttribute, attribute, "pattern");
+
+		if (!attribute.has("enum") && defAttribute.has("enum")) {
+			attribute.set("enum", defAttribute.get("enum"));
+		}
+
+		// Handle list representation
+		if (defAttribute.path("repeatable").asBoolean(false)) {
+			return wrapArraySchema(attribute);
+		}
+
+		return attribute;
+	}
+
+	/**
+	 * Wraps a given schema node into a JSON Schema array definition.
+	 * 
+	 * @param itemSchema the schema describing the individual array elements
+	 * @return a JSON Schema object with {@code type: "array"} and the given {@code items} schema
+	 */
+	private ObjectNode wrapArraySchema(JsonNode itemSchema) {
+		ObjectNode arraySchema = om.createObjectNode();
+		arraySchema.put("type", "array");
+		arraySchema.set("items", itemSchema);
+		
+		return arraySchema;
+	}
+
+	/**
+	 * Flattens all leaf attributes of a type definition into a map, the key being by their attribute path.
+	 * 
+	 * @param definition the full type definition whose leaf attributes should be flattened
+	 * @return a map from logical attribute paths to their corresponding leaf definition nodes
+	 */
+	private Map<String, JsonNode> flattenLeafNodes(JsonNode definition) {
+		if (definition == null) {
+			return new HashMap<>();
+		}
+		
+		return collectLeafNodes(definition.get("attributes"), "");
+	}
+
+	/**
+	 * Recursively collects all leaf attributes from a definition subtree and stores them 
+	 * in a flat map with the keys being their logical path.
+	 * 
+	 * @param attributes the array of attribute definition nodes to inspect
+	 * @param currentPath the current path prefix created from parent named groups
+	 * @return the target map that receives the collected leaf nodes, keyed by their full logical path
+	 */
+	private Map<String, JsonNode> collectLeafNodes(JsonNode attributes, String currentPath) {
+		Map<String, JsonNode> flat = new HashMap<>();
+		
+		if (attributes == null || !attributes.isArray()) {
+			return flat;
+		}
+
+		for (JsonNode node : attributes) {
+			if (isContainerNode(node)) {
+				String nextPath = currentPath;
+				if (isNamedGroup(node)) {
+					nextPath = appendPath(currentPath, node.get("name").asText());
+				}
+				
+				flat.putAll(collectLeafNodes(node.get("attributes"), nextPath));
+			} else {
+				flat.put(appendPath(currentPath, node.get("name").asText()), node);
+			}
+		}
+		
+		return flat;
+	}
+
+	/**
+	 * Checks if the given node is a container, i.e. if it has attributes.
+	 * 
+	 * @param node the node to check
+	 * @return {@code true} if the node is a container, {@code false} otherwise
+	 */
+	private boolean isContainerNode(JsonNode node) {
+		return node != null && node.has("attributes");
+	}
+
+	/**
+	 * Checks if a given node is a group-layout-descriptor with a name.
+	 * 
+	 * @param node the node to check
+	 * @return {@code true} if the node is a group-layout-descriptor with a name, {@code false} otherwise
+	 */
+	private boolean isNamedGroup(JsonNode node) {
+		return node != null && "group".equalsIgnoreCase(node.path("layout").asText(""))
+				&& node.hasNonNull("name") && !node.get("name").asText().isBlank();
+	}
+
+	/**
+	 * If a node has a name, this method extracts it.
+	 * 
+	 * @param node the node to check
+	 * @return the name if available
+	 */
+	private String getOptionalName(JsonNode node) {
+		if (node != null && node.hasNonNull("name")) {
+			String value = node.get("name").asText();
+			
+			return value == null || value.isBlank() ? null : value;
+		}
+		
+		return null;
+	}
+
+	/**
+	 * Method to append the attribute name to the current path.
+	 * 
+	 * @param currentPath the path up until the currently processed node
+	 * @param name the attribute name to add
+	 * @return the path including the attribute name, separated by a dot ('.')
+	 */
+	private String appendPath(String currentPath, String name) {
+		return currentPath == null || currentPath.isBlank() ? name : currentPath + "." + name;
+	}
+
+	/**
+	 * Normalize this nodes type. Turns "enum" into a "string".
+	 * 
+	 * @param node the node to check
+	 * @return the node's type or "string", whenever the type was "enum" 
+	 */
+	private String normalizeType(JsonNode node) {
+		String type = node.path("type").asText();
+		
+		return "enum".equalsIgnoreCase(type) ? "string" : type;
+	}
+
+	/**
+	 * Checks if a given node has a list of allowed values (e.g. for an enum definition).
+	 * 
+	 * @param node the node to check
+	 * @return {@code true} when the node has a non-empty values attribute or is an enum, {@code false} otherwise
+	 */
+	private boolean hasAllowedValues(JsonNode node) {
+		return (node.has("values") && node.get("values").isArray() && node.get("values").size() > 0)
+				|| (node.has("enum") && node.get("enum").isArray() && node.get("enum").size() > 0);
+	}
+
+	/**
+	 * Retrieves the list of allowed values from a node as an {@link ArrayNode}.
+	 * 
+	 * @param node the node to check
+	 * @return the list of allowed values or enum values if available
+	 */
+	private ArrayNode extractAllowedValuesArray(JsonNode node) {
+		if (node.has("values") && node.get("values").isArray()) {
+			return (ArrayNode) node.get("values").deepCopy();
+		}
+		
+		if (node.has("enum") && node.get("enum").isArray()) {
+			return (ArrayNode) node.get("enum").deepCopy();
+		}
+		
+		return null;
+	}
+
+	/**
+	 * Retrieves the list of allowed values from a node as a {@link Set} of strings.
+	 * 
+	 * @param node the node to check
+	 * @return the list of allowed values or enum values if available
+	 */
+	private Set<String> extractAllowedValues(JsonNode node) {
+		ArrayNode values = extractAllowedValuesArray(node);
+		if (values == null) {
+			return null;
+		}
+
+		Set<String> result = new HashSet<>();
+		for (JsonNode value : values) {
+			result.add(value.asText());
+		}
+		
+		return result;
 	}
 
 	/**

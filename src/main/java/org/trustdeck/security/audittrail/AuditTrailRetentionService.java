@@ -27,7 +27,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.trustdeck.configuration.AuditTrailRetentionConfiguration;
 
-import static org.trustdeck.jooq.generated.Tables.AUDITEVENT;
+import static org.trustdeck.jooq.generated.Tables.AUDIT_EVENT;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -70,8 +70,8 @@ public class AuditTrailRetentionService {
 
 			int deletedRows = dslCtx.transactionResult(configuration ->
 				DSL.using(configuration)
-				.deleteFrom(AUDITEVENT)
-				.where(AUDITEVENT.REQUESTTIME.lt(cutoffDateTime))
+				.deleteFrom(AUDIT_EVENT)
+				.where(AUDIT_EVENT.REQUEST_TIME.lt(cutoffDateTime))
 				.execute());
 
 			log.info("Successfully deleted " + deletedRows + " old audit trail entries.");

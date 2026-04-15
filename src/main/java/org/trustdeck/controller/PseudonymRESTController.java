@@ -17,7 +17,6 @@
 
 package org.trustdeck.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +39,6 @@ import org.trustdeck.dto.PseudonymUpdateDTO;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.security.audittrail.annotation.Audit;
-import org.trustdeck.security.audittrail.event.AuditEventType;
-import org.trustdeck.security.audittrail.usertype.AuditUserType;
 import org.trustdeck.service.AuthorizationService;
 import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.service.PseudonymDBAccessService;
@@ -114,7 +111,7 @@ public class PseudonymRESTController {
 		Double k = Math.pow(10.0d, (double) domain.getPseudonymlength());
 		Double n = k * Math.pow((1.0d - T), (1.0d / (double) Pseudonymizer.DEFAULT_NUMBER_OF_RETRIES));
 		
-		Integer existingPseudonyms = domainDBAccessService.getAmountOfPseudonymsInDomain(domain.getName(), null);
+		Integer existingPseudonyms = domainDBAccessService.getAmountOfPseudonymsInDomain(domain.getName());
 		existingPseudonyms = existingPseudonyms == null ? 0 : existingPseudonyms; // Ignore unsuccessful database retrieval
 		
 		if (existingPseudonyms > n) {
@@ -135,7 +132,6 @@ public class PseudonymRESTController {
      * @param omitPrefix (optional) determines whether or not the prefix should be added to the pseudonym
      * @param pseudonymDtoList (required) the list of necessary information, formatted as a JSON to match the pseudonymDto
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return	<li>a <b>201-CREATED</b> status and a list of the created
      * 				<b>pseudonym-objects</b> on success</li>
      * 			<li>a <b>404-NOT_FOUND</b> when the domain wasn't found</li>
@@ -149,12 +145,11 @@ public class PseudonymRESTController {
      */
     @PostMapping("/domains/{domainName}/pseudonyms/batch")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:create-batch')")
-    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> createPseudonymBatch(@PathVariable("domainName") String domainName,
                                                	  @RequestParam(name = "omitPrefix", required = false, defaultValue = "false") Boolean omitPrefix,
                                                	  @RequestBody List<PseudonymDTO> pseudonymDtoList,
-                                               	  @RequestHeader(name = "accept", required = false) String responseContentType,
-                                               	  HttpServletRequest request) {
+                                               	  @RequestHeader(name = "accept", required = false) String responseContentType) {
         // Check that the batch size isn't too big.
         if (pseudonymDtoList.size() > DEFAULT_PSEUDONYM_BATCH_LENGTH) {
             // The batch size exceeded the limit. Return an error 422-UNPROCESSABLE_ENTITY.
@@ -163,7 +158,7 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the domain the pseudonyms belong to
-        Domain domain = domainDBAccessService.getDomainByName(domainName, null);
+        Domain domain = domainDBAccessService.getDomainByName(domainName);
 
         if (domain == null) {
             // The domain wasn't found; return a 404-NOT_FOUND
@@ -284,7 +279,7 @@ public class PseudonymRESTController {
         }
 
         // Insert the list of pseudonyms in one batch
-        List<String> result = pseudonymDBAccessService.createPseudonyms(pseudonyms, domain.getId(), domain.getMultiplepsnallowed(), request);
+        List<String> result = pseudonymDBAccessService.createPseudonyms(pseudonyms, domain.getId(), domain.getMultiplepsnallowed());
 
         // Evaluate the result
         List<PseudonymDTO> pseudonymDTOs = new ArrayList<>();
@@ -350,7 +345,6 @@ public class PseudonymRESTController {
      * @param pseudonymDTO (required) the Pseudonym object
      * @param omitPrefix (optional) determines whether or not the prefix should be added to the pseudonym
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return	<li>a <b>200-OK</b> status and the <b>pseudonym</b> when the
      * 				requested insertion would be a duplicate</li>
      * 			<li>a <b>201-CREATED</b> status and the created pseudonym on
@@ -366,12 +360,11 @@ public class PseudonymRESTController {
      */
     @PostMapping("/domains/{domainName}/pseudonyms")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:create')")
-    @Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> createPseudonym(@PathVariable("domainName") String domainName,
                                           	 @RequestBody PseudonymDTO pseudonymDTO,
                                           	 @RequestParam(name = "omitPrefix", required = false, defaultValue = "false") Boolean omitPrefix,
-                                          	 @RequestHeader(name = "accept", required = false) String responseContentType,
-                                          	 HttpServletRequest request) {
+                                          	 @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         if (!pseudonymDTO.validate() || !pseudonymDTO.isValidStandardView()) {
         	log.debug("The given PseudonymDTO was either invalid or had information that is not allowed in it.");
@@ -392,7 +385,7 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the domain the pseudonym belongs to
-        Domain domain = domainDBAccessService.getDomainByName(domainName, null);
+        Domain domain = domainDBAccessService.getDomainByName(domainName);
 
         if (domain == null) {
             // The domain wasn't found; return a 404-NOT_FOUND
@@ -488,7 +481,7 @@ public class PseudonymRESTController {
         p.setPsn(pseudonym);
         
         // Insert the pseudonym into the database
-        String result = pseudonymDBAccessService.createPseudonyms(List.of(p), domain.getId(), domain.getMultiplepsnallowed(), request).getFirst();
+        String result = pseudonymDBAccessService.createPseudonyms(List.of(p), domain.getId(), domain.getMultiplepsnallowed()).getFirst();
         
         // If a random algorithm is used, check if we generated a duplicate. If so, retry.
         if (domain.getAlgorithm().toUpperCase().startsWith("RANDOM")) {
@@ -501,7 +494,7 @@ public class PseudonymRESTController {
 	        		
 	        		// Retry
 	        		p.setPsn(pseudonymize(identifier, idType, domain, omitPrefix));
-	        		result = pseudonymDBAccessService.createPseudonyms(List.of(p), domain.getId(), domain.getMultiplepsnallowed(), request).getFirst();
+	        		result = pseudonymDBAccessService.createPseudonyms(List.of(p), domain.getId(), domain.getMultiplepsnallowed()).getFirst();
 				} else {
 					// Not a duplicate
 					break;
@@ -527,7 +520,7 @@ public class PseudonymRESTController {
             return responseService.created(responseContentType, p);
         } else if (result.equals(PseudonymDBAccessService.INSERTION_DUPLICATE_IDENTIFIER)) {
             // Nothing added since the entry is a duplicate. Return an 200-OK status.
-        	List<PseudonymDTO> ps = pseudonymDBAccessService.getPseudonym(domainName, p.getIdentifierItem(), psn, null);
+        	List<PseudonymDTO> ps = pseudonymDBAccessService.getPseudonym(domainName, p.getIdentifierItem(), psn);
             if (ps == null || ps.isEmpty()) {
             	// Could not find the pseudonym object that was just created
             	log.error("Insertion of a new pseudonym failed.");
@@ -554,7 +547,6 @@ public class PseudonymRESTController {
      *
      * @param domainName (required) the name of the domain the pseudonyms are in
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return	<li>a <b>204-NO_CONTENT</b> status when the deletion was
      * 				successful</li>
      * 			<li>a <b>206-PARTIAL_CONTENT</b> status and a list of deletion 
@@ -566,12 +558,11 @@ public class PseudonymRESTController {
      */
     @DeleteMapping("/domains/{domainName}/pseudonyms/batch")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:delete-batch')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> deletePseudonymBatch(@PathVariable("domainName") String domainName,
-                                               	  @RequestHeader(name = "accept", required = false) String responseContentType,
-                                               	  HttpServletRequest request) {
+                                               	  @RequestHeader(name = "accept", required = false) String responseContentType) {
         // Retrieve the domain the pseudonyms belong to
-        Domain d = domainDBAccessService.getDomainByName(domainName, null);
+        Domain d = domainDBAccessService.getDomainByName(domainName);
         if (d == null) {
             // The domain wasn't found; return a 404-NOT_FOUND
             log.debug("The domain where the pseudonyms should be searched couldn't be found.");
@@ -579,7 +570,7 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the pseudonyms
-        List<PseudonymDTO> pseudonyms = domainDBAccessService.getAllPseudonymsInDomain(domainName, null);
+        List<PseudonymDTO> pseudonyms = domainDBAccessService.getAllPseudonymsInDomain(domainName);
 
         // Check if anything was found
         if (pseudonyms == null) {
@@ -593,7 +584,7 @@ public class PseudonymRESTController {
         }
 
         // Perform deletion
-        List<Boolean> results = pseudonymDBAccessService.deletePseudonyms(pseudonyms, d.getId(), request);
+        List<Boolean> results = pseudonymDBAccessService.deletePseudonyms(pseudonyms, d.getId());
         if (results != null && results.contains(true) && !results.contains(false)) {
             // Successfully deleted the batch, return a 204-NO_CONTENT.
             log.debug("Successfully deleted all pseudonyms from domain \"" + domainName + "\".");
@@ -618,7 +609,6 @@ public class PseudonymRESTController {
      * @param idType (optional) the type of the identifier
      * @param psn (optional) the pseudonym to search for
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return	<li>a <b>204-NO_CONTENT</b> status when the deletion was
      * 				successful</li>
      * 			<li>a <b>400-BAD_REQUEST</b> when neither an identifier, nor
@@ -630,15 +620,14 @@ public class PseudonymRESTController {
      */
     @DeleteMapping("/domains/{domainName}/pseudonyms")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:delete')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> deletePseudonym(@PathVariable("domainName") String domainName,
                                           	 @RequestParam(name = "id", required = false) String identifier,
                                           	 @RequestParam(name = "idType", required = false) String idType,
                                           	 @RequestParam(name = "psn", required = false) String psn,
-                                          	 @RequestHeader(name = "accept", required = false) String responseContentType,
-                                          	 HttpServletRequest request) {
+                                          	 @RequestHeader(name = "accept", required = false) String responseContentType) {
     	// Retrieve domain
-        Domain d = domainDBAccessService.getDomainByName(domainName, null);
+        Domain d = domainDBAccessService.getDomainByName(domainName);
         if (d == null) {
         	log.debug("The domain with the name \"" + domainName + "\" was not found.");
         	return responseService.notFound(responseContentType);
@@ -653,7 +642,7 @@ public class PseudonymRESTController {
         	p = PseudonymDTO.builder().identifierItem(idItem).psn(psn).build();
         } else if (Assertion.assertNotNullAll(identifier, idType) && psn == null) {
             // Delete through identifier
-            List<PseudonymDTO> pList = pseudonymDBAccessService.getPseudonym(domainName, idItem, null, null);
+            List<PseudonymDTO> pList = pseudonymDBAccessService.getPseudonym(domainName, idItem, null);
 
             // Check if a pseudonym with the given identifier exists
             if (pList == null || pList.size() == 0) {
@@ -668,7 +657,7 @@ public class PseudonymRESTController {
             p = PseudonymDTO.builder().identifierItem(idItem).psn(pList.get(0).getPsn()).build();
         } else if (Assertion.assertNullAll(identifier, idType) && psn != null) {
             // Delete through pseudonym
-            List<PseudonymDTO> pList = pseudonymDBAccessService.getPseudonym(domainName, null, psn, null);
+            List<PseudonymDTO> pList = pseudonymDBAccessService.getPseudonym(domainName, null, psn);
 
             // Check if a pseudonym with the given psn exists
             if (pList == null || pList.size() == 0) {
@@ -685,7 +674,7 @@ public class PseudonymRESTController {
         }
         
         // Perform deletion and evaluate success
-        if (pseudonymDBAccessService.deletePseudonyms(List.of(p), d.getId(), request).getFirst()) {
+        if (pseudonymDBAccessService.deletePseudonyms(List.of(p), d.getId()).getFirst()) {
             // Successfully deleted a pseudonym, return a 204-NO_CONTENT
             log.debug("Successfully deleted the pseudonym.");
             return responseService.noContent(responseContentType);
@@ -705,7 +694,6 @@ public class PseudonymRESTController {
      * @param sourceIdType (optional) the idType of the pseudonym to start the search from
      * @param sourcePsn (optional) the pseudonym of the pseudonym to start the search from
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the <b>list of linked pseudonyms</b> 
      * 				when linkable pseudonyms were found</li>
      * 			<li>a <b>403-FORBIDDEN</b> when the requester does not have 
@@ -719,22 +707,20 @@ public class PseudonymRESTController {
     		+ " and @auth.hasDomainPermission(#root, #sourceDomain, 'pseudonym:link')"
     		+ " and @auth.hasDomainPermission(#root, #targetDomain, 'pseudonym:read')"
     		+ " and @auth.hasDomainPermission(#root, #targetDomain, 'pseudonym:link')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getLinkedPseudonyms(@RequestParam(name = "sourceDomain", required = true) String sourceDomain,
     										  	 @RequestParam(name = "targetDomain", required = true) String targetDomain,
     										  	 @RequestParam(name = "sourceIdentifier", required = false) String sourceIdentifier,
     										  	 @RequestParam(name = "sourceIdType", required = false) String sourceIdType,
     										  	 @RequestParam(name = "sourcePsn", required = false) String sourcePsn,
-    										  	 @RequestHeader(name = "accept", required = false) String responseContentType,
-    										  	 HttpServletRequest request) {
+    										  	 @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         // Try to find any pseudonyms that are connected in a pseudonym chain in the given domains
     	List<Pair<PseudonymDTO, PseudonymDTO>> pseudonyms = domainDBAccessService.getLinkedPseudonyms(sourceDomain,
                 Assertion.isNotNullOrEmpty(sourceIdentifier) ? sourceIdentifier : null,
                 Assertion.isNotNullOrEmpty(sourceIdType) ? sourceIdType : null,
                 Assertion.isNotNullOrEmpty(sourcePsn) ? sourcePsn : null,
-                targetDomain,
-                request);
+                targetDomain);
         
         // Check if anything was found
         if (pseudonyms == null || pseudonyms.size() == 0) {
@@ -770,7 +756,6 @@ public class PseudonymRESTController {
      *
      * @param domainName (required) the name of the domain the pseudonyms are in
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return	<li>a <b>200-OK</b> status and the <b>list of pseudonyms</b>
      * 				when successful</li>
      * 			<li>a <b>404-NOT_FOUND</b> when the given domain wasn't
@@ -780,12 +765,11 @@ public class PseudonymRESTController {
      */
     @GetMapping("/domains/{domainName}/pseudonyms/batch")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:read-batch')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getPseudonymBatch(@PathVariable("domainName") String domainName,
-                                               @RequestHeader(name = "accept", required = false) String responseContentType,
-                                               HttpServletRequest request) {
+                                               @RequestHeader(name = "accept", required = false) String responseContentType) {
         // Check that the batch size isn't too big.
-        Integer count = domainDBAccessService.getAmountOfPseudonymsInDomain(domainName, null);
+        Integer count = domainDBAccessService.getAmountOfPseudonymsInDomain(domainName);
         if (count == null) {
             // An error during accessing the domain occurred. Maybe the domain is not in the database.
             log.error("Couldn't count the number of pseudonyms in the domain \"" + domainName + "\".");
@@ -801,7 +785,7 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the domain the pseudonyms belong to
-        Domain d = domainDBAccessService.getDomainByName(domainName, null);
+        Domain d = domainDBAccessService.getDomainByName(domainName);
         if (d == null) {
             // The domain wasn't found; return a 404-NOT_FOUND
             log.debug("The domain where the pseudonyms should be searched couldn't be found.");
@@ -809,7 +793,7 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the pseudonyms
-        List<PseudonymDTO> pseudonyms = domainDBAccessService.getAllPseudonymsInDomain(domainName, request);
+        List<PseudonymDTO> pseudonyms = domainDBAccessService.getAllPseudonymsInDomain(domainName);
 
         // Check if anything was found
         if (pseudonyms == null) {
@@ -856,7 +840,6 @@ public class PseudonymRESTController {
      * @param identifier (required) the identifier to search for
      * @param idType (required) the type of the identifier
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the <b>pseudonym</b> when it was
      * 				found</li>
      * 			<li>a <b>404-NOT_FOUND</b> when no pseudonym was found for the
@@ -864,14 +847,13 @@ public class PseudonymRESTController {
      */
     @GetMapping(value = "/domains/{domainName}/pseudonyms", params = {"id", "idType"})
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:read')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getPseudonymByIdentifier(@PathVariable("domainName") String domainName,
                                                    	  @RequestParam(name = "id", required = true) String identifier,
                                                    	  @RequestParam(name = "idType", required = true) String idType,
-                                                   	  @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                   	  HttpServletRequest request) {
+                                                   	  @RequestHeader(name = "accept", required = false) String responseContentType) {
         // Retrieve the domain the pseudonym belongs to
-        Domain d = domainDBAccessService.getDomainByName(domainName, null);
+        Domain d = domainDBAccessService.getDomainByName(domainName);
 
         if (d == null) {
             // The domain wasn't found; return a 404-NOT_FOUND
@@ -881,7 +863,7 @@ public class PseudonymRESTController {
 
         // Retrieve the pseudonym
         IdentifierItem idItem = IdentifierItem.builder().identifier(identifier).idType(idType).build();
-        List<PseudonymDTO> p = pseudonymDBAccessService.getPseudonym(domainName, idItem, null, request);
+        List<PseudonymDTO> p = pseudonymDBAccessService.getPseudonym(domainName, idItem, null);
         if (p != null && !p.isEmpty()) {
             // Successfully retrieved pseudonym(s), return it to the user as well as a 200-OK
         	PseudonymDTO pseudonymDTO = null;
@@ -907,7 +889,6 @@ public class PseudonymRESTController {
      * @param domainName (required) the name of the domain the pseudonym is in
      * @param psn (required) the pseudonym to search for
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the <b>pseudonym</b> when it was
      * 				found</li>
      * 			<li>a <b>404-NOT_FOUND</b> when no pseudonym was found for the
@@ -915,13 +896,12 @@ public class PseudonymRESTController {
      */
     @GetMapping(value = "/domains/{domainName}/pseudonyms", params = "psn")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:read')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getPseudonymByPsn(@PathVariable("domainName") String domainName,
                                                @RequestParam(name = "psn", required = true) String psn,
-                                               @RequestHeader(name = "accept", required = false) String responseContentType,
-                                               HttpServletRequest request) {
+                                               @RequestHeader(name = "accept", required = false) String responseContentType) {
         // Retrieve the domain the pseudonym belongs to
-        Domain d = domainDBAccessService.getDomainByName(domainName, null);
+        Domain d = domainDBAccessService.getDomainByName(domainName);
 
         if (d == null) {
             // The domain wasn't found; return a 404-NOT_FOUND
@@ -930,7 +910,7 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the pseudonym
-        List<PseudonymDTO> p = pseudonymDBAccessService.getPseudonym(domainName, null, psn, request);
+        List<PseudonymDTO> p = pseudonymDBAccessService.getPseudonym(domainName, null, psn);
         if (p != null && !p.isEmpty()) {
             // Successfully retrieved pseudonym(s), return it to the user as well as a 200-OK
         	PseudonymDTO pseudonymDTO = null;
@@ -959,7 +939,7 @@ public class PseudonymRESTController {
      * @param omitPrefix determines whether or not the prefix should be added to the pseudonym
      * @return the generated pseudonym
      */
-    private String pseudonymize(String identifier, String idType, Domain domain, Boolean omitPrefix) {
+    public static String pseudonymize(String identifier, String idType, Domain domain, Boolean omitPrefix) {
         // Generate a new pseudonym
         String prefix = (omitPrefix != null && omitPrefix) ? "" : domain.getPrefix();
         
@@ -976,7 +956,6 @@ public class PseudonymRESTController {
      * @param domainName (required) the name of the domain the pseudonyms are in
      * @param pseudonymUpdateList (required) the list of necessary information, formatted as a JSON to match the pseudonymDto
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status on success</li>
      * 			<li>a <b>404-NOT_FOUND</b> status when the domain couldn't
      * 				be found</li>
@@ -985,17 +964,16 @@ public class PseudonymRESTController {
      */
     @PutMapping("/domains/{domainName}/pseudonyms/batch")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:update-batch')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> updatePseudonymBatch(@PathVariable("domainName") String domainName,
                                                	  @RequestBody List<PseudonymUpdateDTO> pseudonymUpdateList,
-                                               	  @RequestHeader(name = "accept", required = false) String responseContentType,
-                                               	  HttpServletRequest request) {
+                                               	  @RequestHeader(name = "accept", required = false) String responseContentType) {
         int ignored = 0;
         int updated = 0;
         List<PseudonymUpdateDTO> updateablePseudonyms = new ArrayList<>();
 
         // Retrieve the domain the pseudonyms belong to
-        Domain d = domainDBAccessService.getDomainByName(domainName, null);
+        Domain d = domainDBAccessService.getDomainByName(domainName);
 
         if (d == null) {
             // The domain wasn't found; return a 404-NOT_FOUND
@@ -1022,7 +1000,7 @@ public class PseudonymRESTController {
         }
 
         // Update pseudonyms
-        List<Boolean> updateSuccess = pseudonymDBAccessService.updatePseudonyms(updateablePseudonyms, request);
+        List<Boolean> updateSuccess = pseudonymDBAccessService.updatePseudonyms(updateablePseudonyms);
         if (updateSuccess != null && !updateSuccess.isEmpty()) {
         	// Success. Return a status code 200-OK and a list of the updated pseudonyms.
         	List<PseudonymDTO> updatedPseudonyms = new ArrayList<>();
@@ -1032,7 +1010,7 @@ public class PseudonymRESTController {
         			IdentifierItem idItem = updateablePseudonyms.get(i).getNewIdentifierItem() != null ? updateablePseudonyms.get(i).getNewIdentifierItem() : updateablePseudonyms.get(i).getOldIdentifierItem();
         			String psn = updateablePseudonyms.get(i).getNewPsn() != null ? updateablePseudonyms.get(i).getNewPsn() : updateablePseudonyms.get(i).getOldPsn();
         			
-        			PseudonymDTO updatedPseudonym = pseudonymDBAccessService.getPseudonym(domainName, idItem, psn, null).getFirst();
+        			PseudonymDTO updatedPseudonym = pseudonymDBAccessService.getPseudonym(domainName, idItem, psn).getFirst();
         			updatedPseudonyms.add(authorizationService.hasDomainPermission(domainName, "complete-view") ? updatedPseudonym : updatedPseudonym.toReducedStandardView());
         			updated++;
         		} else if (updateSuccess.get(i) != null && !updateSuccess.get(i)) {
@@ -1057,7 +1035,6 @@ public class PseudonymRESTController {
      * @param pseudonymUpdateDTO (required) the update object containing the identifying and the new data
      * @param regeneratePseudonym (optional) a flag to keep or regenerate the psn when the identifierItem or the domain changed
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the updated pseudonym on success</li>
      * 			<li>a <b>400-BAD_REQUEST</b> when neither an identifier, nor
      * 				a pseudonym were given</li>
@@ -1069,12 +1046,11 @@ public class PseudonymRESTController {
      */
     @PutMapping(value = "/domains/{domainName}/pseudonyms/complete")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #oldDomainName, 'pseudonym:update-complete')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> updatePseudonymComplete(@PathVariable("domainName") String oldDomainName,
                                                   	 @RequestBody PseudonymUpdateDTO pseudonymUpdateDTO,
                                                   	 @RequestParam(name = "regeneratePseudonym", required = false) Boolean regeneratePseudonym,
-                                                  	 @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                  	 HttpServletRequest request) {
+                                                  	 @RequestHeader(name = "accept", required = false) String responseContentType) {
         String newIdentifier = pseudonymUpdateDTO.getNewIdentifierItem() == null ? null : pseudonymUpdateDTO.getNewIdentifierItem().getIdentifier();
         String newIdType = pseudonymUpdateDTO.getNewIdentifierItem() == null ? null : pseudonymUpdateDTO.getNewIdentifierItem().getIdType();
         String newPsn = pseudonymUpdateDTO.getNewPsn();
@@ -1097,13 +1073,13 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the domain the pseudonym belongs to
-        Domain oldDomain = domainDBAccessService.getDomainByName(oldDomainName, null);
+        Domain oldDomain = domainDBAccessService.getDomainByName(oldDomainName);
 
         // Try to retrieve the updated domain (is null, when no new domain was given)
-        Domain newDomain = domainDBAccessService.getDomainByName(newDomainName, null);
+        Domain newDomain = domainDBAccessService.getDomainByName(newDomainName);
 
         // Retrieve the old pseudonym
-        List<PseudonymDTO> oldPseudonymList = pseudonymDBAccessService.getPseudonym(oldDomainName, pseudonymUpdateDTO.getOldIdentifierItem(), pseudonymUpdateDTO.getOldPsn(), null);
+        List<PseudonymDTO> oldPseudonymList = pseudonymDBAccessService.getPseudonym(oldDomainName, pseudonymUpdateDTO.getOldIdentifierItem(), pseudonymUpdateDTO.getOldPsn());
         if (oldPseudonymList == null || oldPseudonymList.size() == 0) {
         	// Couldn't find the pseudonym that should be updated. Return a 404-NOT_FOUND
             log.debug("The pseudonym that should be updated couldn't be found.");
@@ -1211,9 +1187,9 @@ public class PseudonymRESTController {
         }
 
         // Update pseudonym
-        if (pseudonymDBAccessService.updatePseudonyms(List.of(updateDTO), request).getFirst()) {
+        if (pseudonymDBAccessService.updatePseudonyms(List.of(updateDTO)).getFirst()) {
             // Update successful. Retrieve the updated pseudonym to show it to the user.
-            PseudonymDTO updatedPseudonym = pseudonymDBAccessService.getPseudonym(updateDTO.getNewDomainName(), updateDTO.getNewIdentifierItem(), updateDTO.getNewPsn(), null).get(0);
+            PseudonymDTO updatedPseudonym = pseudonymDBAccessService.getPseudonym(updateDTO.getNewDomainName(), updateDTO.getNewIdentifierItem(), updateDTO.getNewPsn()).get(0);
 
             // Determine whether or not a reduced standard view or a complete view is requested
             if (!authorizationService.hasDomainPermission(updateDTO.getNewDomainName(), "complete-view")) {
@@ -1237,7 +1213,6 @@ public class PseudonymRESTController {
      * @param domainName (required) the name of the domain the pseudonym should be in
      * @param pseudonymDTO (required) the pseudonym object
      * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return 	<li>a <b>200-OK</b> status and the <b>pseudonym</b> on
      * 				success</li>
      * 			<li>a <b>400-BAD_REQUEST</b> when neither an identifier, nor
@@ -1249,11 +1224,10 @@ public class PseudonymRESTController {
      */
     @PutMapping("/domains/{domainName}/pseudonyms")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:update')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> updatePseudonym(@PathVariable("domainName") String domainName,
                                           	 @RequestBody PseudonymUpdateDTO pseudonymDTO,
-                                          	 @RequestHeader(name = "accept", required = false) String responseContentType,
-                                          	 HttpServletRequest request) {
+                                          	 @RequestHeader(name = "accept", required = false) String responseContentType) {
         Timestamp validFrom = pseudonymDTO.getValidFrom() != null ? Timestamp.valueOf(pseudonymDTO.getValidFrom()) : null;
         Timestamp validTo = pseudonymDTO.getValidTo() != null ? Timestamp.valueOf(pseudonymDTO.getValidTo()) : null;
         String validityTime = pseudonymDTO.getValidityTime();
@@ -1265,10 +1239,10 @@ public class PseudonymRESTController {
         }
 
         // Retrieve the domain the pseudonym belongs to
-        Domain d = domainDBAccessService.getDomainByName(domainName, null);
+        Domain d = domainDBAccessService.getDomainByName(domainName);
 
         // Retrieve the old pseudonym
-        List<PseudonymDTO> oldPseudonymList = pseudonymDBAccessService.getPseudonym(domainName, pseudonymDTO.getOldIdentifierItem(), pseudonymDTO.getOldPsn(), null);
+        List<PseudonymDTO> oldPseudonymList = pseudonymDBAccessService.getPseudonym(domainName, pseudonymDTO.getOldIdentifierItem(), pseudonymDTO.getOldPsn());
         if (oldPseudonymList == null || oldPseudonymList.size() == 0) {
         	// Couldn't find the pseudonym that should be updated. Return a 404-NOT_FOUND
             log.debug("The pseudonym that should be updated couldn't be found.");
@@ -1347,9 +1321,9 @@ public class PseudonymRESTController {
         }
 
         // Update pseudonym
-        if (pseudonymDBAccessService.updatePseudonyms(List.of(updateDTO), request).getFirst()) {
+        if (pseudonymDBAccessService.updatePseudonyms(List.of(updateDTO)).getFirst()) {
             // Update successful, retrieve the updated pseudonym to show it to the user
-            PseudonymDTO updatedPseudonym = pseudonymDBAccessService.getPseudonym(d.getName(), oldPseudonym.getIdentifierItem(), oldPseudonym.getPsn(), null).get(0);
+            PseudonymDTO updatedPseudonym = pseudonymDBAccessService.getPseudonym(d.getName(), oldPseudonym.getIdentifierItem(), oldPseudonym.getPsn()).get(0);
 
             // Determine whether or not a reduced standard view or a complete view is requested
             if (!authorizationService.hasDomainPermission(domainName, "complete-view")) {
@@ -1379,13 +1353,12 @@ public class PseudonymRESTController {
      */
     @GetMapping("/domains/{domainName}/pseudonyms/validation")
     @PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:read')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> validatePseudonym(@PathVariable("domainName") String domainName,
 								               @RequestParam(name = "psn", required = true) String psn,
-								               @RequestHeader(name = "accept", required = false) String responseContentType,
-								               HttpServletRequest request) {
+								               @RequestHeader(name = "accept", required = false) String responseContentType) {
     	// Retrieve domain
-    	Domain d = domainDBAccessService.getDomainByName(domainName, null);
+    	Domain d = domainDBAccessService.getDomainByName(domainName);
     	
     	if (d == null) {
     		log.debug("Could not find the domain in which the validation should be performed.");
@@ -1456,7 +1429,6 @@ public class PseudonymRESTController {
 	 * @param domainName the name of the domain to which the request is scoped to
 	 * @param query the search string that should be looked up 
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the list of matching pseudonyms on 
 	 * 		   success</li>
      *         <li>a <b>206-PARTIAL_CONTENT</b> status with a truncated result set when 
@@ -1468,13 +1440,12 @@ public class PseudonymRESTController {
 	 */
 	@GetMapping(value = "/domains/{domainName}/pseudonyms", params = {"query"})
 	@PreAuthorize("isAuthenticated() and @auth.hasDomainPermission(#root, #domainName, 'pseudonym:search')")
-	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> searchPseudonyms(@PathVariable("domainName") String domainName,
 											  @RequestParam(name = "query", required = true) String query,
-											  @RequestHeader(name = "accept", required = false) String responseContentType,
-											  HttpServletRequest request) {
+											  @RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Check if the domain exists and is still active
-        Domain domain = domainDBAccessService.getDomainByName(domainName, null);
+        Domain domain = domainDBAccessService.getDomainByName(domainName);
         if (domain == null) {
             log.debug("The domain where the pseudonym should be searched couldn't be found.");
             return responseService.notFound(responseContentType);
@@ -1486,7 +1457,7 @@ public class PseudonymRESTController {
 		}
 		
 		// Retrieve pseudonyms from the database
-		List<PseudonymDTO> pseudonyms = pseudonymDBAccessService.searchPseudonyms(query, domain.getId(), request);
+		List<PseudonymDTO> pseudonyms = pseudonymDBAccessService.searchPseudonyms(query, domain.getId());
 		
 		// Evaluate result
 		if (pseudonyms == null || pseudonyms.size() == 0) {

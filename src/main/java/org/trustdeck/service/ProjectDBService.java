@@ -33,7 +33,6 @@ import org.trustdeck.jooq.generated.tables.pojos.Project;
 import org.trustdeck.jooq.generated.tables.records.ProjectRecord;
 import org.trustdeck.utils.Assertion;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.OffsetDateTime;
@@ -64,13 +63,12 @@ public class ProjectDBService {
      * Method to insert a new project into the database table.
      * 
      * @param project the project object containing the necessary information
-     * @param request the http request object containing information necessary for the audit trail
      * @throws DuplicateProjectException when the project (identified by the name) is already in the database
      * @return The inserted project object including the ID when the insertion was successful,
      * 		   {@code null} when the insertion failed or would create a duplicate.
      */
     @Transactional
-    public ProjectDTO createProject(ProjectDTO project, HttpServletRequest request) throws DuplicateProjectException {
+    public ProjectDTO createProject(ProjectDTO project) throws DuplicateProjectException {
     	try {
     		// Insert project
     		ProjectRecord projectRecord = dsl.newRecord(PROJECT);
@@ -102,7 +100,7 @@ public class ProjectDBService {
 	    }
     	
     	// Handle permissions
-        if (!permissionDBService.addProjectPermissionsForSubject(request, project.getAbbreviation())) {
+        if (!permissionDBService.addProjectPermissionsForSubject(project.getAbbreviation())) {
         	log.debug("Failed to add the project's permissions. Aborting.");
         	throw new PermissionManagementException(project.getName());
         }
@@ -116,11 +114,10 @@ public class ProjectDBService {
      * This method retrieves a project by its name.
      * 
      * @param name the name of the project to search for
-     * @param request the http request object containing information necessary for the audit trail
      * @return the project object or {@code null} if nothing was found
      */
     @Transactional
-    public ProjectDTO getProjectByName(String name, HttpServletRequest request) {
+    public ProjectDTO getProjectByName(String name) {
     	// Build and execute the query
     	List<Project> projects = null;
         try {
@@ -150,11 +147,10 @@ public class ProjectDBService {
      * This method retrieves a project by its abbreviation.
      * 
      * @param abbreviation the abbreviation of the project to search for
-     * @param request the http request object containing information necessary for the audit trail
      * @return the project object or {@code null} if nothing was found
      */
     @Transactional
-    public ProjectDTO getProjectByAbbreviation(String abbreviation, HttpServletRequest request) {
+    public ProjectDTO getProjectByAbbreviation(String abbreviation) {
     	// Build and execute the query
     	List<Project> projects = null;
         try {
@@ -184,11 +180,10 @@ public class ProjectDBService {
      * This method retrieves a project by its id.
      * 
      * @param id the id of the project to search for
-     * @param request the http request object containing information necessary for the audit trail
      * @return the project object or {@code null} if nothing was found
      */
     @Transactional
-    public ProjectDTO getProjectByID(int id, HttpServletRequest request) {
+    public ProjectDTO getProjectByID(int id) {
     	// Build and execute the query
     	List<Project> projects = null;
         try {
@@ -221,14 +216,13 @@ public class ProjectDBService {
      * 
      * @param project the DTO containing information about the project that should be deleted
      * @param deleteDate the date which should be used for the end_date
-     * @param request the http request object containing information necessary for the audit trail
      * @return {@code true} when the deletion was successful, {@code false} when the project object 
      * 			that should be deleted was not found
      * @throws UnexpectedResultSizeException whenever the deletion would not exactly affect one project entry
      */
     @Transactional
     // TODO: When deleting a project, should the types defined in it also be considered deleted? What about the instances using the type?
-    public boolean deleteProject(ProjectDTO project, OffsetDateTime deleteDate, HttpServletRequest request) throws UnexpectedResultSizeException {
+    public boolean deleteProject(ProjectDTO project, OffsetDateTime deleteDate) throws UnexpectedResultSizeException {
     	// Check if the given project is valid
     	if (project != null && project.getId() != null && project.getId() > 0) {
     		// Check if project is still active
@@ -257,7 +251,7 @@ public class ProjectDBService {
             }
     	
             // Handle permissions
-            if (!permissionDBService.removeProjectPermissionsForSubject(request, project.getAbbreviation())) {
+            if (!permissionDBService.removeProjectPermissionsForSubject(project.getAbbreviation())) {
             	log.debug("Failed to remove the project's permissions. Aborting.");
             	throw new PermissionManagementException(project.getAbbreviation());
             }
@@ -277,11 +271,10 @@ public class ProjectDBService {
      * 
      * @param oldProject the project object containing information of the project that should be updated
      * @param updatedProject the project object containing the updated information
-     * @param request the http request object containing information necessary for the audit trail
      * @return the ID of the updated project, or {@code null} if an error occurred
      */
     @Transactional
-    public ProjectDTO updateProject(ProjectDTO oldProject, ProjectDTO updatedProject, HttpServletRequest request) {
+    public ProjectDTO updateProject(ProjectDTO oldProject, ProjectDTO updatedProject) {
     	// Check if the old record was given
 		if (oldProject == null || oldProject.getId() == null) {
 			log.debug("The project object that should be updated was not found.");
@@ -377,12 +370,12 @@ public class ProjectDBService {
     	// Check if the permissions need to be adapted
         if (newAbbreviation != null && !oldProject.getName().equals(newAbbreviation)) {
         	// The project abbreviation has changed, so we need to update the permissions
-            if (!permissionDBService.removeProjectPermissionsForSubject(request, oldProject.getAbbreviation())) {
+            if (!permissionDBService.removeProjectPermissionsForSubject(oldProject.getAbbreviation())) {
             	log.debug("Failed to remove the project's permissions. Aborting.");
             	throw new PermissionManagementException(oldProject.getAbbreviation());
             }
             
-            if (!permissionDBService.addProjectPermissionsForSubject(request, newAbbreviation)) {
+            if (!permissionDBService.addProjectPermissionsForSubject(newAbbreviation)) {
             	log.debug("Failed to add the project's permissions. Aborting.");
             	throw new PermissionManagementException(newAbbreviation);
             }
@@ -396,11 +389,10 @@ public class ProjectDBService {
     /**
      * This method retrieves all projects.
      * 
-     * @param request the http request object containing information necessary for the audit trail
      * @return all projects as a list
      */
     @Transactional(readOnly = true)
-    public List<ProjectDTO> getAllProjects(HttpServletRequest request) {
+    public List<ProjectDTO> getAllProjects() {
     	// Build and execute the query
     	List<Project> projects = null;
         try {
@@ -426,11 +418,10 @@ public class ProjectDBService {
     /**
      * This method retrieves all project names.
      * 
-     * @param request the http request object containing information necessary for the audit trail
      * @return the names of all projects as a list
      */
     @Transactional(readOnly = true)
-    public List<String> getAllProjectNames(HttpServletRequest request) {
+    public List<String> getAllProjectNames() {
     	// Build and execute the query
     	List<String> projects = null;
         try {

@@ -50,8 +50,6 @@ import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.security.audittrail.annotation.Audit;
-import org.trustdeck.security.audittrail.event.AuditEventType;
-import org.trustdeck.security.audittrail.usertype.AuditUserType;
 import org.trustdeck.service.AuthorizationService;
 import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.service.EntityInstanceDBService;
@@ -66,7 +64,6 @@ import org.trustdeck.utils.Utility.Pair;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.networknt.schema.JsonSchema;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -124,7 +121,6 @@ public class EntityInstanceRESTController {
 	 * @param entityTypeName the name of the entity type associated with this instance
 	 * @param entityInstanceDTO the data transfer object containing this instance's data
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>201-CREATED</b> status with the created entity instance on success</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when the instance payload is 
      *         missing/invalid or fails schema validation</li>
@@ -136,14 +132,13 @@ public class EntityInstanceRESTController {
 	 */
 	@PostMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:create')")
-	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> createEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
 			   									  @PathVariable("entityTypeName") String entityTypeName,
 												  @RequestBody EntityInstanceDTO entityInstanceDTO,
-												  @RequestHeader(name = "accept", required = false) String responseContentType,
-												  HttpServletRequest request) {
+												  @RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -154,7 +149,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Check if entity type exists and is still active
-		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), null);
+		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId());
 		if (entityType == null) {
 			log.debug("Entity type \"" + entityTypeName + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -193,10 +188,10 @@ public class EntityInstanceRESTController {
 		
 		EntityInstanceDTO created;
 		try {
-			created = entityInstanceDBService.createEntityInstance(createInstance, request);
+			created = entityInstanceDBService.createEntityInstance(createInstance);
 		} catch (DuplicateEntityInstanceException e) {
 			log.info("While creating an entity instance, an identical one was found and will be used instead.");
-			return responseService.ok(responseContentType, entityInstanceDBService.getEntityInstance(createInstance, null));
+			return responseService.ok(responseContentType, entityInstanceDBService.getEntityInstance(createInstance));
 		}
 		
 		// Evaluate the creation success
@@ -210,7 +205,7 @@ public class EntityInstanceRESTController {
 			// There is an associated domain --> a pseudonym should automatically be created
 			
 			// Retrieve domain
-			Domain domain = ddba.getDomainByName(entityType.getAssociatedDomainName(), null);
+			Domain domain = ddba.getDomainByName(entityType.getAssociatedDomainName());
 			
 			// If a valid domain object is available, generate and store the psn-value
 			if (domain != null) {
@@ -234,7 +229,7 @@ public class EntityInstanceRESTController {
 	            p.setDomainName(domain.getName());
 				
 	            // Sent to database
-				String result = pdba.createPseudonyms(List.of(p), domain.getId(), false, request).getFirst();
+				String result = pdba.createPseudonyms(List.of(p), domain.getId(), false).getFirst();
 				
 				// Evaluate creation result
 				if (!result.equals(PseudonymDBAccessService.INSERTION_SUCCESS)) {
@@ -258,7 +253,6 @@ public class EntityInstanceRESTController {
 	 * @param entityTypeName the name of the entity type associated with this instance
 	 * @param trustDeckId the unique UUID for this entity instance
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the requested entity instance on success</li>
      *         <li>a <b>404-NOT_FOUND</b> status when the project, entity type, or 
      *         instance cannot be found</li>
@@ -267,15 +261,14 @@ public class EntityInstanceRESTController {
 	 */
 	@GetMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:read')")
-	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> getEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
 											   @PathVariable("entityTypeName") String entityTypeName,
 											   @PathVariable("trustDeckId") String trustDeckId,
-											   @RequestHeader(name = "accept", required = false) String responseContentType,
-											   HttpServletRequest request) {
+											   @RequestHeader(name = "accept", required = false) String responseContentType) {
 		
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -286,7 +279,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Check if entity type exists and is still active
-		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), null);
+		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId());
 		if (entityType == null) {
 			log.debug("Entity type \"" + entityTypeName + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -296,7 +289,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Retrieve instance
-		EntityInstanceDTO instance = entityInstanceDBService.getEntityInstance(trustDeckId, request);
+		EntityInstanceDTO instance = entityInstanceDBService.getEntityInstance(trustDeckId);
 		
 		// Check result
 		if (instance == null) {
@@ -320,7 +313,6 @@ public class EntityInstanceRESTController {
 	 * @param trustDeckId the unique UUID for this entity instance
 	 * @param entityInstanceDTO the data transfer object containing this instance's data
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the updated entity instance on success</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when no updatable fields are 
      *         provided or the payload is invalid/fails schema validation</li>
@@ -332,16 +324,15 @@ public class EntityInstanceRESTController {
 	 */
 	@PutMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:update')")
-	@Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> updateEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												  @PathVariable("entityTypeName") String entityTypeName,
 												  @PathVariable("trustDeckId") String trustDeckId,
 												  @RequestBody EntityInstanceDTO entityInstanceDTO,
-												  @RequestHeader(name = "accept", required = false) String responseContentType,
-												  HttpServletRequest request) {
+												  @RequestHeader(name = "accept", required = false) String responseContentType) {
 		
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -352,7 +343,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Check if entity type exists and is still active
-		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), null);
+		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId());
 		if (entityType == null) {
 			log.debug("Entity type \"" + entityTypeName + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -392,7 +383,7 @@ public class EntityInstanceRESTController {
 	    }
 	    
 	    // Retrieve the old instance
-	    EntityInstanceDTO oldInstance = entityInstanceDBService.getEntityInstance(trustDeckId, null);
+	    EntityInstanceDTO oldInstance = entityInstanceDBService.getEntityInstance(trustDeckId);
 	    
 	    if (oldInstance == null) {
 	    	log.debug("Could not find the instance that should be updated.");
@@ -410,7 +401,7 @@ public class EntityInstanceRESTController {
 	    newInstance.setUpdatedAt(entityInstanceDTO.getUpdatedAt() != null ? entityInstanceDTO.getUpdatedAt() : OffsetDateTime.now());
 	    
 		// Update the instance
-		EntityInstanceDTO updated = entityInstanceDBService.updateEntityInstance(oldInstance.getId(), newInstance, request);
+		EntityInstanceDTO updated = entityInstanceDBService.updateEntityInstance(oldInstance.getId(), newInstance);
 		
 		// Evaluate the update success
 		if (updated == null) {
@@ -430,7 +421,6 @@ public class EntityInstanceRESTController {
 	 * @param entityTypeName the name of the entity type associated with this instance
 	 * @param trustDeckId the unique UUID for this entity instance
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>204-NO_CONTENT</b> status when the instance was successfully 
 	 * 		   tombstoned</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when the TrustDeckID is not a valid 
@@ -443,14 +433,13 @@ public class EntityInstanceRESTController {
 	 */
 	@DeleteMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:delete')")
-	@Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> deleteEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												  @PathVariable("entityTypeName") String entityTypeName,
 												  @PathVariable("trustDeckId") String trustDeckId,
-												  @RequestHeader(name = "accept", required = false) String responseContentType,
-												  HttpServletRequest request) {
+												  @RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -461,7 +450,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Check if entity type exists and is still active
-		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), null);
+		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId());
 		if (entityType == null) {
 			log.debug("Entity type \"" + entityTypeName + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -482,7 +471,7 @@ public class EntityInstanceRESTController {
 		// Delete the instance and evaluate the result
 		boolean deleted = false;
 		try {
-			deleted = entityInstanceDBService.deleteEntityInstance(tdid, request);
+			deleted = entityInstanceDBService.deleteEntityInstance(tdid);
 		} catch (UnexpectedResultSizeException e) {
 			if (e.getActual() == 0) {
 				log.debug("Could not find the entity instance that should be deleted.");
@@ -507,7 +496,6 @@ public class EntityInstanceRESTController {
 	 * @param entityTypeName the name of the entity type associated with this instance
 	 * @param query the search string that should be looked up 
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the list of matching entity instances on 
 	 * 		   success</li>
      *         <li>a <b>206-PARTIAL_CONTENT</b> status with a truncated result set when 
@@ -519,15 +507,14 @@ public class EntityInstanceRESTController {
 	 */
 	@GetMapping(value = "/projects/{projectAbbreviation}/entities/{entityTypeName}", params = {"query"})
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:search')")
-	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> searchEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												  @PathVariable("entityTypeName") String entityTypeName,
 												  @RequestParam(name = "query", required = true) String query,
-												  @RequestHeader(name = "accept", required = false) String responseContentType,
-												  HttpServletRequest request) {
+												  @RequestHeader(name = "accept", required = false) String responseContentType) {
 		
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -538,7 +525,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Check if entity type exists and is still active
-		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), null);
+		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId());
 		if (entityType == null) {
 			log.debug("Entity type \"" + entityTypeName + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -548,7 +535,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Send query to the database
-		List<EntityInstanceDTO> foundInstances = entityInstanceDBService.searchEntityInstance(query, entityType.getId(), request);
+		List<EntityInstanceDTO> foundInstances = entityInstanceDBService.searchEntityInstance(query, entityType.getId());
 		
 		// Evaluate findings
 		if (foundInstances == null || foundInstances.size() == 0) {
@@ -570,7 +557,6 @@ public class EntityInstanceRESTController {
 	 * @param entityTypeName the name of the entity type associated with this instance
 	 * @param trustDeckId the unique UUID for this entity instance
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the list of linked pseudonyms on 
 	 * 		   success</li>
      *         <li>a <b>206-PARTIAL_CONTENT</b> status with a truncated result set when 
@@ -586,15 +572,14 @@ public class EntityInstanceRESTController {
 	 */
 	@GetMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/{trustDeckId}/pseudonyms")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:list-pseudonyms')")
-	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> getAllPseudonymsForEntityInstance(@PathVariable("projectAbbreviation") String projectAbbreviation,
 												  			   @PathVariable("entityTypeName") String entityTypeName,
 															   @PathVariable("trustDeckId") String trustDeckId,
-												  			   @RequestHeader(name = "accept", required = false) String responseContentType,
-												  			   HttpServletRequest request) {
+												  			   @RequestHeader(name = "accept", required = false) String responseContentType) {
 		
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -605,7 +590,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Check if entity type exists and is still active
-		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), null);
+		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId());
 		if (entityType == null) {
 			log.debug("Entity type \"" + entityTypeName + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -615,7 +600,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Check if entity instance exists and is still active
-		EntityInstanceDTO instance = entityInstanceDBService.getEntityInstance(trustDeckId, request);
+		EntityInstanceDTO instance = entityInstanceDBService.getEntityInstance(trustDeckId);
 		if (instance == null) {
 			log.debug("Entity instance with TrustDeckID\"" + trustDeckId + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -638,11 +623,11 @@ public class EntityInstanceRESTController {
 		
 		// Retrieve direct pseudonyms
 		IdentifierItem ii = IdentifierItem.builder().identifier(trustDeckId).idType("TrustDeckID").build();
-		List<PseudonymDTO> pseudonyms = pdba.getPseudonymFromIdentifier(domain, ii, request);
+		List<PseudonymDTO> pseudonyms = pdba.getPseudonymFromIdentifier(domain, ii);
 		
 		// Also retrieve secondary pseudonyms (pseudonyms of pseudonyms)
 		// Start by retrieving the domain subtree for the starting domain
-		List<DomainDTO> tree = ddba.getSubtreeFromDomainName(domain, null);
+		List<DomainDTO> tree = ddba.getSubtreeFromDomainName(domain);
 		
 		// For every domain in the subtree, find the pseudonyms linked by psn-id-connection in it
 		List<Pair<PseudonymDTO, PseudonymDTO>> linkedPseudonyms = new ArrayList<>();
@@ -663,7 +648,7 @@ public class EntityInstanceRESTController {
 			// Get secondary pseudonyms for every pseudonym in the "root"-domain
 			for (PseudonymDTO p : pseudonyms) {
 				List<Pair<PseudonymDTO, PseudonymDTO>> linked = ddba.getLinkedPseudonyms(domain, p.getIdentifierItem().getIdentifier(),
-						p.getIdentifierItem().getIdType(), p.getPsn(), d.getName(), request);
+						p.getIdentifierItem().getIdType(), p.getPsn(), d.getName());
 				
 				if (linked != null && !linked.isEmpty()) {
 					linkedPseudonyms.addAll(linked);
@@ -696,7 +681,6 @@ public class EntityInstanceRESTController {
 	 * @param entityTypeName the name of the entity type associated with the instance to check
 	 * @param entityInstanceDTO the data transfer object containing the data of the instance that should be checked
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with a list of candidate entities when matches are found</li>
      *         <li>a <b>204-NO_CONTENT</b> status when no record-linkage candidates are found</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when the instance payload is missing/empty or 
@@ -708,14 +692,13 @@ public class EntityInstanceRESTController {
 	 */
 	@PostMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}/record-linkage")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:record-linkage')")
-	@Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> recordLinkage(@PathVariable("projectAbbreviation") String projectAbbreviation,
 			   							   @PathVariable("entityTypeName") String entityTypeName,
 			   							   @RequestBody EntityInstanceDTO entityInstanceDTO,
-			   							   @RequestHeader(name = "accept", required = false) String responseContentType,
-			   							   HttpServletRequest request) {
+			   							   @RequestHeader(name = "accept", required = false) String responseContentType) {
 		// Check if project exists and still active
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("Project \"" + projectAbbreviation + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -726,7 +709,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Check if entity type exists and is still active
-		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId(), null);
+		EntityTypeDTO entityType = entityTypeDBService.getEntityTypeByName(entityTypeName, project.getId());
 		if (entityType == null) {
 			log.debug("Entity type \"" + entityTypeName + "\" was not found.");
 			return responseService.notFound(responseContentType);
@@ -786,7 +769,7 @@ public class EntityInstanceRESTController {
         }
         
         // Search for candidates
-        List<EntityInstanceDTO> candidates = entityInstanceDBService.searchRecordLinkageCandidates(project.getId(), entityType.getId(), linkageValues, MAX_NUMBER_OF_SEARCH_RESULTS, request);
+        List<EntityInstanceDTO> candidates = entityInstanceDBService.searchRecordLinkageCandidates(project.getId(), entityType.getId(), linkageValues, MAX_NUMBER_OF_SEARCH_RESULTS);
 	    
         // Evaluate results
         if (candidates == null) {

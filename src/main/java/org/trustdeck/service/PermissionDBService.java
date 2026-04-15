@@ -41,6 +41,7 @@ import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.PermissionGrant;
 import org.trustdeck.jooq.generated.tables.records.PermissionGrantRecord;
 import org.trustdeck.utils.Assertion;
+import org.trustdeck.utils.Utility;
 import org.trustdeck.utils.Utility.Pair;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -108,19 +109,22 @@ public class PermissionDBService {
      * Method to insert multiple permissions at once in a batch. Duplicates will be ignored.
      * 
      * @param permissions a list of permissions to insert into the database
-     * @param request the request object from the security context
-     * @return a list of the created permissions, {@code null} for duplicates and errors
-     */
+     * @return a list of result pairs in the same order as the input list.
+	 *         For each entry, {@code first()} contains the created or duplicated permission
+	 *         (or {@code null} on error), and {@code second()} contains one of: {@link #INSERTION_SUCCESS}, 
+	 *         {@link #INSERTION_DUPLICATE_PERMISSION}, or {@link #INSERTION_ERROR}. Returns an empty list 
+	 *         if no permissions were given, and {@code null} if the batch operation failed completely.
+	 */
     @Transactional
-    public List<PermissionDTO> createPermissions(List<PermissionDTO> permissions, HttpServletRequest request) {
+    public List<Pair<PermissionDTO, String>> createPermissions(List<PermissionDTO> permissions) {
     	// Check if there is something to do
     	if (permissions == null || permissions.isEmpty()) {
     	    return Collections.emptyList();
     	}
     	
     	int n = permissions.size();
-    	List<PermissionDTO> results = new ArrayList<>(n);
-
+    	List<Pair<PermissionDTO, String>> results = new ArrayList<>(n);
+    	
     	// Prefill the result list with nulls
     	for (int i = 0; i < n; i++) {
     		results.add(null);
@@ -131,7 +135,7 @@ public class PermissionDBService {
 
     	try {
 	    	// Reused variables
-	    	String requester = subjectIdFromRequest(request);
+	    	String requester = subjectIdFromRequest();
 	    	OffsetDateTime now = OffsetDateTime.now();
 	    	
 			// Check for duplicates in DB (skip duplicates before inserting)
@@ -146,25 +150,44 @@ public class PermissionDBService {
 				idRows.add(DSL.row(dto.getSubjectId(), dto.getResourceType(), dto.getResourceId(), dto.getAction()));
 			}
 			// Query the database and see if we find any of the user-provided permissions already in there
-            Map<Row4<String, String, Integer, String>, Boolean> existingMap = 
-            		dsl.select(PERMISSION_GRANT.SUBJECT_ID, PERMISSION_GRANT.RESOURCE_TYPE, PERMISSION_GRANT.RESOURCE_ID, PERMISSION_GRANT.ACTION)
-            		.from(PERMISSION_GRANT)
+            Map<Row4<String, String, Integer, String>, PermissionDTO> existingMap = 
+            		dsl.selectFrom(PERMISSION_GRANT)
 					.where(DSL.row(PERMISSION_GRANT.SUBJECT_ID, PERMISSION_GRANT.RESOURCE_TYPE, PERMISSION_GRANT.RESOURCE_ID, PERMISSION_GRANT.ACTION).in(idRows))
-					.fetchMap(r -> DSL.row(r.get(PERMISSION_GRANT.SUBJECT_ID), r.get(PERMISSION_GRANT.RESOURCE_TYPE), r.get(PERMISSION_GRANT.RESOURCE_ID), r.get(PERMISSION_GRANT.ACTION)), r -> Boolean.TRUE);
+					.fetchMap(r -> DSL.row(r.get(PERMISSION_GRANT.SUBJECT_ID), r.get(PERMISSION_GRANT.RESOURCE_TYPE), r.get(PERMISSION_GRANT.RESOURCE_ID), r.get(PERMISSION_GRANT.ACTION)),
+							r -> {
+								PermissionDTO p = new PermissionDTO().assignPojoValues(r.into(PermissionGrant.class));
+								
+								if ("DOMAIN".equalsIgnoreCase(r.getResourceType())) {
+									Domain d = ddba.getDomainByID(r.getResourceId());
+									p.setDomainName(d == null ? null : d.getName());
+								} else if ("PROJECT".equalsIgnoreCase(r.getResourceType())) {
+									ProjectDTO proj = pdba.getProjectByID(r.getResourceId());
+									p.setProjectAbbreviation(proj == null ? null : proj.getAbbreviation());
+								}
+
+								return p;
+							});
             
             // Mark duplicates in original order; marking null-permissions as "exists" will lead to them getting skipped later
-			for (int i = 0; i < n; i++) {
-				if (permissions.get(i) == null) {
+            int rowIndex = 0;
+            for (int i = 0; i < n; i++) {
+            	PermissionDTO dto = permissions.get(i);
+            	
+            	if (dto == null) {
 					existsFlags.set(i, Boolean.TRUE);
 					continue;
 				}
 
-				boolean isDuplicate = existingMap.containsKey(idRows.get(i));
+				PermissionDTO duplicate = existingMap.get(idRows.get(rowIndex));
+				boolean isDuplicate = duplicate != null;
 				existsFlags.set(i, isDuplicate);
 				
 				if (isDuplicate) {
-					results.set(i, null);
+					results.set(i, new Pair<PermissionDTO, String>(duplicate, INSERTION_DUPLICATE_PERMISSION));
 				}
+				
+				// This index will only increased when the checked DTO was not null, so we can always assume that there is an accompanying idRow available
+				rowIndex++;
 			}
 
 			// Prepare batch inserts for non-duplicates
@@ -226,14 +249,14 @@ public class PermissionDBService {
 					
 					// Add created permission to the result list
 					PermissionDTO p = permissions.get(originalIndex);
-					PermissionDTO created = getPermission(p.getSubjectId(), p.getResourceType(), p.getResourceId(), p.getAction(), request);
-					results.set(originalIndex, created);
+					PermissionDTO created = getPermission(p.getSubjectId(), p.getResourceType(), p.getResourceId(), p.getAction());
+					results.set(originalIndex, new Pair<PermissionDTO, String>(created, INSERTION_SUCCESS));
 				} else if (individualResult == 0) {
 					ignored++;
 					
 					// Only mark error if it wasn't already marked duplicate
 					if (results.get(originalIndex) == null) {
-						results.set(originalIndex, null);
+						results.set(originalIndex, new Pair<PermissionDTO, String>(null, INSERTION_ERROR));
 					}
 				} else {
                     // Unexpected result size: abort
@@ -246,7 +269,7 @@ public class PermissionDBService {
 			Set<String> affectedContexts = new HashSet<>();
 
 			for (int i = 0; i < results.size(); i++) {
-			    PermissionDTO created = results.get(i);
+			    PermissionDTO created = results.get(i).first();
 			    if (created == null) {
 			    	continue;
 			    }
@@ -279,11 +302,11 @@ public class PermissionDBService {
      * Method to retrieve all permissions a given subject has.
      * 
      * @param subjectId the (Keycloak) ID of the subject
-     * @param request the request object that is needed for creating the audit database-entries. If no auditing should be performed, you can pass {@code null}.
+auditing should be performed, you can pass {@code null}.
      * @return a list of all the permissions found
      */
     @Transactional
-	public List<PermissionDTO> getAllPermissionsForSubject(String subjectId, HttpServletRequest request) {
+	public List<PermissionDTO> getAllPermissionsForSubject(String subjectId) {
 		// Build and execute the query
 		List<PermissionGrant> permissions = null;
 		try {
@@ -315,11 +338,10 @@ public class PermissionDBService {
      * @param resourceType the type of the resource that this permission is about, e.g., 'Domain' or 'Project'
      * @param resourceId the (internal) database ID of the resource
      * @param action the action that is permitted, e.g., project:read or domain:create
-     * @param request the request object from the security context
      * @return the single permission identified by the given attributes
      */
     @Transactional
-	public PermissionDTO getPermission(String subjectId, String resourceType, Integer resourceId, String action, HttpServletRequest request) {
+	public PermissionDTO getPermission(String subjectId, String resourceType, Integer resourceId, String action) {
 		// Build and execute the query
 		PermissionGrant permission = null;
 		try {
@@ -346,10 +368,10 @@ public class PermissionDBService {
 		PermissionDTO p = new PermissionDTO().assignPojoValues(permission);
 		
 		if (resourceType.equalsIgnoreCase("Domain")) {
-			Domain d = ddba.getDomainByID(p.getResourceId(), null);
+			Domain d = ddba.getDomainByID(p.getResourceId());
 			p.setDomainName(d == null ? null : d.getName());
 		} else if (resourceType.equalsIgnoreCase("Project")) {
-			ProjectDTO proj = pdba.getProjectByID(p.getResourceId(), null);
+			ProjectDTO proj = pdba.getProjectByID(p.getResourceId());
 			p.setProjectAbbreviation(proj == null ? null : proj.getAbbreviation());
 		}
 		
@@ -463,11 +485,10 @@ public class PermissionDBService {
      * @param resourceType the type of the resource that this permission is about, e.g., 'Domain' or 'Project'
      * @param resourceId the (internal) database ID of the resource
      * @param action the action that should be checked, e.g., project:read or domain:create
-     * @param request the request object from the security context
      * @return {@code true} when the action is allowed, {@code false} otherwise
      */
     @Transactional
-	public boolean isActionAllowed(String subjectId, String resourceType, Integer resourceId, String action, HttpServletRequest request) {
+	public boolean isActionAllowed(String subjectId, String resourceType, Integer resourceId, String action) {
     	if (!Assertion.isNotNullOrEmpty(subjectId, resourceType, action) || resourceId == null) {
     		return false;
         }
@@ -516,11 +537,10 @@ public class PermissionDBService {
      * Can also update a single permission (given as a list).
      * 
      * @param permissions a list of permissions to delete from the database
-     * @param request the request object from the security context
      * @return a list of the success results of each individual permission-delete-request
      */
 	@Transactional
-	public List<Boolean> deletePermissions(List<PermissionDTO> permissions, HttpServletRequest request) {
+	public List<Boolean> deletePermissions(List<PermissionDTO> permissions) {
 		if (permissions == null || permissions.isEmpty()) {
 			return Collections.emptyList();
 		}
@@ -618,11 +638,10 @@ public class PermissionDBService {
      * Can also update a single permission (given as a list).
 	 * 
 	 * @param permissionUpdates a list of permission updates to insert into the database
-	 * @param request the request object from the security context
 	 * @return a list of the success results of each individual permission-update-request
 	 */
 	@Transactional
-	public List<Boolean> updatePermissions(List<PermissionUpdateDTO> permissionUpdates, HttpServletRequest request) {
+	public List<Boolean> updatePermissions(List<PermissionUpdateDTO> permissionUpdates) {
 		// Check if there is something to do
 		if (permissionUpdates == null || permissionUpdates.isEmpty()) {
 			return Collections.emptyList();
@@ -637,7 +656,7 @@ public class PermissionDBService {
 		}
 
 		try {
-			String requester = subjectIdFromRequest(request);
+			String requester = subjectIdFromRequest();
 			OffsetDateTime now = OffsetDateTime.now();
 
 			List<UpdateConditionStep<PermissionGrantRecord>> updates = new ArrayList<>();
@@ -766,12 +785,11 @@ public class PermissionDBService {
      * Method to add all domain-specific permissions at once for a given domain.
      * The user is identified through the request.
      * 
-     * @param request the request object from the security context
      * @param domainId the (internal) ID of the domain for which these permissions should be created
      * @return {@code true} when the insertion was successful, {@code false} otherwise
      */
 	@Transactional
-	public boolean addDomainPermissionsForSubject(HttpServletRequest request, int domainId) {
+	public boolean addDomainPermissionsForSubject(int domainId) {
 		// Get list of domain-related rights
 		List<String> domainRights = roleConfig.getACERoles();
 		if (domainRights == null || domainRights.isEmpty()) {
@@ -779,7 +797,7 @@ public class PermissionDBService {
 			return true;
 		}
 		
-		String subjectID = subjectIdFromRequest(request);
+		String subjectID = subjectIdFromRequest();
 		String resourceType = "DOMAIN";
 		
 		// Prepare a list of all permissions
@@ -795,12 +813,12 @@ public class PermissionDBService {
 		
 		// Add the permissions
 		log.trace("Adding " + permissions.size() + " permissions for the domain with id: " + domainId);
-		List<PermissionDTO> results = createPermissions(permissions, request);
+		List<Pair<PermissionDTO, String>> results = createPermissions(permissions);
 		
 		if (results == null || results.isEmpty()) {
 			log.error("Could not create any permissions for domain with id \"" + domainId + "\", so the process was aborted.");
 			return false;
-		} else if (results.contains(null)) {
+		} else if (results.contains(new Pair<PermissionDTO, String>(null, INSERTION_ERROR))) {
 			log.warn("Could not add all permissions for domain with id \"" + domainId + "\". The permissions might be incomplete.");
 			return true;
 		}
@@ -813,12 +831,11 @@ public class PermissionDBService {
      * Method to add all project-specific permissions at once for a given project.
      * The user is identified through the request.
      * 
-     * @param request the request object from the security context
      * @param projectAbbreviation the abbreviation of the project for which these permissions should be created
      * @return {@code true} when the insertion was successful, {@code false} otherwise
      */
 	@Transactional
-	public boolean addProjectPermissionsForSubject(HttpServletRequest request, String projectAbbreviation) {
+	public boolean addProjectPermissionsForSubject(String projectAbbreviation) {
 		// Get list of project-related rights
 		List<String> projectRights = roleConfig.getKINGRoles();
 		if (projectRights == null || projectRights.isEmpty()) {
@@ -826,9 +843,9 @@ public class PermissionDBService {
 			return true;
 		}
 		
-		String subjectID = subjectIdFromRequest(request);
+		String subjectID = subjectIdFromRequest();
 		String resourceType = "PROJECT";
-		int resourceID = pdba.getProjectByAbbreviation(projectAbbreviation, null).getId();
+		int resourceID = pdba.getProjectByAbbreviation(projectAbbreviation).getId();
 		
 		// Prepare a list of all permissions
 		List<PermissionDTO> permissions = new ArrayList<PermissionDTO>();
@@ -843,12 +860,12 @@ public class PermissionDBService {
 		
 		// Add the permissions
 		log.trace("Adding " + permissions.size() + " permissions for the project \"" + projectAbbreviation + "\".");
-		List<PermissionDTO> results = createPermissions(permissions, request);
+		List<Pair<PermissionDTO, String>> results = createPermissions(permissions);
 		
 		if (results == null || results.isEmpty()) {
 			log.error("Could not create any permissions for project \"" + projectAbbreviation + "\", so the process was aborted.");
 			return false;
-		} else if (results.contains(null)) {
+		} else if (results.contains(new Pair<PermissionDTO, String>(null, INSERTION_ERROR))) {
 			log.warn("Could not add all permissions for project \"" + projectAbbreviation + "\". The permissions might be incomplete.");
 			return true;
 		}
@@ -861,18 +878,17 @@ public class PermissionDBService {
      * Method to remove all domain-specific permissions at once for a given domain.
      * The user is identified through the request.
      * 
-     * @param request the request object from the security context
      * @param domainName the name of the domain for which the permissions should be removed
      * @return {@code true} when the deletion was successful, {@code false} otherwise
      */
 	@Transactional
-	public boolean removeDomainPermissionsForSubject(HttpServletRequest request, String domainName) {
-		String subjectID = subjectIdFromRequest(request);
+	public boolean removeDomainPermissionsForSubject(String domainName) {
+		String subjectID = subjectIdFromRequest();
 		String type = "DOMAIN";
-		int resourceID = ddba.getDomainByName(domainName, null).getId();
+		int resourceID = ddba.getDomainByName(domainName).getId();
 		
 		// Get list of domain-related permissions from the database
-		List<PermissionDTO> activePermissions = getAllPermissionsForSubject(subjectID, null);
+		List<PermissionDTO> activePermissions = getAllPermissionsForSubject(subjectID);
 
 		// Check if the list is empty
 		if (activePermissions == null || activePermissions.isEmpty()) {
@@ -891,7 +907,7 @@ public class PermissionDBService {
 		
 		// Remove the permissions
 		log.trace("Removing " + activePermissions.size() + " permissions for the domain \"" + domainName + "\".");
-		List<Boolean> results = deletePermissions(activePermissions, request);
+		List<Boolean> results = deletePermissions(activePermissions);
 		
 		if (results == null || results.isEmpty()) {
 			log.error("Could not remove any permissions for domain \"" + domainName + "\", so the process was aborted.");
@@ -913,18 +929,17 @@ public class PermissionDBService {
      * Method to remove all project-specific permissions at once for a given domain.
      * The user is identified through the request.
      * 
-     * @param request the request object from the security context
      * @param projectAbbreviation the abbreviation of the project for which the permissions should be removed
      * @return {@code true} when the deletion was successful, {@code false} otherwise
      */
 	@Transactional
-	public boolean removeProjectPermissionsForSubject(HttpServletRequest request, String projectAbbreviation) {
-		String subjectID = subjectIdFromRequest(request);
+	public boolean removeProjectPermissionsForSubject(String projectAbbreviation) {
+		String subjectID = subjectIdFromRequest();
 		String type = "PROJECT";
-		int resourceID = pdba.getProjectByAbbreviation(projectAbbreviation, null).getId();
+		int resourceID = pdba.getProjectByAbbreviation(projectAbbreviation).getId();
 		
 		// Get list of project-related permissions from the database
-		List<PermissionDTO> activePermissions = getAllPermissionsForSubject(subjectID, null);
+		List<PermissionDTO> activePermissions = getAllPermissionsForSubject(subjectID);
 
 		// Check if the list is empty
 		if (activePermissions == null || activePermissions.isEmpty()) {
@@ -943,7 +958,7 @@ public class PermissionDBService {
 		
 		// Remove the permissions
 		log.trace("Removing " + activePermissions.size() + " permissions for the project \"" + projectAbbreviation + "\".");
-		List<Boolean> results = deletePermissions(activePermissions, request);
+		List<Boolean> results = deletePermissions(activePermissions);
 		
 		if (results == null || results.isEmpty()) {
 			log.error("Could not remove any permissions for project \"" + projectAbbreviation + "\", so the process was aborted.");
@@ -1116,11 +1131,10 @@ public class PermissionDBService {
      * @param resourceType the type of the resource that these permissions are about, e.g., 'Domain' or 'Project'
      * @param resourceId the (internal) database ID of the resource
      * @param actions the desired list of actions that should be allowed
-     * @param request the request object from the security context
 	 * @return {@code true} if the operation completed successfully, {@code false} if input invalid; {@code null} on failure.
 	 */
 	@Transactional
-	public boolean replacePermissionsForResource(String subjectId, String resourceType, Integer resourceId, List<String> actions, HttpServletRequest request) {
+	public boolean replacePermissionsForResource(String subjectId, String resourceType, Integer resourceId, List<String> actions) {
 		if (!Assertion.isNotNullOrEmpty(subjectId, resourceType) || resourceId == null || actions == null) {
             log.debug("Missing parameters.");
 			return false;
@@ -1164,7 +1178,7 @@ public class PermissionDBService {
             	}
             	
             	// Call the delete method
-            	List<Boolean> result = deletePermissions(deletes, request);
+            	List<Boolean> result = deletePermissions(deletes);
             	if (result == null || result.contains(false)) {
             		log.debug("Could not properly remove the actions that are not needed anymore. Aborting.");
             		throw new PermissionManagementException(resourceType + ":" + resourceId.toString());
@@ -1182,8 +1196,8 @@ public class PermissionDBService {
             	}
             	
             	// Call the create method
-            	List<PermissionDTO> result = createPermissions(inserts, request);
-            	if (result == null || result.contains(null)) {
+            	List<Pair<PermissionDTO, String>> result = createPermissions(inserts);
+            	if (result == null || result.contains(new Pair<PermissionDTO, String>(null, INSERTION_ERROR))) {
             		log.debug("Could not properly add the actions that were required. Aborting.");
             		throw new PermissionManagementException(resourceType + ":" + resourceId.toString());
             	}
@@ -1211,10 +1225,11 @@ public class PermissionDBService {
 	/**
 	 * Method that extracts the subject ID from the request object.
 	 * 
-	 * @param request the request object containing the JWT that contains the requester's subject information
 	 * @return the subject ID that is in the JWT token in the request
 	 */
-	private String subjectIdFromRequest(HttpServletRequest request) {
+	private String subjectIdFromRequest() {
+		HttpServletRequest request = Utility.getCurrentRequest();
+		
 		if (request != null) {
 			// Check if the information needed is in the token
 			JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
@@ -1243,10 +1258,10 @@ public class PermissionDBService {
 		}
 		
 		if (resourceType.equalsIgnoreCase("DOMAIN")) {
-			Domain d = ddba.getDomainByID(id, null);
+			Domain d = ddba.getDomainByID(id);
 			return d == null ? null : d.getName();
 		} else if (resourceType.equalsIgnoreCase("PROJECT")) {
-			ProjectDTO p = pdba.getProjectByID(id, null);
+			ProjectDTO p = pdba.getProjectByID(id);
 			return p == null ? null : p.getAbbreviation();
 		} else if (resourceType.equalsIgnoreCase("GLOBAL")) {
 			return null;
@@ -1270,10 +1285,10 @@ public class PermissionDBService {
 		}
 		
 		if (resourceType.equalsIgnoreCase("DOMAIN")) {
-			Domain d = ddba.getDomainByName(nameOrAbbreviation, null);
+			Domain d = ddba.getDomainByName(nameOrAbbreviation);
 			return d == null ? null : d.getId();
 		} else if (resourceType.equalsIgnoreCase("PROJECT")) {
-			ProjectDTO p = pdba.getProjectByAbbreviation(nameOrAbbreviation, null);
+			ProjectDTO p = pdba.getProjectByAbbreviation(nameOrAbbreviation);
 			return p == null ? null : p.getId();
 		} else if (resourceType.equalsIgnoreCase("GLOBAL")) {
 			return 0;

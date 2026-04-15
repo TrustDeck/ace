@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.security.audittrail.annotation.Audit;
-import org.trustdeck.security.audittrail.event.AuditEventType;
 import org.trustdeck.security.audittrail.usertype.AuditUserType;
 
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +42,7 @@ public class ApiRESTController {
      * @return <li>a <b>200-OK</b> status</li>
      */
     @GetMapping(value = "/ping")
-    @Audit(eventType = AuditEventType.PING, auditFor = AuditUserType.HUMAN)
+    @Audit(auditFor = AuditUserType.HUMAN)
     public ResponseEntity<?> ping() {
         // The response to the ping is just a 200-OK status code
         log.trace("Ping.");

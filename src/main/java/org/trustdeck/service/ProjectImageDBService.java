@@ -29,7 +29,6 @@ import org.trustdeck.dto.ProjectImageDTO;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.ProjectImage;
 import org.trustdeck.jooq.generated.tables.records.ProjectImageRecord;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -49,11 +48,10 @@ public class ProjectImageDBService {
 	 * Create a new project image.
 	 *
 	 * @param projectImage the DTO containing projectId, imageBytes, mimeType
-	 * @param request the http request object containing information necessary for the audit trail
 	 * @return the created image record as a DTO, or {@code null} on error
 	 */
     @Transactional
-    public ProjectImageDTO createProjectImage(ProjectImageDTO projectImage, HttpServletRequest request) {
+    public ProjectImageDTO createProjectImage(ProjectImageDTO projectImage) {
 		ProjectImageRecord created;
 		try {
 			// Build the SQL statement and execute it
@@ -82,11 +80,10 @@ public class ProjectImageDBService {
      * Retrieve a project image by its projectId.
      * 
      * @param projectId the owning project's ID
-     * @param request the http request object containing information necessary for the audit trail
      * @return the project image, or {@code null} when unsuccessful
      */
     @Transactional
-    public ProjectImageDTO getProjectImageByProjectId(int projectId, HttpServletRequest request) {
+    public ProjectImageDTO getProjectImageByProjectId(int projectId) {
 		ProjectImage img;
 		try {
 			// Build the SQL statement and execute it
@@ -116,11 +113,10 @@ public class ProjectImageDBService {
      * 
      * @param projectId the owning project's ID
      * @param newImage the DTO containing the updated information
-     * @param request the http request object containing information necessary for the audit trail
      * @return the updated image as it is represented in the database after the update when successful, {@code null} otherwise
      */
     @Transactional
-    public ProjectImageDTO updateProjectImage(int projectId, ProjectImageDTO newImage, HttpServletRequest request) {
+    public ProjectImageDTO updateProjectImage(int projectId, ProjectImageDTO newImage) {
     	ProjectImageRecord updated;
 		try {
 			// Build the SQL statement and execute it
@@ -149,12 +145,11 @@ public class ProjectImageDBService {
      * Method to remove a project image from the database.
      * 
      * @param projectId the owning project's ID
-     * @param request the http request object containing information necessary for the audit trail
      * @return {@code true} when the deletion was successful, {@code false} otherwise
      * @throws UnexpectedResultSizeException
      */
     @Transactional
-    public boolean deleteProjectImage(int projectId, HttpServletRequest request) throws UnexpectedResultSizeException {
+    public boolean deleteProjectImage(int projectId) throws UnexpectedResultSizeException {
 		int deletedRecords = 0;
 		try {
 			// Build the SQL statement and execute it

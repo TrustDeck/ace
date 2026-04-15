@@ -17,7 +17,6 @@
 
 package org.trustdeck.service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +27,8 @@ import org.jooq.impl.DSL;
 import org.jooq.JoinType;
 import org.jooq.Record;
 import org.jooq.SelectQuery;
+import org.jooq.exception.DataAccessException;
+import org.jooq.exception.MappingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -72,7 +73,7 @@ public class DomainDBAccessService {
 
     /** References a jOOQ configuration object that configures jOOQ's behavior when executing queries. */
     @Autowired
-    private DSLContext dslCtx;
+    private DSLContext dsl;
 
     /** Enables the access to the domain specific database access methods. */
     @Autowired
@@ -98,46 +99,59 @@ public class DomainDBAccessService {
      */
     private DomainDao getDomainDao() {
     	// Attaches DAO to the current transactional context
-    	return new DomainDao(dslCtx.configuration());
+    	return new DomainDao(dsl.configuration());
     }
 
     /**
      * Method to retrieve a domain from the database given its name.
      *
      * @param domainName the name of the domain you want to get
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return the retrieved domain as a jOOQ Domain object, or {@code null} if nothing was found
      */
-    public Domain getDomainByName(String domainName, HttpServletRequest request) {
+    @Transactional
+    public Domain getDomainByName(String domainName) {
+    	// Check if all the necessary arguments are available
+    	if (Assertion.isNullOrEmpty(domainName.trim())) {
+    		log.trace("The given domain name is null or empty.");
+    		return null;
+    	}
+    	
+    	// Build and execute the query
+    	List<Domain> domains = null;
     	try {
-            Domain domain = this.dslCtx.transactionResult(configuration -> {
-                // Get domain
-                return this.getDomainDao().fetchOneByName(domainName);
-
-                // Implicit transaction commit here
-            });
-
-            // At this point the retrieval was successful
-            log.trace("Successfully queried the database for the domain using the name (" + domainName + ").");
-            return domain;
-        } catch (Exception e) {
-            log.error("Couldn't retrieve the domain " + domainName + " from the database: " + e.getMessage() + "\n");
-            return null;
+			domains = dsl.selectFrom(DOMAIN)
+					.where(DOMAIN.NAME.equalIgnoreCase(domainName.trim()))
+					.fetchInto(Domain.class);
+        } catch (MappingException e) {
+        	log.debug("Could not map the domain search result into the Domain-POJO.", e);
+        	return null;
+        } catch (DataAccessException f) {
+        	log.debug("Searching for the domain in the database failed.", f);
+        	return null;
         }
+    	
+    	// Check if the search was successful
+    	if (domains == null || domains.size() == 0) {
+    		log.debug("No domain for name \"" + domainName + "\" found.");
+            return null;
+    	} else if (domains.size() > 1) {
+        	log.debug("Too many domains with name \"" + domainName + "\" were found.");
+        	return null;
+        }
+
+    	log.trace("Successfully queried the database for the domain using the name (" + domainName + ").");
+        return domains.getFirst();
     }
 
     /**
      * This method retrieves a domain for a given ID
      *
      * @param domainID the id of the domain you want to get
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return the retrieved domain as a jOOQ Domain object, or {@code null} if nothing was found
      */
-    public Domain getDomainByID(int domainID, HttpServletRequest request) {
+    public Domain getDomainByID(int domainID) {
     	try {
-            Domain domain = this.dslCtx.transactionResult(configuration -> {
+            Domain domain = this.dsl.transactionResult(configuration -> {
                 // Get domain
                 return this.getDomainDao().fetchOneById(domainID);
 
@@ -160,12 +174,10 @@ public class DomainDBAccessService {
      * Helper method that creates the subtree of a domain starting from the given domain.
      *
      * @param domainName a domain name from which the search should start
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return a list of domain DTOs which represent all domains of the subtree starting with the given domain
      */
     @Transactional
-    public List<DomainDTO> getSubtreeFromDomainName(String domainName, HttpServletRequest request) {
+    public List<DomainDTO> getSubtreeFromDomainName(String domainName) {
     	if (domainName == null) {
     		log.debug("Could not search for a subtree since the domain ID was null.");
     		return List.of();
@@ -196,7 +208,7 @@ public class DomainDBAccessService {
         
         // Execute the query
         try {
-        	return dslCtx.withRecursive(treeStructure)
+        	return dsl.withRecursive(treeStructure)
         			.selectFrom(treeStructure)
         			.fetchInto(Domain.class)
         			.stream().map(d -> new DomainDTO().assignPojoValues(d)).toList();
@@ -267,7 +279,7 @@ public class DomainDBAccessService {
         // Execute the query
         List<Domain> result = null;
         try {
-			result = this.dslCtx.transactionResult(configuration -> {
+			result = this.dsl.transactionResult(configuration -> {
 			    List<Domain> r = DSL.using(configuration).withRecursive(findRoot, treeStructure)
 			            .select()
 			            .from(name("tree_structure")).fetchInto(Domain.class);
@@ -292,7 +304,7 @@ public class DomainDBAccessService {
 	* @throws IllegalArgumentException when the domain or it's tree could not be retrieved
 	*/
 	public List<String> getFlatDomainTree(String domainName) throws IllegalArgumentException {
-		Domain domain = getDomainByName(domainName, null);
+		Domain domain = getDomainByName(domainName);
 		List<Domain> domainTree = domain == null ? null : getDomainTreeStructure(domain);
 
 		// Check if the tree has at least one domain in it
@@ -342,18 +354,16 @@ public class DomainDBAccessService {
      * @param sourceIdType the idType of the starting identifier
      * @param sourcePsn the pseudonym of the record to start the search from
      * @param targetDomainName the name of the domain where to find the matching pseudonym records in
-     * @param request the request object that is needed for creating the audit database-entries. 
-     * 			If no auditing should be performed, you can pass {@code null}.
      * @return a list of pairs <b>(A, B)</b> of linked pseudonym records, with <b>A</b> being the source 
      * 			record, and <b>B</b> being the linked record, i.e., [(A, B), (A, C), (A, D), ..., (A, N)]
      * 			or {@code null}.
      */
-    public List<Pair<PseudonymDTO, PseudonymDTO>> getLinkedPseudonyms(String sourceDomainName, String sourceIdentifier, String sourceIdType, String sourcePsn, String targetDomainName, HttpServletRequest request) {
+    public List<Pair<PseudonymDTO, PseudonymDTO>> getLinkedPseudonyms(String sourceDomainName, String sourceIdentifier, String sourceIdType, String sourcePsn, String targetDomainName) {
     	// Retrieve the source domain object (will not be audited)
-		Domain sourceDomain = getDomainByName(sourceDomainName, null);
-		Domain targetDomain = getDomainByName(targetDomainName, null);
+		Domain sourceDomain = getDomainByName(sourceDomainName);
+		Domain targetDomain = getDomainByName(targetDomainName);
 		IdentifierItem sourceII = IdentifierItem.builder().identifier(sourceIdentifier).idType(sourceIdType).build();
-		List<PseudonymDTO> sourcePseudonymList = pseudonymDBAccessService.getPseudonym(sourceDomainName, sourceII, sourcePsn, null);
+		List<PseudonymDTO> sourcePseudonymList = pseudonymDBAccessService.getPseudonym(sourceDomainName, sourceII, sourcePsn);
 		
 		// Check if the given information is sufficient to start the linking-process
         if (sourceDomain == null) {
@@ -387,9 +397,9 @@ public class DomainDBAccessService {
         }
 
         try {
-            List<Pair<PseudonymDTO, PseudonymDTO>> result = dslCtx.transactionResult(configuration -> {
+            List<Pair<PseudonymDTO, PseudonymDTO>> result = dsl.transactionResult(configuration -> {
                 // Start building the query
-            	SelectQuery<Record> query = dslCtx.select(PSEUDONYM.as("p" + pathSize).asterisk()).getQuery();
+            	SelectQuery<Record> query = dsl.select(PSEUDONYM.as("p" + pathSize).asterisk()).getQuery();
                 query.addFrom(PSEUDONYM.as("p1"));
 
                 // Iterate over the path to find all the pseudonyms along the path
@@ -446,18 +456,16 @@ public class DomainDBAccessService {
      * Method to retrieve all pseudonym-values that exist in a domain from the database.
      * 
      * @param domainName the name of the domain where the values should be retrieved from
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return a list of pseudonyms existing in the given domain when successful, {@code null} otherwise
      */
-	public List<String> getAllPseudonymValuesInDomain(String domainName, HttpServletRequest request) {
+	public List<String> getAllPseudonymValuesInDomain(String domainName) {
 		try {
-			List<String> pseudonyms = this.dslCtx.transactionResult(configuration -> {
+			List<String> pseudonyms = this.dsl.transactionResult(configuration -> {
 				// Retrieve all pseudonyms from the domain
 				return DSL.using(configuration)
 						.select(PSEUDONYM.PSEUDONYM_)
 						.from(PSEUDONYM)
-						.where(PSEUDONYM.DOMAINID.equal(this.getDomainByName(domainName, null).getId()))
+						.where(PSEUDONYM.DOMAINID.equal(this.getDomainByName(domainName).getId()))
 						.fetchInto(String.class);
 				
 			    // Implicit transaction commit here
@@ -476,18 +484,16 @@ public class DomainDBAccessService {
      * Method to retrieve all records stored in a domain.
      *
      * @param domainName the name of the domain where the records should be retrieved from
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return a list of records stored in the given domain when successful, {@code null} otherwise
      */
 	@Transactional
-    public List<PseudonymDTO> getAllPseudonymsInDomain(String domainName, HttpServletRequest request) {
+    public List<PseudonymDTO> getAllPseudonymsInDomain(String domainName) {
         try {
             // Get domain
-            Domain d = this.getDomainByName(domainName, null);
+            Domain d = this.getDomainByName(domainName);
 
             // Retrieve all records from a domain
-            List<PseudonymDTO> ps = dslCtx.selectFrom(PSEUDONYM)
+            List<PseudonymDTO> ps = dsl.selectFrom(PSEUDONYM)
                     .where(PSEUDONYM.DOMAINID.eq(d.getId()))
                     .fetchInto(Pseudonym.class)
                     .stream()
@@ -507,15 +513,13 @@ public class DomainDBAccessService {
      * Returns the number of records in a domain
      *
      * @param domainName the name of the domain where the number of records should be retrieved from
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return the counted number
      */
-    public Integer getAmountOfPseudonymsInDomain(String domainName, HttpServletRequest request) {
+    public Integer getAmountOfPseudonymsInDomain(String domainName) {
         try {
-            Integer count = this.dslCtx.transactionResult(configuration -> {
+            Integer count = this.dsl.transactionResult(configuration -> {
                 // Get domain
-                Domain d = this.getDomainByName(domainName, null);
+                Domain d = this.getDomainByName(domainName);
                 
                 if (d == null) {
                 	// Domain wasn't found
@@ -549,16 +553,14 @@ public class DomainDBAccessService {
      *
      * @param domainName the name of the domain that should be deleted
      * @param recursiveDeletion determines if possible child domains should also be deleted
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return {@code true} when the deletion was successful or the record
      * was not in the database, {@code false} otherwise
      */
-    public boolean deleteDomain(String domainName, boolean recursiveDeletion, HttpServletRequest request) {
+    public boolean deleteDomain(String domainName, boolean recursiveDeletion) {
         try {
-            this.dslCtx.transaction(configuration -> {
+            this.dsl.transaction(configuration -> {
                 // Retrieve the domain object
-                Domain domain = getDomainByName(domainName, null);
+                Domain domain = getDomainByName(domainName);
 
                 // Check if the domain is in the database
                 if (domain == null) {
@@ -576,10 +578,10 @@ public class DomainDBAccessService {
 
                     // Iterate over the sub-domain IDs
                     for (int id : ids) {
-                        String childName = getDomainByID(id, null).getName();
+                        String childName = getDomainByID(id).getName();
 
                         // Recursive call of the delete method -> DFS
-                        if (deleteDomain(childName, recursiveDeletion, request)) {
+                        if (deleteDomain(childName, recursiveDeletion)) {
                             /* (deletions on the connections opened in this DFS are committed only if
                              * the deletion is successful from bottom to top, otherwise the deletion fails
                              * and the error is transferred bottom-up.)
@@ -644,7 +646,7 @@ public class DomainDBAccessService {
                 }
                 
                 // Handle permissions
-                if (!permissionDBService.removeDomainPermissionsForSubject(request, domain.getName())) {
+                if (!permissionDBService.removeDomainPermissionsForSubject(domain.getName())) {
                 	log.debug("Failed to remove the domain's permissions. Aborting.");
                 	throw new PermissionManagementException(domain.getName());
                 }
@@ -681,17 +683,15 @@ public class DomainDBAccessService {
      * Method to insert information of a domain into the according table.
      *
      * @param domain the domain object to insert
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return {@code INSERTION_SUCCESS} when the insertion was successful,
      * {@code INSERTION_DUPLICATE} when the domain was already in
      * the database, {@code INSERTION_ERROR} otherwise.
      */
-    public String insertDomain(Domain domain, HttpServletRequest request) {
+    public String insertDomain(Domain domain) {
         try {
-            this.dslCtx.transaction(configuration -> {
+            this.dsl.transaction(configuration -> {
                 // Check if the domain is already in the database
-                if (getDomainByName(domain.getName(), null) != null) {
+                if (getDomainByName(domain.getName()) != null) {
                     // Record is already in the DB. Use exception to break the transaction.
                     throw new DuplicateDomainException(domain.getName());
                 }
@@ -735,7 +735,7 @@ public class DomainDBAccessService {
                 }
 
                 // Handle permissions
-                if (!permissionDBService.addDomainPermissionsForSubject(request, domainId)) {
+                if (!permissionDBService.addDomainPermissionsForSubject(domainId)) {
                 	log.debug("Failed to add the domain's permissions. Aborting.");
                 	throw new PermissionManagementException(domain.getName());
                 }
@@ -768,14 +768,12 @@ public class DomainDBAccessService {
     /**
      * This method lists all domains from the database.
      *
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return a list of domains, if nothing was found an empty list is returned.
      */
     @Transactional
-    public List<DomainDTO> listDomains(HttpServletRequest request) {
+    public List<DomainDTO> listDomains() {
         try {
-			return dslCtx.selectFrom(DOMAIN)
+			return dsl.selectFrom(DOMAIN)
 					.fetchInto(Domain.class)
                     .stream().map(d -> new DomainDTO().assignPojoValues(d)).toList();
         } catch (Exception e) {
@@ -793,7 +791,7 @@ public class DomainDBAccessService {
      */
     public boolean updateCounter(Long counter, String domainName) {
     	try {
-            this.dslCtx.transaction(configuration -> {
+            this.dsl.transaction(configuration -> {
                 // Create and execute the update query
                 int updatedDomain = DSL.using(configuration).update(DOMAIN)
                         .set(DOMAIN.CONSECUTIVEVALUECOUNTER, counter)
@@ -831,13 +829,11 @@ public class DomainDBAccessService {
      * @param oldDomain the domain object of the domain that should be updated
      * @param newDomain the domain object of the new domain; variables that aren't needed can be {@code null}
      * @param recursiveChanges determines if possible child domains should also be updated
-     * @param request the request object that is needed for creating the audit database-entries. If no 
-     * auditing should be performed, you can pass {@code null}.
      * @return {@code true} if the update was successful, {@code false} otherwise
      */
-    public Domain updateDomain(Domain oldDomain, Domain newDomain, boolean recursiveChanges, HttpServletRequest request) {
+    public Domain updateDomain(Domain oldDomain, Domain newDomain, boolean recursiveChanges) {
         try {
-            this.dslCtx.transaction(configuration -> {
+            this.dsl.transaction(configuration -> {
                 // Check if the domain to be updated exists
                 if (!getDomainDao().exists(oldDomain)) {
                     // Domain is not in the DB. Use exception to break the transaction.
@@ -916,7 +912,7 @@ public class DomainDBAccessService {
                 }
                 
                 // Update the inheritable variables
-                List<Boolean> results = pseudonymDBAccessService.updatePseudonyms(updates, null);
+                List<Boolean> results = pseudonymDBAccessService.updatePseudonyms(updates);
                 if (!updates.isEmpty() && results.contains(false)) {
                     // Failed update of a pseudonym-record: use exception to break the transaction
                 	IdentifierItem ii = updates.get(results.indexOf(false)).getNewIdentifierItem();
@@ -961,7 +957,7 @@ public class DomainDBAccessService {
                         updateDomain.setLengthincludescheckdigitinherited(oldChild.getLengthincludescheckdigitinherited());
 
                         // Recursive call of the update method
-                        if (updateDomain(oldChild, updateDomain, recursiveChanges, request) != null) {
+                        if (updateDomain(oldChild, updateDomain, recursiveChanges) != null) {
                             log.debug("Successfully updated the child-domain \"" + oldChild.getName() + "\".");
                         } else {
                             // Failed update of child-domain. Use exception to break the transaction.
@@ -973,12 +969,12 @@ public class DomainDBAccessService {
                 // Check if the permissions need to be adapted
                 if (newDomain.getName() != null && !oldDomain.getName().equals(newDomain.getName())) {
                 	// The domain name has changed, so we need to update the permissions
-                    if (!permissionDBService.removeDomainPermissionsForSubject(request, oldDomain.getName())) {
+                    if (!permissionDBService.removeDomainPermissionsForSubject(oldDomain.getName())) {
                     	log.debug("Failed to remove the domain's permissions. Aborting.");
                     	throw new PermissionManagementException(oldDomain.getName());
                     }
                     
-                    if (!permissionDBService.addDomainPermissionsForSubject(request, oldDomain.getId())) {
+                    if (!permissionDBService.addDomainPermissionsForSubject(oldDomain.getId())) {
                     	log.debug("Failed to add the domain's permissions. Aborting.");
                     	throw new PermissionManagementException(newDomain.getName());
                     }
@@ -990,7 +986,7 @@ public class DomainDBAccessService {
             // Successful update
             String name = (newDomain.getName() != null) ? newDomain.getName() : oldDomain.getName();
             log.debug("Successfully updated the domain \"" + name + "\".");
-            return getDomainByName(name, null);
+            return getDomainByName(name);
         } catch (DomainNotFoundException e) {
             log.info("The domain (\"" + e.getDomainName() + "\") is not in the database. Nothing to update.");
             return null;

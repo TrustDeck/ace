@@ -17,7 +17,6 @@
 
 package org.trustdeck.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -45,14 +44,13 @@ import org.trustdeck.dto.EffectivePermissionDTO;
 import org.trustdeck.dto.PermissionDTO;
 import org.trustdeck.dto.ProjectDTO;
 import org.trustdeck.security.audittrail.annotation.Audit;
-import org.trustdeck.security.audittrail.event.AuditEventType;
-import org.trustdeck.security.audittrail.usertype.AuditUserType;
 import org.trustdeck.service.DomainDBAccessService;
 import org.trustdeck.service.KeycloakService;
 import org.trustdeck.service.PermissionDBService;
 import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
+import org.trustdeck.utils.Utility.Pair;
 
 /**
  * Provides the REST API for the permission endpoints.
@@ -99,7 +97,6 @@ public class PermissionRESTController {
 	 *
 	 * @param query the search term
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status with the (possibly empty) list of
 	 * 		   users matching the query</li>
 	 *         <li>a <b>206-PARTIAL_CONTENT</b> status with a truncated list
@@ -109,10 +106,9 @@ public class PermissionRESTController {
 	 */
 	@GetMapping("/users")
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> searchUsers(@RequestParam(name = "query") String query,
-                                         @RequestHeader(name = "accept", required = false) String responseContentType,
-                                         HttpServletRequest request) {
+                                         @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         if (Assertion.isNullOrEmpty(query)) {
         	log.trace("No query string provided.");
@@ -143,7 +139,6 @@ public class PermissionRESTController {
 	 * @param userId the ID of the user
 	 * @param permissions the desired list of permissions
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status when after validation of the permissions, no 
 	 * 		   permission remained to be inserted</li>
 	 * 		   <li>a <b>201-CREATED</b> status and a list of the created permissions when 
@@ -157,12 +152,11 @@ public class PermissionRESTController {
 	 */
 	@PostMapping("/domains/{domainName}")
 	@PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> createDomainPermissions(@PathVariable("domainName") String domainName,
 	                                                 @RequestParam(name = "userId") String userId,
 	                                                 @RequestBody List<PermissionDTO> permissions,
-	                                                 @RequestHeader(name = "accept", required = false) String responseContentType,
-	                                                 HttpServletRequest request) {
+	                                                 @RequestHeader(name = "accept", required = false) String responseContentType) {
 
 		if (Assertion.isNullOrEmpty(domainName, userId) || permissions == null || permissions.isEmpty()) {
 			log.debug("Missing parameter (domainName, userId, or list of permissions).");
@@ -170,7 +164,7 @@ public class PermissionRESTController {
 		}
 
 		// Retrieve the domain from the database
-		Domain domain = domainDBAccessService.getDomainByName(domainName, null);
+		Domain domain = domainDBAccessService.getDomainByName(domainName);
 		if (domain == null) {
 			log.debug("No domain found.");
 			return responseService.notFound(responseContentType);
@@ -235,7 +229,7 @@ public class PermissionRESTController {
 		}
 
 		// Batch insert
-		List<PermissionDTO> created = permissionDBService.createPermissions(validated, request);
+		List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissions(validated);
 		if (created == null) {
 			log.debug("Failed to insert any permissions.");
 			return responseService.badRequest(responseContentType);
@@ -244,16 +238,23 @@ public class PermissionRESTController {
 		// Map the list of created permissions back into original order
 	    for (int j = 0; j < created.size(); j++) {
 	        int idx = originalIndex.get(j);
-	        result.set(idx, created.get(j));
+	        result.set(idx, created.get(j).first());
 	    }
 	    
 	    // Return the results; decide on the proper status code
-	    log.debug("Successfully created " + created.stream().filter(e -> e != null).count() + " domain "
+	    log.debug("Successfully created " + created.stream().filter(e -> e != null && e.first() != null).count() + " domain "
     			+ "permission(s) out of " + created.size() + " requested permissions for user " + userId 
     			+ " in domain " + domain.getName() + ".");
-	    if (created.contains(null)) {
-	    	// There were either duplicates or errors --> partial success
+
+	    boolean hasErrors = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_ERROR.equals(p.second()));
+	    boolean hasDuplicates = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_DUPLICATE_PERMISSION.equals(p.second()));
+	    
+	    if (hasErrors) {
+	    	// There were errors --> partial success
 	    	return responseService.partialContent(responseContentType, result);
+	    } else if (hasDuplicates) {
+	    	// There were duplicates --> return code 200
+	    	return responseService.ok(responseContentType, result);
 	    } else {
 	    	// All requested permissions were created
 	    	return responseService.created(responseContentType, result);
@@ -269,7 +270,6 @@ public class PermissionRESTController {
 	 * @param userId the ID of the user
 	 * @param permissions the desired list of permissions
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>200-OK</b> status when after validation of the permissions, no 
 	 * 		   permission remained to be inserted</li>
 	 * 		   <li>a <b>201-CREATED</b> status and a list of the created permissions when 
@@ -283,12 +283,11 @@ public class PermissionRESTController {
 	 */
 	@PostMapping("/projects/{projectAbbreviation}")
 	@PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> createProjectPermissions(@PathVariable("projectAbbreviation") String projectAbbreviation,
 	                                                  @RequestParam(name = "userId") String userId,
 	                                                  @RequestBody List<PermissionDTO> permissions,
-	                                                  @RequestHeader(name = "accept", required = false) String responseContentType,
-	                                                  HttpServletRequest request) {
+	                                                  @RequestHeader(name = "accept", required = false) String responseContentType) {
 
 		if (Assertion.isNullOrEmpty(projectAbbreviation, userId) || permissions == null || permissions.isEmpty()) {
 			log.debug("Missing parameter (projectAbbreviation, userId, or list of permissions).");
@@ -296,7 +295,7 @@ public class PermissionRESTController {
 		}
 
 		// Retrieve the project from the database
-		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+		ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
 		if (project == null) {
 			log.debug("No project found.");
 			return responseService.notFound(responseContentType);
@@ -360,7 +359,7 @@ public class PermissionRESTController {
 		}
 
 		// Batch insert
-		List<PermissionDTO> created = permissionDBService.createPermissions(validated, request);
+		List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissions(validated);
 		if (created == null) {
 			log.debug("Failed to insert any permissions.");
 			return responseService.badRequest(responseContentType);
@@ -369,16 +368,23 @@ public class PermissionRESTController {
 		// Map the list of created permissions back into original order
 	    for (int j = 0; j < created.size(); j++) {
 	        int idx = originalIndex.get(j);
-	        result.set(idx, created.get(j));
+	        result.set(idx, created.get(j).first());
 	    }
 	    
 	    // Return the results; decide on the proper status code
-	    log.debug("Successfully created " + created.stream().filter(e -> e != null).count() + " project "
+	    log.debug("Successfully created " + created.stream().filter(e -> e != null && e.first() != null).count() + " project "
     			+ "permission(s) out of " + created.size() + " requested permissions for user " + userId 
     			+ " in project " + project.getAbbreviation() + ".");
-	    if (created.contains(null)) {
-	    	// There were either duplicates or errors --> partial success
+
+	    boolean hasErrors = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_ERROR.equals(p.second()));
+	    boolean hasDuplicates = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_DUPLICATE_PERMISSION.equals(p.second()));
+	    
+	    if (hasErrors) {
+	    	// There were errors --> partial success
 	    	return responseService.partialContent(responseContentType, result);
+	    } else if (hasDuplicates) {
+	    	// There were duplicates
+	    	return responseService.ok(responseContentType, result);
 	    } else {
 	    	// All requested permissions were created
 	    	return responseService.created(responseContentType, result);
@@ -393,7 +399,6 @@ public class PermissionRESTController {
 	 * @param userId the ID of the user
 	 * @param permissions the desired list of permissions
 	 * @param responseContentType (optional) the response content type
-	 * @param request the request object, injected by Spring Boot
 	 * @return <li>a <b>201-CREATED</b> status and a list of the created permissions when 
 	 * 		   all requested permissions were successfully created</li>
 	 * 		   <li>a <b>206-PARTIAL_CONTENT</b> status and a list of the created permissions  
@@ -404,11 +409,10 @@ public class PermissionRESTController {
 	 */
 	@PostMapping("/global")
 	@PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-	@Audit(eventType = AuditEventType.CREATE, auditFor = AuditUserType.ALL)
+	@Audit
 	public ResponseEntity<?> createGlobalPermissions(@RequestParam(name = "userId") String userId,
 	                                                 @RequestBody List<PermissionDTO> permissions,
-	                                                 @RequestHeader(name = "accept", required = false) String responseContentType,
-	                                                 HttpServletRequest request) {
+	                                                 @RequestHeader(name = "accept", required = false) String responseContentType) {
 
 	    if (Assertion.isNullOrEmpty(userId) || permissions == null || permissions.isEmpty()) {
 	        return responseService.badRequest(responseContentType);
@@ -475,7 +479,7 @@ public class PermissionRESTController {
 	    }
 
 		// Batch insert
-	    List<PermissionDTO> created = permissionDBService.createPermissions(validated, request);
+	    List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissions(validated);
 	    if (created == null) {
 			log.debug("Failed to insert any permissions.");
 	        return responseService.badRequest(responseContentType);
@@ -484,15 +488,22 @@ public class PermissionRESTController {
 		// Map the list of created permissions back into original order
 	    for (int j = 0; j < created.size(); j++) {
 	        int idx = originalIndex.get(j);
-	        result.set(idx, created.get(j));
+	        result.set(idx, created.get(j).first());
 	    }
 	    
 	    // Return the results; decide on the proper status code
-	    log.debug("Successfully created " + created.stream().filter(e -> e != null).count() + " global "
+	    log.debug("Successfully created " + created.stream().filter(e -> e != null && e.first() != null).count() + " global "
     			+ "permission(s) out of " + created.size() + " requested permissions for user " + userId + ".");
-	    if (created.contains(null)) {
-	    	// There were either duplicates or errors --> partial success
+
+	    boolean hasErrors = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_ERROR.equals(p.second()));
+	    boolean hasDuplicates = created.stream().anyMatch(p -> p != null && PermissionDBService.INSERTION_DUPLICATE_PERMISSION.equals(p.second()));
+	    
+	    if (hasErrors) {
+	    	// There were errors --> partial success
 	    	return responseService.partialContent(responseContentType, result);
+	    } else if (hasDuplicates) {
+	    	// There were duplicates --> return code 200
+	    	return responseService.ok(responseContentType, result);
 	    } else {
 	    	// All requested permissions were created
 	    	return responseService.created(responseContentType, result);
@@ -505,7 +516,6 @@ public class PermissionRESTController {
 	 * @param domainName the name of the domain
 	 * @param userId the ID of the user
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status with the list of permissions 
      * 		   for the user in the given domain when successful</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when <i>domainName</i> 
@@ -515,18 +525,17 @@ public class PermissionRESTController {
 	 */
     @GetMapping("/domains/{domainName}")
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getDomainPermissions(@PathVariable("domainName") String domainName,
                                                   @RequestParam(name = "userId") String userId,
-                                                  @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                  HttpServletRequest request) {
+                                                  @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         if (Assertion.isNullOrEmpty(domainName, userId)) {
         	log.debug("The domain name or the user ID was empty");
             return responseService.badRequest(responseContentType);
         }
 
-        Domain domain = domainDBAccessService.getDomainByName(domainName, null);
+        Domain domain = domainDBAccessService.getDomainByName(domainName);
         if (domain == null) {
         	log.debug("No domain found.");
             return responseService.notFound(responseContentType);
@@ -553,7 +562,6 @@ public class PermissionRESTController {
 	 * @param projectAbbreviation the abbreviation of the project
 	 * @param userId the ID of the user
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status with the list of permissions 
      * 		   for the user in the given project when successful</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when <i>projectAbbreviation</i> 
@@ -563,18 +571,17 @@ public class PermissionRESTController {
 	 */
     @GetMapping("/projects/{projectAbbreviation}")
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getProjectPermissions(@PathVariable("projectAbbreviation") String projectAbbreviation,
                                                    @RequestParam(name = "userId") String userId,
-                                                   @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                   HttpServletRequest request) {
+                                                   @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         if (Assertion.isNullOrEmpty(projectAbbreviation, userId)) {
         	log.debug("The project abbreviation or the user ID was empty");
             return responseService.badRequest(responseContentType);
         }
 
-        ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+        ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
         if (project == null) {
         	log.debug("No project found.");
             return responseService.notFound(responseContentType);
@@ -600,7 +607,6 @@ public class PermissionRESTController {
      * 
      * @param userId the ID of the user
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status with the list of permissions 
      * 		   for the user when successful</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when the <i>userId</i> 
@@ -610,10 +616,9 @@ public class PermissionRESTController {
      */
     @GetMapping("/global")
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> getGlobalPermissions(@RequestParam(name = "userId") String userId,
-                                                  @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                  HttpServletRequest request) {
+                                                  @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         if (Assertion.isNullOrEmpty(userId)) {
             return responseService.badRequest(responseContentType);
@@ -633,15 +638,13 @@ public class PermissionRESTController {
      * This method is needed by the frontend to discover what roles are currently available.
      * 
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status with the list of permissions 
      * 		   for the user when successful</li>
      */
     @GetMapping
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> getAllPermissions(@RequestHeader(name = "accept", required = false) String responseContentType,
-                                               HttpServletRequest request) {
+    @Audit
+    public ResponseEntity<?> getAllPermissions(@RequestHeader(name = "accept", required = false) String responseContentType) {
     	List<EffectivePermissionDTO> permissions = new ArrayList<>();
     	
     	// Add domain-specific roles
@@ -669,7 +672,6 @@ public class PermissionRESTController {
 	 * @param userId the ID of the user
 	 * @param permissions the desired list of permissions
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status when the user's permissions were 
      * 		   successfully synchronized with the provided list</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when a parameter is 
@@ -679,12 +681,11 @@ public class PermissionRESTController {
 	 */
     @PutMapping("/domains/{domainName}")
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> updateDomainPermissions(@PathVariable("domainName") String domainName,
                                                      @RequestParam(name = "userId") String userId,
                                                      @RequestBody List<PermissionDTO> permissions,
-                                                     @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                     HttpServletRequest request) {
+                                                     @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         if (Assertion.isNullOrEmpty(domainName, userId) || permissions == null) {
         	log.debug("Missing parameter (domainName, userId, or list of permissions).");
@@ -692,7 +693,7 @@ public class PermissionRESTController {
         }
 
         // Retrieve domain
-        Domain domain = domainDBAccessService.getDomainByName(domainName, null);
+        Domain domain = domainDBAccessService.getDomainByName(domainName);
         if (domain == null) {
         	log.debug("No domain found.");
             return responseService.notFound(responseContentType);
@@ -745,7 +746,7 @@ public class PermissionRESTController {
 
         // Replace the old actions with the set of new actions
         log.trace("Found " + validatedActions.size() + " valid permissions for the replacement process.");
-        boolean result = permissionDBService.replacePermissionsForResource(userId, "DOMAIN", domain.getId(), validatedActions, request);
+        boolean result = permissionDBService.replacePermissionsForResource(userId, "DOMAIN", domain.getId(), validatedActions);
         
         if (result) {
         	log.debug("Successfully updated the domain permissions for user " + userId + " in domain " + domain.getName());
@@ -763,7 +764,6 @@ public class PermissionRESTController {
 	 * @param userId the ID of the user
 	 * @param permissions the desired list of permissions
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status when the user's permissions were 
      * 		   successfully synchronized with the provided list</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when a parameter is 
@@ -773,12 +773,11 @@ public class PermissionRESTController {
 	 */
     @PutMapping("/projects/{projectAbbreviation}")
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> updateProjectPermissions(@PathVariable("projectAbbreviation") String projectAbbreviation,
                                                       @RequestParam(name = "userId") String userId,
                                                       @RequestBody List<PermissionDTO> permissions,
-                                                      @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                      HttpServletRequest request) {
+                                                      @RequestHeader(name = "accept", required = false) String responseContentType) {
 
     	if (Assertion.isNullOrEmpty(projectAbbreviation, userId) || permissions == null) {
         	log.debug("Missing parameter (projectAbbreviation, userId, or list of permissions).");
@@ -786,7 +785,7 @@ public class PermissionRESTController {
         }
 
         // Retrieve project
-        ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+        ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
         if (project == null) {
         	log.debug("No project found.");
             return responseService.notFound(responseContentType);
@@ -839,7 +838,7 @@ public class PermissionRESTController {
 
         // Replace the old actions with the set of new actions
         log.trace("Found " + validatedActions.size() + " valid permissions for the replacement process.");
-        boolean result = permissionDBService.replacePermissionsForResource(userId, "PROJECT", project.getId(), validatedActions, request);
+        boolean result = permissionDBService.replacePermissionsForResource(userId, "PROJECT", project.getId(), validatedActions);
         
         if (result) {
         	log.debug("Successfully updated the project permissions for user " + userId + " in project " + project.getAbbreviation());
@@ -856,7 +855,6 @@ public class PermissionRESTController {
 	 * @param userId the ID of the user
 	 * @param permissions the desired list of permissions
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status when the user's permissions were 
      * 		   successfully synchronized with the provided list</li>
      *         <li>a <b>400-BAD_REQUEST</b> status when a parameter is 
@@ -864,11 +862,10 @@ public class PermissionRESTController {
      */
     @PutMapping("/global")
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-    @Audit(eventType = AuditEventType.UPDATE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> updateGlobalPermissions(@RequestParam(name = "userId") String userId,
                                                     @RequestBody List<PermissionDTO> permissions,
-                                                    @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                    HttpServletRequest request) {
+                                                    @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         if (Assertion.isNullOrEmpty(userId) || permissions == null) {
             return responseService.badRequest(responseContentType);
@@ -919,7 +916,7 @@ public class PermissionRESTController {
 
         // Replace the old actions with the set of new actions
         log.trace("Found " + validatedActions.size() + " valid permissions for the replacement process.");
-        boolean result = permissionDBService.replacePermissionsForResource(userId, "GLOBAL", 0, validatedActions, request);
+        boolean result = permissionDBService.replacePermissionsForResource(userId, "GLOBAL", 0, validatedActions);
         
         if (result) {
         	log.debug("Successfully updated the global permissions for user " + userId + ".");
@@ -939,7 +936,6 @@ public class PermissionRESTController {
 	 * @param userId the ID of the user
 	 * @param permissions the desired list of permissions
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>204-NO_CONTENT</b> status when the user's  
      * 		   permissions were successfully deleted</li>
      * 		   <li>a <b>206-PARTIAL_CONTENT</b> status with results if
@@ -951,12 +947,11 @@ public class PermissionRESTController {
 	 */
     @DeleteMapping("/domains/{domainName}")
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> deleteDomainPermissions(@PathVariable("domainName") String domainName,
                                     				 @RequestParam(name = "userId") String userId,
                                                      @RequestBody List<PermissionDTO> permissions,
-                                                     @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                     HttpServletRequest request) {
+                                                     @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         if (Assertion.isNullOrEmpty(domainName, userId) || permissions == null || permissions.isEmpty()) {
             log.debug("Missing parameter (domainName, userId, or list of permissions).");
@@ -964,7 +959,7 @@ public class PermissionRESTController {
         }
 
         // Retrieve domain
-        Domain domain = domainDBAccessService.getDomainByName(domainName, null);
+        Domain domain = domainDBAccessService.getDomainByName(domainName);
         if (domain == null) {
             log.debug("No domain found.");
             return responseService.notFound(responseContentType);
@@ -1033,7 +1028,7 @@ public class PermissionRESTController {
         }
 
      // Delete permissions
-        List<Boolean> deleted = permissionDBService.deletePermissions(validated, request);
+        List<Boolean> deleted = permissionDBService.deletePermissions(validated);
         if (deleted == null) {
             log.debug("Deletion of " + validated.size() + " permissions failed.");
             return responseService.badRequest(responseContentType);
@@ -1067,7 +1062,6 @@ public class PermissionRESTController {
 	 * @param userId the ID of the user
 	 * @param permissions the desired list of permissions
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>204-NO_CONTENT</b> status when the user's  
      * 		   permissions were successfully deleted</li>
      * 		   <li>a <b>206-PARTIAL_CONTENT</b> status with results if
@@ -1079,12 +1073,11 @@ public class PermissionRESTController {
 	 */
     @DeleteMapping("/projects/{projectAbbreviation}")
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> deleteProjectPermissions(@PathVariable("domainName") String projectAbbreviation,
+    @Audit
+    public ResponseEntity<?> deleteProjectPermissions(@PathVariable("projectAbbreviation") String projectAbbreviation,
     												  @RequestParam(name = "userId") String userId,
                                                       @RequestBody List<PermissionDTO> permissions,
-                                                      @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                      HttpServletRequest request) {
+                                                      @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         if (Assertion.isNullOrEmpty(projectAbbreviation, userId) || permissions == null || permissions.isEmpty()) {
             log.debug("Missing parameter (projectAbbreviation, userId, or list of permissions).");
@@ -1092,7 +1085,7 @@ public class PermissionRESTController {
         }
 
         // Retrieve project
-        ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation, null);
+        ProjectDTO project = projectDBService.getProjectByAbbreviation(projectAbbreviation);
         if (project == null) {
             log.debug("No project found.");
             return responseService.notFound(responseContentType);
@@ -1161,7 +1154,7 @@ public class PermissionRESTController {
         }
 
         // Delete permissions
-        List<Boolean> deleted = permissionDBService.deletePermissions(validated, request);
+        List<Boolean> deleted = permissionDBService.deletePermissions(validated);
         if (deleted == null) {
             log.debug("Deletion of " + validated.size() + " permissions failed.");
             return responseService.badRequest(responseContentType);
@@ -1194,7 +1187,6 @@ public class PermissionRESTController {
 	 * @param userId the ID of the user
 	 * @param permissions the desired list of permissions
 	 * @param responseContentType (optional) the response content type
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>204-NO_CONTENT</b> status when the user's  
      * 		   permissions were successfully deleted</li>
      * 		   <li>a <b>206-PARTIAL_CONTENT</b> status with results if
@@ -1204,11 +1196,10 @@ public class PermissionRESTController {
 	 */
     @DeleteMapping("/global")
     @PreAuthorize("isAuthenticated() and hasRole('permission-manager')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> deleteGlobalPermissions(@RequestParam(name = "userId") String userId,
                                                      @RequestBody List<PermissionDTO> permissions,
-                                                     @RequestHeader(name = "accept", required = false) String responseContentType,
-                                                     HttpServletRequest request) {
+                                                     @RequestHeader(name = "accept", required = false) String responseContentType) {
 
         if (Assertion.isNullOrEmpty(userId) || permissions == null || permissions.isEmpty()) {
             return responseService.badRequest(responseContentType);
@@ -1275,7 +1266,7 @@ public class PermissionRESTController {
         }
 
         // Batch delete
-        List<Boolean> deleted = permissionDBService.deletePermissions(validated, request);
+        List<Boolean> deleted = permissionDBService.deletePermissions(validated);
         if (deleted == null) {
 			log.debug("Failed to delete any permissions.");
             return responseService.badRequest(responseContentType);

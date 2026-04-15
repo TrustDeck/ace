@@ -95,7 +95,7 @@ public class SHA3Pseudonymizer extends Pseudonymizer {
 		// Retrieve counter if needed. Immediately update it and write it back
 		Long counter = null;
 		if (isMultiplePsnAllowed()) {
-			counter = isAlgorithmObjectBased() ? getAdbs().getAlgorithmByID(getAlgorithmID()).getConsecutivevaluecounter() : getDdba().getDomainByName(getDomainName(), null).getConsecutivevaluecounter();
+			counter = isAlgorithmObjectBased() ? getAdbs().getAlgorithmByID(getAlgorithmID()).getConsecutivevaluecounter() : getDdba().getDomainByName(getDomainName()).getConsecutivevaluecounter();
 			setCurrentValue(counter == null ? 1L : counter + 1L);
 			persist();
 		}

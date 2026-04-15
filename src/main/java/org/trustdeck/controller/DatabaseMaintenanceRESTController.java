@@ -17,7 +17,6 @@
 
 package org.trustdeck.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.NotFoundException;
 
 import org.jooq.DSLContext;
@@ -37,8 +36,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.trustdeck.security.audittrail.annotation.Audit;
-import org.trustdeck.security.audittrail.event.AuditEventType;
-import org.trustdeck.security.audittrail.usertype.AuditUserType;
 import org.trustdeck.service.PermissionDBService;
 import org.trustdeck.service.ResponseService;
 
@@ -75,7 +72,7 @@ public class DatabaseMaintenanceRESTController {
      */
     @GetMapping("/tables/{table}/storage")
     @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'table:read-storage')")
-    @Audit(eventType = AuditEventType.READ, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> monitorDatabaseMetrics(@PathVariable("table") String tableName) {
     	TableMetrics metrics = getTableMetrics(tableName);
     	Long dbSize = getTotalDatabaseSize();
@@ -101,7 +98,7 @@ public class DatabaseMaintenanceRESTController {
      */
     @DeleteMapping("/tables/{tableName}")
     @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'table:delete')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
+    @Audit
     public ResponseEntity<?> clearTable(@PathVariable("tableName") String tableName) {
     	try {
     		// Remove all records from table
@@ -122,17 +119,15 @@ public class DatabaseMaintenanceRESTController {
      * Access to this method should be highly restricted.
      * 
      * @param domainName (required) the name of the domain for which the user wants to remove the roles
-     * @param request the request object, injected by Spring Boot
      * @return <li>a <b>200-OK</b> status</li>
      */
     @DeleteMapping("/roles/{domainName}")
     @PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'roles:delete')")
-    @Audit(eventType = AuditEventType.DELETE, auditFor = AuditUserType.ALL)
-    public ResponseEntity<?> deleteDomainRightsAndRoles(@PathVariable("domainName") String domainName,
-    													HttpServletRequest request) {
+    @Audit
+    public ResponseEntity<?> deleteDomainRightsAndRoles(@PathVariable("domainName") String domainName) {
 		try {
 		    // Remove all roles from table
-			permissionDBService.removeDomainPermissionsForSubject(request, domainName);
+			permissionDBService.removeDomainPermissionsForSubject(domainName);
 		} catch (NotFoundException e) {
 		    // Domain does not exist. Nothing to do.
 		} catch (Exception f) {
