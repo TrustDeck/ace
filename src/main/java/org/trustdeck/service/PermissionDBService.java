@@ -26,6 +26,8 @@ import org.jooq.impl.DSL;
 import org.jooq.Row4;
 import org.jooq.UpdateConditionStep;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +42,9 @@ import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
 import org.trustdeck.jooq.generated.tables.pojos.PermissionGrant;
 import org.trustdeck.jooq.generated.tables.records.PermissionGrantRecord;
+import org.trustdeck.security.audittrail.context.AuditInformationObject;
+import org.trustdeck.security.audittrail.context.AuditSourceSystem;
+import org.trustdeck.security.audittrail.context.AuditTriggerContext;
 import org.trustdeck.utils.Assertion;
 import org.trustdeck.utils.Utility;
 import org.trustdeck.utils.Utility.Pair;
@@ -47,6 +52,7 @@ import org.trustdeck.utils.Utility.Pair;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
+import java.security.Principal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -1445,16 +1451,35 @@ public class PermissionDBService {
 	 * @return the subject ID that is in the JWT token in the request
 	 */
 	private String subjectIdFromRequest() {
+		// Try HTTP request principal first
 		HttpServletRequest request = Utility.getCurrentRequest();
-		
 		if (request != null) {
 			// Check if the information needed is in the token
-			JwtAuthenticationToken token = (JwtAuthenticationToken) request.getUserPrincipal();
-			if (token != null && token.getToken() != null && token.getToken().getSubject() != null
-					&& !token.getToken().getSubject().isBlank()) {
-				return token.getToken().getSubject();
-			}
+			Principal principal = request.getUserPrincipal();
+	        if (principal instanceof JwtAuthenticationToken token
+	                && token.getToken() != null
+	                && token.getToken().getSubject() != null
+	                && !token.getToken().getSubject().isBlank()) {
+	            return token.getToken().getSubject();
+	        }
 		}
+		
+		// Try security context next
+	    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+	    if (authentication instanceof JwtAuthenticationToken token
+	            && token.getToken() != null
+	            && token.getToken().getSubject() != null
+	            && !token.getToken().getSubject().isBlank()) {
+	        return token.getToken().getSubject();
+	    }
+	    
+	    // Finally, try the thread-local context to see if there is any information in there
+	    AuditInformationObject aio = AuditTriggerContext.get();
+	    if (aio != null && Assertion.isNotNullOrEmpty(aio.getUsername())) {
+	        return aio.getUsername();
+	    } else if (aio != null && aio.getAuditSourceSystem() == AuditSourceSystem.KAFKA) {
+	        return "KAFKA";
+	    }
 		
 		// The subject ID could not be found
 		return "UNKNOWN";
