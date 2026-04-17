@@ -168,8 +168,11 @@ public class PermissionDTO implements IObjectDTO<IPermissionGrant, PermissionDTO
 	@Override
 	@JsonIgnore
 	public Boolean validate() {
-		// Should either be a domain-specific permission and needs a domain name or (XOR) is a project-specific one with a project name
+		// Should either be a domain-specific permission and needs a domain name 
+		// or (XOR) is a project-specific one with a project name
+		// or (XOR) is a global permission with neither domain name nor project abbreviation
 		return (this.getResourceType().equalsIgnoreCase("Domain") && Assertion.isNotNullOrEmpty(this.getDomainName()))
-			 ^ (this.getResourceType().equalsIgnoreCase("Project") && Assertion.isNotNullOrEmpty(this.getProjectAbbreviation()));
+			 ^ (this.getResourceType().equalsIgnoreCase("Project") && Assertion.isNotNullOrEmpty(this.getProjectAbbreviation()))
+			 ^ (this.getResourceType().equalsIgnoreCase("Global") && Assertion.isNullOrEmpty(this.getDomainName(), this.getProjectAbbreviation()));
 	}
 }

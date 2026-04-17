@@ -30,6 +30,7 @@ import org.trustdeck.jooq.generated.tables.daos.AuditEventDao;
 import org.trustdeck.jooq.generated.tables.pojos.AuditEvent;
 import org.trustdeck.security.audittrail.context.AuditInformationObject;
 import org.trustdeck.security.audittrail.context.AuditInformationResolver;
+import org.trustdeck.security.audittrail.context.AuditTriggerContext;
 import org.trustdeck.security.audittrail.event.AuditEventBuilder;
 
 import lombok.extern.slf4j.Slf4j;
@@ -81,34 +82,35 @@ public class AuditAnnotationAspect {
     @Around("@annotation(auditAnnotation)")
     @Transactional(propagation = Propagation.REQUIRED)
     public Object auditMethod(ProceedingJoinPoint joinPoint, Audit auditAnnotation) throws AuditTrailException {
-        Object result = null;
+        // Gather information
+        AuditInformationObject aio = auditInformationResolver.resolve(joinPoint);
 
         try {
-            // Proceed with the original method
-            result = joinPoint.proceed();
-            
-            // Gather information
-            AuditInformationObject aio = auditInformationResolver.resolve(joinPoint);
-            
             // Check if we have any information, or if we should skip auditing
-            if (aio == null) {
+            if (aio != null) {
+            	// Add audit information to the current thread local context
+            	AuditTriggerContext.set(aio);
+            	
+            	 // Create audit event object
+	            AuditEvent auditEvent = auditEventBuilder.build(auditAnnotation, aio);
+	            if (auditEvent != null) {
+	            	// Write audit information into database
+	            	this.getAuditeventDao().insert(auditEvent);
+	            }
+            } else {
                 log.trace("No REST or Kafka audit information available. Skip auditing.");
-                return result;
-            }
-
-            // Create audit event object
-            AuditEvent auditEvent = auditEventBuilder.build(auditAnnotation, aio);
-            if (auditEvent != null) {
-            	// Write audit information into database
-            	this.getAuditeventDao().insert(auditEvent);
             }
             
-            return result;
+            // Proceed with the original method
+            return joinPoint.proceed();
         } catch (Throwable e) {
         	log.debug("Audit trail information could not be stored: ", e);
             
             // Throw an exception to terminate the transaction that surrounds the audit annotation processing
             throw new AuditTrailException();
+        } finally {
+        	// Remove audit information from thread
+        	AuditTriggerContext.clear();
         }
     }
 }

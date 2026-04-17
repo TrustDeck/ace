@@ -81,6 +81,7 @@ app:
       - domain:update
       - domain:update-complete
       - domain:update-salt
+      - domain:manage-permissions
       - pseudonym:create
       - pseudonym:create-batch
       - pseudonym:delete
@@ -97,6 +98,7 @@ app:
       - project:read
       - project:update
       - project:delete
+      - project:manage-permissions
       - image:create
       - image:read
       - image:update
@@ -124,6 +126,7 @@ app:
       - roles:delete
       - table:delete
       - table:read-storage
+      - global:manage-permissions
   kafka:
     enabled: ${KAFKA_ENABLED:false}
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}

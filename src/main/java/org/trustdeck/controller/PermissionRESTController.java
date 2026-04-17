@@ -214,8 +214,13 @@ public class PermissionRESTController {
 			
 			// Ensure that the action is domain-specific
 			if (!roleConfig.getACERoles().contains(p.getAction())) {
-				log.trace("Permission validation failed because the action was not domain-specific.");
-				continue;
+				if (roleConfig.getAllRoles().contains(p.getAction())) {
+					log.trace("Permission validation failed because the action was not domain-specific.");
+					continue;
+				} else {
+					log.trace("Permission validation failed because the action was not recognized.");
+					continue;
+				}
 			}
 
 			validated.add(p);
@@ -229,10 +234,15 @@ public class PermissionRESTController {
 		}
 
 		// Batch insert
-		List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissions(validated);
+		List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissionsSecured(validated);
 		if (created == null) {
 			log.debug("Failed to insert any permissions.");
 			return responseService.badRequest(responseContentType);
+		}
+		
+		if (created.isEmpty() || created.size() == 0) {
+			log.debug("No actions were added. This is usually because the requester failed bounded delegation checks.");
+			return responseService.forbidden(responseContentType);
 		}
 		
 		// Map the list of created permissions back into original order
@@ -344,8 +354,13 @@ public class PermissionRESTController {
 			
 			// Ensure that the action is project-specific
 			if (!roleConfig.getKINGRoles().contains(p.getAction())) {
-				log.trace("Permission validation failed because the action was not project-specific.");
-				continue;
+				if (roleConfig.getAllRoles().contains(p.getAction())) {
+					log.trace("Permission validation failed because the action was not project-specific.");
+					continue;
+				} else {
+					log.trace("Permission validation failed because the action was not recognized.");
+					continue;
+				}
 			}
 
 			validated.add(p);
@@ -359,10 +374,15 @@ public class PermissionRESTController {
 		}
 
 		// Batch insert
-		List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissions(validated);
+		List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissionsSecured(validated);
 		if (created == null) {
 			log.debug("Failed to insert any permissions.");
 			return responseService.badRequest(responseContentType);
+		}
+		
+		if (created.isEmpty() || created.size() == 0) {
+			log.debug("No actions were added. This is usually because the requester failed bounded delegation checks.");
+			return responseService.forbidden(responseContentType);
 		}
 		
 		// Map the list of created permissions back into original order
@@ -460,8 +480,13 @@ public class PermissionRESTController {
  			
  			// Ensure that the action is globally scoped
  			if (!roleConfig.getGlobalRoles().contains(p.getAction())) {
- 				log.trace("Permission validation failed because the action was not global-scoped.");
- 				continue;
+				if (roleConfig.getAllRoles().contains(p.getAction())) {
+	 				log.trace("Permission validation failed because the action was not global-scoped.");
+	 				continue;
+				} else {
+					log.trace("Permission validation failed because the action was not recognized.");
+					continue;
+				}
  			}
 	        
  			// Ensure we don't have unnecessary information
@@ -479,11 +504,16 @@ public class PermissionRESTController {
 	    }
 
 		// Batch insert
-	    List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissions(validated);
+	    List<Pair<PermissionDTO, String>> created = permissionDBService.createPermissionsSecured(validated);
 	    if (created == null) {
 			log.debug("Failed to insert any permissions.");
 	        return responseService.badRequest(responseContentType);
 	    }
+		
+		if (created.isEmpty() || created.size() == 0) {
+			log.debug("No actions were added. This is usually because the requester failed bounded delegation checks.");
+			return responseService.forbidden(responseContentType);
+		}
 
 		// Map the list of created permissions back into original order
 	    for (int j = 0; j < created.size(); j++) {
@@ -707,7 +737,7 @@ public class PermissionRESTController {
             	continue;
             }
             
-            if (!p.getDomainName().equals(domainName)) {
+            if (Assertion.isNullOrEmpty(p.getDomainName()) || !p.getDomainName().equals(domainName)) {
             	log.trace("Permission validation failed because the domain name was different from the URI-domain name.");
             	continue;
             }
@@ -746,7 +776,7 @@ public class PermissionRESTController {
 
         // Replace the old actions with the set of new actions
         log.trace("Found " + validatedActions.size() + " valid permissions for the replacement process.");
-        boolean result = permissionDBService.replacePermissionsForResource(userId, "DOMAIN", domain.getId(), validatedActions);
+        boolean result = permissionDBService.replacePermissionsForResourceSecured(userId, "DOMAIN", domain.getId(), validatedActions);
         
         if (result) {
         	log.debug("Successfully updated the domain permissions for user " + userId + " in domain " + domain.getName());
@@ -799,7 +829,7 @@ public class PermissionRESTController {
             	continue;
             }
             
-            if (!p.getProjectAbbreviation().equals(projectAbbreviation)) {
+            if (Assertion.isNullOrEmpty(p.getProjectAbbreviation()) || !p.getProjectAbbreviation().equals(projectAbbreviation)) {
             	log.trace("Permission validation failed because the project abbreviation was different from the URI-project abbreviation.");
             	continue;
             }
@@ -838,7 +868,7 @@ public class PermissionRESTController {
 
         // Replace the old actions with the set of new actions
         log.trace("Found " + validatedActions.size() + " valid permissions for the replacement process.");
-        boolean result = permissionDBService.replacePermissionsForResource(userId, "PROJECT", project.getId(), validatedActions);
+        boolean result = permissionDBService.replacePermissionsForResourceSecured(userId, "PROJECT", project.getId(), validatedActions);
         
         if (result) {
         	log.debug("Successfully updated the project permissions for user " + userId + " in project " + project.getAbbreviation());
@@ -916,7 +946,7 @@ public class PermissionRESTController {
 
         // Replace the old actions with the set of new actions
         log.trace("Found " + validatedActions.size() + " valid permissions for the replacement process.");
-        boolean result = permissionDBService.replacePermissionsForResource(userId, "GLOBAL", 0, validatedActions);
+        boolean result = permissionDBService.replacePermissionsForResourceSecured(userId, "GLOBAL", 0, validatedActions);
         
         if (result) {
         	log.debug("Successfully updated the global permissions for user " + userId + ".");
@@ -983,7 +1013,7 @@ public class PermissionRESTController {
                 continue;
             }
             
-            if (!p.getDomainName().equals(domainName)) {
+            if (Assertion.isNullOrEmpty(p.getDomainName()) || !p.getDomainName().equals(domainName)) {
             	log.trace("Permission validation failed because the domain name was different from the URI-domain name.");
             	continue;
             }
@@ -1027,12 +1057,17 @@ public class PermissionRESTController {
             return responseService.ok(responseContentType, result);
         }
 
-     // Delete permissions
-        List<Boolean> deleted = permissionDBService.deletePermissions(validated);
+        // Delete permissions
+        List<Boolean> deleted = permissionDBService.deletePermissionsSecured(validated);
         if (deleted == null) {
             log.debug("Deletion of " + validated.size() + " permissions failed.");
             return responseService.badRequest(responseContentType);
         }
+		
+		if (deleted.isEmpty() || deleted.size() == 0) {
+			log.debug("No actions were deleted. This is usually because the requester failed bounded delegation checks.");
+			return responseService.forbidden(responseContentType);
+		}
 
         // Map the list of deleted permissions back into original order
         for (int j = 0; j < deleted.size(); j++) {
@@ -1109,7 +1144,7 @@ public class PermissionRESTController {
                 continue;
             }
             
-            if (!p.getProjectAbbreviation().equals(projectAbbreviation)) {
+            if (Assertion.isNullOrEmpty(p.getProjectAbbreviation()) || !p.getProjectAbbreviation().equals(projectAbbreviation)) {
             	log.trace("Permission validation failed because the project abbreviation was different from the URI-project abbreviation.");
             	continue;
             }
@@ -1154,11 +1189,16 @@ public class PermissionRESTController {
         }
 
         // Delete permissions
-        List<Boolean> deleted = permissionDBService.deletePermissions(validated);
+        List<Boolean> deleted = permissionDBService.deletePermissionsSecured(validated);
         if (deleted == null) {
             log.debug("Deletion of " + validated.size() + " permissions failed.");
             return responseService.badRequest(responseContentType);
         }
+		
+		if (deleted.isEmpty() || deleted.size() == 0) {
+			log.debug("No actions were deleted. This is usually because the requester failed bounded delegation checks.");
+			return responseService.forbidden(responseContentType);
+		}
 
         // Map the list of deleted permissions back into original order
         for (int j = 0; j < deleted.size(); j++) {
@@ -1266,11 +1306,16 @@ public class PermissionRESTController {
         }
 
         // Batch delete
-        List<Boolean> deleted = permissionDBService.deletePermissions(validated);
+        List<Boolean> deleted = permissionDBService.deletePermissionsSecured(validated);
         if (deleted == null) {
 			log.debug("Failed to delete any permissions.");
             return responseService.badRequest(responseContentType);
         }
+		
+		if (deleted.isEmpty() || deleted.size() == 0) {
+			log.debug("No actions were deleted. This is usually because the requester failed bounded delegation checks.");
+			return responseService.forbidden(responseContentType);
+		}
 
         // Map the list of deleted permissions back into original order
         for (int j = 0; j < deleted.size(); j++) {
