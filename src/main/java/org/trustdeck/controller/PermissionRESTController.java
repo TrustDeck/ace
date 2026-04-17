@@ -214,8 +214,13 @@ public class PermissionRESTController {
 			
 			// Ensure that the action is domain-specific
 			if (!roleConfig.getACERoles().contains(p.getAction())) {
-				log.trace("Permission validation failed because the action was not domain-specific.");
-				continue;
+				if (roleConfig.getAllRoles().contains(p.getAction())) {
+					log.trace("Permission validation failed because the action was not domain-specific.");
+					continue;
+				} else {
+					log.trace("Permission validation failed because the action was not recognized.");
+					continue;
+				}
 			}
 
 			validated.add(p);
@@ -349,8 +354,13 @@ public class PermissionRESTController {
 			
 			// Ensure that the action is project-specific
 			if (!roleConfig.getKINGRoles().contains(p.getAction())) {
-				log.trace("Permission validation failed because the action was not project-specific.");
-				continue;
+				if (roleConfig.getAllRoles().contains(p.getAction())) {
+					log.trace("Permission validation failed because the action was not project-specific.");
+					continue;
+				} else {
+					log.trace("Permission validation failed because the action was not recognized.");
+					continue;
+				}
 			}
 
 			validated.add(p);
@@ -470,8 +480,13 @@ public class PermissionRESTController {
  			
  			// Ensure that the action is globally scoped
  			if (!roleConfig.getGlobalRoles().contains(p.getAction())) {
- 				log.trace("Permission validation failed because the action was not global-scoped.");
- 				continue;
+				if (roleConfig.getAllRoles().contains(p.getAction())) {
+	 				log.trace("Permission validation failed because the action was not global-scoped.");
+	 				continue;
+				} else {
+					log.trace("Permission validation failed because the action was not recognized.");
+					continue;
+				}
  			}
 	        
  			// Ensure we don't have unnecessary information
