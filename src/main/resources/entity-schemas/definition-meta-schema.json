@@ -132,7 +132,80 @@
           "items": {
             "type": "string"
           }
-        }
+        },
+		"tags": {
+		  "type": "array",
+		  "items": {
+		    "type": "string",
+		    "minLength": 1,
+		    "pattern": "^[a-zA-Z0-9_.:-]+$"
+		  },
+		  "minItems": 1,
+		  "uniqueItems": true
+		},
+		"linkageConfig": {
+		  "type": "object",
+		  "additionalProperties": false,
+		  "properties": {
+		    "normalizers": {
+		      "type": "array",
+		      "items": {
+		        "type": "string",
+		        "enum": [
+		          "trim",
+		          "lower",
+		          "collapseWhitespace",
+		          "asciiFold",
+		          "umlautFold",
+		          "removePunctuation",
+		          "digitsOnly"
+		        ]
+		      },
+		      "uniqueItems": true
+		    },
+		    "encoders": {
+		      "type": "array",
+		      "items": {
+		        "type": "string",
+		        "enum": [
+		          "cologne"
+		        ]
+		      },
+		      "uniqueItems": true
+		    },
+		    "blocking": {
+		      "type": "array",
+		      "items": {
+		        "type": "string",
+		        "enum": [
+		          "exact",
+		          "prefix3",
+		          "prefix4",
+		          "prefix6",
+		          "phonetic",
+		          "year",
+		          "yearMonth",
+		          "domainExact"
+		        ]
+		      },
+		      "uniqueItems": true
+		    },
+		    "comparator": {
+		      "type": "string",
+		      "enum": [
+		        "exact",
+		        "trigram",
+		        "date",
+		        "email",
+		        "phone"
+		      ]
+		    },
+		    "weight": {
+		      "type": "number",
+		      "minimum": 0.0
+		    }
+		  }
+		}
       },
       "patternProperties": {
         "^label_[A-Za-z]{2}$": {
