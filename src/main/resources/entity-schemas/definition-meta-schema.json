@@ -133,7 +133,7 @@
             "type": "string"
           }
         },
-		"tags": {
+		"tags": { // Semantic descriptor of the field, since different entity types may use different field names, but have the same logical meaning
 		  "type": "array",
 		  "items": {
 		    "type": "string",
