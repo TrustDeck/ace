@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import org.jooq.JSONB;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.trustdeck.linkage.LinkageFieldRule;
 import org.trustdeck.utils.LRUCache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -212,6 +213,20 @@ public class JsonSchemaService {
 			boolean pRequired = p.path("required").asBoolean(false);
 			if (bRequired && !pRequired) {
 				errors.add("Attribute \"" + path + "\" is required in the base type and must remain required.");
+			}
+			
+			// Check equal linkage-status
+			boolean bLinkage = b.path("linkage").asBoolean(false);
+			boolean pLinkage = p.path("linkage").asBoolean(false);
+			if (bLinkage && !pLinkage) {
+			    errors.add("Attribute \"" + path + "\" is linkage-enabled in the base type and must remain linkage-enabled.");
+			}
+
+			// Check equal linkage tags
+			Set<String> bTags = jsonArraytoStringSet(b.get("tags"));
+			Set<String> pTags = jsonArraytoStringSet(p.has("tags") ? p.get("tags") : b.get("tags"));
+			if (!pTags.containsAll(bTags)) {
+			    errors.add("Attribute \"" + path + "\" must preserve all linkage tags from the base type.");
 			}
 
 			// Check that constraints are equal or stricter
@@ -807,6 +822,192 @@ public class JsonSchemaService {
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Creates the default record linkage rule for a single leaf attribute definition.
+	 * The returned rule contains the baseline linkage configuration for the given field
+	 * and can later be refined or overridden by an explicit linkage configuration from a
+	 * project-specific entity type or its corresponding base type.
+	 * 
+	 * @param path the logical path of the field inside the type definition
+	 * @param node the leaf definition node from which the default linkage rule should be derived
+	 * @return the default linkage rule for the given field
+	 */
+	private LinkageFieldRule applyDefaultLinkageConfig(String path, JsonNode node) {
+		if (node == null) {
+			return null;
+		}
+		
+		// Extract the name
+		String name = node.path("name").asText();
+		
+		// Extract the data type of the attribute which this rule is for
+		String type = node.path("type").asText("string");
+		
+		// Extract the semantic tag for this attribute
+		String tag = null;
+		if (node.has("tags") && node.get("tags").isArray() && !node.get("tags").isEmpty()) {
+			tag = node.get("tags").get(0).asText();
+		}
+		
+		// Build the rule
+		LinkageFieldRule rule = LinkageFieldRule.builder()
+			.path(path)
+			.name(name)
+			.tag((tag != null && !tag.isBlank()) ? tag : "generic." + name)
+			.type(type)
+			.linkage(node.path("linkage").asBoolean(false))
+			.build();
+		
+		// If the attribute is a date, use date-ralted defaults
+		switch (type) {
+			case "date": {
+				rule.setNormalizers(List.of("trim"));
+				rule.setEncoders(List.of());
+				rule.setBlocking(List.of("exact", "year", "yearMonth"));
+				rule.setComparator("date");
+				rule.setWeight(3.0);
+			}
+			default: {
+				rule.setNormalizers(List.of("trim", "lower", "collapseWhitespace"));
+				rule.setEncoders(List.of());
+				rule.setBlocking(List.of("exact", "prefix4"));
+				rule.setComparator("trigram");
+				rule.setWeight(1.0);
+			}
+		}
+		
+		return rule;
+	}
+	
+	/**
+	 * Resolves the effective record linkage rules for all linkage-enabled leaf attributes
+	 * of a project-specific type definition, optionally inheriting defaults and overrides
+	 * from the corresponding base type definition.
+	 * 
+	 * The resolution follows this order:
+	 * <ol>
+	 *   <li>default linkage configuration derived from the base type leaf node if present,
+	 *       otherwise from the project-specific leaf node</li>
+	 *   <li>tag values taken from the project-specific node if present, otherwise from the 
+	 *   	 base type node</li>
+	 *   <li>explicit linkage configuration taken from the project-specific node if present,
+	 *       otherwise from the base type node</li>
+	 * </ol>
+	 * 
+	 * Only attributes whose effective {@code linkage} flag is set to {@code true} are included
+	 * in the returned result.
+	 * 
+	 * @param baseDefinition the base type definition that may provide inherited linkage defaults; may be {@code null}
+	 * @param definition the concrete project-specific type definition for which the effective linkage rules should be resolved
+	 * @return the list of effective linkage field rules for all linkage-enabled leaf attributes
+	 */
+	public List<LinkageFieldRule> resolveLinkageFieldRules(JsonNode baseDefinition, JsonNode definition) {
+		// Get a flat map of the base type's leaf nodes, if available 
+		Map<String, JsonNode> baseLeafNodes = (baseDefinition == null) ? Map.of() : flattenLeafNodes(baseDefinition);
+		
+		// Get a flat map of the project-specific type's leaf nodes
+		Map<String, JsonNode> projectLeafNodes = flattenLeafNodes(definition);
+
+		// Create the rules
+		List<LinkageFieldRule> resolvedRules = new ArrayList<>();
+		for (Map.Entry<String, JsonNode> entry : projectLeafNodes.entrySet()) {
+			String path = entry.getKey();
+			JsonNode projectSpecificNode = entry.getValue();
+			JsonNode baseNode = baseLeafNodes.get(path);
+
+			// Check if this attribute should be used for record linkage purposes
+			if (!projectSpecificNode.path("linkage")
+					.asBoolean(baseNode != null && baseNode.path("linkage").asBoolean(false))) {
+				continue;
+			}
+
+			// Use either the base type's default-linkage-configuration or the sproject-spefic type's one if there is no base type
+			LinkageFieldRule rule = applyDefaultLinkageConfig(path, (baseNode != null) ? baseNode : projectSpecificNode);
+			if (rule == null) {
+				continue;
+			}
+
+			// Set the tag for the rule by either using the project-sp. type's tag or the base type's instead
+			JsonNode tagSourceNode = projectSpecificNode.has("tags") ? projectSpecificNode : baseNode;
+			if (tagSourceNode != null && tagSourceNode.has("tags") && tagSourceNode.get("tags").isArray()
+					&& !tagSourceNode.get("tags").isEmpty()) {
+				rule.setTag(tagSourceNode.get("tags").get(0).asText());
+			}
+
+			// Decide which linkage config to use
+			JsonNode linkageConfigNode = projectSpecificNode.has("linkageConfig")
+					? projectSpecificNode.get("linkageConfig")
+					: (baseNode != null ? baseNode.get("linkageConfig") : null);
+
+			// Add normalizer, encoder, blocking, comparator, and weight settings to the rule
+			if (linkageConfigNode != null) {
+				if (linkageConfigNode.has("normalizers")) {
+					rule.setNormalizers(jsonArrayToStringList(linkageConfigNode.get("normalizers")));
+				}
+				
+				if (linkageConfigNode.has("encoders")) {
+					rule.setEncoders(jsonArrayToStringList(linkageConfigNode.get("encoders")));
+				}
+				
+				if (linkageConfigNode.has("blocking")) {
+					rule.setBlocking(jsonArrayToStringList(linkageConfigNode.get("blocking")));
+				}
+				
+				if (linkageConfigNode.has("comparator")) {
+					rule.setComparator(linkageConfigNode.get("comparator").asText());
+				}
+				
+				if (linkageConfigNode.has("weight")) {
+					rule.setWeight(linkageConfigNode.get("weight").asDouble());
+				}
+			}
+
+			// Done building the rule for this attribute
+			resolvedRules.add(rule);
+		}
+
+		return resolvedRules;
+	}
+
+	/**
+	 * Converts a JSON array node into a list of strings.
+	 * Non-array nodes result in an empty list.
+	 * 
+	 * @param arrayNode the JSON array node whose values should be converted to strings
+	 * @return a list containing the string representation of all array elements, or an empty list if the node is not an array
+	 */
+	private List<String> jsonArrayToStringList(JsonNode arrayNode) {
+		if (arrayNode == null || !arrayNode.isArray()) {
+			return List.of();
+		}
+
+		List<String> values = new ArrayList<>();
+		for (JsonNode node : arrayNode) {
+			values.add(node.asText());
+		}
+		
+		return values;
+	}
+	
+	/**
+	 * Converts a JSON array node into a set of strings.
+	 * Non-array or {@code null} nodes result in an empty set.
+	 * 
+	 * @param arrayNode the JSON array node whose values should be converted to strings
+	 * @return a set containing the string representation of all array elements, or an empty set if the node is not an array
+	 */
+	private Set<String> jsonArraytoStringSet(JsonNode arrayNode) {
+	    Set<String> out = new HashSet<>();
+	    
+	    if (arrayNode != null && arrayNode.isArray()) {
+	        for (JsonNode n : arrayNode) {
+	            out.add(n.asText());
+	        }
+	    }
+	    
+	    return out;
 	}
 
 	/**
