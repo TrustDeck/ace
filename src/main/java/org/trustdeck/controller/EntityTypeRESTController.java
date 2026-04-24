@@ -587,7 +587,7 @@ public class EntityTypeRESTController {
 	
 	/**
 	 * Endpoint to search for base entity types.
-	 * the search supports multi-word search and searches in the type's
+	 * The search supports multi-word search and searches in the type's
 	 * name, version, and type definition.
 	 * 
 	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
@@ -618,7 +618,7 @@ public class EntityTypeRESTController {
 	
 	/**
 	 * Endpoint to search for entity types in a project.
-	 * the search supports multi-word search and searches in the type's
+	 * The search supports multi-word search and searches in the type's
 	 * name, version, and type definition.
 	 * 
 	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to

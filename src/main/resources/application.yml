@@ -123,6 +123,7 @@ app:
       - project:list-all
       - base-type:create
       - base-type:read
+      - base-type:search
       - roles:delete
       - table:delete
       - table:read-storage
