@@ -419,7 +419,7 @@ public class EntityTypeDBService {
      * @return a list of entity types that match the search query
      */
     @Transactional
-    public List<EntityTypeDTO> searchEntityType(String query, int projectId) {
+    public List<EntityTypeDTO> searchEntityType(String query, Integer projectId) {
     	if (Assertion.isNullOrEmpty(query)) {
             log.debug("Search query is empty.");
             return null;
@@ -427,14 +427,24 @@ public class EntityTypeDBService {
     	
     	// Allow wildcard-search with '*'
     	if (query.trim().equalsIgnoreCase("*")) {
-    		// Return all entity types for this project
     		List<EntityType> results;
             try {
-                results = dsl.selectFrom(ENTITY_TYPE)
-	            			.where(ENTITY_TYPE.PROJECT_ID.eq(projectId))
-	            			.and(ENTITY_TYPE.IS_DEPRECATED.eq(false))
-	            			.orderBy(ENTITY_TYPE.NAME.asc(), ENTITY_TYPE.VERSION.asc())
-	                        .fetchInto(EntityType.class);
+        		// Check if we are searching for a base-type (projectId not given)
+        		if (projectId == null) {
+        			results = dsl.selectFrom(ENTITY_TYPE)
+        						.where(ENTITY_TYPE.PROJECT_ID.isNull())
+        						.and(ENTITY_TYPE.IS_BASE_TYPE.eq(true))
+		            			.and(ENTITY_TYPE.IS_DEPRECATED.eq(false))
+    	            			.orderBy(ENTITY_TYPE.NAME.asc(), ENTITY_TYPE.VERSION.asc())
+        						.fetchInto(EntityType.class);
+        		} else {
+        			// Return all project-specific entity types
+        			results = dsl.selectFrom(ENTITY_TYPE)
+		            			.where(ENTITY_TYPE.PROJECT_ID.eq(projectId))
+		            			.and(ENTITY_TYPE.IS_DEPRECATED.eq(false))
+		            			.orderBy(ENTITY_TYPE.NAME.asc(), ENTITY_TYPE.VERSION.asc())
+		                        .fetchInto(EntityType.class);
+        		}
             } catch (MappingException e) {
                 log.debug("Could not map entity type search result.", e);
                 return null;
@@ -468,8 +478,14 @@ public class EntityTypeDBService {
         // Exclude deprecated/deleted types
         condition = condition.and(ENTITY_TYPE.IS_DEPRECATED.eq(false));
         
-        // Only search in a project scope
-        condition = condition.and(ENTITY_TYPE.PROJECT_ID.eq(projectId));
+        // Handle base type searches
+        if (projectId == null) {
+        	condition = condition.and(ENTITY_TYPE.PROJECT_ID.isNull())
+        						 .and(ENTITY_TYPE.IS_BASE_TYPE.eq(true));
+        } else {
+        	// Only search in a project scope
+        	condition = condition.and(ENTITY_TYPE.PROJECT_ID.eq(projectId));
+        }
 
         // Execute the search
         List<EntityType> results;
