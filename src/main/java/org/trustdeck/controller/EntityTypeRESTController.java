@@ -586,6 +586,37 @@ public class EntityTypeRESTController {
 	}
 	
 	/**
+	 * Endpoint to search for base entity types.
+	 * the search supports multi-word search and searches in the type's
+	 * name, version, and type definition.
+	 * 
+	 * @param projectAbbreviation the abbreviation of the project to which the request is scoped to
+	 * @param query the search string that should be used to find entity types
+	 * @param responseContentType (optional) the response content type
+	 * @return <li>a <b>200-OK</b> status with the list of matching entity types on success</li>
+     *         <li>a <b>404-NOT_FOUND</b> status when no entity types match the query or the project does not exist</li>
+     *         <li>a <b>410-GONE</b> status when the project has already ended/is marked as deleted</li>
+	 */
+	@GetMapping("/entities/base-types")
+	@PreAuthorize("isAuthenticated() and @auth.hasGlobalPermission(#root, 'base-type:search')")
+	@Audit
+	public ResponseEntity<?> searchBaseEntityType(@RequestParam(name = "query", required = true) String query,
+												  @RequestHeader(name = "accept", required = false) String responseContentType) {
+		
+		// Retrieve base types from the database
+		List<EntityTypeDTO> types = entityTypeDBService.searchEntityType(query, null);
+		
+		// Evaluate result
+		if (types == null || types.size() == 0) {
+			log.debug("No entity types for the given query string were found.");
+			return responseService.notFound(responseContentType);
+		}
+		
+		log.debug("Successfully found " + types.size() + " entity types.");
+		return responseService.ok(responseContentType, types);
+	}
+	
+	/**
 	 * Endpoint to search for entity types in a project.
 	 * the search supports multi-word search and searches in the type's
 	 * name, version, and type definition.
