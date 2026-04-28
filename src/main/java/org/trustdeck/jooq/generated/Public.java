@@ -18,6 +18,7 @@ import org.trustdeck.jooq.generated.tables.AuditEvent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
+import org.trustdeck.jooq.generated.tables.LinkageToken;
 import org.trustdeck.jooq.generated.tables.PermissionGrant;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
@@ -63,6 +64,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.entity_type</code>.
      */
     public final EntityType ENTITY_TYPE = EntityType.ENTITY_TYPE;
+
+    /**
+     * The table <code>public.linkage_token</code>.
+     */
+    public final LinkageToken LINKAGE_TOKEN = LinkageToken.LINKAGE_TOKEN;
 
     /**
      * The table <code>public.permission_grant</code>.
@@ -144,6 +150,7 @@ public class Public extends SchemaImpl {
             Domain.DOMAIN,
             EntityInstance.ENTITY_INSTANCE,
             EntityType.ENTITY_TYPE,
+            LinkageToken.LINKAGE_TOKEN,
             PermissionGrant.PERMISSION_GRANT,
             PgpArmorHeaders.PGP_ARMOR_HEADERS,
             Project.PROJECT,
