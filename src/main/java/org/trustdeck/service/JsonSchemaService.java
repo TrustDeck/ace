@@ -433,6 +433,96 @@ public class JsonSchemaService {
 	}
 	
 	/**
+	 * Resolves the effective record linkage rules for all linkage-enabled leaf attributes
+	 * of a project-specific type definition, optionally inheriting defaults and overrides
+	 * from the corresponding base type definition.
+	 * 
+	 * The resolution follows this order:
+	 * <ol>
+	 *   <li>default linkage configuration derived from the base type leaf node if present,
+	 *       otherwise from the project-specific leaf node</li>
+	 *   <li>tag values taken from the project-specific node if present, otherwise from the 
+	 *   	 base type node</li>
+	 *   <li>explicit linkage configuration taken from the project-specific node if present,
+	 *       otherwise from the base type node</li>
+	 * </ol>
+	 * 
+	 * Only attributes whose effective {@code linkage} flag is set to {@code true} are included
+	 * in the returned result.
+	 * 
+	 * @param typeDefinition the concrete project-specific type definition for which the effective linkage rules should be resolved
+	 * @param baseDefinition the base type definition that may provide inherited linkage defaults; may be {@code null}
+	 * @return the list of effective linkage field rules for all linkage-enabled leaf attributes
+	 */
+	public List<LinkageFieldRule> resolveLinkageFieldRules(JsonNode typeDefinition, JsonNode baseDefinition) {
+		// Get a flat map of the base type's leaf nodes, if available 
+		Map<String, JsonNode> baseLeafNodes = (baseDefinition == null) ? Map.of() : flattenLeafNodes(baseDefinition);
+		
+		// Get a flat map of the project-specific type's leaf nodes
+		Map<String, JsonNode> projectLeafNodes = flattenLeafNodes(typeDefinition);
+
+		// Create the rules
+		List<LinkageFieldRule> resolvedRules = new ArrayList<>();
+		for (Map.Entry<String, JsonNode> entry : projectLeafNodes.entrySet()) {
+			String path = entry.getKey();
+			JsonNode projectSpecificNode = entry.getValue();
+			JsonNode baseNode = baseLeafNodes.get(path);
+
+			// Check if this attribute should be used for record linkage purposes
+			if (!projectSpecificNode.path("linkage")
+					.asBoolean(baseNode != null && baseNode.path("linkage").asBoolean(false))) {
+				continue;
+			}
+
+			// Use either the base type's default-linkage-configuration or the sproject-spefic type's one if there is no base type
+			LinkageFieldRule rule = applyDefaultLinkageConfig(path, (baseNode != null) ? baseNode : projectSpecificNode);
+			if (rule == null) {
+				continue;
+			}
+
+			// Set the tag for the rule by either using the project-sp. type's tag or the base type's instead
+			JsonNode tagSourceNode = projectSpecificNode.has("tags") ? projectSpecificNode : baseNode;
+			if (tagSourceNode != null && tagSourceNode.has("tags") && tagSourceNode.get("tags").isArray()
+					&& !tagSourceNode.get("tags").isEmpty()) {
+				rule.setTag(tagSourceNode.get("tags").get(0).asText());
+			}
+
+			// Decide which linkage config to use
+			JsonNode linkageConfigNode = projectSpecificNode.has("linkageConfig")
+					? projectSpecificNode.get("linkageConfig")
+					: (baseNode != null ? baseNode.get("linkageConfig") : null);
+
+			// Add normalizer, encoder, blocking, comparator, and weight settings to the rule
+			if (linkageConfigNode != null) {
+				if (linkageConfigNode.has("normalizers")) {
+					rule.setNormalizers(jsonArrayToStringList(linkageConfigNode.get("normalizers")));
+				}
+				
+				if (linkageConfigNode.has("encoders")) {
+					rule.setEncoders(jsonArrayToStringList(linkageConfigNode.get("encoders")));
+				}
+				
+				if (linkageConfigNode.has("blocking")) {
+					rule.setBlocking(jsonArrayToStringList(linkageConfigNode.get("blocking")));
+				}
+				
+				if (linkageConfigNode.has("comparator")) {
+					rule.setComparator(linkageConfigNode.get("comparator").asText());
+				}
+				
+				if (linkageConfigNode.has("weight")) {
+					rule.setWeight(linkageConfigNode.get("weight").asDouble());
+				}
+			}
+
+			// Done building the rule for this attribute
+			resolvedRules.add(rule);
+		}
+
+		return resolvedRules;
+	}
+	
+	/**
 	 * Validate attribute nodes in an attribute array. 
 	 * 
 	 * @param attributes the JsonNode representation of the attribute-array
@@ -860,16 +950,16 @@ public class JsonSchemaService {
 			.linkage(node.path("linkage").asBoolean(false))
 			.build();
 		
-		// If the attribute is a date, use date-ralted defaults
+		// If the attribute is a date, use date-related defaults
 		switch (type) {
-			case "date": {
+			case "date" -> {
 				rule.setNormalizers(List.of("trim"));
 				rule.setEncoders(List.of());
 				rule.setBlocking(List.of("exact", "year", "yearMonth"));
 				rule.setComparator("date");
 				rule.setWeight(3.0);
 			}
-			default: {
+			default -> {
 				rule.setNormalizers(List.of("trim", "lower", "collapseWhitespace"));
 				rule.setEncoders(List.of());
 				rule.setBlocking(List.of("exact", "prefix4"));
@@ -879,96 +969,6 @@ public class JsonSchemaService {
 		}
 		
 		return rule;
-	}
-	
-	/**
-	 * Resolves the effective record linkage rules for all linkage-enabled leaf attributes
-	 * of a project-specific type definition, optionally inheriting defaults and overrides
-	 * from the corresponding base type definition.
-	 * 
-	 * The resolution follows this order:
-	 * <ol>
-	 *   <li>default linkage configuration derived from the base type leaf node if present,
-	 *       otherwise from the project-specific leaf node</li>
-	 *   <li>tag values taken from the project-specific node if present, otherwise from the 
-	 *   	 base type node</li>
-	 *   <li>explicit linkage configuration taken from the project-specific node if present,
-	 *       otherwise from the base type node</li>
-	 * </ol>
-	 * 
-	 * Only attributes whose effective {@code linkage} flag is set to {@code true} are included
-	 * in the returned result.
-	 * 
-	 * @param typeDefinition the concrete project-specific type definition for which the effective linkage rules should be resolved
-	 * @param baseDefinition the base type definition that may provide inherited linkage defaults; may be {@code null}
-	 * @return the list of effective linkage field rules for all linkage-enabled leaf attributes
-	 */
-	public List<LinkageFieldRule> resolveLinkageFieldRules(JsonNode typeDefinition, JsonNode baseDefinition) {
-		// Get a flat map of the base type's leaf nodes, if available 
-		Map<String, JsonNode> baseLeafNodes = (baseDefinition == null) ? Map.of() : flattenLeafNodes(baseDefinition);
-		
-		// Get a flat map of the project-specific type's leaf nodes
-		Map<String, JsonNode> projectLeafNodes = flattenLeafNodes(typeDefinition);
-
-		// Create the rules
-		List<LinkageFieldRule> resolvedRules = new ArrayList<>();
-		for (Map.Entry<String, JsonNode> entry : projectLeafNodes.entrySet()) {
-			String path = entry.getKey();
-			JsonNode projectSpecificNode = entry.getValue();
-			JsonNode baseNode = baseLeafNodes.get(path);
-
-			// Check if this attribute should be used for record linkage purposes
-			if (!projectSpecificNode.path("linkage")
-					.asBoolean(baseNode != null && baseNode.path("linkage").asBoolean(false))) {
-				continue;
-			}
-
-			// Use either the base type's default-linkage-configuration or the sproject-spefic type's one if there is no base type
-			LinkageFieldRule rule = applyDefaultLinkageConfig(path, (baseNode != null) ? baseNode : projectSpecificNode);
-			if (rule == null) {
-				continue;
-			}
-
-			// Set the tag for the rule by either using the project-sp. type's tag or the base type's instead
-			JsonNode tagSourceNode = projectSpecificNode.has("tags") ? projectSpecificNode : baseNode;
-			if (tagSourceNode != null && tagSourceNode.has("tags") && tagSourceNode.get("tags").isArray()
-					&& !tagSourceNode.get("tags").isEmpty()) {
-				rule.setTag(tagSourceNode.get("tags").get(0).asText());
-			}
-
-			// Decide which linkage config to use
-			JsonNode linkageConfigNode = projectSpecificNode.has("linkageConfig")
-					? projectSpecificNode.get("linkageConfig")
-					: (baseNode != null ? baseNode.get("linkageConfig") : null);
-
-			// Add normalizer, encoder, blocking, comparator, and weight settings to the rule
-			if (linkageConfigNode != null) {
-				if (linkageConfigNode.has("normalizers")) {
-					rule.setNormalizers(jsonArrayToStringList(linkageConfigNode.get("normalizers")));
-				}
-				
-				if (linkageConfigNode.has("encoders")) {
-					rule.setEncoders(jsonArrayToStringList(linkageConfigNode.get("encoders")));
-				}
-				
-				if (linkageConfigNode.has("blocking")) {
-					rule.setBlocking(jsonArrayToStringList(linkageConfigNode.get("blocking")));
-				}
-				
-				if (linkageConfigNode.has("comparator")) {
-					rule.setComparator(linkageConfigNode.get("comparator").asText());
-				}
-				
-				if (linkageConfigNode.has("weight")) {
-					rule.setWeight(linkageConfigNode.get("weight").asDouble());
-				}
-			}
-
-			// Done building the rule for this attribute
-			resolvedRules.add(rule);
-		}
-
-		return resolvedRules;
 	}
 
 	/**
