@@ -43,7 +43,7 @@ public class LinkageToken {
     private String tag;
 
     /** The type of token that was generated (e.g. norm, phonetic, block). */
-    private String tokenType;
+    private LinkageTokenType tokenType;
 
     /** The actual token's value used for record linkage. */
     private String tokenValue;

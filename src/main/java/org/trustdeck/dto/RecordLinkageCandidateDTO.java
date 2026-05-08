@@ -19,6 +19,8 @@ package org.trustdeck.dto;
 
 import java.util.List;
 
+import org.trustdeck.model.CandidateStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -45,4 +47,7 @@ public class RecordLinkageCandidateDTO {
 
     /** The list of fields or tags on which the candidate matched. */
     private List<String> matchedOn;
+
+    /** The candidate status, e.g. ACTIVE or DELETED. */
+    private CandidateStatus candidateStatus;
 }
