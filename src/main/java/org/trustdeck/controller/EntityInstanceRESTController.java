@@ -19,9 +19,7 @@ package org.trustdeck.controller;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +43,11 @@ import org.trustdeck.dto.EntityInstanceDTO;
 import org.trustdeck.dto.EntityTypeDTO;
 import org.trustdeck.dto.ProjectDTO;
 import org.trustdeck.dto.PseudonymDTO;
+import org.trustdeck.dto.RecordLinkageCandidateDTO;
 import org.trustdeck.exception.DuplicateEntityInstanceException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.Domain;
+import org.trustdeck.linkage.LinkageIndexService;
 import org.trustdeck.model.IdentifierItem;
 import org.trustdeck.security.audittrail.annotation.Audit;
 import org.trustdeck.service.AuthorizationService;
@@ -57,11 +57,11 @@ import org.trustdeck.service.EntityTypeDBService;
 import org.trustdeck.service.JsonSchemaService;
 import org.trustdeck.service.ProjectDBService;
 import org.trustdeck.service.PseudonymDBAccessService;
+import org.trustdeck.service.RecordLinkageService;
 import org.trustdeck.service.ResponseService;
 import org.trustdeck.utils.Assertion;
 import org.trustdeck.utils.Utility.Pair;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.networknt.schema.JsonSchema;
 
 import lombok.extern.slf4j.Slf4j;
@@ -104,13 +104,24 @@ public class EntityInstanceRESTController {
 	/** Enables access to the JSON schema validation functionalities. */
 	@Autowired
 	private JsonSchemaService jsonSchemaService;
+	
+	/** Used to create, update, and remove record linkage index entries for entity instances. */
+	@Autowired
+	private LinkageIndexService linkageIndexService;
+	
+	/** Enables access to record linkage candidate search. */
+	@Autowired
+	private RecordLinkageService recordLinkageService;
 
     /** Provides functionality to ensure proper rights and roles when accessing the endpoints. */
     @Autowired
     private AuthorizationService authorizationService;
 	
 	/** The maximum number of search results that will be returned to the caller. */
-	private final static int MAX_NUMBER_OF_SEARCH_RESULTS = 20; 
+	private final static int MAX_NUMBER_OF_SEARCH_RESULTS = 20;
+	
+	/** The maximum number of results that will be returned during record linkage. */
+	private final static int MAX_NUMBER_OF_RECORD_LINKAGE_RESULTS = 20;
 	
 	/**
 	 * Endpoint to create a new instance of an entity type.
@@ -128,7 +139,8 @@ public class EntityInstanceRESTController {
      *         cannot be found</li>
      *         <li>a <b>410-GONE</b> status when the project has ended or the entity type 
      *         is marked as deprecated</li>
-     *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when creation failed</li>
+     *         <li>a <b>422-UNPROCESSABLE_ENTITY</b> status when creation failed or when 
+     *         the record linkage tokens could not be created/stored in the database</li>
 	 */
 	@PostMapping("/projects/{projectAbbreviation}/entities/{entityTypeName}")
 	@PreAuthorize("isAuthenticated() and @auth.hasProjectPermission(#root, #projectAbbreviation, 'instance:create')")
@@ -240,6 +252,14 @@ public class EntityInstanceRESTController {
 			} else {
 				log.debug("Could not find the associated domain. No pseudonym was created.");
 			}
+		}
+		
+		// Add instance's record linkage tokens to the database
+		if (linkageIndexService.rebuildIndex(created)) {
+			log.debug("Adding the instance's record linkage tokens to the database was successful.");
+		} else {
+			log.debug("Failed to add the instance's record linkage tokens to the database.");
+			return responseService.unprocessableEntity(responseContentType);
 		}
 		
 		log.debug("Successfully created the new instance: " + created.getTrustdeckID().toString());
@@ -409,6 +429,14 @@ public class EntityInstanceRESTController {
 			return responseService.unprocessableEntity(responseContentType);
 		}
 		
+		// Add updated instance's record linkage tokens to the database
+		if (linkageIndexService.rebuildIndex(updated)) {
+			log.debug("Updating the instance's record linkage tokens was successful.");
+		} else {
+			log.debug("Failed to update the instance's record linkage tokens.");
+			return responseService.unprocessableEntity(responseContentType);
+		}
+		
 		log.debug("Successfully updated the instance: " + updated.getTrustdeckID().toString());
 		return responseService.ok(responseContentType, updated);
 	}
@@ -480,13 +508,21 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Evaluate deletion result
-		if (deleted) {
-			log.debug("Successfully deleted (tombstoned) the requested entity instance.");
-			return responseService.noContent(responseContentType);
-		} else {
+		if (!deleted) {
 			log.debug("Could not delete the requested entity instance.");
 			return responseService.unprocessableEntity(responseContentType);
 		}
+		
+		// Remove instance's record linkage tokens from the database
+		if (linkageIndexService.removeAllIndicesForInstance(tdid)) {
+			log.debug("Adding the instance's record linkage tokens to the database was successful.");
+		} else {
+			log.debug("Failed to add the instance's record linkage tokens to the database.");
+			return responseService.unprocessableEntity(responseContentType);
+		}
+		
+		log.debug("Successfully deleted (tombstoned) the requested entity instance.");
+		return responseService.noContent(responseContentType);
 	}
 	
 	/**
@@ -740,46 +776,20 @@ public class EntityInstanceRESTController {
             return responseService.badRequest(responseContentType);
         }
         
-        // Determine which attributes should be used during the record linkage ("linkage"-flag on attributes)
-        List<String> linkageAttributes = new ArrayList<>();
-        for (JsonNode attr : entityType.getTypeDefinition().get("attributes")) {
-            if (attr.has("linkage") && attr.get("linkage").asBoolean(false)) {
-                linkageAttributes.add(attr.get("name").asText());
-            }
-        }
+        // Find candidates that (partially) match the given payload data
+        List<RecordLinkageCandidateDTO> candidates = recordLinkageService.findCandidates(project.getId(), entityType, 
+        		entityInstanceDTO.getData(), MAX_NUMBER_OF_RECORD_LINKAGE_RESULTS);
         
-        if (linkageAttributes.isEmpty()) {
-            log.debug("The entity type \"" + entityTypeName + "\" defines no linkage attributes.");
-            return responseService.badRequest(responseContentType);
-        }
-        
-        // Build a map of the values for the attributes that should be used for RL
-        Map<String, JsonNode> linkageValues = new HashMap<>();
-        JsonNode data = entityInstanceDTO.getData();
-        
-        for (String attributeName : linkageAttributes) {
-            if (data.has(attributeName) && !data.get(attributeName).isNull() && !Assertion.isJsonEmpty(data.get(attributeName))) {
-                linkageValues.put(attributeName, data.get(attributeName));
-            }
-        }
-        
-        if (linkageValues.isEmpty()) {
-            log.debug("None of the linkage attributes were present or non-empty in the given payload.");
-            return responseService.badRequest(responseContentType);
-        }
-        
-        // Search for candidates
-        List<EntityInstanceDTO> candidates = entityInstanceDBService.searchRecordLinkageCandidates(project.getId(), entityType.getId(), linkageValues, MAX_NUMBER_OF_SEARCH_RESULTS);
-	    
-        // Evaluate results
+        // Evaluate the candidate search result
         if (candidates == null) {
             log.debug("Record linkage candidate search failed.");
             return responseService.unprocessableEntity(responseContentType);
         } else if (candidates.isEmpty()) {
-        	log.debug("No record linkage candidates were found.");
-        	return responseService.noContent(responseContentType);
+        	// Nothing found, payload is probably unique
+            log.debug("No record linkage candidates were found.");
+            return responseService.noContent(responseContentType);
         } else {
-        	return responseService.ok(responseContentType, candidates);
+            return responseService.ok(responseContentType, candidates);
         }
 	}
 }
