@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import org.jooq.JSONB;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import org.trustdeck.linkage.LinkageFieldRule;
+import org.trustdeck.model.LinkageFieldRule;
 import org.trustdeck.utils.LRUCache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -899,16 +899,16 @@ public class JsonSchemaService {
 	 * Only attributes whose effective {@code linkage} flag is set to {@code true} are included
 	 * in the returned result.
 	 * 
+	 * @param typeDefinition the concrete project-specific type definition for which the effective linkage rules should be resolved
 	 * @param baseDefinition the base type definition that may provide inherited linkage defaults; may be {@code null}
-	 * @param definition the concrete project-specific type definition for which the effective linkage rules should be resolved
 	 * @return the list of effective linkage field rules for all linkage-enabled leaf attributes
 	 */
-	public List<LinkageFieldRule> resolveLinkageFieldRules(JsonNode baseDefinition, JsonNode definition) {
+	public List<LinkageFieldRule> resolveLinkageFieldRules(JsonNode typeDefinition, JsonNode baseDefinition) {
 		// Get a flat map of the base type's leaf nodes, if available 
 		Map<String, JsonNode> baseLeafNodes = (baseDefinition == null) ? Map.of() : flattenLeafNodes(baseDefinition);
 		
 		// Get a flat map of the project-specific type's leaf nodes
-		Map<String, JsonNode> projectLeafNodes = flattenLeafNodes(definition);
+		Map<String, JsonNode> projectLeafNodes = flattenLeafNodes(typeDefinition);
 
 		// Create the rules
 		List<LinkageFieldRule> resolvedRules = new ArrayList<>();
