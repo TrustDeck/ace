@@ -34,7 +34,6 @@ import org.trustdeck.linkage.LinkageTokenService;
 import org.trustdeck.model.CandidateStatus;
 import org.trustdeck.model.LinkageFieldRule;
 import org.trustdeck.model.LinkageToken;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.extern.slf4j.Slf4j;
@@ -192,17 +191,15 @@ public class RecordLinkageService {
             	if (!payloadToken.getTokenValue().equals(candidateToken.getTokenValue())) {
     				continue;
     			}
-                
-            	if ("norm".equals(payloadToken.getTokenType())) {
-                	// Exact normalized matches contribute the full configured weight for this attribute
-                    score += payloadToken.getWeight();
-                } else if ("phonetic".equals(payloadToken.getTokenType())) {
-                	// Phonetic matches are weaker than exact normalized matches
-                    score += payloadToken.getWeight() * PHONETIC_MATCH_WEIGHT_FACTOR;
-                } else if ("block".equals(payloadToken.getTokenType())) {
-                	// Blocking matches only provide a weak supporting signal
-                    score += payloadToken.getWeight() * BLOCKING_MATCH_WEIGHT_FACTOR;
-                }
+            	
+            	switch (payloadToken.getTokenType()) {
+	            	// Exact normalized matches contribute the full configured weight for this attribute
+            		case NORM -> score += payloadToken.getWeight();
+	            	// Phonetic matches are weaker than exact normalized matches
+            		case PHONETIC -> score += payloadToken.getWeight() * PHONETIC_MATCH_WEIGHT_FACTOR;
+            		// Blocking matches only provide a weak supporting signal
+	            	case BLOCK -> score += payloadToken.getWeight() * BLOCKING_MATCH_WEIGHT_FACTOR;
+	            }
             	
             	matchedOn.add(formatMatchedOn(payloadToken));
             }

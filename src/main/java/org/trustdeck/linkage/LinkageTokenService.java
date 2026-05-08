@@ -219,11 +219,11 @@ public class LinkageTokenService {
      * @return the target list that receives all matching result nodes
      */
     private List<JsonNode> collectNodesByPath(JsonNode current, String[] pathParts, int pathIndex) {
-    	if (current == null) {
-    		return null;
-    	}
-    	
     	List<JsonNode> out = new ArrayList<>();
+    	
+    	if (current == null) {
+    		return out;
+    	}
     	
     	// Check the leaf-element 
     	if (pathIndex >= pathParts.length) {

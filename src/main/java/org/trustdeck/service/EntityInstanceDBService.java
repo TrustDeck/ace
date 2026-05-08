@@ -531,7 +531,7 @@ public class EntityInstanceDBService {
     @Transactional(readOnly = true)
     public List<Long> findCandidateIdsByBlockingTokens(int projectId, int entityTypeId, List<LinkageToken> payloadTokens, int limit, boolean includeDeleted) {
     	// Only blocking tokens are used during candidate generation
-    	List<LinkageToken> blockTokens = payloadTokens.stream().filter(t -> "block".equals(t.getTokenType())).toList();
+    	List<LinkageToken> blockTokens = payloadTokens.stream().filter(t -> LinkageTokenType.BLOCK.equals(t.getTokenType())).toList();
 
     	// Without blocking tokens, no efficient candidate generation can be performed
     	if (blockTokens.isEmpty()) {
@@ -544,7 +544,7 @@ public class EntityInstanceDBService {
     	for (LinkageToken token : blockTokens) {
     		tokenCondition = tokenCondition
     				.or(LINKAGE_TOKEN.TAG.eq(token.getTag())
-    					.and(LINKAGE_TOKEN.TOKEN_TYPE.eq("block"))
+    					.and(LINKAGE_TOKEN.TOKEN_TYPE.eq(LinkageTokenType.BLOCK.name().toLowerCase()))
     					.and(LINKAGE_TOKEN.TOKEN_VALUE.eq(token.getTokenValue()))
     				);
     	}
