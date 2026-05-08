@@ -40,6 +40,7 @@ import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.EntityInstance;
 import org.trustdeck.jooq.generated.tables.records.EntityInstanceRecord;
 import org.trustdeck.model.LinkageToken;
+import org.trustdeck.model.LinkageTokenType;
 import org.trustdeck.utils.Assertion;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -247,22 +248,31 @@ public class EntityInstanceDBService {
      * 
      * @param instanceIDs the List of database IDs that should be searched for
      * @param entityTypeID the database ID of the type the instances are of
+     * @param includeDeleted whether or not soft-deleted entity instances should be included
      * @return the list of retrieved entity instances when successful, or {@code null} when nothing was found
      */
-    @Transactional
-    public List<EntityInstanceDTO> getEntityInstancesByIDs(List<Long> instanceIDs, int entityTypeID) {
+    @Transactional(readOnly = true)
+    public List<EntityInstanceDTO> getEntityInstancesByIDs(List<Long> instanceIDs, int entityTypeID, boolean includeDeleted) {
     	// Check if all the necessary arguments are available
     	if (instanceIDs == null || instanceIDs.isEmpty()) {
     		log.debug("Could not retrieve the entity instances, because the given list of IDs is missing or empty.");
     		return null;
+    	}
+
+    	// Restrict lookup to the requested entity type and requested instance IDs
+    	Condition condition = ENTITY_INSTANCE.ENTITY_TYPE_ID.eq(entityTypeID)
+    			.and(ENTITY_INSTANCE.ID.in(instanceIDs));
+
+    	// Optionally restrict to active records only
+    	if (!includeDeleted) {
+    		condition = condition.and(ENTITY_INSTANCE.IS_DELETED.eq(false));
     	}
     	
     	// Build and execute the query
     	List<EntityInstance> instances = null;
     	try {
     		instances = dsl.selectFrom(ENTITY_INSTANCE)
-    			.where(ENTITY_INSTANCE.ENTITY_TYPE_ID.eq(entityTypeID))
-                .and(ENTITY_INSTANCE.ID.in(instanceIDs))
+    			.where(condition)
                 .fetchInto(EntityInstance.class);
         } catch (MappingException e) {
         	log.debug("Could not map the entity instance search result into the EntityInstance-POJO.", e);
@@ -271,16 +281,23 @@ public class EntityInstanceDBService {
         	log.debug("Searching for entity instances in the database failed.", f);
         	return null;
         }
-    	
-    	// Check if the search was successful
-    	if (instances == null || instances.isEmpty()) {
-    		log.debug("No entity instance was found.");
-            return null;
-    	}
 
         // Create list of DTOs and return it
     	return instances.stream().map(i -> new EntityInstanceDTO().assignPojoValues(i)).toList();
     }
+
+	/**
+	 * Retrieves active entity instances by their internal database IDs.
+	 * Soft-deleted entity instances are excluded.
+	 * 
+	 * @param instanceIDs the internal database IDs of the entity instances that should be retrieved
+	 * @param entityTypeID the ID of the entity type to which the entity instances belong
+	 * @return the list of retrieved active entity instances, or {@code null} if retrieval failed
+	 */
+	@Transactional(readOnly = true)
+	public List<EntityInstanceDTO> getEntityInstancesByIDs(List<Long> instanceIDs, int entityTypeID) {
+		return getEntityInstancesByIDs(instanceIDs, entityTypeID, false);
+	}
     
     /**
      * Method to delete an entity instance.
@@ -508,10 +525,11 @@ public class EntityInstanceDBService {
      * @param entityTypeId the ID of the entity type to which the candidate records must belong
      * @param payloadTokens the linkage tokens generated from the input payload
      * @param limit the maximum number of candidate entity instance IDs to return
+     * @param includeDeleted whether or not soft-deleted entity instances should be included as candidates
      * @return the list of candidate entity instance IDs ordered by descending number of matching blocking tokens
      */
     @Transactional(readOnly = true)
-    public List<Long> findCandidateIdsByBlockingTokens(int projectId, int entityTypeId, List<LinkageToken> payloadTokens, int limit) {
+    public List<Long> findCandidateIdsByBlockingTokens(int projectId, int entityTypeId, List<LinkageToken> payloadTokens, int limit, boolean includeDeleted) {
     	// Only blocking tokens are used during candidate generation
     	List<LinkageToken> blockTokens = payloadTokens.stream().filter(t -> "block".equals(t.getTokenType())).toList();
 
@@ -531,21 +549,44 @@ public class EntityInstanceDBService {
     				);
     	}
 
+    	// Build the common candidate condition
+    	Condition condition = LINKAGE_TOKEN.PROJECT_ID.eq(projectId)
+    			.and(LINKAGE_TOKEN.ENTITY_TYPE_ID.eq(entityTypeId))
+    			.and(tokenCondition);
+
+    	// Exclude tombstoned instances when the caller explicitly wants active candidates only
+    	if (!includeDeleted) {
+    		condition = condition.and(ENTITY_INSTANCE.IS_DELETED.eq(false));
+    	}
+
     	// Retrieve matching entity instance IDs, exclude soft-deleted records,
     	// and rank candidates by the number of matching blocking tokens
     	return dsl.select(LINKAGE_TOKEN.ENTITY_INSTANCE_ID)
-	    			.from(LINKAGE_TOKEN)
-	    			.join(ENTITY_INSTANCE)
-	    				.on(LINKAGE_TOKEN.ENTITY_TYPE_ID.eq(ENTITY_INSTANCE.ENTITY_TYPE_ID))
-	    				.and(LINKAGE_TOKEN.ENTITY_INSTANCE_ID.eq(ENTITY_INSTANCE.ID))
-	    			.where(LINKAGE_TOKEN.PROJECT_ID.eq(projectId))
-	    			.and(LINKAGE_TOKEN.ENTITY_TYPE_ID.eq(entityTypeId))
-	    			.and(tokenCondition)
-	    			.and(ENTITY_INSTANCE.IS_DELETED.eq(false))
-	    			.groupBy(LINKAGE_TOKEN.ENTITY_INSTANCE_ID)
-	    			.orderBy(DSL.count().desc())
-	    			.limit(limit)
-	    			.fetch(LINKAGE_TOKEN.ENTITY_INSTANCE_ID);
+    			.from(LINKAGE_TOKEN)
+    			.join(ENTITY_INSTANCE)
+					.on(LINKAGE_TOKEN.PROJECT_ID.eq(ENTITY_INSTANCE.PROJECT_ID))
+					.and(LINKAGE_TOKEN.ENTITY_TYPE_ID.eq(ENTITY_INSTANCE.ENTITY_TYPE_ID))
+					.and(LINKAGE_TOKEN.ENTITY_INSTANCE_ID.eq(ENTITY_INSTANCE.ID))
+				.where(condition)
+				.groupBy(LINKAGE_TOKEN.ENTITY_INSTANCE_ID)
+				.orderBy(DSL.count().desc())
+				.limit(limit)
+				.fetch(LINKAGE_TOKEN.ENTITY_INSTANCE_ID);
+    }
+    
+    /**
+     * Finds active candidate entity instance IDs by matching the provided blocking tokens.
+     * Soft-deleted entity instances are excluded.
+     * 
+     * @param projectId the ID of the project in which candidate records should be searched
+     * @param entityTypeId the ID of the entity type to which the candidate records must belong
+     * @param payloadTokens the linkage tokens generated from the input payload
+     * @param limit the maximum number of candidate entity instance IDs to return
+     * @return the list of active candidate entity instance IDs
+     */
+    @Transactional(readOnly = true)
+    public List<Long> findCandidateIdsByBlockingTokens(int projectId, int entityTypeId, List<LinkageToken> payloadTokens, int limit) {
+    	return findCandidateIdsByBlockingTokens(projectId, entityTypeId, payloadTokens, limit, false);
     }
     
     /**
@@ -576,7 +617,7 @@ public class EntityInstanceDBService {
 
     				// Add each token to the list belonging to its entity instance
     				out.computeIfAbsent(id, x -> new ArrayList<>())
-    						.add(new LinkageToken(tok.getFieldPath(), tok.getTag(), tok.getTokenType(), tok.getTokenValue(), tok.getWeight()));
+    						.add(new LinkageToken(tok.getFieldPath(), tok.getTag(), toTypeEnum(tok.getTokenType()), tok.getTokenValue(), tok.getWeight()));
     			});
 
     	return out;
@@ -601,5 +642,21 @@ public class EntityInstanceDBService {
     	}
     	
         return jsonb;
+    }
+    
+    /**
+     * Helper method that transforms a linkage token type given as a string
+     * into the proper enum representation.
+     * 
+     * @param type the linkage token type string
+     * @return the linkage token type enum representation
+     */
+    private LinkageTokenType toTypeEnum(String type) {
+    	return switch (type.trim().toLowerCase()) {
+    		case "norm" -> LinkageTokenType.NORM;
+    		case "phonetic" -> LinkageTokenType.PHONETIC;
+    		case "block" -> LinkageTokenType.BLOCK;
+    		default -> throw new IllegalArgumentException("Unknown linkage token type: " + type);
+    	};
     }
 }

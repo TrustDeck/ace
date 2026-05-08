@@ -100,6 +100,10 @@ public class LinkageIndexService {
 
         // Generate all linkage tokens for the current entity instance payload
         List<LinkageToken> tokens = linkageTokenService.buildTokens(rules, instance.getData());
+        
+		// If no tokens were generated, the index is still valid after deleting old tokens
+		// (this can happen for entity types without linkage-enabled fields or empty linkage values).
+		boolean noTokensGenerated = tokens.isEmpty();
 
         // Remove any previously stored tokens for this entity instance
         try {
@@ -123,7 +127,7 @@ public class LinkageIndexService {
 				   .set(LINKAGE_TOKEN.PROJECT_ID, instance.getProjectID())
 				   .set(LINKAGE_TOKEN.FIELD_PATH, token.getFieldPath())
 				   .set(LINKAGE_TOKEN.TAG, token.getTag())
-				   .set(LINKAGE_TOKEN.TOKEN_TYPE, token.getTokenType())
+				   .set(LINKAGE_TOKEN.TOKEN_TYPE, token.getTokenType().name().toLowerCase())
 				   .set(LINKAGE_TOKEN.TOKEN_VALUE, token.getTokenValue())
 				   .set(LINKAGE_TOKEN.WEIGHT, token.getWeight())
 				   .execute();
@@ -135,18 +139,27 @@ public class LinkageIndexService {
 			}
         }
         
-        log.debug("Inserted " + inserted + " linkage tokens successfully, failed to insert " + failed + "linkage tokens.");
-        if (inserted <= 0) {
+        log.debug("Inserted " + inserted + " linkage tokens successfully, failed to insert " + failed + " linkage tokens.");
+        if (failed > 0) {
         	return false;
-        } else {
-        	return true;
         }
+
+        if (noTokensGenerated) {
+        	log.trace("No linkage tokens were generated for the instance with TrustDeckID = " + instance.getTrustdeckID() + ".");
+        }
+
+        return true;
     }
 
     /**
      * Removes all record linkage index entries for a given entity instance.
+     * This method should only be used when an entity instance is physically 
+     * deleted or permanently purged. It should not be called during normal 
+     * soft deletion, because tombstoned entity instances should still be 
+     * detectable during record linkage.
      * 
-     * @param instance the entity instance whose linkage index entries should be removed
+     * @param trustDeckID the TrustDeck ID of the entity instance whose linkage index entries should be removed
+     * @return {@code true} when the linkage index entries were removed, {@code false} otherwise
      */
     @Transactional
     public boolean removeAllIndicesForInstance(UUID trustDeckID) {
