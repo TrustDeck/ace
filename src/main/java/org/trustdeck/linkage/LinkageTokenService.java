@@ -24,9 +24,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.trustdeck.model.LinkageFieldRule;
 import org.trustdeck.model.LinkageToken;
+import org.trustdeck.model.LinkageTokenType;
 import org.trustdeck.utils.Assertion;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This service generates record linkage tokens from entity instance payloads.
@@ -37,6 +40,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  * @author Armin Müller
  */
 @Service
+@Slf4j
 public class LinkageTokenService {
 
 	/** The normalization service used for value normalization and phonetic encoding. */
@@ -82,21 +86,25 @@ public class LinkageTokenService {
 	            }
 	
 	            // Create and add normalized-linkage token
-	            tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), "norm", normalized, rule.getWeight()));
+	            tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.NORM, normalized, rule.getWeight()));
 	
-	            // Phonetically encode the normalized string
-	            for (String encoder : rule.getEncoders()) {
-	                String encoded = normalizationService.phoneticEncode(normalized, encoder);
-	                
-	                if (Assertion.isNotNullOrEmpty(encoded)) {
-	                    // Add phonetically encoded-linkage token
-	                    tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), "phonetic", encoded, rule.getWeight()));
-	                }
+	            // Phonetically encode the normalized string if encoders are configured
+	            if (rule.getEncoders() != null) {
+		            for (String encoder : rule.getEncoders()) {
+		                String encoded = normalizationService.phoneticEncode(normalized, encoder);
+		                
+		                if (Assertion.isNotNullOrEmpty(encoded)) {
+		                    // Add phonetically encoded-linkage token
+		                    tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.PHONETIC, encoded, rule.getWeight()));
+		                }
+		            }
 	            }
 	
-	            // Generate blocking tokens
-	            for (String block : rule.getBlocking()) {
-	            	tokens.addAll(buildBlockingTokens(rule, normalized, block));
+	            // Generate blocking tokens if blocking strategies are configured
+	            if (rule.getBlocking() != null) {
+		            for (String block : rule.getBlocking()) {
+		            	tokens.addAll(buildBlockingTokens(rule, normalized, block));
+		            }
 	            }
     		}
         }
@@ -120,43 +128,57 @@ public class LinkageTokenService {
     	switch (block.trim().toLowerCase()) {
     		case "exact" -> 
     			// Uses the full normalized value itself as the blocking key
-    			tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), "block", normalized, rule.getWeight()));
+    			tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.BLOCK, 
+    					normalized, rule.getWeight()));
     		case "prefix3" -> {
     			// Uses the first three characters of the normalized value as the blocking key
     			if (normalized.length() >= 3) {
-    				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), "block", normalized.substring(0, 3), rule.getWeight()));
+    				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.BLOCK, 
+    						normalized.substring(0, 3), rule.getWeight()));
     			}
     		}
     		case "prefix4" -> {
     			// Uses the first four characters of the normalized value as the blocking key
     			if (normalized.length() >= 4) {
-    				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), "block", normalized.substring(0, 4), rule.getWeight()));
+    				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.BLOCK, 
+    						normalized.substring(0, 4), rule.getWeight()));
     			}
     		}
     		case "prefix6" -> {
     			// Uses the first six characters of the normalized value as the blocking key
     			if (normalized.length() >= 6) {
-    				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), "block", normalized.substring(0, 6), rule.getWeight()));
+    				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.BLOCK, 
+    						normalized.substring(0, 6), rule.getWeight()));
     			}
     		}
+    		// Uses one or more phonetic encodings of the normalized value so 
+    		// that similarly sounding values can fall into the same candidate group
     		case "phonetic" -> {
-    			// Uses the phonetic encoding of the normalized value as the blocking key
-    			String phonetic = normalizationService.phoneticEncode(normalized, rule.getEncoders().getFirst());
-    			if (Assertion.isNotNullOrEmpty(phonetic)) {
-    				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), "block", phonetic, rule.getWeight()));
+    			if (rule.getEncoders() == null || rule.getEncoders().isEmpty()) {
+    				log.trace("Skipping phonetic blocking for field \"" + rule.getPath() + "\" because no phonetic encoder is configured.");
+    				break;
+    			}
+
+    			for (String encoder : rule.getEncoders()) {
+    				String phonetic = normalizationService.phoneticEncode(normalized, encoder);
+
+    				if (Assertion.isNotNullOrEmpty(phonetic)) {
+    					tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.BLOCK, 
+    							phonetic, rule.getWeight()));
+    				}
     			}
     		}
     		case "year" -> {
     			// Uses only the year component of a normalized ISO date as the blocking key
     			if ("date".equals(rule.getType())) {
-    				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), "block",
+    				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.BLOCK,
     						normalizationService.yearFromDate(normalized), rule.getWeight()));
     			}
     		}
     		case "yearmonth" -> {
     			// Uses the year and month component of a normalized ISO date as the blocking key
     			if ("date".equals(rule.getType())) {
-    				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), "block",
+    				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.BLOCK,
     						normalizationService.yearMonthFromDate(normalized), rule.getWeight()));
     			}
     		}
