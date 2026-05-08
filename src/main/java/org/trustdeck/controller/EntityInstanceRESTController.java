@@ -255,9 +255,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Add instance's record linkage tokens to the database
-		if (linkageIndexService.rebuildIndex(created)) {
-			log.debug("Adding the instance's record linkage tokens to the database was successful.");
-		} else {
+		if (!linkageIndexService.rebuildIndex(created)) {
 			log.debug("Failed to add the instance's record linkage tokens to the database.");
 			return responseService.unprocessableEntity(responseContentType);
 		}
@@ -430,9 +428,7 @@ public class EntityInstanceRESTController {
 		}
 		
 		// Add updated instance's record linkage tokens to the database
-		if (linkageIndexService.rebuildIndex(updated)) {
-			log.debug("Updating the instance's record linkage tokens was successful.");
-		} else {
+		if (!linkageIndexService.rebuildIndex(updated)) {
 			log.debug("Failed to update the instance's record linkage tokens.");
 			return responseService.unprocessableEntity(responseContentType);
 		}
@@ -510,14 +506,6 @@ public class EntityInstanceRESTController {
 		// Evaluate deletion result
 		if (!deleted) {
 			log.debug("Could not delete the requested entity instance.");
-			return responseService.unprocessableEntity(responseContentType);
-		}
-		
-		// Remove instance's record linkage tokens from the database
-		if (linkageIndexService.removeAllIndicesForInstance(tdid)) {
-			log.debug("Adding the instance's record linkage tokens to the database was successful.");
-		} else {
-			log.debug("Failed to add the instance's record linkage tokens to the database.");
 			return responseService.unprocessableEntity(responseContentType);
 		}
 		
@@ -777,8 +765,10 @@ public class EntityInstanceRESTController {
         }
         
         // Find candidates that (partially) match the given payload data
+        // During registration-time linkage, include soft-deleted records so that tombstoned 
+        // identities can still be detected as possible duplicates
         List<RecordLinkageCandidateDTO> candidates = recordLinkageService.findCandidates(project.getId(), entityType, 
-        		entityInstanceDTO.getData(), MAX_NUMBER_OF_RECORD_LINKAGE_RESULTS);
+        		entityInstanceDTO.getData(), MAX_NUMBER_OF_RECORD_LINKAGE_RESULTS, true);
         
         // Evaluate the candidate search result
         if (candidates == null) {
