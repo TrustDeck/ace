@@ -17,7 +17,9 @@
 
 package org.trustdeck.linkage;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.jooq.DSLContext;
@@ -115,11 +117,19 @@ public class LinkageIndexService {
 			log.trace("Removed " + deleted + " old linkage token" + (deleted == 1 ? "." : "s."));
 		} catch (DataAccessException e) {
 			log.debug("Could not delete old linkage tokens for the instance with TrustDeckID = " + instance.getTrustdeckID(), e);
+			return false;
 		}
+        
+        // Ensure that we do not have any duplicates
+        Map<String, LinkageToken> uniqueTokens = new LinkedHashMap<>();
+        for (LinkageToken token : tokens) {
+        	// Inserting into the linked hash map automatically deduplicates based on the given key and retains input order
+        	uniqueTokens.putIfAbsent(tokenDeduplicationKey(token), token);
+        }
 
         // Insert the newly generated linkage tokens into the linkage index table
         int inserted = 0, failed = 0;
-        for (LinkageToken token : tokens) {
+        for (LinkageToken token : uniqueTokens.values()) {
             try {
 				dsl.insertInto(LINKAGE_TOKEN)
 				   .set(LINKAGE_TOKEN.ENTITY_TYPE_ID, instance.getEntityTypeID())
@@ -184,5 +194,18 @@ public class LinkageIndexService {
 		}
         
         return true;
+    }
+    
+    /**
+     * Creates a text key that identifies one generated linkage token.
+     * Tokens with the same tag, token type, and token value would produce the 
+     * same database row for one entity instance, so this key is used to keep 
+     * only one of them before inserting the tokens.
+     * 
+     * @param token the linkage token for which the key should be generated
+     * @return a text key composed of the token's tag, type, and value
+     */
+    private String tokenDeduplicationKey(LinkageToken token) {
+    	return token.getTag() + "|" + token.getTokenType().name().toLowerCase() + "|" + token.getTokenValue();
     }
 }
