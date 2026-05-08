@@ -18,6 +18,8 @@
 package org.trustdeck.service;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -37,6 +39,7 @@ import org.trustdeck.exception.DuplicateEntityInstanceException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.EntityInstance;
 import org.trustdeck.jooq.generated.tables.records.EntityInstanceRecord;
+import org.trustdeck.model.LinkageToken;
 import org.trustdeck.utils.Assertion;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,6 +49,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
 import static org.trustdeck.jooq.generated.Tables.ENTITY_INSTANCE;
+import static org.trustdeck.jooq.generated.Tables.LINKAGE_TOKEN;
 
 /**
  * This class encapsulates the database access for entity instances.
@@ -112,7 +116,7 @@ public class EntityInstanceDBService {
      * trustDeckID, which is unique in the database.
      * 
      * @param trustDeckID the entity instance's publicly accessible TrustDeck ID
-     * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found.
+     * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found
      */
     @Transactional
     public EntityInstanceDTO getEntityInstance(UUID trustDeckID) {
@@ -152,7 +156,7 @@ public class EntityInstanceDBService {
      * trustDeckID as a String, which is unique in the database.
      * 
      * @param trustDeckID the entity instance's publicly accessible TrustDeck ID as a String
-     * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found.
+     * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found
      */
     @Transactional
     public EntityInstanceDTO getEntityInstance(String trustDeckID) {
@@ -178,7 +182,7 @@ public class EntityInstanceDBService {
      * Method to retrieve an entity instance from the database by providing the data JSON.
      * 
      * @param data the entity instance's data object
-     * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found.
+     * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found
      */
     @Transactional
     public EntityInstanceDTO getEntityInstanceByData(JSONB data) {
@@ -218,7 +222,7 @@ public class EntityInstanceDBService {
      * Internally it uses only the trustDeckID, which is unique in the database.
      * 
      * @param entityInstance the DTO containing at least the instance's publicly accessible TrustDeck ID
-     * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found.
+     * @return the retrieved entity instance when successfully found, or {@code null} when nothing was found
      */
     @Transactional
     public EntityInstanceDTO getEntityInstance(EntityInstanceDTO entityInstance) {
@@ -235,6 +239,47 @@ public class EntityInstanceDBService {
     		// Use trustDeckId to find the instance
     		return getEntityInstance(entityInstance.getTrustdeckID());
     	}
+    }
+    
+    /**
+     * Method to retrieve a list of entity instances from 
+     * the database by providing a list of database IDs.
+     * 
+     * @param instanceIDs the List of database IDs that should be searched for
+     * @param entityTypeID the database ID of the type the instances are of
+     * @return the list of retrieved entity instances when successful, or {@code null} when nothing was found
+     */
+    @Transactional
+    public List<EntityInstanceDTO> getEntityInstancesByIDs(List<Long> instanceIDs, int entityTypeID) {
+    	// Check if all the necessary arguments are available
+    	if (instanceIDs == null || instanceIDs.isEmpty()) {
+    		log.debug("Could not retrieve the entity instances, because the given list of IDs is missing or empty.");
+    		return null;
+    	}
+    	
+    	// Build and execute the query
+    	List<EntityInstance> instances = null;
+    	try {
+    		instances = dsl.selectFrom(ENTITY_INSTANCE)
+    			.where(ENTITY_INSTANCE.ENTITY_TYPE_ID.eq(entityTypeID))
+                .and(ENTITY_INSTANCE.ID.in(instanceIDs))
+                .fetchInto(EntityInstance.class);
+        } catch (MappingException e) {
+        	log.debug("Could not map the entity instance search result into the EntityInstance-POJO.", e);
+        	return null;
+        } catch (DataAccessException f) {
+        	log.debug("Searching for entity instances in the database failed.", f);
+        	return null;
+        }
+    	
+    	// Check if the search was successful
+    	if (instances == null || instances.isEmpty()) {
+    		log.debug("No entity instance was found.");
+            return null;
+    	}
+
+        // Create list of DTOs and return it
+    	return instances.stream().map(i -> new EntityInstanceDTO().assignPojoValues(i)).toList();
     }
     
     /**
@@ -449,6 +494,92 @@ public class EntityInstanceDBService {
 
         // Return the found types
         return candidates.stream().map(row -> new EntityInstanceDTO().assignPojoValues(row)).toList();
+    }
+    
+    /**
+     * Finds candidate entity instance IDs by matching the provided blocking tokens against
+     * the record linkage token index in the database.
+     * 
+     * Only tokens of type {@code block} are used for candidate generation. Matching records
+     * are grouped by entity instance ID and ordered by the number of matching blocking tokens,
+     * so records sharing more blocking tokens with the query payload are returned first.
+     * 
+     * @param projectId the ID of the project in which candidate records should be searched
+     * @param entityTypeId the ID of the entity type to which the candidate records must belong
+     * @param payloadTokens the linkage tokens generated from the input payload
+     * @param limit the maximum number of candidate entity instance IDs to return
+     * @return the list of candidate entity instance IDs ordered by descending number of matching blocking tokens
+     */
+    @Transactional(readOnly = true)
+    public List<Long> findCandidateIdsByBlockingTokens(int projectId, int entityTypeId, List<LinkageToken> payloadTokens, int limit) {
+    	// Only blocking tokens are used during candidate generation
+    	List<LinkageToken> blockTokens = payloadTokens.stream().filter(t -> "block".equals(t.getTokenType())).toList();
+
+    	// Without blocking tokens, no efficient candidate generation can be performed
+    	if (blockTokens.isEmpty()) {
+    		log.trace("No blocking tokens were found for the given payload.");
+    		return List.of();
+    	}
+
+    	// A candidate matches if it shares at least one blocking token with the query payload
+    	Condition tokenCondition = DSL.falseCondition();
+    	for (LinkageToken token : blockTokens) {
+    		tokenCondition = tokenCondition
+    				.or(LINKAGE_TOKEN.TAG.eq(token.getTag())
+    					.and(LINKAGE_TOKEN.TOKEN_TYPE.eq("block"))
+    					.and(LINKAGE_TOKEN.TOKEN_VALUE.eq(token.getTokenValue()))
+    				);
+    	}
+
+    	// Retrieve matching entity instance IDs, exclude soft-deleted records,
+    	// and rank candidates by the number of matching blocking tokens
+    	return dsl.select(LINKAGE_TOKEN.ENTITY_INSTANCE_ID)
+	    			.from(LINKAGE_TOKEN)
+	    			.join(ENTITY_INSTANCE)
+	    				.on(LINKAGE_TOKEN.ENTITY_TYPE_ID.eq(ENTITY_INSTANCE.ENTITY_TYPE_ID))
+	    				.and(LINKAGE_TOKEN.ENTITY_INSTANCE_ID.eq(ENTITY_INSTANCE.ID))
+	    			.where(LINKAGE_TOKEN.PROJECT_ID.eq(projectId))
+	    			.and(LINKAGE_TOKEN.ENTITY_TYPE_ID.eq(entityTypeId))
+	    			.and(tokenCondition)
+	    			.and(ENTITY_INSTANCE.IS_DELETED.eq(false))
+	    			.groupBy(LINKAGE_TOKEN.ENTITY_INSTANCE_ID)
+	    			.orderBy(DSL.count().desc())
+	    			.limit(limit)
+	    			.fetch(LINKAGE_TOKEN.ENTITY_INSTANCE_ID);
+    }
+    
+    /**
+     * Retrieves all record linkage tokens from the database for the given entity 
+     * instances. The returned map is keyed by entity instance ID (so tuples of 
+     * (instanceID, linkageTokens)) so that the tokens can be efficiently matched 
+     * to their corresponding candidate records during later scoring.
+     * 
+     * @param instanceIDs the database IDs of the entity instances whose linkage tokens should be retrieved
+     * @param entityTypeID the ID of the entity type to which the instances belong
+     * @return a map from entity instance ID to the list of stored linkage tokens
+     */
+    @Transactional(readOnly = true)
+    public Map<Long, List<LinkageToken>> getLinkageTokensForInstances(List<Long> instanceIDs, int entityTypeID) {
+    	if (instanceIDs == null || instanceIDs.isEmpty()) {
+    		return Map.of();
+    	}
+
+    	Map<Long, List<LinkageToken>> out = new HashMap<>();
+
+    	// Retrieve all linkage tokens for the requested entity instances and group them by instance ID; add them to the map
+    	dsl.selectFrom(LINKAGE_TOKEN)
+    			.where(LINKAGE_TOKEN.ENTITY_TYPE_ID.eq(entityTypeID))
+    			.and(LINKAGE_TOKEN.ENTITY_INSTANCE_ID.in(instanceIDs))
+    			.fetch()
+    			.forEach(tok -> {
+    				Long id = tok.getEntityInstanceId();
+
+    				// Add each token to the list belonging to its entity instance
+    				out.computeIfAbsent(id, x -> new ArrayList<>())
+    						.add(new LinkageToken(tok.getFieldPath(), tok.getTag(), tok.getTokenType(), tok.getTokenValue(), tok.getWeight()));
+    			});
+
+    	return out;
     }
     
     /**
