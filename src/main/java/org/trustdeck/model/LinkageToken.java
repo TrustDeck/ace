@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.linkage;
+package org.trustdeck.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
