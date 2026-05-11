@@ -44,6 +44,9 @@ public class RecordLinkageCandidateDTO {
 
     /** The score that indicates how well the candidate matches the input record. */
     private double score;
+    
+    /** The normalized score between 0.0 and 1.0 indicating how much of the possible query score matched. */
+    private double normalizedScore;
 
     /** The list of fields or tags on which the candidate matched. */
     private List<String> matchedOn;

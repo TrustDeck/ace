@@ -62,7 +62,7 @@ public class LinkageFieldRule {
     /** The blocking strategies that should be used for candidate generation. */
     private List<String> blocking;
 
-    /** The comparator that should be used during record linkage scoring. */
+    /** The comparator that should be used during record linkage scoring. (Not yet used / implemented.) */
     private String comparator;
 
     /** The weight of this field during record linkage scoring. */
