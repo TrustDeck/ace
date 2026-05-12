@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.model;
+package org.trustdeck.linkage.model;
 
 import java.util.List;
 

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.trustdeck.model;
+package org.trustdeck.linkage.model;
 
 /**
  * This enum represents the status of a record linkage candidate.

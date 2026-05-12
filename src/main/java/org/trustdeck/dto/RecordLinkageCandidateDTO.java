@@ -19,7 +19,7 @@ package org.trustdeck.dto;
 
 import java.util.List;
 
-import org.trustdeck.model.CandidateStatus;
+import org.trustdeck.linkage.model.CandidateStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

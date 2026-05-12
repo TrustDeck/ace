@@ -22,9 +22,9 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.trustdeck.model.LinkageFieldRule;
-import org.trustdeck.model.LinkageToken;
-import org.trustdeck.model.LinkageTokenType;
+import org.trustdeck.linkage.model.LinkageFieldRule;
+import org.trustdeck.linkage.model.LinkageToken;
+import org.trustdeck.linkage.model.LinkageTokenType;
 import org.trustdeck.utils.Assertion;
 
 import com.fasterxml.jackson.databind.JsonNode;

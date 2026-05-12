@@ -31,9 +31,10 @@ import org.trustdeck.dto.EntityInstanceDTO;
 import org.trustdeck.dto.EntityTypeDTO;
 import org.trustdeck.dto.RecordLinkageCandidateDTO;
 import org.trustdeck.linkage.LinkageTokenService;
-import org.trustdeck.model.CandidateStatus;
-import org.trustdeck.model.LinkageFieldRule;
-import org.trustdeck.model.LinkageToken;
+import org.trustdeck.linkage.model.CandidateStatus;
+import org.trustdeck.linkage.model.LinkageFieldRule;
+import org.trustdeck.linkage.model.LinkageToken;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.extern.slf4j.Slf4j;

@@ -39,8 +39,8 @@ import org.trustdeck.exception.DuplicateEntityInstanceException;
 import org.trustdeck.exception.UnexpectedResultSizeException;
 import org.trustdeck.jooq.generated.tables.pojos.EntityInstance;
 import org.trustdeck.jooq.generated.tables.records.EntityInstanceRecord;
-import org.trustdeck.model.LinkageToken;
-import org.trustdeck.model.LinkageTokenType;
+import org.trustdeck.linkage.model.LinkageToken;
+import org.trustdeck.linkage.model.LinkageTokenType;
 import org.trustdeck.utils.Assertion;
 
 import com.fasterxml.jackson.core.JsonProcessingException;

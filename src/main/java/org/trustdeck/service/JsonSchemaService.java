@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import org.jooq.JSONB;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import org.trustdeck.model.LinkageFieldRule;
+import org.trustdeck.linkage.model.LinkageFieldRule;
 import org.trustdeck.utils.LRUCache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
