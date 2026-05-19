@@ -37,6 +37,7 @@ import org.jooq.JSONB;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.trustdeck.linkage.model.LinkageFieldRule;
+import org.trustdeck.linkage.model.PPRLConfig;
 import org.trustdeck.utils.LRUCache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -506,6 +507,19 @@ public class JsonSchemaService {
 					rule.setBlocking(jsonArrayToStringList(linkageConfigNode.get("blocking")));
 				}
 				
+				if (linkageConfigNode.has("privacyMode")) {
+					rule.setPrivacyMode(linkageConfigNode.get("privacyMode").asText("plain"));
+				}
+
+				if (linkageConfigNode.has("pprl")) {
+					rule.setPprlConfig(jsonToPPRLConfig(linkageConfigNode.get("pprl")));
+
+					// If a PPRL configuration is present, default to PPRL mode unless explicitly configured otherwise
+					if (!linkageConfigNode.has("privacyMode")) {
+						rule.setPrivacyMode("pprl");
+					}
+				}
+				
 				if (linkageConfigNode.has("comparator")) {
 					rule.setComparator(linkageConfigNode.get("comparator").asText());
 				}
@@ -948,6 +962,8 @@ public class JsonSchemaService {
 			.tag((tag != null && !tag.isBlank()) ? tag : "generic." + name)
 			.type(type)
 			.linkage(node.path("linkage").asBoolean(false))
+			.privacyMode("plain")
+			.pprlConfig(null)
 			.build();
 		
 		// If the attribute is a date, use date-related defaults
@@ -1099,6 +1115,47 @@ public class JsonSchemaService {
 			// Fallback to String
 			return node.toString().getBytes(StandardCharsets.UTF_8);
 		}
+	}
+	
+	/**
+	 * Converts a JSON PPRL configuration node into a PprlConfig object.
+	 * Missing properties are filled with safe defaults.
+	 * 
+	 * @param node the JSON node containing the PPRL configuration
+	 * @return the parsed PPRL configuration
+	 */
+	private PPRLConfig jsonToPPRLConfig(JsonNode node) {
+		PPRLConfig config = new PPRLConfig();
+
+		if (node == null || !node.isObject()) {
+			return config;
+		}
+
+		if (node.has("method")) {
+			config.setMethod(node.get("method").asText(PPRLConfig.METHOD_NGRAM_BLOOM_FILTER));
+		}
+
+		if (node.has("n")) {
+			config.setN(node.get("n").asInt(2));
+		}
+
+		if (node.has("length")) {
+			config.setLength(node.get("length").asInt(1024));
+		}
+
+		if (node.has("hashPositions")) {
+			config.setHashPositions(node.get("hashPositions").asInt(10));
+		}
+
+		if (node.has("bandSize")) {
+			config.setBandSize(node.get("bandSize").asInt(32));
+		}
+
+		if (node.has("exact")) {
+			config.setExact(node.get("exact").asBoolean(false));
+		}
+
+		return config;
 	}
 
 	/**
