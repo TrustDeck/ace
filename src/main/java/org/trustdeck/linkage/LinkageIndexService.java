@@ -101,7 +101,7 @@ public class LinkageIndexService {
         List<LinkageFieldRule> rules = jsonSchemaService.resolveLinkageFieldRules(entityType.getTypeDefinition(), baseDef);
 
         // Generate all linkage tokens for the current entity instance payload
-        List<LinkageToken> tokens = linkageTokenService.buildTokens(rules, instance.getData());
+        List<LinkageToken> tokens = linkageTokenService.buildTokens(rules, instance.getData(), instance.getProjectID(), instance.getEntityTypeID());
         
 		// If no tokens were generated, the index is still valid after deleting old tokens
 		// (this can happen for entity types without linkage-enabled fields or empty linkage values).
@@ -137,7 +137,7 @@ public class LinkageIndexService {
 				   .set(LINKAGE_TOKEN.PROJECT_ID, instance.getProjectID())
 				   .set(LINKAGE_TOKEN.FIELD_PATH, token.getFieldPath())
 				   .set(LINKAGE_TOKEN.TAG, token.getTag())
-				   .set(LINKAGE_TOKEN.TOKEN_TYPE, token.getTokenType().name().toLowerCase())
+				   .set(LINKAGE_TOKEN.TOKEN_TYPE, token.getTokenType().dbName())
 				   .set(LINKAGE_TOKEN.TOKEN_VALUE, token.getTokenValue())
 				   .set(LINKAGE_TOKEN.WEIGHT, token.getWeight())
 				   .execute();

@@ -31,9 +31,11 @@ import org.trustdeck.dto.EntityInstanceDTO;
 import org.trustdeck.dto.EntityTypeDTO;
 import org.trustdeck.dto.RecordLinkageCandidateDTO;
 import org.trustdeck.linkage.LinkageTokenService;
+import org.trustdeck.linkage.PPRLEncodingService;
 import org.trustdeck.linkage.model.CandidateStatus;
 import org.trustdeck.linkage.model.LinkageFieldRule;
 import org.trustdeck.linkage.model.LinkageToken;
+import org.trustdeck.linkage.model.LinkageTokenType;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -62,6 +64,10 @@ public class RecordLinkageService {
     /** The service used to generate linkage tokens from input payloads. */
     @Autowired
     private LinkageTokenService linkageTokenService;
+    
+    /** The service used to compare PPRL Bloom filter tokens. */
+    @Autowired
+    private PPRLEncodingService pprlService;
 
     /** Used to retrieve candidate entity instances from the database. */
     @Autowired
@@ -81,6 +87,9 @@ public class RecordLinkageService {
 
     /** The default minimum normalized score a candidate must reach to be returned. */
     private static final double DEFAULT_MIN_NORMALIZED_SCORE = 0.60;
+    
+    /** Minimum Dice similarity required for a PPRL Bloom filter field to contribute to the score. */
+    private static final double PPRL_BLOOM_MIN_SIMILARITY = 0.75;
     
     /**
      * Searches for record linkage candidates for a given input payload.
@@ -107,7 +116,7 @@ public class RecordLinkageService {
         List<LinkageFieldRule> rules = jsonSchemaService.resolveLinkageFieldRules(entityType.getTypeDefinition(), baseTypeDef);
 
         // Generate linkage tokens for the input payload
-        List<LinkageToken> payloadTokens = linkageTokenService.buildTokens(rules, payload);
+        List<LinkageToken> payloadTokens = linkageTokenService.buildTokens(rules, payload, projectId, entityType.getId());
         if (payloadTokens.isEmpty()) {
         	log.trace("Could not create tokens for the given payload.");
             return null;
@@ -198,12 +207,13 @@ public class RecordLinkageService {
 
     /**
      * Calculates the linkage score between the payload tokens and the tokens of one candidate.
-     * Exact matches on normalized tokens contribute the full weight, phonetic token matches
-     * contribute a reduced weight, and blocking token matches contribute only a small amount.
+     * Exact matches on normalized and HMAC exact tokens contribute the full weight, phonetic 
+     * token matches contribute a reduced weight, plaintext blocking tokens contribute only a 
+     * small amount, and PPRL Bloom filters contribute according to their Dice similarity.
      * 
      * @param payloadTokens the linkage tokens derived from the input payload
      * @param candidateTokens the linkage tokens stored for one candidate entity instance
-     * @return the total linkage score for the given candidate
+     * @return the total linkage score and the fields or tags that contributed to the match
      */
     private LinkageScoreResult score(List<LinkageToken> payloadTokens, List<LinkageToken> candidateTokens) {
         double score = 0.0;
@@ -229,6 +239,20 @@ public class RecordLinkageService {
             List<LinkageToken> candidateTokenMatches = candidateTokensByTagAndType.getOrDefault(key, List.of());
 
             // Calculate the score based on the type of token
+            // Check if we are doing PPRL
+            if (LinkageTokenType.PPRL_BLOOM.equals(payloadToken.getTokenType())) {
+            	// Calculate the best similarity between payload and candidates and check if that similarity is bigger than the threshold
+    			double highestSimilarity = highestBloomSimilarity(payloadToken, candidateTokenMatches);
+    			if (highestSimilarity >= PPRL_BLOOM_MIN_SIMILARITY) {
+    				// The payload is similar (enough) to at least one candidate
+    				score += payloadToken.getWeight() * highestSimilarity;
+    				matchedOn.add(formatMatchedOn(payloadToken) + " similarity=" + "%.3f".formatted(highestSimilarity));
+    			}
+
+    			continue;
+    		}
+            
+            // Plaintext token scoring
             for (LinkageToken candidateToken : candidateTokenMatches) {
             	if (!payloadToken.getTokenValue().equals(candidateToken.getTokenValue())) {
     				continue;
@@ -321,7 +345,38 @@ public class RecordLinkageService {
             case PHONETIC -> token.getWeight() * PHONETIC_MATCH_WEIGHT_FACTOR;
             // Blocking matches only provide a weak supporting signal
             case BLOCK -> token.getWeight() * BLOCKING_MATCH_WEIGHT_FACTOR;
+			case PPRL_BLOOM -> token.getWeight();
+			case PPRL_EXACT -> token.getWeight();
+			// PPRL Blocking tokens are for candidate generation, and should not influence the scoring
+			case PPRL_BLOCK -> 0.0d;
+			default -> throw new IllegalArgumentException("Unexpected value for scoreContribution: " + token.getTokenType());
         };
+    }
+    
+    /**
+     * Calculates the highest Dice similarity between one payload Bloom filter token
+     * and all candidate Bloom filter tokens with the same tag.
+     * 
+     * @param payloadToken the PPRL Bloom filter token generated from the payload
+     * @param candidateTokens the candidate PPRL Bloom filter tokens with the same tag
+     * @return the highest Dice similarity
+     */
+    private double highestBloomSimilarity(LinkageToken payloadToken, List<LinkageToken> candidateTokens) {
+    	double highest = 0.0;
+
+    	// Iterate over candidates
+    	for (LinkageToken candidateToken : candidateTokens) {
+    		// We only want to check Bloom filter tokens
+    		if (!LinkageTokenType.PPRL_BLOOM.equals(candidateToken.getTokenType())) {
+    			continue;
+    		}
+
+    		// Calculate the dice similarity
+    		double similarity = pprlService.diceSimilarity(payloadToken.getTokenValue(), candidateToken.getTokenValue());
+    		highest = Math.max(highest, similarity);
+    	}
+
+    	return highest;
     }
     
     /**

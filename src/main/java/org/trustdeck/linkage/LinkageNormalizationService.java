@@ -73,6 +73,8 @@ public class LinkageNormalizationService {
 					s = s.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss");
 					s = s.replace("Ä", "Ae").replace("Ö", "Oe").replace("Ü", "Ue");
 				}
+				// Transforms accented characters into their base letter plus diacritic marks,
+				// then remove the diacritic marks (the replace-part); e.g. "Müller" becomes "Muller"
 				case "asciifold" -> s = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
 				default -> {
 					log.debug("The normalizer rule \"" + rule + "\" is unkown and was therefore ignored.");

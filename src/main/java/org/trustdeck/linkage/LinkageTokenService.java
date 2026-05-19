@@ -18,6 +18,7 @@
 package org.trustdeck.linkage;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.trustdeck.linkage.model.LinkageFieldRule;
 import org.trustdeck.linkage.model.LinkageToken;
 import org.trustdeck.linkage.model.LinkageTokenType;
+import org.trustdeck.linkage.model.PPRLConfig;
 import org.trustdeck.utils.Assertion;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -46,6 +48,10 @@ public class LinkageTokenService {
 	/** The normalization service used for value normalization and phonetic encoding. */
     @Autowired
     private LinkageNormalizationService normalizationService;
+    
+    /** The service used to generate privacy-preserving linkage tokens. */
+    @Autowired
+    private PPRLEncodingService pprlEncodingService;
 
     /**
      * Generates record linkage tokens for a payload according to the provided linkage field rules.
@@ -54,9 +60,11 @@ public class LinkageTokenService {
      * 
      * @param rules the linkage field rules that determine how tokens should be generated
      * @param payload the JSON payload from which the linkage tokens should be derived
+     * @param projectId the (internal) database ID of the project in which the record linkage takes place
+     * @param entityTypeId the (internal) database ID of the entity type of the record for which RL is done
      * @return the list of generated linkage tokens
      */
-    public List<LinkageToken> buildTokens(List<LinkageFieldRule> rules, JsonNode payload) {
+    public List<LinkageToken> buildTokens(List<LinkageFieldRule> rules, JsonNode payload, int projectId, int entityTypeId) {
         List<LinkageToken> tokens = new ArrayList<>();
 
         // Apply rules
@@ -84,33 +92,112 @@ public class LinkageTokenService {
 	            if (normalized == null) {
 	                continue;
 	            }
-	
-	            // Create and add normalized-linkage token
-	            tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.NORM, normalized, rule.getWeight()));
-	
-	            // Phonetically encode the normalized string if encoders are configured
-	            if (rule.getEncoders() != null) {
-		            for (String encoder : rule.getEncoders()) {
-		                String encoded = normalizationService.phoneticEncode(normalized, encoder);
-		                
-		                if (Assertion.isNotNullOrEmpty(encoded)) {
-		                    // Add phonetically encoded-linkage token
-		                    tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.PHONETIC, encoded, rule.getWeight()));
-		                }
-		            }
-	            }
-	
-	            // Generate blocking tokens if blocking strategies are configured
-	            if (rule.getBlocking() != null) {
-		            for (String block : rule.getBlocking()) {
-		            	tokens.addAll(buildBlockingTokens(rule, normalized, block));
-		            }
-	            }
+	            
+				// Generate either plaintext linkage tokens or privacy-preserving linkage tokens
+				// In PPRL mode, no plaintext normalized, phonetic, or prefix tokens are generated
+				if (rule.usesPprl()) {
+					tokens.addAll(buildPPRLTokens(rule, normalized, projectId, entityTypeId));
+				} else {
+					tokens.addAll(buildPlainTokens(rule, normalized));
+				}
     		}
         }
 
         return tokens;
     }
+    
+    /**
+     * Generates the plaintext linkage tokens for a normalized value.
+     * This includes normalized tokens, optional phonetic tokens, and blocking tokens.
+     * 
+     * @param rule the linkage field rule
+     * @param normalized the normalized field value
+     * @return the generated plaintext linkage tokens
+     */
+	private List<LinkageToken> buildPlainTokens(LinkageFieldRule rule, String normalized) {
+		List<LinkageToken> tokens = new ArrayList<>();
+	
+		// Create and add normalized-linkage token
+		tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.NORM, normalized, rule.getWeight()));
+	
+		// Phonetically encode the normalized string if encoders are configured
+		if (rule.getEncoders() != null) {
+			for (String encoder : rule.getEncoders()) {
+				String encoded = normalizationService.phoneticEncode(normalized, encoder);
+	
+				if (Assertion.isNotNullOrEmpty(encoded)) {
+                    // Add phonetically encoded-linkage token
+					tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.PHONETIC, encoded, rule.getWeight()));
+				}
+			}
+		}
+	
+		// Generate blocking tokens if blocking strategies are configured
+		if (rule.getBlocking() != null) {
+			for (String block : rule.getBlocking()) {
+				tokens.addAll(buildBlockingTokens(rule, normalized, block));
+			}
+		}
+	
+		return tokens;
+	}
+	
+	/**
+	 * Generates privacy-preserving linkage tokens for a normalized value.
+	 * Depending on the PPRL method, this creates either an HMAC exact token or an
+	 * n-gram Bloom filter with protected band tokens for candidate generation.
+	 * 
+	 * @param rule the linkage field rule
+	 * @param normalized the normalized field value
+	 * @param projectId the project ID used for PPRL context separation
+	 * @param entityTypeId the entity type ID used for PPRL context separation
+	 * @return the generated PPRL linkage tokens
+	 */
+	private List<LinkageToken> buildPPRLTokens(LinkageFieldRule rule, String normalized, int projectId, int entityTypeId) {
+		List<LinkageToken> tokens = new ArrayList<>();
+		
+		// Get or create a PPRL config
+		PPRLConfig config = rule.getPprlConfig() == null ? new PPRLConfig() : rule.getPprlConfig();
+
+		// Check if the project and type context are given
+		if (projectId <= 0 || entityTypeId <= 0) {
+			throw new IllegalArgumentException("PPRL token generation requires projectId and entityTypeId.");
+		}
+
+		// Generate tokens based on the generation method defined in the config or use default
+		String method = config.getMethod() == null ? PPRLConfig.METHOD_NGRAM_BLOOM_FILTER : config.getMethod();
+		switch (method.trim().toLowerCase()) {
+			case "hmacexact" -> {
+				// Exact PPRL mode: only an HMAC-protected value is stored
+				String exact = pprlEncodingService.hmacExact(projectId, entityTypeId, rule.getTag(), normalized);
+				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.PPRL_EXACT, exact, rule.getWeight()));
+
+				// The exact HMAC is also usable as a protected blocking key
+				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.PPRL_BLOCK, exact, rule.getWeight()));
+			}
+			case "ngrambloomfilter" -> {
+				// Fuzzy PPRL mode: n-grams are encoded into a protected Bloom filter
+				BitSet bloomFilter = pprlEncodingService.buildBloomFilter(projectId, entityTypeId, rule.getTag(), normalized, config);
+				String encodedBloom = pprlEncodingService.encodeBloomFilter(bloomFilter, config.getLength());
+
+				tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.PPRL_BLOOM, encodedBloom, rule.getWeight()));
+
+				// Bloom filter bands are used for fast candidate generation
+				for (String bandToken : pprlEncodingService.buildBloomBandTokens(projectId, entityTypeId, rule.getTag(), bloomFilter, config)) {
+					tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.PPRL_BLOCK, bandToken, rule.getWeight()));
+				}
+
+				// Optional exact HMAC support for fields where exact agreement should provide a strong signal
+				if (config.isExact()) {
+					String exact = pprlEncodingService.hmacExact(projectId, entityTypeId, rule.getTag(), normalized);
+					tokens.add(new LinkageToken(rule.getPath(), rule.getTag(), LinkageTokenType.PPRL_EXACT, exact, rule.getWeight()));
+				}
+			}
+			default -> log.debug("Unknown PPRL method \"" + method + "\" for field \"" + rule.getPath() + "\".");
+		}
+
+		return tokens;
+	}
 
     /**
      * Generates blocking tokens for a normalized field value according to the 

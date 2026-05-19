@@ -531,7 +531,7 @@ public class EntityInstanceDBService {
     @Transactional(readOnly = true)
     public List<Long> findCandidateIdsByBlockingTokens(int projectId, int entityTypeId, List<LinkageToken> payloadTokens, int limit, boolean includeDeleted) {
     	// Only blocking tokens are used during candidate generation
-    	List<LinkageToken> blockTokens = payloadTokens.stream().filter(t -> LinkageTokenType.BLOCK.equals(t.getTokenType())).toList();
+    	List<LinkageToken> blockTokens = payloadTokens.stream().filter(t -> t.getTokenType() != null && t.getTokenType().isCandidateGenerationToken()).toList();
 
     	// Without blocking tokens, no efficient candidate generation can be performed
     	if (blockTokens.isEmpty()) {
@@ -544,7 +544,7 @@ public class EntityInstanceDBService {
     	for (LinkageToken token : blockTokens) {
     		tokenCondition = tokenCondition
     				.or(LINKAGE_TOKEN.TAG.eq(token.getTag())
-    					.and(LINKAGE_TOKEN.TOKEN_TYPE.eq(LinkageTokenType.BLOCK.name().toLowerCase()))
+    					.and(LINKAGE_TOKEN.TOKEN_TYPE.eq(token.getTokenType().dbName()))
     					.and(LINKAGE_TOKEN.TOKEN_VALUE.eq(token.getTokenValue()))
     				);
     	}
@@ -652,11 +652,6 @@ public class EntityInstanceDBService {
      * @return the linkage token type enum representation
      */
     private LinkageTokenType toTypeEnum(String type) {
-    	return switch (type.trim().toLowerCase()) {
-    		case "norm" -> LinkageTokenType.NORM;
-    		case "phonetic" -> LinkageTokenType.PHONETIC;
-    		case "block" -> LinkageTokenType.BLOCK;
-    		default -> throw new IllegalArgumentException("Unknown linkage token type: " + type);
-    	};
+    	return LinkageTokenType.fromDbValue(type);
     }
 }
