@@ -71,6 +71,9 @@ app:
       password: ${DATABASE_TRUSTDECK_PASSWORD}
       configuration:
         maximum-pool-size: 20
+  linkage:
+    pprl:
+      secret: ${TRUSTDECK_PPRL_SECRET}
   roles:
     # Name of all possible rights -- used for rights and roles management
     ACE:
