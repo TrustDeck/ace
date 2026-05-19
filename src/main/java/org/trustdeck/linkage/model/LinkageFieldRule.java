@@ -52,6 +52,12 @@ public class LinkageFieldRule {
 
     /** Determines whether or not this field should be used for record linkage. */
     private boolean linkage;
+    
+    /** The privacy mode used for this field, e.g. plain or PPRL. */
+    private String privacyMode;
+
+    /** The PPRL-specific configuration for this field. */
+    private PPRLConfig pprlConfig;
 
     /** The normalization steps that should be applied to the field's value. */
     private List<String> normalizers;
@@ -67,4 +73,22 @@ public class LinkageFieldRule {
 
     /** The weight of this field during record linkage scoring. */
     private double weight;
+    
+    /**
+     * Checks whether this rule should generate privacy-preserving linkage tokens.
+     * 
+     * @return {@code true} if this rule uses PPRL mode, {@code false} otherwise
+     */
+    public boolean usesPprl() {
+    	return "pprl".equalsIgnoreCase(privacyMode);
+    }
+    
+    /**
+     * Checks whether this rule should generate privacy-preserving linkage tokens.
+     * 
+     * @return {@code true} if this rule uses PPRL mode, {@code false} otherwise
+     */
+    public boolean usesPlain() {
+    	return "plain".equalsIgnoreCase(privacyMode);
+    }
 }
