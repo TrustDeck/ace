@@ -191,6 +191,46 @@
 		      },
 		      "uniqueItems": true
 		    },
+			"privacyMode": {
+			  "type": "string",
+			  "enum": ["plain", "pprl"],
+			  "default": "plain"
+			},
+			"pprl": {
+			  "type": "object",
+			  "additionalProperties": false,
+			  "properties": {
+			    "method": {
+			      "type": "string",
+			      "enum": ["ngramBloomFilter", "hmacExact"],
+			      "default": "ngramBloomFilter"
+			    },
+			    "n": {
+			      "type": "integer",
+			      "minimum": 1,
+			      "default": 2
+			    },
+			    "length": {
+			      "type": "integer",
+			      "minimum": 128,
+			      "default": 1024
+			    },
+			    "hashPositions": {
+			      "type": "integer",
+			      "minimum": 1,
+			      "default": 10
+			    },
+			    "bandSize": {
+			      "type": "integer",
+			      "minimum": 8,
+			      "default": 32
+			    },
+			    "exact": {
+			      "type": "boolean",
+			      "default": false
+			    }
+			  }
+			},
 		    "comparator": {
 		      "type": "string",
 		      "enum": [
