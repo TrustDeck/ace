@@ -1,6 +1,6 @@
 # TRUSTDECK - Open-Source Tools for Identity Management in Translational Medicine
 
-[![Version](https://img.shields.io/badge/version-v1.0.1-green)](https://github.com/TrustDeck/ace/releases/tag/v1.0.1)
+[![Version](https://img.shields.io/badge/version-v1.0.2-green)](https://github.com/TrustDeck/ace/releases/tag/v1.0.2)
 [![License](https://img.shields.io/badge/License-Apache_2.0-green)](https://github.com/TrustDeck/ace/blob/main/LICENSE)
 
 TrustDeck provides a robust solution for pseudonymization and identity management and features high scalability and an integrated audit trail. Its architecture enables the creation of domain hierarchies with inheritable properties that provide both configuration and customization capabilities. The service allows for defining entities via type definition to maximize customizability. Complemented by a modern REST interface and state-of-the-art web technologies, TrustDeck is well suited for the use by trusted third party personnel as well as integration into data processing pipelines. It is built with Java and SpringBoot, the service integrates with Keycloak for authentication, HikariCP for efficient database connection pooling, jOOQ for type-safe SQL query construction, and PostgreSQL as the backend database.
@@ -32,3 +32,9 @@ Please refer to the [benchmarking repository](https://github.com/TrustDeck/ace-b
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## How to cite
+
+If you use this software in your research, please cite the accompanying article:
+
+> Müller A, Wündisch E, Wirth FN, Meier Zu Ummeln S, Weber J, Prasser F. **The Advanced Confidentiality Engine as a Scalable Tool for the Pseudonymization of Biomedical Data in Translational Settings: Development and Usability Study.** *J Med Internet Res.* 2025 Nov 5;27:e71822. doi:10.2196/71822. PMID: 41191920.
