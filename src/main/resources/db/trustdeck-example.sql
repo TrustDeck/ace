@@ -299,6 +299,26 @@ ALTER SEQUENCE public.entity_type_id_seq OWNER TO "trustdeck-manager";
 
 ALTER SEQUENCE public.entity_type_id_seq OWNED BY public.entity_type.id;
 
+
+--
+-- Name: linkage_token; Type: TABLE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE TABLE public.linkage_token (
+    entity_instance_id bigint NOT NULL,
+    entity_type_id integer NOT NULL,
+    project_id integer NOT NULL,
+    field_path text NOT NULL,
+    tag text NOT NULL,
+    token_type text NOT NULL,
+    token_value text NOT NULL,
+    weight double precision DEFAULT 1.0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.linkage_token OWNER TO "trustdeck-manager";
+
 --
 -- Name: permission_grant; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
@@ -592,6 +612,14 @@ ALTER TABLE ONLY public.entity_type
 
 
 --
+-- Name: linkage_token linkage_token_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.linkage_token
+    ADD CONSTRAINT linkage_token_pk PRIMARY KEY (entity_type_id, entity_instance_id, tag, token_type, token_value);
+
+
+--
 -- Name: permission_grant permission_grant_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
@@ -752,6 +780,27 @@ CREATE INDEX ix_permission_by_subject ON public.permission_grant USING btree (su
 --
 
 CREATE INDEX ix_permission_check ON public.permission_grant USING btree (subject_id, resource_type, resource_id, action) WHERE ((decision)::text = 'ALLOW'::text);
+
+
+--
+-- Name: linkage_token_block_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX linkage_token_block_idx ON public.linkage_token USING btree (project_id, entity_type_id, token_type, token_value);
+
+
+--
+-- Name: linkage_token_entity_instance_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX linkage_token_entity_instance_idx ON public.linkage_token USING btree (entity_type_id, entity_instance_id);
+
+
+--
+-- Name: linkage_token_lookup_idx; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX linkage_token_lookup_idx ON public.linkage_token USING btree (project_id, entity_type_id, tag, token_type, token_value);
 
 
 --
