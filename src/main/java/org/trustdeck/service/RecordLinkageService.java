@@ -74,7 +74,7 @@ public class RecordLinkageService {
     private EntityInstanceDBService entityInstanceService;
     
     /** A factor to adjust the weight of a phonetic match. As it is less accurate than an exact match on a normalized string, the factor is usually < 1.0. */
-    private static final double PHONETIC_MATCH_WEIGHT_FACTOR = 0.6;
+    private static final double PHONETIC_MATCH_WEIGHT_FACTOR = 0.75;
     
     /** A factor to adjust the weight of a blocking match. As it is less accurate than an exact match on a normalized string, the factor is usually < 1.0. */
     private static final double BLOCKING_MATCH_WEIGHT_FACTOR = 0.25;
@@ -83,10 +83,10 @@ public class RecordLinkageService {
     private static final int CANDIDATE_LIMIT = 250;
     
     /** The default minimum raw score a candidate must reach to be returned. */
-    private static final double DEFAULT_MIN_SCORE = 6.0;
+    private static final double DEFAULT_MIN_SCORE = 4.0;
 
     /** The default minimum normalized score a candidate must reach to be returned. */
-    private static final double DEFAULT_MIN_NORMALIZED_SCORE = 0.60;
+    private static final double DEFAULT_MIN_NORMALIZED_SCORE = 0.50;
     
     /** Minimum Dice similarity required for a PPRL Bloom filter field to contribute to the score. */
     private static final double PPRL_BLOOM_MIN_SIMILARITY = 0.75;
@@ -234,7 +234,12 @@ public class RecordLinkageService {
 
         // Compare each payload token against candidate tokens of the same semantic tag and token type
         for (LinkageToken payloadToken : uniquePayloadTokens.values()) {
-            // Build the token key from the payload and retrieve candidate tokens with the same key
+        	// PPRL blocking tokens are only used for candidate generation, not for detailed scoring
+        	if (LinkageTokenType.PPRL_BLOCK.equals(payloadToken.getTokenType())) {
+        		continue;
+        	}
+        	
+        	// Build the token key from the payload and retrieve candidate tokens with the same key
         	String key = payloadToken.getTag() + "|" + payloadToken.getTokenType();
             List<LinkageToken> candidateTokenMatches = candidateTokensByTagAndType.getOrDefault(key, List.of());
 
