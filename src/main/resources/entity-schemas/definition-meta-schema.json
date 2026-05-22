@@ -238,7 +238,8 @@
 		        "trigram",
 		        "date",
 		        "email",
-		        "phone"
+		        "phone",
+		        "bloomDice"
 		      ]
 		    },
 		    "weight": {
