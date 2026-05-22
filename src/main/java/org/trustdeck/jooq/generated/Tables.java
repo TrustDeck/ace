@@ -12,6 +12,7 @@ import org.trustdeck.jooq.generated.tables.AuditEvent;
 import org.trustdeck.jooq.generated.tables.Domain;
 import org.trustdeck.jooq.generated.tables.EntityInstance;
 import org.trustdeck.jooq.generated.tables.EntityType;
+import org.trustdeck.jooq.generated.tables.LinkageToken;
 import org.trustdeck.jooq.generated.tables.PermissionGrant;
 import org.trustdeck.jooq.generated.tables.PgpArmorHeaders;
 import org.trustdeck.jooq.generated.tables.Project;
@@ -50,6 +51,11 @@ public class Tables {
      * The table <code>public.entity_type</code>.
      */
     public static final EntityType ENTITY_TYPE = EntityType.ENTITY_TYPE;
+
+    /**
+     * The table <code>public.linkage_token</code>.
+     */
+    public static final LinkageToken LINKAGE_TOKEN = LinkageToken.LINKAGE_TOKEN;
 
     /**
      * The table <code>public.permission_grant</code>.

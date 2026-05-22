@@ -1,0 +1,34 @@
+/*
+ * Trust Deck Services
+ * Copyright 2026 Armin Müller and Eric Wündisch
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.trustdeck.linkage.model;
+
+/**
+ * This enum represents the status of a record linkage candidate.
+ * It indicates whether a candidate refers to an active entity instance
+ * or to an entity instance that has already been soft-deleted.
+ * 
+ * @author Armin Müller
+ */
+public enum CandidateStatus {
+
+	/** The candidate refers to an active entity instance. */
+	ACTIVE,
+
+	/** The candidate refers to a soft-deleted entity instance. */
+	DELETED;
+}
