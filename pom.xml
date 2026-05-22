@@ -6,21 +6,24 @@
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <keycloak.version>23.0.5</keycloak.version>
+        <keycloak.admin.client.version>26.0.8</keycloak.admin.client.version>
+        <keycloak.adapter.bom.version>25.0.6</keycloak.adapter.bom.version>
+        <keycloak.spring.starter.version>25.0.3</keycloak.spring.starter.version>
         <disruptor.version>3.4.4</disruptor.version>
+        <lombok.version>1.18.42</lombok.version>
         <blake3.version>0.2.2</blake3.version>
         <lz4.version>1.10.0</lz4.version>
         <jooq.version>3.18.9</jooq.version> <!-- This has to be the same version that the spring-boot-starter-jooq uses. -->
         <springdoc.version>2.6.0</springdoc.version>
-        <jar.finalName>ace</jar.finalName>
+        <jar.finalName>trustdeck</jar.finalName>
         <jooq.skip>false</jooq.skip>
     </properties>
 
     <groupId>org.trustdeck</groupId>
-    <artifactId>ace</artifactId>
-    <version>v1.0.2</version>
+    <artifactId>trustdeck</artifactId>
+    <version>v2.0.0</version>
     <packaging>jar</packaging>
-    <name>ace</name>
+    <name>trustdeck</name>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -52,6 +55,10 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
         </dependency>
         <dependency>
@@ -64,18 +71,16 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
 
         <!-- Other dependencies -->
         <dependency>
+	        <!-- Keycloak -->
+	        <!-- License: Apache 2.0 -->
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-spring-boot-starter</artifactId>
-            <version>${keycloak.version}</version><!--$NO-MVN-MAN-VER$-->
+            <version>${keycloak.spring.starter.version}</version><!--$NO-MVN-MAN-VER$-->
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
@@ -83,9 +88,9 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- PostgreSQL JDBC driver. -->
-        <!-- License: BSD-2-Clause License (compatible with Apache 2.0; https://joinup.ec.europa.eu/licence/compatibility-check/BSD-2-Clause/Apache-2.0) -->
         <dependency>
+	        <!-- PostgreSQL JDBC driver. -->
+	        <!-- License: BSD-2-Clause License (compatible with Apache 2.0; https://joinup.ec.europa.eu/licence/compatibility-check/BSD-2-Clause/Apache-2.0) -->
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
@@ -140,7 +145,7 @@
 			<!-- License: Apache 2.0 -->
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-admin-client</artifactId>
-            <version>${keycloak.version}</version>
+            <version>${keycloak.admin.client.version}</version>
         </dependency>
         <dependency>
         	<!-- Needed for Swagger. -->
@@ -149,6 +154,19 @@
 	        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 	        <version>${springdoc.version}</version>
 	    </dependency>
+	    <dependency>
+        	<!-- Needed for enitity type definition validation. -->
+        	<!-- License: Apache 2.0 -->
+		    <groupId>com.networknt</groupId>
+		    <artifactId>json-schema-validator</artifactId>
+		    <version>1.5.9</version>
+		</dependency>
+	    <dependency>
+        	<!-- Needed for enitity type definition validation. -->
+        	<!-- License: Apache 2.0 -->
+		    <groupId>org.springframework.kafka</groupId>
+		    <artifactId>spring-kafka</artifactId>
+		</dependency>
 
         <!-- Dependencies for tests -->
         <dependency>
@@ -173,7 +191,7 @@
             <dependency>
                 <groupId>org.keycloak.bom</groupId>
                 <artifactId>keycloak-adapter-bom</artifactId>
-                <version>${keycloak.version}</version>
+                <version>${keycloak.adapter.bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -204,9 +222,9 @@
                     <logging>WARN</logging>
                     <jdbc>
                         <driver>org.postgresql.Driver</driver>
-                        <url>jdbc:postgresql://localhost:5432/ace</url>
-                        <user>${env.DATABASE_ACE_USER}</user>
-                        <password>${env.DATABASE_ACE_PASSWORD}</password>
+                        <url>jdbc:postgresql://localhost:5432/trustdeck</url>
+                        <user>${env.DATABASE_TRUSTDECK_USER}</user>
+                        <password>${env.DATABASE_TRUSTDECK_PASSWORD}</password>
                     </jdbc>
                     <generator>
                         <strategy>
@@ -215,11 +233,12 @@
                         <database>
                             <name>org.jooq.meta.postgres.PostgresDatabase</name>
                             <includes>.*</includes>
-                            <excludes></excludes>
+							<!-- Exclude two matching functions and all tables for partition children -->
+							<excludes>public\.regexp_matches|public\.regexp_split_to_table | (?i:(?:public\.)?entityinstance_t\d+)</excludes>
                             <inputSchema>public</inputSchema>
                         </database>
                         <target>
-                            <packageName>org.trustdeck.ace.jooq.generated</packageName>
+                            <packageName>org.trustdeck.jooq.generated</packageName>
                             <directory>src/main/java</directory>
                         </target>
                         <generate>
@@ -234,7 +253,7 @@
                             <immutablePojos>false</immutablePojos>
                             <interfaces>true</interfaces>
                             <daos>true</daos>
-                            <jpaAnnotations>true</jpaAnnotations>
+                            <jpaAnnotations>false</jpaAnnotations>
                             <validationAnnotations>true</validationAnnotations>
                             <globalObjectReferences>true</globalObjectReferences>
                             <fluentSetters>true</fluentSetters>
@@ -265,15 +284,29 @@
                             <goal>repackage</goal>
                         </goals>
                         <configuration>
-                            <finalName>ace-${project.version}</finalName>
+                            <finalName>trustdeck-${project.version}</finalName>
                             <executable>true</executable>
-                            <mainClass>org.trustdeck.ace.Application</mainClass>
+                            <mainClass>org.trustdeck.Application</mainClass>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+            
+            <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
 
-            <!-- used by junit test -->
+			<!-- used by junit test -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -288,6 +321,22 @@
                     </argLine>
                 </configuration>
             </plugin>
+            
+            <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<locale>en</locale>
+					<additionalJOptions>
+						<additionalJOption>-J-Duser.language=en</additionalJOption>
+						<additionalJOption>-J-Duser.country=US</additionalJOption>
+					</additionalJOptions>
+					<encoding>UTF-8</encoding>
+					<docencoding>UTF-8</docencoding>
+					<charset>UTF-8</charset>
+				</configuration>
+			</plugin>
         </plugins>
     </build>
 </project>

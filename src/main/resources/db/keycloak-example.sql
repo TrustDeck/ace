@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 17.3 (Debian 17.3-3.pgdg120+1)
--- Dumped by pg_dump version 17.3 (Debian 17.3-3.pgdg120+1)
+-- Dumped from database version 17.4 (Debian 17.4-1.pgdg120+2)
+-- Dumped by pg_dump version 17.4 (Debian 17.4-1.pgdg120+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -19,13 +19,13 @@ SET row_security = off;
 
 DROP DATABASE IF EXISTS keycloak WITH (FORCE);
 --
--- Name: keycloak; Type: DATABASE; Schema: -; Owner: ace-manager
+-- Name: keycloak; Type: DATABASE; Schema: -; Owner: trustdeck-manager
 --
 
 CREATE DATABASE keycloak WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
 
 
-ALTER DATABASE keycloak OWNER TO "ace-manager";
+ALTER DATABASE keycloak OWNER TO "trustdeck-manager";
 
 \connect keycloak
 
@@ -46,7 +46,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: admin_event_entity; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: admin_event_entity; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.admin_event_entity (
@@ -66,10 +66,10 @@ CREATE TABLE public.admin_event_entity (
 );
 
 
-ALTER TABLE public.admin_event_entity OWNER TO "ace-manager";
+ALTER TABLE public.admin_event_entity OWNER TO "trustdeck-manager";
 
 --
--- Name: associated_policy; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: associated_policy; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.associated_policy (
@@ -78,10 +78,10 @@ CREATE TABLE public.associated_policy (
 );
 
 
-ALTER TABLE public.associated_policy OWNER TO "ace-manager";
+ALTER TABLE public.associated_policy OWNER TO "trustdeck-manager";
 
 --
--- Name: authentication_execution; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: authentication_execution; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.authentication_execution (
@@ -98,10 +98,10 @@ CREATE TABLE public.authentication_execution (
 );
 
 
-ALTER TABLE public.authentication_execution OWNER TO "ace-manager";
+ALTER TABLE public.authentication_execution OWNER TO "trustdeck-manager";
 
 --
--- Name: authentication_flow; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: authentication_flow; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.authentication_flow (
@@ -115,10 +115,10 @@ CREATE TABLE public.authentication_flow (
 );
 
 
-ALTER TABLE public.authentication_flow OWNER TO "ace-manager";
+ALTER TABLE public.authentication_flow OWNER TO "trustdeck-manager";
 
 --
--- Name: authenticator_config; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: authenticator_config; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.authenticator_config (
@@ -128,10 +128,10 @@ CREATE TABLE public.authenticator_config (
 );
 
 
-ALTER TABLE public.authenticator_config OWNER TO "ace-manager";
+ALTER TABLE public.authenticator_config OWNER TO "trustdeck-manager";
 
 --
--- Name: authenticator_config_entry; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: authenticator_config_entry; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.authenticator_config_entry (
@@ -141,10 +141,10 @@ CREATE TABLE public.authenticator_config_entry (
 );
 
 
-ALTER TABLE public.authenticator_config_entry OWNER TO "ace-manager";
+ALTER TABLE public.authenticator_config_entry OWNER TO "trustdeck-manager";
 
 --
--- Name: broker_link; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: broker_link; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.broker_link (
@@ -158,10 +158,10 @@ CREATE TABLE public.broker_link (
 );
 
 
-ALTER TABLE public.broker_link OWNER TO "ace-manager";
+ALTER TABLE public.broker_link OWNER TO "trustdeck-manager";
 
 --
--- Name: client; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: client; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.client (
@@ -194,10 +194,10 @@ CREATE TABLE public.client (
 );
 
 
-ALTER TABLE public.client OWNER TO "ace-manager";
+ALTER TABLE public.client OWNER TO "trustdeck-manager";
 
 --
--- Name: client_attributes; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: client_attributes; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.client_attributes (
@@ -207,10 +207,10 @@ CREATE TABLE public.client_attributes (
 );
 
 
-ALTER TABLE public.client_attributes OWNER TO "ace-manager";
+ALTER TABLE public.client_attributes OWNER TO "trustdeck-manager";
 
 --
--- Name: client_auth_flow_bindings; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: client_auth_flow_bindings; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.client_auth_flow_bindings (
@@ -220,10 +220,10 @@ CREATE TABLE public.client_auth_flow_bindings (
 );
 
 
-ALTER TABLE public.client_auth_flow_bindings OWNER TO "ace-manager";
+ALTER TABLE public.client_auth_flow_bindings OWNER TO "trustdeck-manager";
 
 --
--- Name: client_initial_access; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: client_initial_access; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.client_initial_access (
@@ -236,10 +236,10 @@ CREATE TABLE public.client_initial_access (
 );
 
 
-ALTER TABLE public.client_initial_access OWNER TO "ace-manager";
+ALTER TABLE public.client_initial_access OWNER TO "trustdeck-manager";
 
 --
--- Name: client_node_registrations; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: client_node_registrations; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.client_node_registrations (
@@ -249,10 +249,10 @@ CREATE TABLE public.client_node_registrations (
 );
 
 
-ALTER TABLE public.client_node_registrations OWNER TO "ace-manager";
+ALTER TABLE public.client_node_registrations OWNER TO "trustdeck-manager";
 
 --
--- Name: client_scope; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: client_scope; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.client_scope (
@@ -264,10 +264,10 @@ CREATE TABLE public.client_scope (
 );
 
 
-ALTER TABLE public.client_scope OWNER TO "ace-manager";
+ALTER TABLE public.client_scope OWNER TO "trustdeck-manager";
 
 --
--- Name: client_scope_attributes; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: client_scope_attributes; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.client_scope_attributes (
@@ -277,10 +277,10 @@ CREATE TABLE public.client_scope_attributes (
 );
 
 
-ALTER TABLE public.client_scope_attributes OWNER TO "ace-manager";
+ALTER TABLE public.client_scope_attributes OWNER TO "trustdeck-manager";
 
 --
--- Name: client_scope_client; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: client_scope_client; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.client_scope_client (
@@ -290,10 +290,10 @@ CREATE TABLE public.client_scope_client (
 );
 
 
-ALTER TABLE public.client_scope_client OWNER TO "ace-manager";
+ALTER TABLE public.client_scope_client OWNER TO "trustdeck-manager";
 
 --
--- Name: client_scope_role_mapping; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: client_scope_role_mapping; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.client_scope_role_mapping (
@@ -302,10 +302,10 @@ CREATE TABLE public.client_scope_role_mapping (
 );
 
 
-ALTER TABLE public.client_scope_role_mapping OWNER TO "ace-manager";
+ALTER TABLE public.client_scope_role_mapping OWNER TO "trustdeck-manager";
 
 --
--- Name: component; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: component; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.component (
@@ -319,10 +319,10 @@ CREATE TABLE public.component (
 );
 
 
-ALTER TABLE public.component OWNER TO "ace-manager";
+ALTER TABLE public.component OWNER TO "trustdeck-manager";
 
 --
--- Name: component_config; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: component_config; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.component_config (
@@ -333,10 +333,10 @@ CREATE TABLE public.component_config (
 );
 
 
-ALTER TABLE public.component_config OWNER TO "ace-manager";
+ALTER TABLE public.component_config OWNER TO "trustdeck-manager";
 
 --
--- Name: composite_role; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: composite_role; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.composite_role (
@@ -345,10 +345,10 @@ CREATE TABLE public.composite_role (
 );
 
 
-ALTER TABLE public.composite_role OWNER TO "ace-manager";
+ALTER TABLE public.composite_role OWNER TO "trustdeck-manager";
 
 --
--- Name: credential; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: credential; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.credential (
@@ -360,14 +360,15 @@ CREATE TABLE public.credential (
     user_label character varying(255),
     secret_data text,
     credential_data text,
-    priority integer
+    priority integer,
+    version integer DEFAULT 0
 );
 
 
-ALTER TABLE public.credential OWNER TO "ace-manager";
+ALTER TABLE public.credential OWNER TO "trustdeck-manager";
 
 --
--- Name: databasechangelog; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: databasechangelog; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.databasechangelog (
@@ -388,10 +389,10 @@ CREATE TABLE public.databasechangelog (
 );
 
 
-ALTER TABLE public.databasechangelog OWNER TO "ace-manager";
+ALTER TABLE public.databasechangelog OWNER TO "trustdeck-manager";
 
 --
--- Name: databasechangeloglock; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: databasechangeloglock; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.databasechangeloglock (
@@ -402,10 +403,10 @@ CREATE TABLE public.databasechangeloglock (
 );
 
 
-ALTER TABLE public.databasechangeloglock OWNER TO "ace-manager";
+ALTER TABLE public.databasechangeloglock OWNER TO "trustdeck-manager";
 
 --
--- Name: default_client_scope; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: default_client_scope; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.default_client_scope (
@@ -415,10 +416,10 @@ CREATE TABLE public.default_client_scope (
 );
 
 
-ALTER TABLE public.default_client_scope OWNER TO "ace-manager";
+ALTER TABLE public.default_client_scope OWNER TO "trustdeck-manager";
 
 --
--- Name: event_entity; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: event_entity; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.event_entity (
@@ -436,10 +437,10 @@ CREATE TABLE public.event_entity (
 );
 
 
-ALTER TABLE public.event_entity OWNER TO "ace-manager";
+ALTER TABLE public.event_entity OWNER TO "trustdeck-manager";
 
 --
--- Name: fed_user_attribute; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: fed_user_attribute; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.fed_user_attribute (
@@ -455,10 +456,10 @@ CREATE TABLE public.fed_user_attribute (
 );
 
 
-ALTER TABLE public.fed_user_attribute OWNER TO "ace-manager";
+ALTER TABLE public.fed_user_attribute OWNER TO "trustdeck-manager";
 
 --
--- Name: fed_user_consent; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: fed_user_consent; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.fed_user_consent (
@@ -474,10 +475,10 @@ CREATE TABLE public.fed_user_consent (
 );
 
 
-ALTER TABLE public.fed_user_consent OWNER TO "ace-manager";
+ALTER TABLE public.fed_user_consent OWNER TO "trustdeck-manager";
 
 --
--- Name: fed_user_consent_cl_scope; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: fed_user_consent_cl_scope; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.fed_user_consent_cl_scope (
@@ -486,10 +487,10 @@ CREATE TABLE public.fed_user_consent_cl_scope (
 );
 
 
-ALTER TABLE public.fed_user_consent_cl_scope OWNER TO "ace-manager";
+ALTER TABLE public.fed_user_consent_cl_scope OWNER TO "trustdeck-manager";
 
 --
--- Name: fed_user_credential; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: fed_user_credential; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.fed_user_credential (
@@ -507,10 +508,10 @@ CREATE TABLE public.fed_user_credential (
 );
 
 
-ALTER TABLE public.fed_user_credential OWNER TO "ace-manager";
+ALTER TABLE public.fed_user_credential OWNER TO "trustdeck-manager";
 
 --
--- Name: fed_user_group_membership; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: fed_user_group_membership; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.fed_user_group_membership (
@@ -521,10 +522,10 @@ CREATE TABLE public.fed_user_group_membership (
 );
 
 
-ALTER TABLE public.fed_user_group_membership OWNER TO "ace-manager";
+ALTER TABLE public.fed_user_group_membership OWNER TO "trustdeck-manager";
 
 --
--- Name: fed_user_required_action; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: fed_user_required_action; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.fed_user_required_action (
@@ -535,10 +536,10 @@ CREATE TABLE public.fed_user_required_action (
 );
 
 
-ALTER TABLE public.fed_user_required_action OWNER TO "ace-manager";
+ALTER TABLE public.fed_user_required_action OWNER TO "trustdeck-manager";
 
 --
--- Name: fed_user_role_mapping; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: fed_user_role_mapping; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.fed_user_role_mapping (
@@ -549,10 +550,10 @@ CREATE TABLE public.fed_user_role_mapping (
 );
 
 
-ALTER TABLE public.fed_user_role_mapping OWNER TO "ace-manager";
+ALTER TABLE public.fed_user_role_mapping OWNER TO "trustdeck-manager";
 
 --
--- Name: federated_identity; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: federated_identity; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.federated_identity (
@@ -565,10 +566,10 @@ CREATE TABLE public.federated_identity (
 );
 
 
-ALTER TABLE public.federated_identity OWNER TO "ace-manager";
+ALTER TABLE public.federated_identity OWNER TO "trustdeck-manager";
 
 --
--- Name: federated_user; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: federated_user; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.federated_user (
@@ -578,10 +579,10 @@ CREATE TABLE public.federated_user (
 );
 
 
-ALTER TABLE public.federated_user OWNER TO "ace-manager";
+ALTER TABLE public.federated_user OWNER TO "trustdeck-manager";
 
 --
--- Name: group_attribute; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: group_attribute; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.group_attribute (
@@ -592,10 +593,10 @@ CREATE TABLE public.group_attribute (
 );
 
 
-ALTER TABLE public.group_attribute OWNER TO "ace-manager";
+ALTER TABLE public.group_attribute OWNER TO "trustdeck-manager";
 
 --
--- Name: group_role_mapping; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: group_role_mapping; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.group_role_mapping (
@@ -604,10 +605,10 @@ CREATE TABLE public.group_role_mapping (
 );
 
 
-ALTER TABLE public.group_role_mapping OWNER TO "ace-manager";
+ALTER TABLE public.group_role_mapping OWNER TO "trustdeck-manager";
 
 --
--- Name: identity_provider; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: identity_provider; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.identity_provider (
@@ -629,10 +630,10 @@ CREATE TABLE public.identity_provider (
 );
 
 
-ALTER TABLE public.identity_provider OWNER TO "ace-manager";
+ALTER TABLE public.identity_provider OWNER TO "trustdeck-manager";
 
 --
--- Name: identity_provider_config; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: identity_provider_config; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.identity_provider_config (
@@ -642,10 +643,10 @@ CREATE TABLE public.identity_provider_config (
 );
 
 
-ALTER TABLE public.identity_provider_config OWNER TO "ace-manager";
+ALTER TABLE public.identity_provider_config OWNER TO "trustdeck-manager";
 
 --
--- Name: identity_provider_mapper; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: identity_provider_mapper; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.identity_provider_mapper (
@@ -657,10 +658,10 @@ CREATE TABLE public.identity_provider_mapper (
 );
 
 
-ALTER TABLE public.identity_provider_mapper OWNER TO "ace-manager";
+ALTER TABLE public.identity_provider_mapper OWNER TO "trustdeck-manager";
 
 --
--- Name: idp_mapper_config; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: idp_mapper_config; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.idp_mapper_config (
@@ -670,10 +671,25 @@ CREATE TABLE public.idp_mapper_config (
 );
 
 
-ALTER TABLE public.idp_mapper_config OWNER TO "ace-manager";
+ALTER TABLE public.idp_mapper_config OWNER TO "trustdeck-manager";
 
 --
--- Name: keycloak_group; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: jgroups_ping; Type: TABLE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE TABLE public.jgroups_ping (
+    address character varying(200) NOT NULL,
+    name character varying(200),
+    cluster_name character varying(200) NOT NULL,
+    ip character varying(200) NOT NULL,
+    coord boolean
+);
+
+
+ALTER TABLE public.jgroups_ping OWNER TO "trustdeck-manager";
+
+--
+-- Name: keycloak_group; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.keycloak_group (
@@ -681,14 +697,15 @@ CREATE TABLE public.keycloak_group (
     name character varying(255),
     parent_group character varying(36) NOT NULL,
     realm_id character varying(36),
-    type integer DEFAULT 0 NOT NULL
+    type integer DEFAULT 0 NOT NULL,
+    description character varying(255)
 );
 
 
-ALTER TABLE public.keycloak_group OWNER TO "ace-manager";
+ALTER TABLE public.keycloak_group OWNER TO "trustdeck-manager";
 
 --
--- Name: keycloak_role; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: keycloak_role; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.keycloak_role (
@@ -703,10 +720,10 @@ CREATE TABLE public.keycloak_role (
 );
 
 
-ALTER TABLE public.keycloak_role OWNER TO "ace-manager";
+ALTER TABLE public.keycloak_role OWNER TO "trustdeck-manager";
 
 --
--- Name: migration_model; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: migration_model; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.migration_model (
@@ -716,10 +733,10 @@ CREATE TABLE public.migration_model (
 );
 
 
-ALTER TABLE public.migration_model OWNER TO "ace-manager";
+ALTER TABLE public.migration_model OWNER TO "trustdeck-manager";
 
 --
--- Name: offline_client_session; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: offline_client_session; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.offline_client_session (
@@ -734,10 +751,10 @@ CREATE TABLE public.offline_client_session (
 );
 
 
-ALTER TABLE public.offline_client_session OWNER TO "ace-manager";
+ALTER TABLE public.offline_client_session OWNER TO "trustdeck-manager";
 
 --
--- Name: offline_user_session; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: offline_user_session; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.offline_user_session (
@@ -753,10 +770,10 @@ CREATE TABLE public.offline_user_session (
 );
 
 
-ALTER TABLE public.offline_user_session OWNER TO "ace-manager";
+ALTER TABLE public.offline_user_session OWNER TO "trustdeck-manager";
 
 --
--- Name: org; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: org; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.org (
@@ -771,10 +788,10 @@ CREATE TABLE public.org (
 );
 
 
-ALTER TABLE public.org OWNER TO "ace-manager";
+ALTER TABLE public.org OWNER TO "trustdeck-manager";
 
 --
--- Name: org_domain; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: org_domain; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.org_domain (
@@ -785,10 +802,10 @@ CREATE TABLE public.org_domain (
 );
 
 
-ALTER TABLE public.org_domain OWNER TO "ace-manager";
+ALTER TABLE public.org_domain OWNER TO "trustdeck-manager";
 
 --
--- Name: policy_config; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: policy_config; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.policy_config (
@@ -798,10 +815,10 @@ CREATE TABLE public.policy_config (
 );
 
 
-ALTER TABLE public.policy_config OWNER TO "ace-manager";
+ALTER TABLE public.policy_config OWNER TO "trustdeck-manager";
 
 --
--- Name: protocol_mapper; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: protocol_mapper; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.protocol_mapper (
@@ -814,10 +831,10 @@ CREATE TABLE public.protocol_mapper (
 );
 
 
-ALTER TABLE public.protocol_mapper OWNER TO "ace-manager";
+ALTER TABLE public.protocol_mapper OWNER TO "trustdeck-manager";
 
 --
--- Name: protocol_mapper_config; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: protocol_mapper_config; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.protocol_mapper_config (
@@ -827,10 +844,10 @@ CREATE TABLE public.protocol_mapper_config (
 );
 
 
-ALTER TABLE public.protocol_mapper_config OWNER TO "ace-manager";
+ALTER TABLE public.protocol_mapper_config OWNER TO "trustdeck-manager";
 
 --
--- Name: realm; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: realm; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.realm (
@@ -890,10 +907,10 @@ CREATE TABLE public.realm (
 );
 
 
-ALTER TABLE public.realm OWNER TO "ace-manager";
+ALTER TABLE public.realm OWNER TO "trustdeck-manager";
 
 --
--- Name: realm_attribute; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: realm_attribute; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.realm_attribute (
@@ -903,10 +920,10 @@ CREATE TABLE public.realm_attribute (
 );
 
 
-ALTER TABLE public.realm_attribute OWNER TO "ace-manager";
+ALTER TABLE public.realm_attribute OWNER TO "trustdeck-manager";
 
 --
--- Name: realm_default_groups; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: realm_default_groups; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.realm_default_groups (
@@ -915,10 +932,10 @@ CREATE TABLE public.realm_default_groups (
 );
 
 
-ALTER TABLE public.realm_default_groups OWNER TO "ace-manager";
+ALTER TABLE public.realm_default_groups OWNER TO "trustdeck-manager";
 
 --
--- Name: realm_enabled_event_types; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: realm_enabled_event_types; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.realm_enabled_event_types (
@@ -927,10 +944,10 @@ CREATE TABLE public.realm_enabled_event_types (
 );
 
 
-ALTER TABLE public.realm_enabled_event_types OWNER TO "ace-manager";
+ALTER TABLE public.realm_enabled_event_types OWNER TO "trustdeck-manager";
 
 --
--- Name: realm_events_listeners; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: realm_events_listeners; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.realm_events_listeners (
@@ -939,10 +956,10 @@ CREATE TABLE public.realm_events_listeners (
 );
 
 
-ALTER TABLE public.realm_events_listeners OWNER TO "ace-manager";
+ALTER TABLE public.realm_events_listeners OWNER TO "trustdeck-manager";
 
 --
--- Name: realm_localizations; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: realm_localizations; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.realm_localizations (
@@ -952,10 +969,10 @@ CREATE TABLE public.realm_localizations (
 );
 
 
-ALTER TABLE public.realm_localizations OWNER TO "ace-manager";
+ALTER TABLE public.realm_localizations OWNER TO "trustdeck-manager";
 
 --
--- Name: realm_required_credential; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: realm_required_credential; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.realm_required_credential (
@@ -967,10 +984,10 @@ CREATE TABLE public.realm_required_credential (
 );
 
 
-ALTER TABLE public.realm_required_credential OWNER TO "ace-manager";
+ALTER TABLE public.realm_required_credential OWNER TO "trustdeck-manager";
 
 --
--- Name: realm_smtp_config; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: realm_smtp_config; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.realm_smtp_config (
@@ -980,10 +997,10 @@ CREATE TABLE public.realm_smtp_config (
 );
 
 
-ALTER TABLE public.realm_smtp_config OWNER TO "ace-manager";
+ALTER TABLE public.realm_smtp_config OWNER TO "trustdeck-manager";
 
 --
--- Name: realm_supported_locales; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: realm_supported_locales; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.realm_supported_locales (
@@ -992,10 +1009,10 @@ CREATE TABLE public.realm_supported_locales (
 );
 
 
-ALTER TABLE public.realm_supported_locales OWNER TO "ace-manager";
+ALTER TABLE public.realm_supported_locales OWNER TO "trustdeck-manager";
 
 --
--- Name: redirect_uris; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: redirect_uris; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.redirect_uris (
@@ -1004,10 +1021,10 @@ CREATE TABLE public.redirect_uris (
 );
 
 
-ALTER TABLE public.redirect_uris OWNER TO "ace-manager";
+ALTER TABLE public.redirect_uris OWNER TO "trustdeck-manager";
 
 --
--- Name: required_action_config; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: required_action_config; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.required_action_config (
@@ -1017,10 +1034,10 @@ CREATE TABLE public.required_action_config (
 );
 
 
-ALTER TABLE public.required_action_config OWNER TO "ace-manager";
+ALTER TABLE public.required_action_config OWNER TO "trustdeck-manager";
 
 --
--- Name: required_action_provider; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: required_action_provider; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.required_action_provider (
@@ -1035,10 +1052,10 @@ CREATE TABLE public.required_action_provider (
 );
 
 
-ALTER TABLE public.required_action_provider OWNER TO "ace-manager";
+ALTER TABLE public.required_action_provider OWNER TO "trustdeck-manager";
 
 --
--- Name: resource_attribute; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: resource_attribute; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.resource_attribute (
@@ -1049,10 +1066,10 @@ CREATE TABLE public.resource_attribute (
 );
 
 
-ALTER TABLE public.resource_attribute OWNER TO "ace-manager";
+ALTER TABLE public.resource_attribute OWNER TO "trustdeck-manager";
 
 --
--- Name: resource_policy; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: resource_policy; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.resource_policy (
@@ -1061,10 +1078,10 @@ CREATE TABLE public.resource_policy (
 );
 
 
-ALTER TABLE public.resource_policy OWNER TO "ace-manager";
+ALTER TABLE public.resource_policy OWNER TO "trustdeck-manager";
 
 --
--- Name: resource_scope; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: resource_scope; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.resource_scope (
@@ -1073,10 +1090,10 @@ CREATE TABLE public.resource_scope (
 );
 
 
-ALTER TABLE public.resource_scope OWNER TO "ace-manager";
+ALTER TABLE public.resource_scope OWNER TO "trustdeck-manager";
 
 --
--- Name: resource_server; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: resource_server; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.resource_server (
@@ -1087,10 +1104,10 @@ CREATE TABLE public.resource_server (
 );
 
 
-ALTER TABLE public.resource_server OWNER TO "ace-manager";
+ALTER TABLE public.resource_server OWNER TO "trustdeck-manager";
 
 --
--- Name: resource_server_perm_ticket; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: resource_server_perm_ticket; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.resource_server_perm_ticket (
@@ -1106,10 +1123,10 @@ CREATE TABLE public.resource_server_perm_ticket (
 );
 
 
-ALTER TABLE public.resource_server_perm_ticket OWNER TO "ace-manager";
+ALTER TABLE public.resource_server_perm_ticket OWNER TO "trustdeck-manager";
 
 --
--- Name: resource_server_policy; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: resource_server_policy; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.resource_server_policy (
@@ -1124,10 +1141,10 @@ CREATE TABLE public.resource_server_policy (
 );
 
 
-ALTER TABLE public.resource_server_policy OWNER TO "ace-manager";
+ALTER TABLE public.resource_server_policy OWNER TO "trustdeck-manager";
 
 --
--- Name: resource_server_resource; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: resource_server_resource; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.resource_server_resource (
@@ -1142,10 +1159,10 @@ CREATE TABLE public.resource_server_resource (
 );
 
 
-ALTER TABLE public.resource_server_resource OWNER TO "ace-manager";
+ALTER TABLE public.resource_server_resource OWNER TO "trustdeck-manager";
 
 --
--- Name: resource_server_scope; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: resource_server_scope; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.resource_server_scope (
@@ -1157,10 +1174,10 @@ CREATE TABLE public.resource_server_scope (
 );
 
 
-ALTER TABLE public.resource_server_scope OWNER TO "ace-manager";
+ALTER TABLE public.resource_server_scope OWNER TO "trustdeck-manager";
 
 --
--- Name: resource_uris; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: resource_uris; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.resource_uris (
@@ -1169,10 +1186,10 @@ CREATE TABLE public.resource_uris (
 );
 
 
-ALTER TABLE public.resource_uris OWNER TO "ace-manager";
+ALTER TABLE public.resource_uris OWNER TO "trustdeck-manager";
 
 --
--- Name: revoked_token; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: revoked_token; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.revoked_token (
@@ -1181,10 +1198,10 @@ CREATE TABLE public.revoked_token (
 );
 
 
-ALTER TABLE public.revoked_token OWNER TO "ace-manager";
+ALTER TABLE public.revoked_token OWNER TO "trustdeck-manager";
 
 --
--- Name: role_attribute; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: role_attribute; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.role_attribute (
@@ -1195,10 +1212,10 @@ CREATE TABLE public.role_attribute (
 );
 
 
-ALTER TABLE public.role_attribute OWNER TO "ace-manager";
+ALTER TABLE public.role_attribute OWNER TO "trustdeck-manager";
 
 --
--- Name: scope_mapping; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: scope_mapping; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.scope_mapping (
@@ -1207,10 +1224,10 @@ CREATE TABLE public.scope_mapping (
 );
 
 
-ALTER TABLE public.scope_mapping OWNER TO "ace-manager";
+ALTER TABLE public.scope_mapping OWNER TO "trustdeck-manager";
 
 --
--- Name: scope_policy; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: scope_policy; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.scope_policy (
@@ -1219,10 +1236,23 @@ CREATE TABLE public.scope_policy (
 );
 
 
-ALTER TABLE public.scope_policy OWNER TO "ace-manager";
+ALTER TABLE public.scope_policy OWNER TO "trustdeck-manager";
 
 --
--- Name: user_attribute; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: server_config; Type: TABLE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE TABLE public.server_config (
+    server_config_key character varying(255) NOT NULL,
+    value text NOT NULL,
+    version integer DEFAULT 0
+);
+
+
+ALTER TABLE public.server_config OWNER TO "trustdeck-manager";
+
+--
+-- Name: user_attribute; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.user_attribute (
@@ -1236,10 +1266,10 @@ CREATE TABLE public.user_attribute (
 );
 
 
-ALTER TABLE public.user_attribute OWNER TO "ace-manager";
+ALTER TABLE public.user_attribute OWNER TO "trustdeck-manager";
 
 --
--- Name: user_consent; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: user_consent; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.user_consent (
@@ -1253,10 +1283,10 @@ CREATE TABLE public.user_consent (
 );
 
 
-ALTER TABLE public.user_consent OWNER TO "ace-manager";
+ALTER TABLE public.user_consent OWNER TO "trustdeck-manager";
 
 --
--- Name: user_consent_client_scope; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: user_consent_client_scope; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.user_consent_client_scope (
@@ -1265,10 +1295,10 @@ CREATE TABLE public.user_consent_client_scope (
 );
 
 
-ALTER TABLE public.user_consent_client_scope OWNER TO "ace-manager";
+ALTER TABLE public.user_consent_client_scope OWNER TO "trustdeck-manager";
 
 --
--- Name: user_entity; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: user_entity; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.user_entity (
@@ -1288,10 +1318,10 @@ CREATE TABLE public.user_entity (
 );
 
 
-ALTER TABLE public.user_entity OWNER TO "ace-manager";
+ALTER TABLE public.user_entity OWNER TO "trustdeck-manager";
 
 --
--- Name: user_federation_config; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: user_federation_config; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.user_federation_config (
@@ -1301,10 +1331,10 @@ CREATE TABLE public.user_federation_config (
 );
 
 
-ALTER TABLE public.user_federation_config OWNER TO "ace-manager";
+ALTER TABLE public.user_federation_config OWNER TO "trustdeck-manager";
 
 --
--- Name: user_federation_mapper; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: user_federation_mapper; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.user_federation_mapper (
@@ -1316,10 +1346,10 @@ CREATE TABLE public.user_federation_mapper (
 );
 
 
-ALTER TABLE public.user_federation_mapper OWNER TO "ace-manager";
+ALTER TABLE public.user_federation_mapper OWNER TO "trustdeck-manager";
 
 --
--- Name: user_federation_mapper_config; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: user_federation_mapper_config; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.user_federation_mapper_config (
@@ -1329,10 +1359,10 @@ CREATE TABLE public.user_federation_mapper_config (
 );
 
 
-ALTER TABLE public.user_federation_mapper_config OWNER TO "ace-manager";
+ALTER TABLE public.user_federation_mapper_config OWNER TO "trustdeck-manager";
 
 --
--- Name: user_federation_provider; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: user_federation_provider; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.user_federation_provider (
@@ -1347,10 +1377,10 @@ CREATE TABLE public.user_federation_provider (
 );
 
 
-ALTER TABLE public.user_federation_provider OWNER TO "ace-manager";
+ALTER TABLE public.user_federation_provider OWNER TO "trustdeck-manager";
 
 --
--- Name: user_group_membership; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: user_group_membership; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.user_group_membership (
@@ -1360,10 +1390,10 @@ CREATE TABLE public.user_group_membership (
 );
 
 
-ALTER TABLE public.user_group_membership OWNER TO "ace-manager";
+ALTER TABLE public.user_group_membership OWNER TO "trustdeck-manager";
 
 --
--- Name: user_required_action; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: user_required_action; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.user_required_action (
@@ -1372,10 +1402,10 @@ CREATE TABLE public.user_required_action (
 );
 
 
-ALTER TABLE public.user_required_action OWNER TO "ace-manager";
+ALTER TABLE public.user_required_action OWNER TO "trustdeck-manager";
 
 --
--- Name: user_role_mapping; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: user_role_mapping; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.user_role_mapping (
@@ -1384,26 +1414,10 @@ CREATE TABLE public.user_role_mapping (
 );
 
 
-ALTER TABLE public.user_role_mapping OWNER TO "ace-manager";
+ALTER TABLE public.user_role_mapping OWNER TO "trustdeck-manager";
 
 --
--- Name: username_login_failure; Type: TABLE; Schema: public; Owner: ace-manager
---
-
-CREATE TABLE public.username_login_failure (
-    realm_id character varying(36) NOT NULL,
-    username character varying(255) NOT NULL,
-    failed_login_not_before integer,
-    last_failure bigint,
-    last_ip_failure character varying(255),
-    num_failures integer
-);
-
-
-ALTER TABLE public.username_login_failure OWNER TO "ace-manager";
-
---
--- Name: web_origins; Type: TABLE; Schema: public; Owner: ace-manager
+-- Name: web_origins; Type: TABLE; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE TABLE public.web_origins (
@@ -1412,22 +1426,39 @@ CREATE TABLE public.web_origins (
 );
 
 
-ALTER TABLE public.web_origins OWNER TO "ace-manager";
+ALTER TABLE public.web_origins OWNER TO "trustdeck-manager";
 
 --
--- Data for Name: admin_event_entity; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Name: workflow_state; Type: TABLE; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE TABLE public.workflow_state (
+    execution_id character varying(255) NOT NULL,
+    resource_id character varying(255) NOT NULL,
+    workflow_id character varying(255) NOT NULL,
+    workflow_provider_id character varying(255),
+    resource_type character varying(255),
+    scheduled_step_id character varying(255),
+    scheduled_step_timestamp bigint
+);
+
+
+ALTER TABLE public.workflow_state OWNER TO "trustdeck-manager";
+
+--
+-- Data for Name: admin_event_entity; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: associated_policy; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: associated_policy; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: authentication_execution; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: authentication_execution; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id, flow_id, requirement, priority, authenticator_flow, auth_flow_id, auth_config) VALUES ('7eed02d8-9a68-44ba-a5ee-6b2c6c4ac3c8', NULL, 'auth-cookie', 'master', 'ce2d4e14-e0d7-4fb0-9ba1-388e3ec46b1a', 2, 10, false, NULL, NULL);
@@ -1515,7 +1546,7 @@ INSERT INTO public.authentication_execution (id, alias, authenticator, realm_id,
 
 
 --
--- Data for Name: authentication_flow; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: authentication_flow; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.authentication_flow (id, alias, description, realm_id, provider_id, top_level, built_in) VALUES ('ce2d4e14-e0d7-4fb0-9ba1-388e3ec46b1a', 'browser', 'browser based authentication', 'master', 'basic-flow', true, true);
@@ -1557,7 +1588,7 @@ INSERT INTO public.authentication_flow (id, alias, description, realm_id, provid
 
 
 --
--- Data for Name: authenticator_config; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: authenticator_config; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.authenticator_config (id, alias, realm_id) VALUES ('b93bda5f-adf2-43db-bc08-09c4c72be0c5', 'review profile config', 'master');
@@ -1567,7 +1598,7 @@ INSERT INTO public.authenticator_config (id, alias, realm_id) VALUES ('a3b29b3d-
 
 
 --
--- Data for Name: authenticator_config_entry; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: authenticator_config_entry; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.authenticator_config_entry (authenticator_id, value, name) VALUES ('b93bda5f-adf2-43db-bc08-09c4c72be0c5', 'missing', 'update.profile.on.first.login');
@@ -1577,13 +1608,13 @@ INSERT INTO public.authenticator_config_entry (authenticator_id, value, name) VA
 
 
 --
--- Data for Name: broker_link; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: broker_link; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: client; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: client; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('d8a35e32-b522-425f-a314-77e6b313330c', true, false, 'master-realm', 0, false, NULL, NULL, true, NULL, false, 'master', NULL, 0, false, false, 'master Realm', false, 'client-secret', NULL, NULL, NULL, true, false, false, false);
@@ -1595,15 +1626,15 @@ INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_befor
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('15b080ba-7783-49c9-b155-86ac5e1855b1', true, false, 'account', 0, true, NULL, '/realms/development/account/', false, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_account}', false, 'client-secret', '${authBaseUrl}', NULL, NULL, true, false, false, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('2c539eab-1781-4d43-94da-033984eea7f6', true, false, 'account-console', 0, true, NULL, '/realms/development/account/', false, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_account-console}', false, 'client-secret', '${authBaseUrl}', NULL, NULL, true, false, false, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('51bba6d9-f73d-4f45-8b06-392303051f3c', true, false, 'broker', 0, false, NULL, NULL, true, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_broker}', false, 'client-secret', NULL, NULL, NULL, true, false, false, false);
-INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', true, true, 'ace', 0, false, '1h6T3Dnx45hrd4pgv7YdcIfP9GRarbpN', NULL, false, '', false, 'development', 'openid-connect', -1, false, false, NULL, false, 'client-secret', '', NULL, NULL, true, false, true, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('19f8a8d4-4eee-413b-8430-1779b7cd1bec', true, true, 'security-admin-console', 0, true, NULL, '/admin/master/console/', false, NULL, false, 'master', 'openid-connect', 0, false, false, '${client_security-admin-console}', false, 'client-secret', '${authAdminUrl}', NULL, NULL, true, false, false, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('a49877bc-ff43-4dcd-8a21-c423e5fb895f', true, true, 'admin-cli', 0, true, NULL, NULL, false, NULL, false, 'master', 'openid-connect', 0, false, false, '${client_admin-cli}', false, 'client-secret', NULL, NULL, NULL, false, false, true, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('723bc5a7-52cb-4063-b8f4-b45327f5db02', true, true, 'security-admin-console', 0, true, NULL, '/admin/development/console/', false, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_security-admin-console}', false, 'client-secret', '${authAdminUrl}', NULL, NULL, true, false, false, false);
 INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('5c7b1c4b-aff8-47d7-b732-4aba58db74b2', true, true, 'admin-cli', 0, true, NULL, NULL, false, NULL, false, 'development', 'openid-connect', 0, false, false, '${client_admin-cli}', false, 'client-secret', NULL, NULL, NULL, false, false, true, false);
+INSERT INTO public.client (id, enabled, full_scope_allowed, client_id, not_before, public_client, secret, base_url, bearer_only, management_url, surrogate_auth_required, realm_id, protocol, node_rereg_timeout, frontchannel_logout, consent_required, name, service_accounts_enabled, client_authenticator_type, root_url, description, registration_token, standard_flow_enabled, implicit_flow_enabled, direct_access_grants_enabled, always_display_in_console) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', true, true, 'trustdeck', 0, false, '1h6T3Dnx45hrd4pgv7YdcIfP9GRarbpN', '', false, '', false, 'development', 'openid-connect', -1, false, false, '', true, 'client-secret', '', '', NULL, true, false, true, false);
 
 
 --
--- Data for Name: client_attributes; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: client_attributes; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.client_attributes (client_id, name, value) VALUES ('34c90cb1-59ee-4c3d-b280-035eb751690a', 'pkce.code.challenge.method', 'S256');
@@ -1643,28 +1674,31 @@ INSERT INTO public.client_attributes (client_id, name, value) VALUES ('19f8a8d4-
 INSERT INTO public.client_attributes (client_id, name, value) VALUES ('a49877bc-ff43-4dcd-8a21-c423e5fb895f', 'client.use.lightweight.access.token.enabled', 'true');
 INSERT INTO public.client_attributes (client_id, name, value) VALUES ('723bc5a7-52cb-4063-b8f4-b45327f5db02', 'client.use.lightweight.access.token.enabled', 'true');
 INSERT INTO public.client_attributes (client_id, name, value) VALUES ('5c7b1c4b-aff8-47d7-b732-4aba58db74b2', 'client.use.lightweight.access.token.enabled', 'true');
+INSERT INTO public.client_attributes (client_id, name, value) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', 'realm_client', 'false');
+INSERT INTO public.client_attributes (client_id, name, value) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', 'standard.token.exchange.enabled', 'false');
+INSERT INTO public.client_attributes (client_id, name, value) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', 'dpop.bound.access.tokens', 'false');
 
 
 --
--- Data for Name: client_auth_flow_bindings; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-
-
---
--- Data for Name: client_initial_access; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: client_auth_flow_bindings; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: client_node_registrations; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: client_initial_access; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: client_scope; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: client_node_registrations; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
+--
+
+
+
+--
+-- Data for Name: client_scope; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALUES ('9999bbc8-5f73-4a21-aa56-797628fa5b5f', 'offline_access', 'master', 'OpenID Connect built-in scope: offline_access', 'openid-connect');
@@ -1689,10 +1723,12 @@ INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALU
 INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALUES ('e22d2191-0ebe-40c6-9d8c-a3c6cc44aaf3', 'acr', 'development', 'OpenID Connect scope for add acr (authentication context class reference) to the token', 'openid-connect');
 INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALUES ('7ef392a1-6728-40ac-9bf6-381f1fbc3b20', 'basic', 'master', 'OpenID Connect scope for add all basic claims to the token', 'openid-connect');
 INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALUES ('25df115c-d573-4b3e-bf3b-db291bfbceff', 'basic', 'development', 'OpenID Connect scope for add all basic claims to the token', 'openid-connect');
+INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALUES ('0530c3dd-3064-4438-b252-3aa26b879293', 'service_account', 'master', 'Specific scope for a client enabled for service accounts', 'openid-connect');
+INSERT INTO public.client_scope (id, name, realm_id, description, protocol) VALUES ('b55992d7-358a-4282-8162-43f01e1da5ec', 'service_account', 'development', 'Specific scope for a client enabled for service accounts', 'openid-connect');
 
 
 --
--- Data for Name: client_scope_attributes; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: client_scope_attributes; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('9999bbc8-5f73-4a21-aa56-797628fa5b5f', 'true', 'display.on.consent.screen');
@@ -1751,10 +1787,14 @@ INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('7ef3
 INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('7ef392a1-6728-40ac-9bf6-381f1fbc3b20', 'false', 'include.in.token.scope');
 INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('25df115c-d573-4b3e-bf3b-db291bfbceff', 'false', 'display.on.consent.screen');
 INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('25df115c-d573-4b3e-bf3b-db291bfbceff', 'false', 'include.in.token.scope');
+INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('0530c3dd-3064-4438-b252-3aa26b879293', 'false', 'display.on.consent.screen');
+INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('0530c3dd-3064-4438-b252-3aa26b879293', 'false', 'include.in.token.scope');
+INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('b55992d7-358a-4282-8162-43f01e1da5ec', 'false', 'display.on.consent.screen');
+INSERT INTO public.client_scope_attributes (scope_id, value, name) VALUES ('b55992d7-358a-4282-8162-43f01e1da5ec', 'false', 'include.in.token.scope');
 
 
 --
--- Data for Name: client_scope_client; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: client_scope_client; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('c8afb027-0c8c-4bdc-bf0f-be4a2c172439', '7d3289fd-f5f7-4c73-a857-6506457c1e6c', true);
@@ -1870,10 +1910,11 @@ INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALU
 INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('723bc5a7-52cb-4063-b8f4-b45327f5db02', '25df115c-d573-4b3e-bf3b-db291bfbceff', true);
 INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('5c7b1c4b-aff8-47d7-b732-4aba58db74b2', '25df115c-d573-4b3e-bf3b-db291bfbceff', true);
 INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', '25df115c-d573-4b3e-bf3b-db291bfbceff', true);
+INSERT INTO public.client_scope_client (client_id, scope_id, default_scope) VALUES ('2be34fd2-d092-457d-b56b-9535ff5ea02a', 'b55992d7-358a-4282-8162-43f01e1da5ec', true);
 
 
 --
--- Data for Name: client_scope_role_mapping; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: client_scope_role_mapping; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.client_scope_role_mapping (scope_id, role_id) VALUES ('9999bbc8-5f73-4a21-aa56-797628fa5b5f', 'f10a139c-29b3-4236-86d1-98baedb83512');
@@ -1881,7 +1922,7 @@ INSERT INTO public.client_scope_role_mapping (scope_id, role_id) VALUES ('b3b6dc
 
 
 --
--- Data for Name: component; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: component; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.component (id, name, parent_id, provider_id, provider_type, realm_id, sub_type) VALUES ('327c25f6-84d9-48a7-89d8-de7fa38bbd08', 'Trusted Hosts', 'master', 'trusted-hosts', 'org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy', 'master', 'anonymous');
@@ -1915,7 +1956,7 @@ INSERT INTO public.component (id, name, parent_id, provider_id, provider_type, r
 
 
 --
--- Data for Name: component_config; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: component_config; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.component_config (id, component_id, name, value) VALUES ('8d51535d-997a-4628-8c91-7699177d7c6f', 'c496dcb4-32ee-410d-9d4d-964d080731d3', 'allow-default-scopes', 'true');
@@ -2005,7 +2046,7 @@ INSERT INTO public.component_config (id, component_id, name, value) VALUES ('fc7
 
 
 --
--- Data for Name: composite_role; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: composite_role; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.composite_role (composite, child_role) VALUES ('30b61dbb-6aac-4a07-8d10-42771ade8537', 'e0d0806a-b318-4b7a-81ac-21a250011133');
@@ -2084,31 +2125,19 @@ INSERT INTO public.composite_role (composite, child_role) VALUES ('30b61dbb-6aac
 INSERT INTO public.composite_role (composite, child_role) VALUES ('c72c9718-fa5e-4ec2-9b02-8989639dcece', '5e757fff-6d31-4597-b37c-c3cdd4775066');
 INSERT INTO public.composite_role (composite, child_role) VALUES ('03eb0760-ea2d-490f-8608-402662997979', 'd611163f-3327-43ee-a7ea-790110d80df3');
 INSERT INTO public.composite_role (composite, child_role) VALUES ('03eb0760-ea2d-490f-8608-402662997979', '666ed87a-22da-43e8-8cf0-08cffd1e0b8a');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('d97e3b14-16d1-4cc3-9c52-101407722ee6', '21b8ea9e-de35-4834-bbe6-93453b581b5b');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('d97e3b14-16d1-4cc3-9c52-101407722ee6', 'be6e6004-49a6-4d3d-a578-07981c601631');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('d97e3b14-16d1-4cc3-9c52-101407722ee6', '64a68e78-5dab-43ba-b136-9424dfbafd3c');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('d97e3b14-16d1-4cc3-9c52-101407722ee6', '3c5cc3e1-d8aa-4770-abed-ff9a72371b66');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('1cc25fc5-1b43-4b8d-9fd0-a324f27b1405', '4e055a12-c22f-4788-82dd-84726bfd04d3');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('1cc25fc5-1b43-4b8d-9fd0-a324f27b1405', '00a4dc29-20f8-447a-8a76-74bf55bac602');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('1cc25fc5-1b43-4b8d-9fd0-a324f27b1405', '0258cd18-b120-4207-8d49-47fc737d386e');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('1cc25fc5-1b43-4b8d-9fd0-a324f27b1405', '7055caa6-86f2-469a-a858-628a327285a3');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('e5fe4cf4-6fd3-4142-b9e0-4bce340aae83', '622751d6-7eba-4466-8acc-03d1083f3915');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('e5fe4cf4-6fd3-4142-b9e0-4bce340aae83', 'd4caf2a0-4b50-41c9-9cb4-86ceef63c3b9');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('e5fe4cf4-6fd3-4142-b9e0-4bce340aae83', 'a0dfa1f7-585e-4427-9e4d-65ec8dbef5c4');
-INSERT INTO public.composite_role (composite, child_role) VALUES ('e5fe4cf4-6fd3-4142-b9e0-4bce340aae83', 'e8f20372-0a20-45d0-ae78-8c614315a52b');
 
 
 --
--- Data for Name: credential; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: credential; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
-INSERT INTO public.credential (id, salt, type, user_id, created_date, user_label, secret_data, credential_data, priority) VALUES ('6be8d32b-928f-42e2-8fe6-38757e8285a3', NULL, 'password', '3dfb6717-3def-493b-a237-b7345fc42718', 1646034188771, NULL, '{"value":"JEHQTojind25A3PegUoR4QxWX8JRVNDdOj/p+umkle8=","salt":"qVFLMBirUr7PowR9clEMrA==","additionalParameters":{}}', '{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}', 10);
-INSERT INTO public.credential (id, salt, type, user_id, created_date, user_label, secret_data, credential_data, priority) VALUES ('8707bee4-8c52-4349-8762-d524ea60ef63', NULL, 'password', '6d478587-a790-46aa-ac3a-133226549795', 1740149478833, NULL, '{"value":"i6xNiSt5h+vJZPnptTIuffiF+X9rvg8vKMwy+Tjk+1s=","salt":"PcMG+DmGMIW0BWO+Jw6Z4A==","additionalParameters":{}}', '{"hashIterations":5,"algorithm":"argon2","additionalParameters":{"hashLength":["32"],"memory":["7168"],"type":["id"],"version":["1.3"],"parallelism":["1"]}}', 10);
-INSERT INTO public.credential (id, salt, type, user_id, created_date, user_label, secret_data, credential_data, priority) VALUES ('35c26377-fd9a-4db1-a1c8-32355a417357', NULL, 'password', '25003dd9-9c30-4da5-a4cd-79c2a7dab915', 1740149642577, 'My password', '{"value":"tTmFRpl11l758HEkVVicrZRLkWMgaITxMh9iz64fluU=","salt":"YCdaNvUcsnWyrWVevkBdeg==","additionalParameters":{}}', '{"hashIterations":5,"algorithm":"argon2","additionalParameters":{"hashLength":["32"],"memory":["7168"],"type":["id"],"version":["1.3"],"parallelism":["1"]}}', 10);
+INSERT INTO public.credential (id, salt, type, user_id, created_date, user_label, secret_data, credential_data, priority, version) VALUES ('8707bee4-8c52-4349-8762-d524ea60ef63', NULL, 'password', '6d478587-a790-46aa-ac3a-133226549795', 1740149478833, NULL, '{"value":"i6xNiSt5h+vJZPnptTIuffiF+X9rvg8vKMwy+Tjk+1s=","salt":"PcMG+DmGMIW0BWO+Jw6Z4A==","additionalParameters":{}}', '{"hashIterations":5,"algorithm":"argon2","additionalParameters":{"hashLength":["32"],"memory":["7168"],"type":["id"],"version":["1.3"],"parallelism":["1"]}}', 10, 0);
+INSERT INTO public.credential (id, salt, type, user_id, created_date, user_label, secret_data, credential_data, priority, version) VALUES ('35c26377-fd9a-4db1-a1c8-32355a417357', NULL, 'password', '25003dd9-9c30-4da5-a4cd-79c2a7dab915', 1740149642577, 'My password', '{"value":"tTmFRpl11l758HEkVVicrZRLkWMgaITxMh9iz64fluU=","salt":"YCdaNvUcsnWyrWVevkBdeg==","additionalParameters":{}}', '{"hashIterations":5,"algorithm":"argon2","additionalParameters":{"hashLength":["32"],"memory":["7168"],"type":["id"],"version":["1.3"],"parallelism":["1"]}}', 10, 0);
+INSERT INTO public.credential (id, salt, type, user_id, created_date, user_label, secret_data, credential_data, priority, version) VALUES ('6be8d32b-928f-42e2-8fe6-38757e8285a3', NULL, 'password', '3dfb6717-3def-493b-a237-b7345fc42718', 1646034188771, NULL, '{"value":"7H1aCqkJj9g72mSW/+qAEp3msfq9DCb4kJgB3V3nKbQ=","salt":"/sVEhNpSqlJVw/3R25Veig==","additionalParameters":{}}', '{"hashIterations":5,"algorithm":"argon2","additionalParameters":{"hashLength":["32"],"memory":["7168"],"type":["id"],"version":["1.3"],"parallelism":["1"]}}', 10, 0);
 
 
 --
--- Data for Name: databasechangelog; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: databasechangelog; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('authz-7.0.0-KEYCLOAK-10443', 'psilva@redhat.com', 'META-INF/jpa-changelog-authz-7.0.0.xml', '2022-02-28 08:24:26.639458', 71, 'EXECUTED', '9:fd4ade7b90c3b67fae0bfcfcb42dfb5f', 'addColumn tableName=RESOURCE_SERVER', '', NULL, '3.5.4', NULL, NULL, '6033062234');
@@ -2261,10 +2290,30 @@ INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, ordere
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('25.0.0-28265-index-cleanup-uss-preload', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-21 15:48:20.296378', 148, 'MARK_RAN', '9:de5f7c1f7e10994ed8b62e621d20eaab', 'dropIndex indexName=IDX_OFFLINE_USS_PRELOAD, tableName=OFFLINE_USER_SESSION', '', NULL, '4.29.1', NULL, NULL, '0149300183');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('25.0.0-28265-index-cleanup-uss-by-usersess', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-21 15:48:20.316068', 149, 'MARK_RAN', '9:6eee220d024e38e89c799417ec33667f', 'dropIndex indexName=IDX_OFFLINE_USS_BY_USERSESS, tableName=OFFLINE_USER_SESSION', '', NULL, '4.29.1', NULL, NULL, '0149300183');
 INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('25.0.0-28265-index-cleanup-css-preload', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-02-21 15:48:20.334668', 150, 'MARK_RAN', '9:5411d2fb2891d3e8d63ddb55dfa3c0c9', 'dropIndex indexName=IDX_OFFLINE_CSS_PRELOAD, tableName=OFFLINE_CLIENT_SESSION', '', NULL, '4.29.1', NULL, NULL, '0149300183');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('29399-jdbc-ping-default', 'keycloak', 'META-INF/jpa-changelog-26.1.0.xml', '2025-03-21 16:31:00.205066', 151, 'EXECUTED', '9:007dbe99d7203fca403b89d4edfdf21e', 'createTable tableName=JGROUPS_PING; addPrimaryKey constraintName=CONSTRAINT_JGROUPS_PING, tableName=JGROUPS_PING', '', NULL, '4.29.1', NULL, NULL, '2571060156');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.1.0-34013', 'keycloak', 'META-INF/jpa-changelog-26.1.0.xml', '2025-03-21 16:31:00.220523', 152, 'MARK_RAN', '9:e6b686a15759aef99a6d758a5c4c6a26', 'addColumn tableName=ADMIN_EVENT_ENTITY', '', NULL, '4.29.1', NULL, NULL, '2571060156');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.1.0-34380', 'keycloak', 'META-INF/jpa-changelog-26.1.0.xml', '2025-03-21 16:31:00.235473', 153, 'EXECUTED', '9:ac8b9edb7c2b6c17a1c7a11fcf5ccf01', 'dropTable tableName=USERNAME_LOGIN_FAILURE', '', NULL, '4.29.1', NULL, NULL, '2571060156');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('20.0.0-12964-supported-dbs-edb-migration', 'keycloak', 'META-INF/jpa-changelog-20.0.0.xml', '2025-12-05 13:17:26.538621', 154, 'EXECUTED', '9:a6b18a8e38062df5793edbe064f4aecd', 'dropIndex indexName=IDX_GROUP_ATT_BY_NAME_VALUE, tableName=GROUP_ATTRIBUTE; createIndex indexName=IDX_GROUP_ATT_BY_NAME_VALUE, tableName=GROUP_ATTRIBUTE', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('client-attributes-string-accomodation-fixed-pre-drop-index', 'keycloak', 'META-INF/jpa-changelog-20.0.0.xml', '2025-12-05 13:17:26.549859', 155, 'MARK_RAN', '9:04baaf56c116ed19951cbc2cca584022', 'dropIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('client-attributes-string-accomodation-fixed-post-create-index', 'keycloak', 'META-INF/jpa-changelog-20.0.0.xml', '2025-12-05 13:17:26.557424', 156, 'MARK_RAN', '9:bd2bd0fc7768cf0845ac96a8786fa735', 'createIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('24.0.0-26618-edb-migration', 'keycloak', 'META-INF/jpa-changelog-24.0.0.xml', '2025-12-05 13:17:26.662811', 157, 'EXECUTED', '9:2f684b29d414cd47efe3a3599f390741', 'dropIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES; createIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('unique-consentuser-edb-migration', 'keycloak', 'META-INF/jpa-changelog-25.0.0.xml', '2025-12-05 13:17:26.684084', 158, 'MARK_RAN', '9:5857626a2ea8767e9a6c66bf3a2cb32f', 'customChange; dropUniqueConstraint constraintName=UK_JKUWUVD56ONTGSUHOGM8UEWRT, tableName=USER_CONSENT; addUniqueConstraint constraintName=UK_LOCAL_CONSENT, tableName=USER_CONSENT; addUniqueConstraint constraintName=UK_EXTERNAL_CONSENT, tableName=...', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.2.0-36750', 'keycloak', 'META-INF/jpa-changelog-26.2.0.xml', '2025-12-05 13:17:26.709485', 159, 'EXECUTED', '9:b49ce951c22f7eb16480ff085640a33a', 'createTable tableName=SERVER_CONFIG', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.2.0-26106', 'keycloak', 'META-INF/jpa-changelog-26.2.0.xml', '2025-12-05 13:17:26.722256', 160, 'EXECUTED', '9:b5877d5dab7d10ff3a9d209d7beb6680', 'addColumn tableName=CREDENTIAL', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.2.6-39866-duplicate', 'keycloak', 'META-INF/jpa-changelog-26.2.6.xml', '2025-12-05 13:17:26.740558', 161, 'EXECUTED', '9:1dc67ccee24f30331db2cba4f372e40e', 'customChange', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.2.6-39866-uk', 'keycloak', 'META-INF/jpa-changelog-26.2.6.xml', '2025-12-05 13:17:26.754339', 162, 'EXECUTED', '9:b70b76f47210cf0a5f4ef0e219eac7cd', 'addUniqueConstraint constraintName=UK_MIGRATION_VERSION, tableName=MIGRATION_MODEL', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.2.6-40088-duplicate', 'keycloak', 'META-INF/jpa-changelog-26.2.6.xml', '2025-12-05 13:17:26.772213', 163, 'EXECUTED', '9:cc7e02ed69ab31979afb1982f9670e8f', 'customChange', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.2.6-40088-uk', 'keycloak', 'META-INF/jpa-changelog-26.2.6.xml', '2025-12-05 13:17:26.783181', 164, 'EXECUTED', '9:5bb848128da7bc4595cc507383325241', 'addUniqueConstraint constraintName=UK_MIGRATION_UPDATE_TIME, tableName=MIGRATION_MODEL', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.3.0-groups-description', 'keycloak', 'META-INF/jpa-changelog-26.3.0.xml', '2025-12-05 13:17:26.793837', 165, 'EXECUTED', '9:e1a3c05574326fb5b246b73b9a4c4d49', 'addColumn tableName=KEYCLOAK_GROUP', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.4.0-40933-saml-encryption-attributes', 'keycloak', 'META-INF/jpa-changelog-26.4.0.xml', '2025-12-05 13:17:26.809159', 166, 'EXECUTED', '9:7e9eaba362ca105efdda202303a4fe49', 'customChange', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.4.0-51321', 'keycloak', 'META-INF/jpa-changelog-26.4.0.xml', '2025-12-05 13:17:26.895273', 167, 'EXECUTED', '9:34bab2bc56f75ffd7e347c580874e306', 'createIndex indexName=IDX_EVENT_ENTITY_USER_ID_TYPE, tableName=EVENT_ENTITY', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('40343-workflow-state-table', 'keycloak', 'META-INF/jpa-changelog-26.4.0.xml', '2025-12-05 13:17:27.080804', 168, 'EXECUTED', '9:ed3ab4723ceed210e5b5e60ac4562106', 'createTable tableName=WORKFLOW_STATE; addPrimaryKey constraintName=PK_WORKFLOW_STATE, tableName=WORKFLOW_STATE; addUniqueConstraint constraintName=UQ_WORKFLOW_RESOURCE, tableName=WORKFLOW_STATE; createIndex indexName=IDX_WORKFLOW_STATE_STEP, table...', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.5.0-index-offline-css-by-client', 'keycloak', 'META-INF/jpa-changelog-26.5.0.xml', '2025-12-05 13:17:27.187892', 169, 'EXECUTED', '9:383e981ce95d16e32af757b7998820f7', 'createIndex indexName=IDX_OFFLINE_CSS_BY_CLIENT, tableName=OFFLINE_CLIENT_SESSION', '', NULL, '4.33.0', NULL, NULL, '4937038731');
+INSERT INTO public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) VALUES ('26.5.0-index-offline-css-by-client-storage-provider', 'keycloak', 'META-INF/jpa-changelog-26.5.0.xml', '2025-12-05 13:17:27.291175', 170, 'EXECUTED', '9:f5bc200e6fa7d7e483854dee535ca425', 'createIndex indexName=IDX_OFFLINE_CSS_BY_CLIENT_STORAGE_PROVIDER, tableName=OFFLINE_CLIENT_SESSION', '', NULL, '4.33.0', NULL, NULL, '4937038731');
 
 
 --
--- Data for Name: databasechangeloglock; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: databasechangeloglock; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.databasechangeloglock (id, locked, lockgranted, lockedby) VALUES (1, false, NULL, NULL);
@@ -2273,7 +2322,7 @@ INSERT INTO public.databasechangeloglock (id, locked, lockgranted, lockedby) VAL
 
 
 --
--- Data for Name: default_client_scope; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: default_client_scope; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.default_client_scope (realm_id, scope_id, default_scope) VALUES ('master', '9999bbc8-5f73-4a21-aa56-797628fa5b5f', false);
@@ -2301,160 +2350,119 @@ INSERT INTO public.default_client_scope (realm_id, scope_id, default_scope) VALU
 
 
 --
--- Data for Name: event_entity; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: event_entity; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: fed_user_attribute; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: fed_user_attribute; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: fed_user_consent; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: fed_user_consent; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: fed_user_consent_cl_scope; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: fed_user_consent_cl_scope; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: fed_user_credential; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: fed_user_credential; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: fed_user_group_membership; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: fed_user_group_membership; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: fed_user_required_action; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: fed_user_required_action; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: fed_user_role_mapping; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: fed_user_role_mapping; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: federated_identity; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: federated_identity; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: federated_user; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: federated_user; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: group_attribute; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: group_attribute; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: group_role_mapping; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('01c50900-5415-483a-87c3-534241f653ce', 'e517eec7-7758-4119-8f23-23633eca253b');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('622751d6-7eba-4466-8acc-03d1083f3915', '12733e22-f745-49c2-9276-b78440b46982');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('5155817c-9926-450b-b648-30ca52fef547', '07501fb5-502b-45d6-86ca-e57bc40f52ae');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('00a4dc29-20f8-447a-8a76-74bf55bac602', 'b2593ee0-fa85-4066-8bdb-676b17caab72');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('64a68e78-5dab-43ba-b136-9424dfbafd3c', 'b06b996b-4f54-40c1-89a5-665c31cc46c7');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('0258cd18-b120-4207-8d49-47fc737d386e', '5453c96b-6f10-4468-83e5-f28aa7459db1');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3c5cc3e1-d8aa-4770-abed-ff9a72371b66', '729ce7b1-9490-47ae-bc96-bac4960bb581');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('7055caa6-86f2-469a-a858-628a327285a3', 'ee436dc5-5f0c-48e1-8ba6-6064b9c0a3f4');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('21b8ea9e-de35-4834-bbe6-93453b581b5b', '7a52e787-c097-4e3f-b58e-51d10b9afef4');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('1cc25fc5-1b43-4b8d-9fd0-a324f27b1405', 'c874aa00-5f8c-4131-a98b-a636f48bfc11');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('d97e3b14-16d1-4cc3-9c52-101407722ee6', '840959d5-adf3-4ea0-96a0-6af24c0629dc');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('4e055a12-c22f-4788-82dd-84726bfd04d3', '46b2df3c-b1eb-41ce-9089-877d11f13975');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('be6e6004-49a6-4d3d-a578-07981c601631', '3d5e8aa3-bcbe-4421-b2a2-77c321ba46fa');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('33480fb8-f2c9-4f8c-858b-0e9dc54c250a', '6cd2a27d-be50-499e-88ad-a0790d9d4954');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('2c36457e-b9f7-4cbb-b92c-614747fa8686', '4678c3af-dec7-41c8-9a53-7203211beed7');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('19a09c60-eca8-4d18-8c74-5dd2fd8ae8d2', 'eeffc09c-10e8-4530-b196-6958dc25a16e');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('a0dfa1f7-585e-4427-9e4d-65ec8dbef5c4', '0d574f57-3d4b-414c-a8f9-b62fdc6a5c57');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('e70260d8-9a30-48f8-a173-faabe44b71eb', '358ee15c-f335-43e5-8491-2684e26f60ef');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('d4caf2a0-4b50-41c9-9cb4-86ceef63c3b9', '3448592e-73f5-4a84-b68f-3e446ef963cf');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('3a955033-0651-4928-82a8-f95da2ac0604', 'ee648feb-e08b-40ba-beb7-c641c6d2879e');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('e8f20372-0a20-45d0-ae78-8c614315a52b', '6eb9e376-9a40-47d2-af8a-fcc0010879b9');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('e5fe4cf4-6fd3-4142-b9e0-4bce340aae83', '146489d4-6846-45cb-939b-09fbaeccad66');
-INSERT INTO public.group_role_mapping (role_id, group_id) VALUES ('7a9b3db3-1233-4ea8-ba47-05bb9b86ddd7', '5cb64447-63c7-41fe-9e34-0861ff04ed22');
-
-
---
--- Data for Name: identity_provider; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: group_role_mapping; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: identity_provider_config; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: identity_provider; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: identity_provider_mapper; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: identity_provider_config; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: idp_mapper_config; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: identity_provider_mapper; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: keycloak_group; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: idp_mapper_config; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('321da70e-bc39-4c6c-8cf6-579dc6e95bab', 'Human', ' ', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('71463f7d-68b9-4a2e-80aa-d1835bbb1736', 'Technical', ' ', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('6db1981a-209e-4687-a8fb-3be35974111e', 'Unaudited', ' ', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('34ba8933-03d7-43a0-8e36-eddd0d6b7537', 'AuditEverything', ' ', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('a35382ee-92e4-41ec-b96e-95dd2feab402', 'Domain', ' ', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('12733e22-f745-49c2-9276-b78440b46982', 'domain-create', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('e517eec7-7758-4119-8f23-23633eca253b', 'complete-view', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('5cb64447-63c7-41fe-9e34-0861ff04ed22', 'domain-create-complete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('146489d4-6846-45cb-939b-09fbaeccad66', 'domain-crud', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('6eb9e376-9a40-47d2-af8a-fcc0010879b9', 'domain-delete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('ee648feb-e08b-40ba-beb7-c641c6d2879e', 'domain-list-all', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('3448592e-73f5-4a84-b68f-3e446ef963cf', 'domain-read', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('358ee15c-f335-43e5-8491-2684e26f60ef', 'domain-read-salt', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('0d574f57-3d4b-414c-a8f9-b62fdc6a5c57', 'domain-update', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('eeffc09c-10e8-4530-b196-6958dc25a16e', 'domain-update-complete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('4678c3af-dec7-41c8-9a53-7203211beed7', 'domain-update-salt', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('6cd2a27d-be50-499e-88ad-a0790d9d4954', 'link-pseudonyms', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('3d5e8aa3-bcbe-4421-b2a2-77c321ba46fa', 'record-create', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('46b2df3c-b1eb-41ce-9089-877d11f13975', 'record-create-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('840959d5-adf3-4ea0-96a0-6af24c0629dc', 'record-crud', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('c874aa00-5f8c-4131-a98b-a636f48bfc11', 'record-crud-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('7a52e787-c097-4e3f-b58e-51d10b9afef4', 'record-delete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('ee436dc5-5f0c-48e1-8ba6-6064b9c0a3f4', 'record-delete-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('729ce7b1-9490-47ae-bc96-bac4960bb581', 'record-read', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('5453c96b-6f10-4468-83e5-f28aa7459db1', 'record-read-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('b06b996b-4f54-40c1-89a5-665c31cc46c7', 'record-update', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('b2593ee0-fa85-4066-8bdb-676b17caab72', 'record-update-batch', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
-INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type) VALUES ('07501fb5-502b-45d6-86ca-e57bc40f52ae', 'record-update-complete', 'a35382ee-92e4-41ec-b96e-95dd2feab402', 'development', 0);
 
 
 --
--- Data for Name: keycloak_role; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: jgroups_ping; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
+--
+
+
+
+--
+-- Data for Name: keycloak_group; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
+--
+
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type, description) VALUES ('321da70e-bc39-4c6c-8cf6-579dc6e95bab', 'Human', ' ', 'development', 0, NULL);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type, description) VALUES ('71463f7d-68b9-4a2e-80aa-d1835bbb1736', 'Technical', ' ', 'development', 0, NULL);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type, description) VALUES ('6db1981a-209e-4687-a8fb-3be35974111e', 'Unaudited', ' ', 'development', 0, NULL);
+INSERT INTO public.keycloak_group (id, name, parent_group, realm_id, type, description) VALUES ('34ba8933-03d7-43a0-8e36-eddd0d6b7537', 'AuditEverything', ' ', 'development', 0, NULL);
+
+
+--
+-- Data for Name: keycloak_role; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('8abade97-996e-4b25-a889-e4bc2d1fc387', 'master', false, '${role_default-roles}', 'default-roles-master', 'master', NULL, NULL);
@@ -2536,35 +2544,13 @@ INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, desc
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('947dd62a-190e-4b63-b787-b3d65c14e0b9', '51bba6d9-f73d-4f45-8b06-392303051f3c', true, '${role_read-token}', 'read-token', 'development', '51bba6d9-f73d-4f45-8b06-392303051f3c', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('d611163f-3327-43ee-a7ea-790110d80df3', 'development', false, '${role_offline-access}', 'offline_access', 'development', NULL, NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('666ed87a-22da-43e8-8cf0-08cffd1e0b8a', 'development', false, '${role_uma_authorization}', 'uma_authorization', 'development', NULL, NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('3c5cc3e1-d8aa-4770-abed-ff9a72371b66', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-read', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('d4caf2a0-4b50-41c9-9cb4-86ceef63c3b9', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-read', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('be6e6004-49a6-4d3d-a578-07981c601631', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-create', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('64a68e78-5dab-43ba-b136-9424dfbafd3c', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-update', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('21b8ea9e-de35-4834-bbe6-93453b581b5b', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-delete', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('d97e3b14-16d1-4cc3-9c52-101407722ee6', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-crud', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('0258cd18-b120-4207-8d49-47fc737d386e', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-read-batch', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('4e055a12-c22f-4788-82dd-84726bfd04d3', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-create-batch', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('00a4dc29-20f8-447a-8a76-74bf55bac602', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-update-batch', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('7055caa6-86f2-469a-a858-628a327285a3', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-delete-batch', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('1cc25fc5-1b43-4b8d-9fd0-a324f27b1405', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-crud-batch', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('622751d6-7eba-4466-8acc-03d1083f3915', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-create', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('a0dfa1f7-585e-4427-9e4d-65ec8dbef5c4', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-update', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('e8f20372-0a20-45d0-ae78-8c614315a52b', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-delete', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('e5fe4cf4-6fd3-4142-b9e0-4bce340aae83', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-crud', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('3a955033-0651-4928-82a8-f95da2ac0604', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-list-all', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('7a9b3db3-1233-4ea8-ba47-05bb9b86ddd7', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-create-complete', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('19a09c60-eca8-4d18-8c74-5dd2fd8ae8d2', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-update-complete', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('e70260d8-9a30-48f8-a173-faabe44b71eb', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-read-salt', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('2c36457e-b9f7-4cbb-b92c-614747fa8686', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'domain-update-salt', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('01c50900-5415-483a-87c3-534241f653ce', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'complete-view', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('5155817c-9926-450b-b648-30ca52fef547', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'record-update-complete', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('124eaa2c-407d-457e-b011-43de0447c790', 'c8afb027-0c8c-4bdc-bf0f-be4a2c172439', true, '${role_view-groups}', 'view-groups', 'master', 'c8afb027-0c8c-4bdc-bf0f-be4a2c172439', NULL);
 INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('4acedae6-e297-4029-a9a0-4c87ff235666', '15b080ba-7783-49c9-b155-86ac5e1855b1', true, '${role_view-groups}', 'view-groups', 'development', '15b080ba-7783-49c9-b155-86ac5e1855b1', NULL);
-INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('33480fb8-f2c9-4f8c-858b-0e9dc54c250a', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, '', 'link-pseudonyms', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
+INSERT INTO public.keycloak_role (id, client_realm_constraint, client_role, description, name, realm_id, client, realm) VALUES ('b9a1e688-d3f0-495f-a2ed-8e915adac8b4', '2be34fd2-d092-457d-b56b-9535ff5ea02a', true, NULL, 'permission-manager', 'development', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 
 
 --
--- Data for Name: migration_model; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: migration_model; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.migration_model (id, version, update_time) VALUES ('mi42b', '16.1.1', 1646033070);
@@ -2574,45 +2560,42 @@ INSERT INTO public.migration_model (id, version, update_time) VALUES ('pojcj', '
 INSERT INTO public.migration_model (id, version, update_time) VALUES ('m28j7', '22.0.5', 1710838220);
 INSERT INTO public.migration_model (id, version, update_time) VALUES ('vgqdp', '26.0.6', 1739962763);
 INSERT INTO public.migration_model (id, version, update_time) VALUES ('6c2df', '26.0.8', 1740149300);
+INSERT INTO public.migration_model (id, version, update_time) VALUES ('jknmx', '26.1.4', 1742571061);
+INSERT INTO public.migration_model (id, version, update_time) VALUES ('5rh32', '26.4.7', 1764937050);
 
 
 --
--- Data for Name: offline_client_session; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-INSERT INTO public.offline_client_session (user_session_id, client_id, offline_flag, "timestamp", data, client_storage_provider, external_client_id, version) VALUES ('ee32ad9f-29e7-4906-81cb-aebdd5da9bf8', '19f8a8d4-4eee-413b-8430-1779b7cd1bec', '0', 1739964004, '{"authMethod":"openid-connect","redirectUri":"http://localhost:8081/admin/master/console/#/development/users","notes":{"clientId":"19f8a8d4-4eee-413b-8430-1779b7cd1bec","iss":"http://localhost:8081/realms/master","startedAt":"1739962807","response_type":"code","level-of-authentication":"-1","code_challenge_method":"S256","nonce":"9ff0f8ca-5802-4b8e-a795-db91b851c76e","response_mode":"query","scope":"openid","userSessionStartedAt":"1739962807","redirect_uri":"http://localhost:8081/admin/master/console/#/development/users","state":"8cb2dc38-992e-40c9-a652-81baabdddd1c","code_challenge":"XSZIsDlR3o0Iaq_wwuMMhrz1Uy5VkHbWSgOgo2wNfeY","prompt":"none","SSO_AUTH":"true"}}', 'local', 'local', 15);
-INSERT INTO public.offline_client_session (user_session_id, client_id, offline_flag, "timestamp", data, client_storage_provider, external_client_id, version) VALUES ('55b700fa-19f3-4360-9e77-a346ca533aee', '34c90cb1-59ee-4c3d-b280-035eb751690a', '0', 1740149486, '{"authMethod":"openid-connect","redirectUri":"http://localhost:8081/realms/master/account/account-security/signing-in??referrer=security-admin-console&referrer_uri=http%3A%2F%2Flocalhost%3A8081%2Fadmin%2Fmaster%2Fconsole%2F","notes":{"clientId":"34c90cb1-59ee-4c3d-b280-035eb751690a","iss":"http://localhost:8081/realms/master","startedAt":"1740149486","response_type":"code","level-of-authentication":"-1","code_challenge_method":"S256","nonce":"9b10c4d7-1b5f-46bb-9acf-be1cb2928854","response_mode":"query","scope":"openid","userSessionStartedAt":"1740149486","redirect_uri":"http://localhost:8081/realms/master/account/account-security/signing-in??referrer=security-admin-console&referrer_uri=http%3A%2F%2Flocalhost%3A8081%2Fadmin%2Fmaster%2Fconsole%2F","state":"109e2623-d016-46b8-b027-859d8348f4d6","code_challenge":"0EGOd4MePBBiIX8cy6L4tXFLnGxqvwFafJKn1bWzbo0"}}', 'local', 'local', 0);
-INSERT INTO public.offline_client_session (user_session_id, client_id, offline_flag, "timestamp", data, client_storage_provider, external_client_id, version) VALUES ('55b700fa-19f3-4360-9e77-a346ca533aee', '19f8a8d4-4eee-413b-8430-1779b7cd1bec', '0', 1740149721, '{"authMethod":"openid-connect","redirectUri":"http://localhost:8081/admin/master/console/#/development","notes":{"clientId":"19f8a8d4-4eee-413b-8430-1779b7cd1bec","iss":"http://localhost:8081/realms/master","startedAt":"1740149521","response_type":"code","level-of-authentication":"-1","code_challenge_method":"S256","nonce":"35706204-1d36-4250-8a96-03f2f2e34574","response_mode":"query","scope":"openid","SSO_AUTH":"true","userSessionStartedAt":"1740149486","redirect_uri":"http://localhost:8081/admin/master/console/#/development","state":"1cc57ab6-cf5e-41bb-9e53-73358180500a","prompt":"none","code_challenge":"z1cX-7rghKA1Q2DlrN5h5V0HaNHU7UErqTh-y_IVd1I"}}', 'local', 'local', 5);
-
-
---
--- Data for Name: offline_user_session; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-INSERT INTO public.offline_user_session (user_session_id, user_id, realm_id, created_on, offline_flag, data, last_session_refresh, broker_session_id, version) VALUES ('ee32ad9f-29e7-4906-81cb-aebdd5da9bf8', '6d478587-a790-46aa-ac3a-133226549795', 'master', 1739962807, '0', '{"ipAddress":"172.18.0.1","authMethod":"openid-connect","rememberMe":false,"started":0,"notes":{"KC_DEVICE_NOTE":"eyJpcEFkZHJlc3MiOiIxNzIuMTguMC4xIiwib3MiOiJXaW5kb3dzIiwib3NWZXJzaW9uIjoiMTAiLCJicm93c2VyIjoiQ2hyb21lLzEzMy4wLjAiLCJkZXZpY2UiOiJPdGhlciIsImxhc3RBY2Nlc3MiOjAsIm1vYmlsZSI6ZmFsc2V9","AUTH_TIME":"1739962807","authenticators-completed":"{\"508bbb2e-afae-41ec-9224-1ddf99a846c3\":1739962807,\"7eed02d8-9a68-44ba-a5ee-6b2c6c4ac3c8\":1739964003}"},"state":"LOGGED_IN"}', 1739964004, NULL, 16);
-INSERT INTO public.offline_user_session (user_session_id, user_id, realm_id, created_on, offline_flag, data, last_session_refresh, broker_session_id, version) VALUES ('55b700fa-19f3-4360-9e77-a346ca533aee', '6d478587-a790-46aa-ac3a-133226549795', 'master', 1740149486, '0', '{"ipAddress":"172.18.0.1","authMethod":"openid-connect","rememberMe":false,"started":0,"notes":{"KC_DEVICE_NOTE":"eyJpcEFkZHJlc3MiOiIxNzIuMTguMC4xIiwib3MiOiJXaW5kb3dzIiwib3NWZXJzaW9uIjoiMTAiLCJicm93c2VyIjoiQ2hyb21lLzEzMy4wLjAiLCJkZXZpY2UiOiJPdGhlciIsImxhc3RBY2Nlc3MiOjAsIm1vYmlsZSI6ZmFsc2V9","AUTH_TIME":"1740149486","authenticators-completed":"{\"508bbb2e-afae-41ec-9224-1ddf99a846c3\":1740149486,\"7eed02d8-9a68-44ba-a5ee-6b2c6c4ac3c8\":1740149585}"},"state":"LOGGED_IN"}', 1740149721, NULL, 6);
-
-
---
--- Data for Name: org; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: offline_client_session; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: org_domain; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: offline_user_session; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: policy_config; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: org; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: protocol_mapper; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: org_domain; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
+--
+
+
+
+--
+-- Data for Name: policy_config; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
+--
+
+
+
+--
+-- Data for Name: protocol_mapper; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('40b33f72-e076-45a0-9e9a-78ba0b77743e', 'audience resolve', 'openid-connect', 'oidc-audience-resolve-mapper', '34c90cb1-59ee-4c3d-b280-035eb751690a', NULL);
@@ -2671,7 +2654,7 @@ INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, cl
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('e2a7c68f-19ed-4536-8303-c14eac258710', 'upn', 'openid-connect', 'oidc-usermodel-property-mapper', NULL, '80982e4f-2393-44de-8207-6ce9526f3fb3');
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('0cf91558-aaa6-4d67-bc7e-4ab382771048', 'groups', 'openid-connect', 'oidc-usermodel-realm-role-mapper', NULL, '80982e4f-2393-44de-8207-6ce9526f3fb3');
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('3c934d4b-bc0a-4e58-a0be-79cda19eabe5', 'locale', 'openid-connect', 'oidc-usermodel-attribute-mapper', '723bc5a7-52cb-4063-b8f4-b45327f5db02', NULL);
-INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('dd8f1754-723c-47ed-b19e-1dad52006743', 'audience ace', 'openid-connect', 'oidc-audience-mapper', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('dd8f1754-723c-47ed-b19e-1dad52006743', 'audience trustdeck', 'openid-connect', 'oidc-audience-mapper', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('8663d46a-7643-4724-9d15-4c670dc00d8e', 'client roles', 'openid-connect', 'oidc-usermodel-client-role-mapper', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'GroupMapper', 'openid-connect', 'oidc-group-membership-mapper', '2be34fd2-d092-457d-b56b-9535ff5ea02a', NULL);
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('f2f1d931-0a0a-48b8-99ba-6342ca70dc51', 'acr loa level', 'openid-connect', 'oidc-acr-mapper', NULL, '3515bf6a-cb15-45db-b55c-6ec21ac99990');
@@ -2680,10 +2663,16 @@ INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, cl
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('0d9cea58-2032-4916-81b3-7bc4123d1a95', 'sub', 'openid-connect', 'oidc-sub-mapper', NULL, '7ef392a1-6728-40ac-9bf6-381f1fbc3b20');
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('08ba371e-e26f-4fec-ae61-af8652dd7461', 'auth_time', 'openid-connect', 'oidc-usersessionmodel-note-mapper', NULL, '25df115c-d573-4b3e-bf3b-db291bfbceff');
 INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('ca6d5979-186c-4b5f-885c-1e949f4f9cdf', 'sub', 'openid-connect', 'oidc-sub-mapper', NULL, '25df115c-d573-4b3e-bf3b-db291bfbceff');
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('4e3492f3-e576-4381-a744-5216db43a8ce', 'Client ID', 'openid-connect', 'oidc-usersessionmodel-note-mapper', NULL, '0530c3dd-3064-4438-b252-3aa26b879293');
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('efd4e08a-c198-4d02-944b-55743faff236', 'Client Host', 'openid-connect', 'oidc-usersessionmodel-note-mapper', NULL, '0530c3dd-3064-4438-b252-3aa26b879293');
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('b55da32b-ff87-450d-8e17-ce8778db6e19', 'Client IP Address', 'openid-connect', 'oidc-usersessionmodel-note-mapper', NULL, '0530c3dd-3064-4438-b252-3aa26b879293');
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('2fddd973-fc1b-4bff-ba31-b0ee3b4a3307', 'Client ID', 'openid-connect', 'oidc-usersessionmodel-note-mapper', NULL, 'b55992d7-358a-4282-8162-43f01e1da5ec');
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('0e4436d1-f5ae-4834-a06c-dd064f6feb7c', 'Client Host', 'openid-connect', 'oidc-usersessionmodel-note-mapper', NULL, 'b55992d7-358a-4282-8162-43f01e1da5ec');
+INSERT INTO public.protocol_mapper (id, name, protocol, protocol_mapper_name, client_id, client_scope_id) VALUES ('9a5b84f9-0f88-4575-ac41-d7e951fa4ab8', 'Client IP Address', 'openid-connect', 'oidc-usersessionmodel-note-mapper', NULL, 'b55992d7-358a-4282-8162-43f01e1da5ec');
 
 
 --
--- Data for Name: protocol_mapper_config; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: protocol_mapper_config; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('537dc4a8-319a-45b3-8625-0b6f46376529', 'true', 'userinfo.token.claim');
@@ -2977,24 +2966,19 @@ INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALU
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('3c934d4b-bc0a-4e58-a0be-79cda19eabe5', 'locale', 'claim.name');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('3c934d4b-bc0a-4e58-a0be-79cda19eabe5', 'String', 'jsonType.label');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('e831139c-a82c-4a6b-9890-44d689e0e271', 'true', 'id.token.claim');
-INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('dd8f1754-723c-47ed-b19e-1dad52006743', 'ace', 'included.client.audience');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('dd8f1754-723c-47ed-b19e-1dad52006743', 'trustdeck', 'included.client.audience');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('dd8f1754-723c-47ed-b19e-1dad52006743', 'true', 'id.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('dd8f1754-723c-47ed-b19e-1dad52006743', 'true', 'access.token.claim');
-INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('e831139c-a82c-4a6b-9890-44d689e0e271', 'ace', 'usermodel.clientRoleMapping.clientId');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('e831139c-a82c-4a6b-9890-44d689e0e271', 'trustdeck', 'usermodel.clientRoleMapping.clientId');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('8663d46a-7643-4724-9d15-4c670dc00d8e', 'foo', 'user.attribute');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('8663d46a-7643-4724-9d15-4c670dc00d8e', 'true', 'access.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('8663d46a-7643-4724-9d15-4c670dc00d8e', 'resource_access.${client_id}.roles', 'claim.name');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('8663d46a-7643-4724-9d15-4c670dc00d8e', 'String', 'jsonType.label');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('8663d46a-7643-4724-9d15-4c670dc00d8e', 'true', 'multivalued');
-INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'groups', 'claim.name');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('f2f1d931-0a0a-48b8-99ba-6342ca70dc51', 'true', 'id.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('f2f1d931-0a0a-48b8-99ba-6342ca70dc51', 'true', 'access.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('4527bbbe-cf23-4c2a-9b34-9fa94bb680e0', 'true', 'id.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('4527bbbe-cf23-4c2a-9b34-9fa94bb680e0', 'true', 'access.token.claim');
-INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'false', 'full.path');
-INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'false', 'id.token.claim');
-INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'false', 'access.token.claim');
-INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'false', 'userinfo.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'true', 'multivalued');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('0d9cea58-2032-4916-81b3-7bc4123d1a95', 'true', 'introspection.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('0d9cea58-2032-4916-81b3-7bc4123d1a95', 'true', 'access.token.claim');
@@ -3012,10 +2996,53 @@ INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALU
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('08ba371e-e26f-4fec-ae61-af8652dd7461', 'long', 'jsonType.label');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ca6d5979-186c-4b5f-885c-1e949f4f9cdf', 'true', 'introspection.token.claim');
 INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ca6d5979-186c-4b5f-885c-1e949f4f9cdf', 'true', 'access.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('4e3492f3-e576-4381-a744-5216db43a8ce', 'client_id', 'user.session.note');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('4e3492f3-e576-4381-a744-5216db43a8ce', 'true', 'introspection.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('4e3492f3-e576-4381-a744-5216db43a8ce', 'true', 'id.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('4e3492f3-e576-4381-a744-5216db43a8ce', 'true', 'access.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('4e3492f3-e576-4381-a744-5216db43a8ce', 'client_id', 'claim.name');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('4e3492f3-e576-4381-a744-5216db43a8ce', 'String', 'jsonType.label');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('b55da32b-ff87-450d-8e17-ce8778db6e19', 'clientAddress', 'user.session.note');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('b55da32b-ff87-450d-8e17-ce8778db6e19', 'true', 'introspection.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('b55da32b-ff87-450d-8e17-ce8778db6e19', 'true', 'id.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('b55da32b-ff87-450d-8e17-ce8778db6e19', 'true', 'access.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('b55da32b-ff87-450d-8e17-ce8778db6e19', 'clientAddress', 'claim.name');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('b55da32b-ff87-450d-8e17-ce8778db6e19', 'String', 'jsonType.label');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('efd4e08a-c198-4d02-944b-55743faff236', 'clientHost', 'user.session.note');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('efd4e08a-c198-4d02-944b-55743faff236', 'true', 'introspection.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('efd4e08a-c198-4d02-944b-55743faff236', 'true', 'id.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('efd4e08a-c198-4d02-944b-55743faff236', 'true', 'access.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('efd4e08a-c198-4d02-944b-55743faff236', 'clientHost', 'claim.name');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('efd4e08a-c198-4d02-944b-55743faff236', 'String', 'jsonType.label');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('0e4436d1-f5ae-4834-a06c-dd064f6feb7c', 'clientHost', 'user.session.note');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('0e4436d1-f5ae-4834-a06c-dd064f6feb7c', 'true', 'introspection.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('0e4436d1-f5ae-4834-a06c-dd064f6feb7c', 'true', 'id.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('0e4436d1-f5ae-4834-a06c-dd064f6feb7c', 'true', 'access.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('0e4436d1-f5ae-4834-a06c-dd064f6feb7c', 'clientHost', 'claim.name');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('0e4436d1-f5ae-4834-a06c-dd064f6feb7c', 'String', 'jsonType.label');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('2fddd973-fc1b-4bff-ba31-b0ee3b4a3307', 'client_id', 'user.session.note');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('2fddd973-fc1b-4bff-ba31-b0ee3b4a3307', 'true', 'introspection.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'true', 'id.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'trustdeck_groups', 'claim.name');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'false', 'full.path');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('2fddd973-fc1b-4bff-ba31-b0ee3b4a3307', 'true', 'id.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('2fddd973-fc1b-4bff-ba31-b0ee3b4a3307', 'true', 'access.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('2fddd973-fc1b-4bff-ba31-b0ee3b4a3307', 'client_id', 'claim.name');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('2fddd973-fc1b-4bff-ba31-b0ee3b4a3307', 'String', 'jsonType.label');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('9a5b84f9-0f88-4575-ac41-d7e951fa4ab8', 'clientAddress', 'user.session.note');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('9a5b84f9-0f88-4575-ac41-d7e951fa4ab8', 'true', 'introspection.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('9a5b84f9-0f88-4575-ac41-d7e951fa4ab8', 'true', 'id.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('9a5b84f9-0f88-4575-ac41-d7e951fa4ab8', 'true', 'access.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('9a5b84f9-0f88-4575-ac41-d7e951fa4ab8', 'clientAddress', 'claim.name');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('9a5b84f9-0f88-4575-ac41-d7e951fa4ab8', 'String', 'jsonType.label');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'false', 'introspection.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'false', 'userinfo.token.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'true', 'lightweight.claim');
+INSERT INTO public.protocol_mapper_config (protocol_mapper_id, value, name) VALUES ('ac41b127-b22e-4cdf-a590-e4343cc5daad', 'true', 'access.token.claim');
 
 
 --
--- Data for Name: realm; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: realm; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.realm (id, access_code_lifespan, user_action_lifespan, access_token_lifespan, account_theme, admin_theme, email_theme, enabled, events_enabled, events_expiration, login_theme, name, not_before, password_policy, registration_allowed, remember_me, reset_password_allowed, social, ssl_required, sso_idle_timeout, sso_max_lifespan, update_profile_on_soc_login, verify_email, master_admin_client, login_lifespan, internationalization_enabled, default_locale, reg_email_as_username, admin_events_enabled, admin_events_details_enabled, edit_username_allowed, otp_policy_counter, otp_policy_window, otp_policy_period, otp_policy_digits, otp_policy_alg, otp_policy_type, browser_flow, registration_flow, direct_grant_flow, reset_credentials_flow, client_auth_flow, offline_session_idle_timeout, revoke_refresh_token, access_token_life_implicit, login_with_email_allowed, duplicate_emails_allowed, docker_auth_flow, refresh_token_max_reuse, allow_user_managed_access, sso_max_lifespan_remember_me, sso_idle_timeout_remember_me, default_role) VALUES ('master', 60, 300, 60, NULL, NULL, NULL, true, false, 0, NULL, 'master', 0, NULL, false, false, false, false, 'EXTERNAL', 1800, 36000, false, false, 'd8a35e32-b522-425f-a314-77e6b313330c', 1800, false, NULL, false, false, false, false, 0, 1, 30, 6, 'HmacSHA1', 'totp', 'ce2d4e14-e0d7-4fb0-9ba1-388e3ec46b1a', 'a0b128f9-cca8-4ff2-a2d1-50d3e92e87c5', 'ecff1be7-9d5e-4de0-9dc0-fb978f82dfbd', 'abb4c92e-d6d3-4618-bab7-8a458f5c9b16', '4168c80d-15c5-43d3-8369-ccf0237f909a', 2592000, false, 900, true, false, '0367ff4e-3e8d-4b52-a7fa-1ec95778554f', 0, false, 0, 0, '8abade97-996e-4b25-a889-e4bc2d1fc387');
@@ -3023,7 +3050,7 @@ INSERT INTO public.realm (id, access_code_lifespan, user_action_lifespan, access
 
 
 --
--- Data for Name: realm_attribute; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: realm_attribute; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('_browser_header.contentSecurityPolicyReportOnly', 'master', '');
@@ -3057,7 +3084,7 @@ INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('clientSessio
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('clientSessionMaxLifespan', 'development', '0');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('clientOfflineSessionIdleTimeout', 'development', '0');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('clientOfflineSessionMaxLifespan', 'development', '0');
-INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('displayName', 'development', 'ACE');
+INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('displayName', 'development', 'TRUSTDECK');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('bruteForceProtected', 'development', 'false');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('permanentLockout', 'development', 'false');
 INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('maxFailureWaitSeconds', 'development', '900');
@@ -3103,19 +3130,19 @@ INSERT INTO public.realm_attribute (name, realm_id, value) VALUES ('firstBrokerL
 
 
 --
--- Data for Name: realm_default_groups; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: realm_default_groups; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: realm_enabled_event_types; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: realm_enabled_event_types; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: realm_events_listeners; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: realm_events_listeners; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.realm_events_listeners (realm_id, value) VALUES ('master', 'jboss-logging');
@@ -3123,13 +3150,13 @@ INSERT INTO public.realm_events_listeners (realm_id, value) VALUES ('development
 
 
 --
--- Data for Name: realm_localizations; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: realm_localizations; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: realm_required_credential; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: realm_required_credential; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.realm_required_credential (type, form_label, input, secret, realm_id) VALUES ('password', 'password', true, true, 'master');
@@ -3137,13 +3164,13 @@ INSERT INTO public.realm_required_credential (type, form_label, input, secret, r
 
 
 --
--- Data for Name: realm_smtp_config; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: realm_smtp_config; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: realm_supported_locales; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: realm_supported_locales; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.realm_supported_locales (realm_id, value) VALUES ('development', 'de');
@@ -3151,7 +3178,7 @@ INSERT INTO public.realm_supported_locales (realm_id, value) VALUES ('developmen
 
 
 --
--- Data for Name: redirect_uris; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: redirect_uris; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.redirect_uris (client_id, value) VALUES ('c8afb027-0c8c-4bdc-bf0f-be4a2c172439', '/realms/master/account/*');
@@ -3164,13 +3191,13 @@ INSERT INTO public.redirect_uris (client_id, value) VALUES ('2be34fd2-d092-457d-
 
 
 --
--- Data for Name: required_action_config; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: required_action_config; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: required_action_provider; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: required_action_provider; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled, default_action, provider_id, priority) VALUES ('a4a1f2ee-cce5-48d7-bfc1-abebf61a4f47', 'VERIFY_EMAIL', 'Verify Email', 'master', true, false, 'VERIFY_EMAIL', 50);
@@ -3189,76 +3216,78 @@ INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled,
 INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled, default_action, provider_id, priority) VALUES ('e2340e0a-d968-4519-9d47-6a799b50366f', 'TERMS_AND_CONDITIONS', 'Terms and Conditions', 'development', false, false, 'TERMS_AND_CONDITIONS', 20);
 INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled, default_action, provider_id, priority) VALUES ('e803079e-d56b-4492-af29-356af1c45abd', 'delete_credential', 'Delete Credential', 'master', true, false, 'delete_credential', 100);
 INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled, default_action, provider_id, priority) VALUES ('9948a0e3-4e8f-4568-8288-288104ef4eec', 'delete_credential', 'Delete Credential', 'development', true, false, 'delete_credential', 100);
+INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled, default_action, provider_id, priority) VALUES ('10e9e211-5e6f-40d5-9584-abcc3ed27b48', 'idp_link', 'Linking Identity Provider', 'master', true, false, 'idp_link', 120);
+INSERT INTO public.required_action_provider (id, alias, name, realm_id, enabled, default_action, provider_id, priority) VALUES ('c379c0ee-fd5c-4e97-917f-2a710b7ad8a7', 'idp_link', 'Linking Identity Provider', 'development', true, false, 'idp_link', 120);
 
 
 --
--- Data for Name: resource_attribute; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-
-
---
--- Data for Name: resource_policy; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: resource_attribute; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: resource_scope; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: resource_policy; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: resource_server; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: resource_scope; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: resource_server_perm_ticket; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: resource_server; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: resource_server_policy; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: resource_server_perm_ticket; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: resource_server_resource; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: resource_server_policy; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: resource_server_scope; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: resource_server_resource; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: resource_uris; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: resource_server_scope; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: revoked_token; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: resource_uris; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: role_attribute; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: revoked_token; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: scope_mapping; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: role_attribute; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
+--
+
+
+
+--
+-- Data for Name: scope_mapping; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.scope_mapping (client_id, role_id) VALUES ('34c90cb1-59ee-4c3d-b280-035eb751690a', '412e3737-b214-48e3-9a53-e5eeff2d222e');
@@ -3268,78 +3297,85 @@ INSERT INTO public.scope_mapping (client_id, role_id) VALUES ('2c539eab-1781-4d4
 
 
 --
--- Data for Name: scope_policy; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: scope_policy; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: user_attribute; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: server_config; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
+--
+
+
+
+--
+-- Data for Name: user_attribute; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.user_attribute (name, value, user_id, id, long_value_hash, long_value_hash_lower_case, long_value) VALUES ('locale', 'en', '25003dd9-9c30-4da5-a4cd-79c2a7dab915', '1469741b-8853-4283-8bca-9d4f96b0146c', NULL, NULL, NULL);
 
 
 --
--- Data for Name: user_consent; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: user_consent; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: user_consent_client_scope; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: user_consent_client_scope; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: user_entity; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: user_entity; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.user_entity (id, email, email_constraint, email_verified, enabled, federation_link, first_name, last_name, realm_id, username, created_timestamp, service_account_client_link, not_before) VALUES ('6d478587-a790-46aa-ac3a-133226549795', NULL, 'ad864bc0-b66c-4aba-8f76-a6c7d22859e8', false, true, NULL, NULL, NULL, 'master', 'admin', 1646033074205, NULL, 0);
 INSERT INTO public.user_entity (id, email, email_constraint, email_verified, enabled, federation_link, first_name, last_name, realm_id, username, created_timestamp, service_account_client_link, not_before) VALUES ('3dfb6717-3def-493b-a237-b7345fc42718', NULL, '40bf643c-2b40-4e6c-a419-5ac18a860376', false, true, NULL, NULL, NULL, 'development', 'test', 1646034179626, NULL, 1682506166);
 INSERT INTO public.user_entity (id, email, email_constraint, email_verified, enabled, federation_link, first_name, last_name, realm_id, username, created_timestamp, service_account_client_link, not_before) VALUES ('25003dd9-9c30-4da5-a4cd-79c2a7dab915', NULL, '9223fd98-e411-446c-8109-4c534d36dbe4', true, true, NULL, NULL, NULL, 'development', 'cache-admin', 1740149602355, NULL, 0);
+INSERT INTO public.user_entity (id, email, email_constraint, email_verified, enabled, federation_link, first_name, last_name, realm_id, username, created_timestamp, service_account_client_link, not_before) VALUES ('224572f6-e49b-4955-9b9c-658f385c9492', NULL, '2a5ec895-c6a9-4aea-9bd8-ff38c702bf98', false, true, NULL, NULL, NULL, 'development', 'service-account-trustdeck', 1770118508297, '2be34fd2-d092-457d-b56b-9535ff5ea02a', 0);
 
 
 --
--- Data for Name: user_federation_config; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-
-
---
--- Data for Name: user_federation_mapper; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: user_federation_config; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: user_federation_mapper_config; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: user_federation_mapper; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: user_federation_provider; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: user_federation_mapper_config; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: user_group_membership; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-INSERT INTO public.user_group_membership (group_id, user_id, membership_type) VALUES ('71463f7d-68b9-4a2e-80aa-d1835bbb1736', '3dfb6717-3def-493b-a237-b7345fc42718', 'UNMANAGED');
-
-
---
--- Data for Name: user_required_action; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: user_federation_provider; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 
 
 --
--- Data for Name: user_role_mapping; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: user_group_membership; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
+--
+
+INSERT INTO public.user_group_membership (group_id, user_id, membership_type) VALUES ('321da70e-bc39-4c6c-8cf6-579dc6e95bab', '3dfb6717-3def-493b-a237-b7345fc42718', 'UNMANAGED');
+
+
+--
+-- Data for Name: user_required_action; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
+--
+
+
+
+--
+-- Data for Name: user_role_mapping; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('8abade97-996e-4b25-a889-e4bc2d1fc387', '6d478587-a790-46aa-ac3a-133226549795');
@@ -3361,30 +3397,6 @@ INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('8a8f1618-4dcd-4
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('590d2771-11cd-49d9-afd9-3d843ea0fa7f', '6d478587-a790-46aa-ac3a-133226549795');
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('55a0caae-ea26-40b8-b739-4e4cd008ae40', '6d478587-a790-46aa-ac3a-133226549795');
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('c20d3730-b91c-49cf-b9de-b9cd7ad66eb7', '6d478587-a790-46aa-ac3a-133226549795');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('03eb0760-ea2d-490f-8608-402662997979', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('64a68e78-5dab-43ba-b136-9424dfbafd3c', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('00a4dc29-20f8-447a-8a76-74bf55bac602', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('7055caa6-86f2-469a-a858-628a327285a3', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('0258cd18-b120-4207-8d49-47fc737d386e', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('3c5cc3e1-d8aa-4770-abed-ff9a72371b66', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('5155817c-9926-450b-b648-30ca52fef547', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('1cc25fc5-1b43-4b8d-9fd0-a324f27b1405', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('21b8ea9e-de35-4834-bbe6-93453b581b5b', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('4e055a12-c22f-4788-82dd-84726bfd04d3', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('d97e3b14-16d1-4cc3-9c52-101407722ee6', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('be6e6004-49a6-4d3d-a578-07981c601631', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('33480fb8-f2c9-4f8c-858b-0e9dc54c250a', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('2c36457e-b9f7-4cbb-b92c-614747fa8686', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('19a09c60-eca8-4d18-8c74-5dd2fd8ae8d2', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('e70260d8-9a30-48f8-a173-faabe44b71eb', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('a0dfa1f7-585e-4427-9e4d-65ec8dbef5c4', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('d4caf2a0-4b50-41c9-9cb4-86ceef63c3b9', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('3a955033-0651-4928-82a8-f95da2ac0604', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('e8f20372-0a20-45d0-ae78-8c614315a52b', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('7a9b3db3-1233-4ea8-ba47-05bb9b86ddd7', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('01c50900-5415-483a-87c3-534241f653ce', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('622751d6-7eba-4466-8acc-03d1083f3915', '3dfb6717-3def-493b-a237-b7345fc42718');
-INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('e5fe4cf4-6fd3-4142-b9e0-4bce340aae83', '3dfb6717-3def-493b-a237-b7345fc42718');
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('03eb0760-ea2d-490f-8608-402662997979', '25003dd9-9c30-4da5-a4cd-79c2a7dab915');
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('b1e0272c-5f10-45ad-9ec5-1fa8dd8f6a07', '25003dd9-9c30-4da5-a4cd-79c2a7dab915');
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('3e73b15e-331c-481d-b925-babec65d356b', '25003dd9-9c30-4da5-a4cd-79c2a7dab915');
@@ -3394,16 +3406,20 @@ INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('d380a439-4eb0-4
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('448e437a-b999-419d-81b9-462d3b9faa47', '25003dd9-9c30-4da5-a4cd-79c2a7dab915');
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('4ba6f226-e44d-4601-8dfd-64c21b052b17', '25003dd9-9c30-4da5-a4cd-79c2a7dab915');
 INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('4fdcfef1-c38b-4ca0-8182-b1d664709520', '25003dd9-9c30-4da5-a4cd-79c2a7dab915');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('b9a1e688-d3f0-495f-a2ed-8e915adac8b4', '3dfb6717-3def-493b-a237-b7345fc42718');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('03eb0760-ea2d-490f-8608-402662997979', '224572f6-e49b-4955-9b9c-658f385c9492');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('d380a439-4eb0-4f64-b365-184a87dbf1ae', '224572f6-e49b-4955-9b9c-658f385c9492');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('4fdcfef1-c38b-4ca0-8182-b1d664709520', '224572f6-e49b-4955-9b9c-658f385c9492');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('6c7ef695-de97-4ffe-bef7-1607ed2c1b37', '224572f6-e49b-4955-9b9c-658f385c9492');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('4ba6f226-e44d-4601-8dfd-64c21b052b17', '224572f6-e49b-4955-9b9c-658f385c9492');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('3e73b15e-331c-481d-b925-babec65d356b', '224572f6-e49b-4955-9b9c-658f385c9492');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('8bc3c47d-126a-49b7-94d7-541ff2ff7804', '224572f6-e49b-4955-9b9c-658f385c9492');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('448e437a-b999-419d-81b9-462d3b9faa47', '224572f6-e49b-4955-9b9c-658f385c9492');
+INSERT INTO public.user_role_mapping (role_id, user_id) VALUES ('b1e0272c-5f10-45ad-9ec5-1fa8dd8f6a07', '224572f6-e49b-4955-9b9c-658f385c9492');
 
 
 --
--- Data for Name: username_login_failure; Type: TABLE DATA; Schema: public; Owner: ace-manager
---
-
-
-
---
--- Data for Name: web_origins; Type: TABLE DATA; Schema: public; Owner: ace-manager
+-- Data for Name: web_origins; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
 INSERT INTO public.web_origins (client_id, value) VALUES ('19f8a8d4-4eee-413b-8430-1779b7cd1bec', '+');
@@ -3412,15 +3428,13 @@ INSERT INTO public.web_origins (client_id, value) VALUES ('2be34fd2-d092-457d-b5
 
 
 --
--- Name: username_login_failure CONSTRAINT_17-2; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Data for Name: workflow_state; Type: TABLE DATA; Schema: public; Owner: trustdeck-manager
 --
 
-ALTER TABLE ONLY public.username_login_failure
-    ADD CONSTRAINT "CONSTRAINT_17-2" PRIMARY KEY (realm_id, username);
 
 
 --
--- Name: org_domain ORG_DOMAIN_pkey; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: org_domain ORG_DOMAIN_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.org_domain
@@ -3428,7 +3442,7 @@ ALTER TABLE ONLY public.org_domain
 
 
 --
--- Name: org ORG_pkey; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: org ORG_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.org
@@ -3436,7 +3450,15 @@ ALTER TABLE ONLY public.org
 
 
 --
--- Name: keycloak_role UK_J3RWUVD56ONTGSUHOGM184WW2-2; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: server_config SERVER_CONFIG_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.server_config
+    ADD CONSTRAINT "SERVER_CONFIG_pkey" PRIMARY KEY (server_config_key);
+
+
+--
+-- Name: keycloak_role UK_J3RWUVD56ONTGSUHOGM184WW2-2; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.keycloak_role
@@ -3444,7 +3466,7 @@ ALTER TABLE ONLY public.keycloak_role
 
 
 --
--- Name: client_auth_flow_bindings c_cli_flow_bind; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_auth_flow_bindings c_cli_flow_bind; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_auth_flow_bindings
@@ -3452,7 +3474,7 @@ ALTER TABLE ONLY public.client_auth_flow_bindings
 
 
 --
--- Name: client_scope_client c_cli_scope_bind; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_scope_client c_cli_scope_bind; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_scope_client
@@ -3460,7 +3482,7 @@ ALTER TABLE ONLY public.client_scope_client
 
 
 --
--- Name: client_initial_access cnstr_client_init_acc_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_initial_access cnstr_client_init_acc_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_initial_access
@@ -3468,7 +3490,7 @@ ALTER TABLE ONLY public.client_initial_access
 
 
 --
--- Name: realm_default_groups con_group_id_def_groups; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_default_groups con_group_id_def_groups; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_default_groups
@@ -3476,7 +3498,7 @@ ALTER TABLE ONLY public.realm_default_groups
 
 
 --
--- Name: broker_link constr_broker_link_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: broker_link constr_broker_link_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.broker_link
@@ -3484,7 +3506,7 @@ ALTER TABLE ONLY public.broker_link
 
 
 --
--- Name: component_config constr_component_config_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: component_config constr_component_config_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.component_config
@@ -3492,7 +3514,7 @@ ALTER TABLE ONLY public.component_config
 
 
 --
--- Name: component constr_component_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: component constr_component_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.component
@@ -3500,7 +3522,7 @@ ALTER TABLE ONLY public.component
 
 
 --
--- Name: fed_user_required_action constr_fed_required_action; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: fed_user_required_action constr_fed_required_action; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.fed_user_required_action
@@ -3508,7 +3530,7 @@ ALTER TABLE ONLY public.fed_user_required_action
 
 
 --
--- Name: fed_user_attribute constr_fed_user_attr_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: fed_user_attribute constr_fed_user_attr_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.fed_user_attribute
@@ -3516,7 +3538,7 @@ ALTER TABLE ONLY public.fed_user_attribute
 
 
 --
--- Name: fed_user_consent constr_fed_user_consent_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: fed_user_consent constr_fed_user_consent_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.fed_user_consent
@@ -3524,7 +3546,7 @@ ALTER TABLE ONLY public.fed_user_consent
 
 
 --
--- Name: fed_user_credential constr_fed_user_cred_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: fed_user_credential constr_fed_user_cred_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.fed_user_credential
@@ -3532,7 +3554,7 @@ ALTER TABLE ONLY public.fed_user_credential
 
 
 --
--- Name: fed_user_group_membership constr_fed_user_group; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: fed_user_group_membership constr_fed_user_group; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.fed_user_group_membership
@@ -3540,7 +3562,7 @@ ALTER TABLE ONLY public.fed_user_group_membership
 
 
 --
--- Name: fed_user_role_mapping constr_fed_user_role; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: fed_user_role_mapping constr_fed_user_role; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.fed_user_role_mapping
@@ -3548,7 +3570,7 @@ ALTER TABLE ONLY public.fed_user_role_mapping
 
 
 --
--- Name: federated_user constr_federated_user; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: federated_user constr_federated_user; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.federated_user
@@ -3556,7 +3578,7 @@ ALTER TABLE ONLY public.federated_user
 
 
 --
--- Name: realm_default_groups constr_realm_default_groups; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_default_groups constr_realm_default_groups; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_default_groups
@@ -3564,7 +3586,7 @@ ALTER TABLE ONLY public.realm_default_groups
 
 
 --
--- Name: realm_enabled_event_types constr_realm_enabl_event_types; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_enabled_event_types constr_realm_enabl_event_types; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_enabled_event_types
@@ -3572,7 +3594,7 @@ ALTER TABLE ONLY public.realm_enabled_event_types
 
 
 --
--- Name: realm_events_listeners constr_realm_events_listeners; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_events_listeners constr_realm_events_listeners; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_events_listeners
@@ -3580,7 +3602,7 @@ ALTER TABLE ONLY public.realm_events_listeners
 
 
 --
--- Name: realm_supported_locales constr_realm_supported_locales; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_supported_locales constr_realm_supported_locales; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_supported_locales
@@ -3588,7 +3610,7 @@ ALTER TABLE ONLY public.realm_supported_locales
 
 
 --
--- Name: identity_provider constraint_2b; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: identity_provider constraint_2b; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.identity_provider
@@ -3596,7 +3618,7 @@ ALTER TABLE ONLY public.identity_provider
 
 
 --
--- Name: client_attributes constraint_3c; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_attributes constraint_3c; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_attributes
@@ -3604,7 +3626,7 @@ ALTER TABLE ONLY public.client_attributes
 
 
 --
--- Name: event_entity constraint_4; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: event_entity constraint_4; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.event_entity
@@ -3612,7 +3634,7 @@ ALTER TABLE ONLY public.event_entity
 
 
 --
--- Name: federated_identity constraint_40; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: federated_identity constraint_40; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.federated_identity
@@ -3620,7 +3642,7 @@ ALTER TABLE ONLY public.federated_identity
 
 
 --
--- Name: realm constraint_4a; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm constraint_4a; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm
@@ -3628,7 +3650,7 @@ ALTER TABLE ONLY public.realm
 
 
 --
--- Name: user_federation_provider constraint_5c; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_federation_provider constraint_5c; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_federation_provider
@@ -3636,7 +3658,7 @@ ALTER TABLE ONLY public.user_federation_provider
 
 
 --
--- Name: client constraint_7; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client constraint_7; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client
@@ -3644,7 +3666,7 @@ ALTER TABLE ONLY public.client
 
 
 --
--- Name: scope_mapping constraint_81; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: scope_mapping constraint_81; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.scope_mapping
@@ -3652,7 +3674,7 @@ ALTER TABLE ONLY public.scope_mapping
 
 
 --
--- Name: client_node_registrations constraint_84; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_node_registrations constraint_84; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_node_registrations
@@ -3660,7 +3682,7 @@ ALTER TABLE ONLY public.client_node_registrations
 
 
 --
--- Name: realm_attribute constraint_9; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_attribute constraint_9; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_attribute
@@ -3668,7 +3690,7 @@ ALTER TABLE ONLY public.realm_attribute
 
 
 --
--- Name: realm_required_credential constraint_92; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_required_credential constraint_92; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_required_credential
@@ -3676,7 +3698,7 @@ ALTER TABLE ONLY public.realm_required_credential
 
 
 --
--- Name: keycloak_role constraint_a; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: keycloak_role constraint_a; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.keycloak_role
@@ -3684,7 +3706,7 @@ ALTER TABLE ONLY public.keycloak_role
 
 
 --
--- Name: admin_event_entity constraint_admin_event_entity; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: admin_event_entity constraint_admin_event_entity; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.admin_event_entity
@@ -3692,7 +3714,7 @@ ALTER TABLE ONLY public.admin_event_entity
 
 
 --
--- Name: authenticator_config_entry constraint_auth_cfg_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: authenticator_config_entry constraint_auth_cfg_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.authenticator_config_entry
@@ -3700,7 +3722,7 @@ ALTER TABLE ONLY public.authenticator_config_entry
 
 
 --
--- Name: authentication_execution constraint_auth_exec_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: authentication_execution constraint_auth_exec_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.authentication_execution
@@ -3708,7 +3730,7 @@ ALTER TABLE ONLY public.authentication_execution
 
 
 --
--- Name: authentication_flow constraint_auth_flow_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: authentication_flow constraint_auth_flow_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.authentication_flow
@@ -3716,7 +3738,7 @@ ALTER TABLE ONLY public.authentication_flow
 
 
 --
--- Name: authenticator_config constraint_auth_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: authenticator_config constraint_auth_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.authenticator_config
@@ -3724,7 +3746,7 @@ ALTER TABLE ONLY public.authenticator_config
 
 
 --
--- Name: user_role_mapping constraint_c; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_role_mapping constraint_c; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_role_mapping
@@ -3732,7 +3754,7 @@ ALTER TABLE ONLY public.user_role_mapping
 
 
 --
--- Name: composite_role constraint_composite_role; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: composite_role constraint_composite_role; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.composite_role
@@ -3740,7 +3762,7 @@ ALTER TABLE ONLY public.composite_role
 
 
 --
--- Name: identity_provider_config constraint_d; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: identity_provider_config constraint_d; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.identity_provider_config
@@ -3748,7 +3770,7 @@ ALTER TABLE ONLY public.identity_provider_config
 
 
 --
--- Name: policy_config constraint_dpc; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: policy_config constraint_dpc; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.policy_config
@@ -3756,7 +3778,7 @@ ALTER TABLE ONLY public.policy_config
 
 
 --
--- Name: realm_smtp_config constraint_e; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_smtp_config constraint_e; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_smtp_config
@@ -3764,7 +3786,7 @@ ALTER TABLE ONLY public.realm_smtp_config
 
 
 --
--- Name: credential constraint_f; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: credential constraint_f; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.credential
@@ -3772,7 +3794,7 @@ ALTER TABLE ONLY public.credential
 
 
 --
--- Name: user_federation_config constraint_f9; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_federation_config constraint_f9; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_federation_config
@@ -3780,7 +3802,7 @@ ALTER TABLE ONLY public.user_federation_config
 
 
 --
--- Name: resource_server_perm_ticket constraint_fapmt; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_perm_ticket constraint_fapmt; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_perm_ticket
@@ -3788,7 +3810,7 @@ ALTER TABLE ONLY public.resource_server_perm_ticket
 
 
 --
--- Name: resource_server_resource constraint_farsr; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_resource constraint_farsr; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_resource
@@ -3796,7 +3818,7 @@ ALTER TABLE ONLY public.resource_server_resource
 
 
 --
--- Name: resource_server_policy constraint_farsrp; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_policy constraint_farsrp; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_policy
@@ -3804,7 +3826,7 @@ ALTER TABLE ONLY public.resource_server_policy
 
 
 --
--- Name: associated_policy constraint_farsrpap; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: associated_policy constraint_farsrpap; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.associated_policy
@@ -3812,7 +3834,7 @@ ALTER TABLE ONLY public.associated_policy
 
 
 --
--- Name: resource_policy constraint_farsrpp; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_policy constraint_farsrpp; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_policy
@@ -3820,7 +3842,7 @@ ALTER TABLE ONLY public.resource_policy
 
 
 --
--- Name: resource_server_scope constraint_farsrs; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_scope constraint_farsrs; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_scope
@@ -3828,7 +3850,7 @@ ALTER TABLE ONLY public.resource_server_scope
 
 
 --
--- Name: resource_scope constraint_farsrsp; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_scope constraint_farsrsp; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_scope
@@ -3836,7 +3858,7 @@ ALTER TABLE ONLY public.resource_scope
 
 
 --
--- Name: scope_policy constraint_farsrsps; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: scope_policy constraint_farsrsps; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.scope_policy
@@ -3844,7 +3866,7 @@ ALTER TABLE ONLY public.scope_policy
 
 
 --
--- Name: user_entity constraint_fb; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_entity constraint_fb; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_entity
@@ -3852,7 +3874,7 @@ ALTER TABLE ONLY public.user_entity
 
 
 --
--- Name: user_federation_mapper_config constraint_fedmapper_cfg_pm; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_federation_mapper_config constraint_fedmapper_cfg_pm; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_federation_mapper_config
@@ -3860,7 +3882,7 @@ ALTER TABLE ONLY public.user_federation_mapper_config
 
 
 --
--- Name: user_federation_mapper constraint_fedmapperpm; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_federation_mapper constraint_fedmapperpm; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_federation_mapper
@@ -3868,7 +3890,7 @@ ALTER TABLE ONLY public.user_federation_mapper
 
 
 --
--- Name: fed_user_consent_cl_scope constraint_fgrntcsnt_clsc_pm; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: fed_user_consent_cl_scope constraint_fgrntcsnt_clsc_pm; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.fed_user_consent_cl_scope
@@ -3876,7 +3898,7 @@ ALTER TABLE ONLY public.fed_user_consent_cl_scope
 
 
 --
--- Name: user_consent_client_scope constraint_grntcsnt_clsc_pm; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_consent_client_scope constraint_grntcsnt_clsc_pm; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_consent_client_scope
@@ -3884,7 +3906,7 @@ ALTER TABLE ONLY public.user_consent_client_scope
 
 
 --
--- Name: user_consent constraint_grntcsnt_pm; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_consent constraint_grntcsnt_pm; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_consent
@@ -3892,7 +3914,7 @@ ALTER TABLE ONLY public.user_consent
 
 
 --
--- Name: keycloak_group constraint_group; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: keycloak_group constraint_group; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.keycloak_group
@@ -3900,7 +3922,7 @@ ALTER TABLE ONLY public.keycloak_group
 
 
 --
--- Name: group_attribute constraint_group_attribute_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: group_attribute constraint_group_attribute_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.group_attribute
@@ -3908,7 +3930,7 @@ ALTER TABLE ONLY public.group_attribute
 
 
 --
--- Name: group_role_mapping constraint_group_role; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: group_role_mapping constraint_group_role; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.group_role_mapping
@@ -3916,7 +3938,7 @@ ALTER TABLE ONLY public.group_role_mapping
 
 
 --
--- Name: identity_provider_mapper constraint_idpm; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: identity_provider_mapper constraint_idpm; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.identity_provider_mapper
@@ -3924,7 +3946,7 @@ ALTER TABLE ONLY public.identity_provider_mapper
 
 
 --
--- Name: idp_mapper_config constraint_idpmconfig; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: idp_mapper_config constraint_idpmconfig; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.idp_mapper_config
@@ -3932,7 +3954,15 @@ ALTER TABLE ONLY public.idp_mapper_config
 
 
 --
--- Name: migration_model constraint_migmod; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: jgroups_ping constraint_jgroups_ping; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.jgroups_ping
+    ADD CONSTRAINT constraint_jgroups_ping PRIMARY KEY (address);
+
+
+--
+-- Name: migration_model constraint_migmod; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.migration_model
@@ -3940,7 +3970,7 @@ ALTER TABLE ONLY public.migration_model
 
 
 --
--- Name: offline_client_session constraint_offl_cl_ses_pk3; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: offline_client_session constraint_offl_cl_ses_pk3; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.offline_client_session
@@ -3948,7 +3978,7 @@ ALTER TABLE ONLY public.offline_client_session
 
 
 --
--- Name: offline_user_session constraint_offl_us_ses_pk2; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: offline_user_session constraint_offl_us_ses_pk2; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.offline_user_session
@@ -3956,7 +3986,7 @@ ALTER TABLE ONLY public.offline_user_session
 
 
 --
--- Name: protocol_mapper constraint_pcm; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: protocol_mapper constraint_pcm; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.protocol_mapper
@@ -3964,7 +3994,7 @@ ALTER TABLE ONLY public.protocol_mapper
 
 
 --
--- Name: protocol_mapper_config constraint_pmconfig; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: protocol_mapper_config constraint_pmconfig; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.protocol_mapper_config
@@ -3972,7 +4002,7 @@ ALTER TABLE ONLY public.protocol_mapper_config
 
 
 --
--- Name: redirect_uris constraint_redirect_uris; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: redirect_uris constraint_redirect_uris; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.redirect_uris
@@ -3980,7 +4010,7 @@ ALTER TABLE ONLY public.redirect_uris
 
 
 --
--- Name: required_action_config constraint_req_act_cfg_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: required_action_config constraint_req_act_cfg_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.required_action_config
@@ -3988,7 +4018,7 @@ ALTER TABLE ONLY public.required_action_config
 
 
 --
--- Name: required_action_provider constraint_req_act_prv_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: required_action_provider constraint_req_act_prv_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.required_action_provider
@@ -3996,7 +4026,7 @@ ALTER TABLE ONLY public.required_action_provider
 
 
 --
--- Name: user_required_action constraint_required_action; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_required_action constraint_required_action; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_required_action
@@ -4004,7 +4034,7 @@ ALTER TABLE ONLY public.user_required_action
 
 
 --
--- Name: resource_uris constraint_resour_uris_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_uris constraint_resour_uris_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_uris
@@ -4012,7 +4042,7 @@ ALTER TABLE ONLY public.resource_uris
 
 
 --
--- Name: role_attribute constraint_role_attribute_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: role_attribute constraint_role_attribute_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.role_attribute
@@ -4020,7 +4050,7 @@ ALTER TABLE ONLY public.role_attribute
 
 
 --
--- Name: revoked_token constraint_rt; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: revoked_token constraint_rt; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.revoked_token
@@ -4028,7 +4058,7 @@ ALTER TABLE ONLY public.revoked_token
 
 
 --
--- Name: user_attribute constraint_user_attribute_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_attribute constraint_user_attribute_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_attribute
@@ -4036,7 +4066,7 @@ ALTER TABLE ONLY public.user_attribute
 
 
 --
--- Name: user_group_membership constraint_user_group; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_group_membership constraint_user_group; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_group_membership
@@ -4044,7 +4074,7 @@ ALTER TABLE ONLY public.user_group_membership
 
 
 --
--- Name: web_origins constraint_web_origins; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: web_origins constraint_web_origins; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.web_origins
@@ -4052,7 +4082,7 @@ ALTER TABLE ONLY public.web_origins
 
 
 --
--- Name: client_scope_attributes pk_cl_tmpl_attr; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_scope_attributes pk_cl_tmpl_attr; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_scope_attributes
@@ -4060,7 +4090,7 @@ ALTER TABLE ONLY public.client_scope_attributes
 
 
 --
--- Name: client_scope pk_cli_template; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_scope pk_cli_template; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_scope
@@ -4068,7 +4098,7 @@ ALTER TABLE ONLY public.client_scope
 
 
 --
--- Name: databasechangeloglock pk_databasechangeloglock; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: databasechangeloglock pk_databasechangeloglock; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.databasechangeloglock
@@ -4076,7 +4106,7 @@ ALTER TABLE ONLY public.databasechangeloglock
 
 
 --
--- Name: resource_server pk_resource_server; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server pk_resource_server; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server
@@ -4084,7 +4114,7 @@ ALTER TABLE ONLY public.resource_server
 
 
 --
--- Name: client_scope_role_mapping pk_template_scope; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_scope_role_mapping pk_template_scope; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_scope_role_mapping
@@ -4092,7 +4122,15 @@ ALTER TABLE ONLY public.client_scope_role_mapping
 
 
 --
--- Name: default_client_scope r_def_cli_scope_bind; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: workflow_state pk_workflow_state; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.workflow_state
+    ADD CONSTRAINT pk_workflow_state PRIMARY KEY (execution_id);
+
+
+--
+-- Name: default_client_scope r_def_cli_scope_bind; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.default_client_scope
@@ -4100,7 +4138,7 @@ ALTER TABLE ONLY public.default_client_scope
 
 
 --
--- Name: realm_localizations realm_localizations_pkey; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_localizations realm_localizations_pkey; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_localizations
@@ -4108,7 +4146,7 @@ ALTER TABLE ONLY public.realm_localizations
 
 
 --
--- Name: resource_attribute res_attr_pk; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_attribute res_attr_pk; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_attribute
@@ -4116,7 +4154,7 @@ ALTER TABLE ONLY public.resource_attribute
 
 
 --
--- Name: keycloak_group sibling_names; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: keycloak_group sibling_names; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.keycloak_group
@@ -4124,7 +4162,7 @@ ALTER TABLE ONLY public.keycloak_group
 
 
 --
--- Name: identity_provider uk_2daelwnibji49avxsrtuf6xj33; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: identity_provider uk_2daelwnibji49avxsrtuf6xj33; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.identity_provider
@@ -4132,7 +4170,7 @@ ALTER TABLE ONLY public.identity_provider
 
 
 --
--- Name: client uk_b71cjlbenv945rb6gcon438at; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client uk_b71cjlbenv945rb6gcon438at; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client
@@ -4140,7 +4178,7 @@ ALTER TABLE ONLY public.client
 
 
 --
--- Name: client_scope uk_cli_scope; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_scope uk_cli_scope; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_scope
@@ -4148,7 +4186,7 @@ ALTER TABLE ONLY public.client_scope
 
 
 --
--- Name: user_entity uk_dykn684sl8up1crfei6eckhd7; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_entity uk_dykn684sl8up1crfei6eckhd7; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_entity
@@ -4156,7 +4194,7 @@ ALTER TABLE ONLY public.user_entity
 
 
 --
--- Name: user_consent uk_external_consent; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_consent uk_external_consent; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_consent
@@ -4164,7 +4202,7 @@ ALTER TABLE ONLY public.user_consent
 
 
 --
--- Name: resource_server_resource uk_frsr6t700s9v50bu18ws5ha6; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_resource uk_frsr6t700s9v50bu18ws5ha6; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_resource
@@ -4172,7 +4210,7 @@ ALTER TABLE ONLY public.resource_server_resource
 
 
 --
--- Name: resource_server_perm_ticket uk_frsr6t700s9v50bu18ws5pmt; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_perm_ticket uk_frsr6t700s9v50bu18ws5pmt; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_perm_ticket
@@ -4180,7 +4218,7 @@ ALTER TABLE ONLY public.resource_server_perm_ticket
 
 
 --
--- Name: resource_server_policy uk_frsrpt700s9v50bu18ws5ha6; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_policy uk_frsrpt700s9v50bu18ws5ha6; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_policy
@@ -4188,7 +4226,7 @@ ALTER TABLE ONLY public.resource_server_policy
 
 
 --
--- Name: resource_server_scope uk_frsrst700s9v50bu18ws5ha6; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_scope uk_frsrst700s9v50bu18ws5ha6; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_scope
@@ -4196,7 +4234,7 @@ ALTER TABLE ONLY public.resource_server_scope
 
 
 --
--- Name: user_consent uk_local_consent; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_consent uk_local_consent; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_consent
@@ -4204,7 +4242,23 @@ ALTER TABLE ONLY public.user_consent
 
 
 --
--- Name: org uk_org_alias; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: migration_model uk_migration_update_time; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.migration_model
+    ADD CONSTRAINT uk_migration_update_time UNIQUE (update_time);
+
+
+--
+-- Name: migration_model uk_migration_version; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.migration_model
+    ADD CONSTRAINT uk_migration_version UNIQUE (version);
+
+
+--
+-- Name: org uk_org_alias; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.org
@@ -4212,7 +4266,7 @@ ALTER TABLE ONLY public.org
 
 
 --
--- Name: org uk_org_group; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: org uk_org_group; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.org
@@ -4220,7 +4274,7 @@ ALTER TABLE ONLY public.org
 
 
 --
--- Name: org uk_org_name; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: org uk_org_name; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.org
@@ -4228,7 +4282,7 @@ ALTER TABLE ONLY public.org
 
 
 --
--- Name: realm uk_orvsdmla56612eaefiq6wl5oi; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm uk_orvsdmla56612eaefiq6wl5oi; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm
@@ -4236,7 +4290,7 @@ ALTER TABLE ONLY public.realm
 
 
 --
--- Name: user_entity uk_ru8tt6t700s9v50bu18ws5ha6; Type: CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_entity uk_ru8tt6t700s9v50bu18ws5ha6; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_entity
@@ -4244,644 +4298,687 @@ ALTER TABLE ONLY public.user_entity
 
 
 --
--- Name: fed_user_attr_long_values; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: workflow_state uq_workflow_resource; Type: CONSTRAINT; Schema: public; Owner: trustdeck-manager
+--
+
+ALTER TABLE ONLY public.workflow_state
+    ADD CONSTRAINT uq_workflow_resource UNIQUE (workflow_id, resource_id);
+
+
+--
+-- Name: fed_user_attr_long_values; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX fed_user_attr_long_values ON public.fed_user_attribute USING btree (long_value_hash, name);
 
 
 --
--- Name: fed_user_attr_long_values_lower_case; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: fed_user_attr_long_values_lower_case; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX fed_user_attr_long_values_lower_case ON public.fed_user_attribute USING btree (long_value_hash_lower_case, name);
 
 
 --
--- Name: idx_admin_event_time; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_admin_event_time; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_admin_event_time ON public.admin_event_entity USING btree (realm_id, admin_event_time);
 
 
 --
--- Name: idx_assoc_pol_assoc_pol_id; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_assoc_pol_assoc_pol_id; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_assoc_pol_assoc_pol_id ON public.associated_policy USING btree (associated_policy_id);
 
 
 --
--- Name: idx_auth_config_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_auth_config_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_auth_config_realm ON public.authenticator_config USING btree (realm_id);
 
 
 --
--- Name: idx_auth_exec_flow; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_auth_exec_flow; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_auth_exec_flow ON public.authentication_execution USING btree (flow_id);
 
 
 --
--- Name: idx_auth_exec_realm_flow; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_auth_exec_realm_flow; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_auth_exec_realm_flow ON public.authentication_execution USING btree (realm_id, flow_id);
 
 
 --
--- Name: idx_auth_flow_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_auth_flow_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_auth_flow_realm ON public.authentication_flow USING btree (realm_id);
 
 
 --
--- Name: idx_cl_clscope; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_cl_clscope; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_cl_clscope ON public.client_scope_client USING btree (scope_id);
 
 
 --
--- Name: idx_client_att_by_name_value; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_client_att_by_name_value; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_client_att_by_name_value ON public.client_attributes USING btree (name, substr(value, 1, 255));
 
 
 --
--- Name: idx_client_id; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_client_id; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_client_id ON public.client USING btree (client_id);
 
 
 --
--- Name: idx_client_init_acc_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_client_init_acc_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_client_init_acc_realm ON public.client_initial_access USING btree (realm_id);
 
 
 --
--- Name: idx_clscope_attrs; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_clscope_attrs; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_clscope_attrs ON public.client_scope_attributes USING btree (scope_id);
 
 
 --
--- Name: idx_clscope_cl; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_clscope_cl; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_clscope_cl ON public.client_scope_client USING btree (client_id);
 
 
 --
--- Name: idx_clscope_protmap; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_clscope_protmap; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_clscope_protmap ON public.protocol_mapper USING btree (client_scope_id);
 
 
 --
--- Name: idx_clscope_role; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_clscope_role; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_clscope_role ON public.client_scope_role_mapping USING btree (scope_id);
 
 
 --
--- Name: idx_compo_config_compo; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_compo_config_compo; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_compo_config_compo ON public.component_config USING btree (component_id);
 
 
 --
--- Name: idx_component_provider_type; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_component_provider_type; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_component_provider_type ON public.component USING btree (provider_type);
 
 
 --
--- Name: idx_component_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_component_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_component_realm ON public.component USING btree (realm_id);
 
 
 --
--- Name: idx_composite; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_composite; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_composite ON public.composite_role USING btree (composite);
 
 
 --
--- Name: idx_composite_child; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_composite_child; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_composite_child ON public.composite_role USING btree (child_role);
 
 
 --
--- Name: idx_defcls_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_defcls_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_defcls_realm ON public.default_client_scope USING btree (realm_id);
 
 
 --
--- Name: idx_defcls_scope; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_defcls_scope; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_defcls_scope ON public.default_client_scope USING btree (scope_id);
 
 
 --
--- Name: idx_event_time; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_event_entity_user_id_type; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX idx_event_entity_user_id_type ON public.event_entity USING btree (user_id, type, event_time);
+
+
+--
+-- Name: idx_event_time; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_event_time ON public.event_entity USING btree (realm_id, event_time);
 
 
 --
--- Name: idx_fedidentity_feduser; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fedidentity_feduser; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fedidentity_feduser ON public.federated_identity USING btree (federated_user_id);
 
 
 --
--- Name: idx_fedidentity_user; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fedidentity_user; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fedidentity_user ON public.federated_identity USING btree (user_id);
 
 
 --
--- Name: idx_fu_attribute; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_attribute; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_attribute ON public.fed_user_attribute USING btree (user_id, realm_id, name);
 
 
 --
--- Name: idx_fu_cnsnt_ext; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_cnsnt_ext; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_cnsnt_ext ON public.fed_user_consent USING btree (user_id, client_storage_provider, external_client_id);
 
 
 --
--- Name: idx_fu_consent; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_consent; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_consent ON public.fed_user_consent USING btree (user_id, client_id);
 
 
 --
--- Name: idx_fu_consent_ru; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_consent_ru; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_consent_ru ON public.fed_user_consent USING btree (realm_id, user_id);
 
 
 --
--- Name: idx_fu_credential; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_credential; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_credential ON public.fed_user_credential USING btree (user_id, type);
 
 
 --
--- Name: idx_fu_credential_ru; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_credential_ru; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_credential_ru ON public.fed_user_credential USING btree (realm_id, user_id);
 
 
 --
--- Name: idx_fu_group_membership; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_group_membership; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_group_membership ON public.fed_user_group_membership USING btree (user_id, group_id);
 
 
 --
--- Name: idx_fu_group_membership_ru; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_group_membership_ru; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_group_membership_ru ON public.fed_user_group_membership USING btree (realm_id, user_id);
 
 
 --
--- Name: idx_fu_required_action; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_required_action; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_required_action ON public.fed_user_required_action USING btree (user_id, required_action);
 
 
 --
--- Name: idx_fu_required_action_ru; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_required_action_ru; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_required_action_ru ON public.fed_user_required_action USING btree (realm_id, user_id);
 
 
 --
--- Name: idx_fu_role_mapping; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_role_mapping; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_role_mapping ON public.fed_user_role_mapping USING btree (user_id, role_id);
 
 
 --
--- Name: idx_fu_role_mapping_ru; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_fu_role_mapping_ru; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_fu_role_mapping_ru ON public.fed_user_role_mapping USING btree (realm_id, user_id);
 
 
 --
--- Name: idx_group_att_by_name_value; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_group_att_by_name_value; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_group_att_by_name_value ON public.group_attribute USING btree (name, ((value)::character varying(250)));
 
 
 --
--- Name: idx_group_attr_group; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_group_attr_group; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_group_attr_group ON public.group_attribute USING btree (group_id);
 
 
 --
--- Name: idx_group_role_mapp_group; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_group_role_mapp_group; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_group_role_mapp_group ON public.group_role_mapping USING btree (group_id);
 
 
 --
--- Name: idx_id_prov_mapp_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_id_prov_mapp_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_id_prov_mapp_realm ON public.identity_provider_mapper USING btree (realm_id);
 
 
 --
--- Name: idx_ident_prov_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_ident_prov_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_ident_prov_realm ON public.identity_provider USING btree (realm_id);
 
 
 --
--- Name: idx_idp_for_login; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_idp_for_login; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_idp_for_login ON public.identity_provider USING btree (realm_id, enabled, link_only, hide_on_login, organization_id);
 
 
 --
--- Name: idx_idp_realm_org; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_idp_realm_org; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_idp_realm_org ON public.identity_provider USING btree (realm_id, organization_id);
 
 
 --
--- Name: idx_keycloak_role_client; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_keycloak_role_client; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_keycloak_role_client ON public.keycloak_role USING btree (client);
 
 
 --
--- Name: idx_keycloak_role_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_keycloak_role_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_keycloak_role_realm ON public.keycloak_role USING btree (realm);
 
 
 --
--- Name: idx_offline_uss_by_broker_session_id; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_offline_css_by_client; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX idx_offline_css_by_client ON public.offline_client_session USING btree (client_id, offline_flag) WHERE ((client_id)::text <> 'external'::text);
+
+
+--
+-- Name: idx_offline_css_by_client_storage_provider; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX idx_offline_css_by_client_storage_provider ON public.offline_client_session USING btree (client_storage_provider, external_client_id, offline_flag) WHERE ((client_storage_provider)::text <> 'internal'::text);
+
+
+--
+-- Name: idx_offline_uss_by_broker_session_id; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_offline_uss_by_broker_session_id ON public.offline_user_session USING btree (broker_session_id, realm_id);
 
 
 --
--- Name: idx_offline_uss_by_last_session_refresh; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_offline_uss_by_last_session_refresh; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_offline_uss_by_last_session_refresh ON public.offline_user_session USING btree (realm_id, offline_flag, last_session_refresh);
 
 
 --
--- Name: idx_offline_uss_by_user; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_offline_uss_by_user; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_offline_uss_by_user ON public.offline_user_session USING btree (user_id, realm_id, offline_flag);
 
 
 --
--- Name: idx_org_domain_org_id; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_org_domain_org_id; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_org_domain_org_id ON public.org_domain USING btree (org_id);
 
 
 --
--- Name: idx_perm_ticket_owner; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_perm_ticket_owner; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_perm_ticket_owner ON public.resource_server_perm_ticket USING btree (owner);
 
 
 --
--- Name: idx_perm_ticket_requester; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_perm_ticket_requester; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_perm_ticket_requester ON public.resource_server_perm_ticket USING btree (requester);
 
 
 --
--- Name: idx_protocol_mapper_client; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_protocol_mapper_client; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_protocol_mapper_client ON public.protocol_mapper USING btree (client_id);
 
 
 --
--- Name: idx_realm_attr_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_realm_attr_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_realm_attr_realm ON public.realm_attribute USING btree (realm_id);
 
 
 --
--- Name: idx_realm_clscope; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_realm_clscope; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_realm_clscope ON public.client_scope USING btree (realm_id);
 
 
 --
--- Name: idx_realm_def_grp_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_realm_def_grp_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_realm_def_grp_realm ON public.realm_default_groups USING btree (realm_id);
 
 
 --
--- Name: idx_realm_evt_list_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_realm_evt_list_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_realm_evt_list_realm ON public.realm_events_listeners USING btree (realm_id);
 
 
 --
--- Name: idx_realm_evt_types_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_realm_evt_types_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_realm_evt_types_realm ON public.realm_enabled_event_types USING btree (realm_id);
 
 
 --
--- Name: idx_realm_master_adm_cli; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_realm_master_adm_cli; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_realm_master_adm_cli ON public.realm USING btree (master_admin_client);
 
 
 --
--- Name: idx_realm_supp_local_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_realm_supp_local_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_realm_supp_local_realm ON public.realm_supported_locales USING btree (realm_id);
 
 
 --
--- Name: idx_redir_uri_client; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_redir_uri_client; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_redir_uri_client ON public.redirect_uris USING btree (client_id);
 
 
 --
--- Name: idx_req_act_prov_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_req_act_prov_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_req_act_prov_realm ON public.required_action_provider USING btree (realm_id);
 
 
 --
--- Name: idx_res_policy_policy; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_res_policy_policy; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_res_policy_policy ON public.resource_policy USING btree (policy_id);
 
 
 --
--- Name: idx_res_scope_scope; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_res_scope_scope; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_res_scope_scope ON public.resource_scope USING btree (scope_id);
 
 
 --
--- Name: idx_res_serv_pol_res_serv; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_res_serv_pol_res_serv; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_res_serv_pol_res_serv ON public.resource_server_policy USING btree (resource_server_id);
 
 
 --
--- Name: idx_res_srv_res_res_srv; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_res_srv_res_res_srv; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_res_srv_res_res_srv ON public.resource_server_resource USING btree (resource_server_id);
 
 
 --
--- Name: idx_res_srv_scope_res_srv; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_res_srv_scope_res_srv; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_res_srv_scope_res_srv ON public.resource_server_scope USING btree (resource_server_id);
 
 
 --
--- Name: idx_rev_token_on_expire; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_rev_token_on_expire; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_rev_token_on_expire ON public.revoked_token USING btree (expire);
 
 
 --
--- Name: idx_role_attribute; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_role_attribute; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_role_attribute ON public.role_attribute USING btree (role_id);
 
 
 --
--- Name: idx_role_clscope; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_role_clscope; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_role_clscope ON public.client_scope_role_mapping USING btree (role_id);
 
 
 --
--- Name: idx_scope_mapping_role; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_scope_mapping_role; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_scope_mapping_role ON public.scope_mapping USING btree (role_id);
 
 
 --
--- Name: idx_scope_policy_policy; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_scope_policy_policy; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_scope_policy_policy ON public.scope_policy USING btree (policy_id);
 
 
 --
--- Name: idx_update_time; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_update_time; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_update_time ON public.migration_model USING btree (update_time);
 
 
 --
--- Name: idx_usconsent_clscope; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_usconsent_clscope; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_usconsent_clscope ON public.user_consent_client_scope USING btree (user_consent_id);
 
 
 --
--- Name: idx_usconsent_scope_id; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_usconsent_scope_id; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_usconsent_scope_id ON public.user_consent_client_scope USING btree (scope_id);
 
 
 --
--- Name: idx_user_attribute; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_user_attribute; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_user_attribute ON public.user_attribute USING btree (user_id);
 
 
 --
--- Name: idx_user_attribute_name; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_user_attribute_name; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_user_attribute_name ON public.user_attribute USING btree (name, value);
 
 
 --
--- Name: idx_user_consent; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_user_consent; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_user_consent ON public.user_consent USING btree (user_id);
 
 
 --
--- Name: idx_user_credential; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_user_credential; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_user_credential ON public.credential USING btree (user_id);
 
 
 --
--- Name: idx_user_email; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_user_email; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_user_email ON public.user_entity USING btree (email);
 
 
 --
--- Name: idx_user_group_mapping; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_user_group_mapping; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_user_group_mapping ON public.user_group_membership USING btree (user_id);
 
 
 --
--- Name: idx_user_reqactions; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_user_reqactions; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_user_reqactions ON public.user_required_action USING btree (user_id);
 
 
 --
--- Name: idx_user_role_mapping; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_user_role_mapping; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_user_role_mapping ON public.user_role_mapping USING btree (user_id);
 
 
 --
--- Name: idx_user_service_account; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_user_service_account; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_user_service_account ON public.user_entity USING btree (realm_id, service_account_client_link);
 
 
 --
--- Name: idx_usr_fed_map_fed_prv; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_usr_fed_map_fed_prv; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_usr_fed_map_fed_prv ON public.user_federation_mapper USING btree (federation_provider_id);
 
 
 --
--- Name: idx_usr_fed_map_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_usr_fed_map_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_usr_fed_map_realm ON public.user_federation_mapper USING btree (realm_id);
 
 
 --
--- Name: idx_usr_fed_prv_realm; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_usr_fed_prv_realm; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_usr_fed_prv_realm ON public.user_federation_provider USING btree (realm_id);
 
 
 --
--- Name: idx_web_orig_client; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_web_orig_client; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX idx_web_orig_client ON public.web_origins USING btree (client_id);
 
 
 --
--- Name: user_attr_long_values; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: idx_workflow_state_provider; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX idx_workflow_state_provider ON public.workflow_state USING btree (resource_id, workflow_provider_id);
+
+
+--
+-- Name: idx_workflow_state_step; Type: INDEX; Schema: public; Owner: trustdeck-manager
+--
+
+CREATE INDEX idx_workflow_state_step ON public.workflow_state USING btree (workflow_id, scheduled_step_id);
+
+
+--
+-- Name: user_attr_long_values; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX user_attr_long_values ON public.user_attribute USING btree (long_value_hash, name);
 
 
 --
--- Name: user_attr_long_values_lower_case; Type: INDEX; Schema: public; Owner: ace-manager
+-- Name: user_attr_long_values_lower_case; Type: INDEX; Schema: public; Owner: trustdeck-manager
 --
 
 CREATE INDEX user_attr_long_values_lower_case ON public.user_attribute USING btree (long_value_hash_lower_case, name);
 
 
 --
--- Name: identity_provider fk2b4ebc52ae5c3b34; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: identity_provider fk2b4ebc52ae5c3b34; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.identity_provider
@@ -4889,7 +4986,7 @@ ALTER TABLE ONLY public.identity_provider
 
 
 --
--- Name: client_attributes fk3c47c64beacca966; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_attributes fk3c47c64beacca966; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_attributes
@@ -4897,7 +4994,7 @@ ALTER TABLE ONLY public.client_attributes
 
 
 --
--- Name: federated_identity fk404288b92ef007a6; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: federated_identity fk404288b92ef007a6; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.federated_identity
@@ -4905,7 +5002,7 @@ ALTER TABLE ONLY public.federated_identity
 
 
 --
--- Name: client_node_registrations fk4129723ba992f594; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_node_registrations fk4129723ba992f594; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_node_registrations
@@ -4913,7 +5010,7 @@ ALTER TABLE ONLY public.client_node_registrations
 
 
 --
--- Name: redirect_uris fk_1burs8pb4ouj97h5wuppahv9f; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: redirect_uris fk_1burs8pb4ouj97h5wuppahv9f; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.redirect_uris
@@ -4921,7 +5018,7 @@ ALTER TABLE ONLY public.redirect_uris
 
 
 --
--- Name: user_federation_provider fk_1fj32f6ptolw2qy60cd8n01e8; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_federation_provider fk_1fj32f6ptolw2qy60cd8n01e8; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_federation_provider
@@ -4929,7 +5026,7 @@ ALTER TABLE ONLY public.user_federation_provider
 
 
 --
--- Name: realm_required_credential fk_5hg65lybevavkqfki3kponh9v; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_required_credential fk_5hg65lybevavkqfki3kponh9v; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_required_credential
@@ -4937,7 +5034,7 @@ ALTER TABLE ONLY public.realm_required_credential
 
 
 --
--- Name: resource_attribute fk_5hrm2vlf9ql5fu022kqepovbr; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_attribute fk_5hrm2vlf9ql5fu022kqepovbr; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_attribute
@@ -4945,7 +5042,7 @@ ALTER TABLE ONLY public.resource_attribute
 
 
 --
--- Name: user_attribute fk_5hrm2vlf9ql5fu043kqepovbr; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_attribute fk_5hrm2vlf9ql5fu043kqepovbr; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_attribute
@@ -4953,7 +5050,7 @@ ALTER TABLE ONLY public.user_attribute
 
 
 --
--- Name: user_required_action fk_6qj3w1jw9cvafhe19bwsiuvmd; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_required_action fk_6qj3w1jw9cvafhe19bwsiuvmd; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_required_action
@@ -4961,7 +5058,7 @@ ALTER TABLE ONLY public.user_required_action
 
 
 --
--- Name: keycloak_role fk_6vyqfe4cn4wlq8r6kt5vdsj5c; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: keycloak_role fk_6vyqfe4cn4wlq8r6kt5vdsj5c; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.keycloak_role
@@ -4969,7 +5066,7 @@ ALTER TABLE ONLY public.keycloak_role
 
 
 --
--- Name: realm_smtp_config fk_70ej8xdxgxd0b9hh6180irr0o; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_smtp_config fk_70ej8xdxgxd0b9hh6180irr0o; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_smtp_config
@@ -4977,7 +5074,7 @@ ALTER TABLE ONLY public.realm_smtp_config
 
 
 --
--- Name: realm_attribute fk_8shxd6l3e9atqukacxgpffptw; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_attribute fk_8shxd6l3e9atqukacxgpffptw; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_attribute
@@ -4985,7 +5082,7 @@ ALTER TABLE ONLY public.realm_attribute
 
 
 --
--- Name: composite_role fk_a63wvekftu8jo1pnj81e7mce2; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: composite_role fk_a63wvekftu8jo1pnj81e7mce2; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.composite_role
@@ -4993,7 +5090,7 @@ ALTER TABLE ONLY public.composite_role
 
 
 --
--- Name: authentication_execution fk_auth_exec_flow; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: authentication_execution fk_auth_exec_flow; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.authentication_execution
@@ -5001,7 +5098,7 @@ ALTER TABLE ONLY public.authentication_execution
 
 
 --
--- Name: authentication_execution fk_auth_exec_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: authentication_execution fk_auth_exec_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.authentication_execution
@@ -5009,7 +5106,7 @@ ALTER TABLE ONLY public.authentication_execution
 
 
 --
--- Name: authentication_flow fk_auth_flow_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: authentication_flow fk_auth_flow_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.authentication_flow
@@ -5017,7 +5114,7 @@ ALTER TABLE ONLY public.authentication_flow
 
 
 --
--- Name: authenticator_config fk_auth_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: authenticator_config fk_auth_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.authenticator_config
@@ -5025,7 +5122,7 @@ ALTER TABLE ONLY public.authenticator_config
 
 
 --
--- Name: user_role_mapping fk_c4fqv34p1mbylloxang7b1q3l; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_role_mapping fk_c4fqv34p1mbylloxang7b1q3l; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_role_mapping
@@ -5033,7 +5130,7 @@ ALTER TABLE ONLY public.user_role_mapping
 
 
 --
--- Name: client_scope_attributes fk_cl_scope_attr_scope; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_scope_attributes fk_cl_scope_attr_scope; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_scope_attributes
@@ -5041,7 +5138,7 @@ ALTER TABLE ONLY public.client_scope_attributes
 
 
 --
--- Name: client_scope_role_mapping fk_cl_scope_rm_scope; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_scope_role_mapping fk_cl_scope_rm_scope; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_scope_role_mapping
@@ -5049,7 +5146,7 @@ ALTER TABLE ONLY public.client_scope_role_mapping
 
 
 --
--- Name: protocol_mapper fk_cli_scope_mapper; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: protocol_mapper fk_cli_scope_mapper; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.protocol_mapper
@@ -5057,7 +5154,7 @@ ALTER TABLE ONLY public.protocol_mapper
 
 
 --
--- Name: client_initial_access fk_client_init_acc_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: client_initial_access fk_client_init_acc_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.client_initial_access
@@ -5065,7 +5162,7 @@ ALTER TABLE ONLY public.client_initial_access
 
 
 --
--- Name: component_config fk_component_config; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: component_config fk_component_config; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.component_config
@@ -5073,7 +5170,7 @@ ALTER TABLE ONLY public.component_config
 
 
 --
--- Name: component fk_component_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: component fk_component_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.component
@@ -5081,7 +5178,7 @@ ALTER TABLE ONLY public.component
 
 
 --
--- Name: realm_default_groups fk_def_groups_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_default_groups fk_def_groups_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_default_groups
@@ -5089,7 +5186,7 @@ ALTER TABLE ONLY public.realm_default_groups
 
 
 --
--- Name: user_federation_mapper_config fk_fedmapper_cfg; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_federation_mapper_config fk_fedmapper_cfg; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_federation_mapper_config
@@ -5097,7 +5194,7 @@ ALTER TABLE ONLY public.user_federation_mapper_config
 
 
 --
--- Name: user_federation_mapper fk_fedmapperpm_fedprv; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_federation_mapper fk_fedmapperpm_fedprv; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_federation_mapper
@@ -5105,7 +5202,7 @@ ALTER TABLE ONLY public.user_federation_mapper
 
 
 --
--- Name: user_federation_mapper fk_fedmapperpm_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_federation_mapper fk_fedmapperpm_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_federation_mapper
@@ -5113,7 +5210,7 @@ ALTER TABLE ONLY public.user_federation_mapper
 
 
 --
--- Name: associated_policy fk_frsr5s213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: associated_policy fk_frsr5s213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.associated_policy
@@ -5121,7 +5218,7 @@ ALTER TABLE ONLY public.associated_policy
 
 
 --
--- Name: scope_policy fk_frsrasp13xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: scope_policy fk_frsrasp13xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.scope_policy
@@ -5129,7 +5226,7 @@ ALTER TABLE ONLY public.scope_policy
 
 
 --
--- Name: resource_server_perm_ticket fk_frsrho213xcx4wnkog82sspmt; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_perm_ticket fk_frsrho213xcx4wnkog82sspmt; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_perm_ticket
@@ -5137,7 +5234,7 @@ ALTER TABLE ONLY public.resource_server_perm_ticket
 
 
 --
--- Name: resource_server_resource fk_frsrho213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_resource fk_frsrho213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_resource
@@ -5145,7 +5242,7 @@ ALTER TABLE ONLY public.resource_server_resource
 
 
 --
--- Name: resource_server_perm_ticket fk_frsrho213xcx4wnkog83sspmt; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_perm_ticket fk_frsrho213xcx4wnkog83sspmt; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_perm_ticket
@@ -5153,7 +5250,7 @@ ALTER TABLE ONLY public.resource_server_perm_ticket
 
 
 --
--- Name: resource_server_perm_ticket fk_frsrho213xcx4wnkog84sspmt; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_perm_ticket fk_frsrho213xcx4wnkog84sspmt; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_perm_ticket
@@ -5161,7 +5258,7 @@ ALTER TABLE ONLY public.resource_server_perm_ticket
 
 
 --
--- Name: associated_policy fk_frsrpas14xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: associated_policy fk_frsrpas14xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.associated_policy
@@ -5169,7 +5266,7 @@ ALTER TABLE ONLY public.associated_policy
 
 
 --
--- Name: scope_policy fk_frsrpass3xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: scope_policy fk_frsrpass3xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.scope_policy
@@ -5177,7 +5274,7 @@ ALTER TABLE ONLY public.scope_policy
 
 
 --
--- Name: resource_server_perm_ticket fk_frsrpo2128cx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_perm_ticket fk_frsrpo2128cx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_perm_ticket
@@ -5185,7 +5282,7 @@ ALTER TABLE ONLY public.resource_server_perm_ticket
 
 
 --
--- Name: resource_server_policy fk_frsrpo213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_policy fk_frsrpo213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_policy
@@ -5193,7 +5290,7 @@ ALTER TABLE ONLY public.resource_server_policy
 
 
 --
--- Name: resource_scope fk_frsrpos13xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_scope fk_frsrpos13xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_scope
@@ -5201,7 +5298,7 @@ ALTER TABLE ONLY public.resource_scope
 
 
 --
--- Name: resource_policy fk_frsrpos53xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_policy fk_frsrpos53xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_policy
@@ -5209,7 +5306,7 @@ ALTER TABLE ONLY public.resource_policy
 
 
 --
--- Name: resource_policy fk_frsrpp213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_policy fk_frsrpp213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_policy
@@ -5217,7 +5314,7 @@ ALTER TABLE ONLY public.resource_policy
 
 
 --
--- Name: resource_scope fk_frsrps213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_scope fk_frsrps213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_scope
@@ -5225,7 +5322,7 @@ ALTER TABLE ONLY public.resource_scope
 
 
 --
--- Name: resource_server_scope fk_frsrso213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_server_scope fk_frsrso213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_server_scope
@@ -5233,7 +5330,7 @@ ALTER TABLE ONLY public.resource_server_scope
 
 
 --
--- Name: composite_role fk_gr7thllb9lu8q4vqa4524jjy8; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: composite_role fk_gr7thllb9lu8q4vqa4524jjy8; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.composite_role
@@ -5241,7 +5338,7 @@ ALTER TABLE ONLY public.composite_role
 
 
 --
--- Name: user_consent_client_scope fk_grntcsnt_clsc_usc; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_consent_client_scope fk_grntcsnt_clsc_usc; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_consent_client_scope
@@ -5249,7 +5346,7 @@ ALTER TABLE ONLY public.user_consent_client_scope
 
 
 --
--- Name: user_consent fk_grntcsnt_user; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_consent fk_grntcsnt_user; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_consent
@@ -5257,7 +5354,7 @@ ALTER TABLE ONLY public.user_consent
 
 
 --
--- Name: group_attribute fk_group_attribute_group; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: group_attribute fk_group_attribute_group; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.group_attribute
@@ -5265,7 +5362,7 @@ ALTER TABLE ONLY public.group_attribute
 
 
 --
--- Name: group_role_mapping fk_group_role_group; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: group_role_mapping fk_group_role_group; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.group_role_mapping
@@ -5273,7 +5370,7 @@ ALTER TABLE ONLY public.group_role_mapping
 
 
 --
--- Name: realm_enabled_event_types fk_h846o4h0w8epx5nwedrf5y69j; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_enabled_event_types fk_h846o4h0w8epx5nwedrf5y69j; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_enabled_event_types
@@ -5281,7 +5378,7 @@ ALTER TABLE ONLY public.realm_enabled_event_types
 
 
 --
--- Name: realm_events_listeners fk_h846o4h0w8epx5nxev9f5y69j; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_events_listeners fk_h846o4h0w8epx5nxev9f5y69j; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_events_listeners
@@ -5289,7 +5386,7 @@ ALTER TABLE ONLY public.realm_events_listeners
 
 
 --
--- Name: identity_provider_mapper fk_idpm_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: identity_provider_mapper fk_idpm_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.identity_provider_mapper
@@ -5297,7 +5394,7 @@ ALTER TABLE ONLY public.identity_provider_mapper
 
 
 --
--- Name: idp_mapper_config fk_idpmconfig; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: idp_mapper_config fk_idpmconfig; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.idp_mapper_config
@@ -5305,7 +5402,7 @@ ALTER TABLE ONLY public.idp_mapper_config
 
 
 --
--- Name: web_origins fk_lojpho213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: web_origins fk_lojpho213xcx4wnkog82ssrfy; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.web_origins
@@ -5313,7 +5410,7 @@ ALTER TABLE ONLY public.web_origins
 
 
 --
--- Name: scope_mapping fk_ouse064plmlr732lxjcn1q5f1; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: scope_mapping fk_ouse064plmlr732lxjcn1q5f1; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.scope_mapping
@@ -5321,7 +5418,7 @@ ALTER TABLE ONLY public.scope_mapping
 
 
 --
--- Name: protocol_mapper fk_pcm_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: protocol_mapper fk_pcm_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.protocol_mapper
@@ -5329,7 +5426,7 @@ ALTER TABLE ONLY public.protocol_mapper
 
 
 --
--- Name: credential fk_pfyr0glasqyl0dei3kl69r6v0; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: credential fk_pfyr0glasqyl0dei3kl69r6v0; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.credential
@@ -5337,7 +5434,7 @@ ALTER TABLE ONLY public.credential
 
 
 --
--- Name: protocol_mapper_config fk_pmconfig; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: protocol_mapper_config fk_pmconfig; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.protocol_mapper_config
@@ -5345,7 +5442,7 @@ ALTER TABLE ONLY public.protocol_mapper_config
 
 
 --
--- Name: default_client_scope fk_r_def_cli_scope_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: default_client_scope fk_r_def_cli_scope_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.default_client_scope
@@ -5353,7 +5450,7 @@ ALTER TABLE ONLY public.default_client_scope
 
 
 --
--- Name: required_action_provider fk_req_act_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: required_action_provider fk_req_act_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.required_action_provider
@@ -5361,7 +5458,7 @@ ALTER TABLE ONLY public.required_action_provider
 
 
 --
--- Name: resource_uris fk_resource_server_uris; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: resource_uris fk_resource_server_uris; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.resource_uris
@@ -5369,7 +5466,7 @@ ALTER TABLE ONLY public.resource_uris
 
 
 --
--- Name: role_attribute fk_role_attribute_id; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: role_attribute fk_role_attribute_id; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.role_attribute
@@ -5377,7 +5474,7 @@ ALTER TABLE ONLY public.role_attribute
 
 
 --
--- Name: realm_supported_locales fk_supported_locales_realm; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: realm_supported_locales fk_supported_locales_realm; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.realm_supported_locales
@@ -5385,7 +5482,7 @@ ALTER TABLE ONLY public.realm_supported_locales
 
 
 --
--- Name: user_federation_config fk_t13hpu1j94r2ebpekr39x5eu5; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_federation_config fk_t13hpu1j94r2ebpekr39x5eu5; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_federation_config
@@ -5393,7 +5490,7 @@ ALTER TABLE ONLY public.user_federation_config
 
 
 --
--- Name: user_group_membership fk_user_group_user; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: user_group_membership fk_user_group_user; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.user_group_membership
@@ -5401,7 +5498,7 @@ ALTER TABLE ONLY public.user_group_membership
 
 
 --
--- Name: policy_config fkdc34197cf864c4e43; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: policy_config fkdc34197cf864c4e43; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.policy_config
@@ -5409,7 +5506,7 @@ ALTER TABLE ONLY public.policy_config
 
 
 --
--- Name: identity_provider_config fkdc4897cf864c4e43; Type: FK CONSTRAINT; Schema: public; Owner: ace-manager
+-- Name: identity_provider_config fkdc4897cf864c4e43; Type: FK CONSTRAINT; Schema: public; Owner: trustdeck-manager
 --
 
 ALTER TABLE ONLY public.identity_provider_config

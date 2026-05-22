@@ -11,12 +11,12 @@ server:
 
 logging:
   level:
-    org.trustdeck.ace: ${ACE_LOG_LEVEL:INFO}
+    org.trustdeck: ${TRUSTDECK_LOG_LEVEL:INFO}
     root: ERROR
 
 spring:
   #application:
-  #  name: ACE
+  #  name: TRUSTDECK
   jpa:
     open-in-view: false
   datasource:
@@ -26,6 +26,9 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   main:
     allow-circular-references: true
+  servlet:
+    multipart:
+      enabled: true
   security:
     oauth2:
       resourceserver:
@@ -34,63 +37,116 @@ spring:
           # Server-uri without /auth since keycloak 17
           principal-attribute: preferred_username
           server-uri: ${KEYCLOAK_SERVER_URI}
-          truststore: ${TRUSTSTORE_PATH}
-          truststore-password: ${TRUSTSTORE_PASSWORD}
-          client-id: ${KEYCLOAK_CLIENT_ID}
-          # Client-secret is only used in the tests
-          client-secret: ${KEYCLOAK_CLIENT_SECRET}
           realm: ${KEYCLOAK_REALM_NAME}
-          admin-username: ${KEYCLOAK_CACHE_ADMIN_USER}
-          admin-password: ${KEYCLOAK_CACHE_ADMIN_PASSWORD}
-          domain-role-group-claim-name: groups
-          domain-role-group-context-name: Domain
+          client-id: ${KEYCLOAK_CLIENT_ID}
+          client-secret: ${KEYCLOAK_CLIENT_SECRET}
           # Custom section ends
           jws-algorithm: RSA256
-          issuer-uri: ${spring.security.oauth2.resourceserver.jwt.server-uri}/realms/${spring.security.oauth2.resourceserver.jwt.realm}
+          issuer-uri: ${KEYCLOAK_HOSTNAME}/realms/${spring.security.oauth2.resourceserver.jwt.realm}
           jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
 
 audittrail:
   oidc-group-mapper:
-    token-claim-name: ace_groups
+    token-claim-name: trustdeck_groups
     group-names:
       isHuman: Human
       isTechnical: Technical
       isNoAuditing: Unaudited
       isAuditEverything: AuditEverything
+  cleanup:
+    enabled: true
+    # Cron expression for cleanup task. Default: Every day at 2:00 AM.
+    cron: "0 0 2 * * ?"
+    # Retention period in days for audit entries.
+    retention-days: 3650
 
 app:
   response:
     # Possible entries are application/json or text/plain
     preferred-accept-mime-type: application/json
   datasource:
-    ace:
-      url: jdbc:postgresql://localhost:5432/ace
-      username: ${DATABASE_ACE_USER}
-      password: ${DATABASE_ACE_PASSWORD}
+    trustdeck:
+      url: jdbc:postgresql://${DATABASE_TRUSTDECK_HOST:localhost}:${DATABASE_TRUSTDECK_PORT:5432}/trustdeck
+      username: ${DATABASE_TRUSTDECK_USER}
+      password: ${DATABASE_TRUSTDECK_PASSWORD}
       configuration:
         maximum-pool-size: 20
-  operations:
+  linkage:
+    pprl:
+      secret: ${TRUSTDECK_PPRL_SECRET}
+  roles:
     # Name of all possible rights -- used for rights and roles management
-    - domain-create
-    - domain-create-complete
-    - domain-delete
-    - domain-list-all
-    - domain-read
-    - domain-read-salt
-    - domain-update
-    - domain-update-complete
-    - domain-update-salt
-    - record-create
-    - record-create-batch
-    - record-delete
-    - record-delete-batch
-    - record-read
-    - record-read-batch
-    - record-update
-    - record-update-complete
-    - record-update-batch
-    - complete-view
-    - link-pseudonyms
-    - delete-table
-    - read-table-storage
-    - delete-roles
+    ACE:
+      - domain:delete
+      - domain:read
+      - domain:read-salt
+      - domain:read-subtree
+      - domain:update
+      - domain:update-complete
+      - domain:update-salt
+      - domain:manage-permissions
+      - pseudonym:create
+      - pseudonym:create-batch
+      - pseudonym:delete
+      - pseudonym:delete-batch
+      - pseudonym:read
+      - pseudonym:read-batch
+      - pseudonym:update
+      - pseudonym:update-complete
+      - pseudonym:update-batch
+      - pseudonym:link
+      - pseudonym:search
+      - complete-view
+    KING:
+      - project:read
+      - project:update
+      - project:delete
+      - project:manage-permissions
+      - image:create
+      - image:read
+      - image:update
+      - image:delete
+      - type:create
+      - type:read
+      - type:update
+      - type:delete
+      - type:search
+      - instance:create
+      - instance:read
+      - instance:update
+      - instance:delete
+      - instance:search
+      - instance:record-linkage
+      - instance:list-pseudonyms
+    global:
+      - domain:create
+      - domain:create-complete
+      - domain:list-all
+      - project:create
+      - project:list-all
+      - base-type:create
+      - base-type:read
+      - base-type:search
+      - roles:delete
+      - table:delete
+      - table:read-storage
+      - global:manage-permissions
+  kafka:
+    enabled: ${KAFKA_ENABLED:false}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    topic: ${KAFKA_TOPIC}
+    group-id: ${KAFKA_GROUP_ID:ths-external-trustdeck}
+    username: ${KAFKA_USERNAME}
+    password: ${KAFKA_PASSWORD}
+    security-protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
+    sasl-mechanism: ${KAFKA_SASL_MECHANISM:PLAIN}
+    trust-store-location: ${KAFKA_TRUSTSTORE_LOCATION}
+    trust-store-password: ${KAFKA_TRUSTSTORE_PASSWORD}
+    trust-store-type: ${KAFKA_TRUSTSTORE_TYPE:JKS}
+    message:
+      identifier-descriptor: ${KAFKA_MESSAGE_IDENTIFIER_DESCRIPTOR}
+      idType-descriptor: ${KAFKA_MESSAGE_IDTYPE_DESCRIPTOR}
+      psn-descriptor: ${KAFKA_MESSAGE_PSN_DESCRIPTOR}
+      source-system-descriptor: ${KAFKA_MESSAGE_SOURCE_SYSTEM_DESCRIPTOR}
+      valid-from-descriptor: ${KAFKA_MESSAGE_VALID_FROM_DESCRIPTOR}
+      username-descriptor: ${KAFKA_MESSAGE_USERNAME_DESCRIPTOR}

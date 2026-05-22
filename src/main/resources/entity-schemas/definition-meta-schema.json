@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:trustdeck:schema:meta:definition:1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["attributes"],
+  "properties": {
+    "typeName": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "layout": {
+      "type": "string",
+      "enum": ["row", "col", "group"]
+    },
+    "repeatable": {
+      "type": "boolean"
+    },
+    "attributes": {
+      "$ref": "#/$defs/attributesArray"
+    }
+  },
+  "patternProperties": {
+    "^label_[A-Za-z]{2}$": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "attributesArray": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "node": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/containerNode"
+        },
+        {
+          "$ref": "#/$defs/leafNode"
+        }
+      ]
+    },
+    "containerNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layout", "attributes"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "layout": {
+          "type": "string",
+          "enum": ["row", "col", "group"]
+        },
+        "repeatable": {
+          "type": "boolean"
+        },
+        "attributes": {
+          "$ref": "#/$defs/attributesArray"
+        }
+      },
+      "patternProperties": {
+        "^label_[A-Za-z]{2}$": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "leafNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "required", "linkage"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "integer", "number", "boolean", "date", "datetime", "enum"]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "linkage": {
+          "type": "boolean"
+        },
+        "repeatable": {
+          "type": "boolean"
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "minLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "enum": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": ["string", "number", "integer", "boolean"]
+          }
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+		"tags": {
+		  "type": "array",
+		  "items": {
+		    "type": "string",
+		    "minLength": 1,
+		    "pattern": "^[a-zA-Z0-9_.:-]+$"
+		  },
+		  "minItems": 1,
+		  "uniqueItems": true
+		},
+		"linkageConfig": {
+		  "type": "object",
+		  "additionalProperties": false,
+		  "properties": {
+		    "normalizers": {
+		      "type": "array",
+		      "items": {
+		        "type": "string",
+		        "enum": [
+		          "trim",
+		          "lower",
+		          "collapseWhitespace",
+		          "asciiFold",
+		          "umlautFold",
+		          "removePunctuation",
+		          "digitsOnly"
+		        ]
+		      },
+		      "uniqueItems": true
+		    },
+		    "encoders": {
+		      "type": "array",
+		      "items": {
+		        "type": "string",
+		        "enum": [
+		          "cologne",
+				  "doubleMetaphone"
+		        ]
+		      },
+		      "uniqueItems": true
+		    },
+		    "blocking": {
+		      "type": "array",
+		      "items": {
+		        "type": "string",
+		        "enum": [
+		          "exact",
+		          "prefix3",
+		          "prefix4",
+		          "prefix6",
+		          "phonetic",
+		          "year",
+		          "yearMonth",
+		          "domainExact"
+		        ]
+		      },
+		      "uniqueItems": true
+		    },
+			"privacyMode": {
+			  "type": "string",
+			  "enum": ["plain", "pprl"],
+			  "default": "plain"
+			},
+			"pprl": {
+			  "type": "object",
+			  "additionalProperties": false,
+			  "properties": {
+			    "method": {
+			      "type": "string",
+			      "enum": ["ngramBloomFilter", "hmacExact"],
+			      "default": "ngramBloomFilter"
+			    },
+			    "n": {
+			      "type": "integer",
+			      "minimum": 1,
+			      "default": 2
+			    },
+			    "length": {
+			      "type": "integer",
+			      "minimum": 128,
+			      "default": 1024
+			    },
+			    "hashPositions": {
+			      "type": "integer",
+			      "minimum": 1,
+			      "default": 10
+			    },
+			    "bandSize": {
+			      "type": "integer",
+			      "minimum": 8,
+			      "default": 32
+			    },
+			    "exact": {
+			      "type": "boolean",
+			      "default": false
+			    }
+			  }
+			},
+		    "comparator": {
+		      "type": "string",
+		      "enum": [
+		        "exact",
+		        "trigram",
+		        "date",
+		        "email",
+		        "phone",
+		        "bloomDice"
+		      ]
+		    },
+		    "weight": {
+		      "type": "number",
+		      "minimum": 0.0
+		    }
+		  }
+		}
+      },
+      "patternProperties": {
+        "^label_[A-Za-z]{2}$": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

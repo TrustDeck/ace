@@ -1,0 +1,47 @@
+# temurin is available under the Apache-2.0-license; the OpenJDK only under the GNU GPL v2 license with Classpath Exception
+FROM eclipse-temurin:21-jre-jammy
+
+# Make proxy available during build
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+
+ENV HTTP_PROXY=${HTTP_PROXY} \
+    HTTPS_PROXY=${HTTPS_PROXY} \
+    NO_PROXY=${NO_PROXY} \
+    http_proxy=${HTTP_PROXY} \
+    https_proxy=${HTTPS_PROXY} \
+    no_proxy=${NO_PROXY}
+
+ENV PKI_CHAIN_DOWNLOAD_URL=https://pki.pca.dfn.de/dfn-ca-global-g2/pub/cacert/chain.txt
+ENV PKI_CHAIN_SHA256=3faab8a9915b567c25cd982c92daa6dbd65807d14436adec2f1040a78701522a
+
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get -y update && \
+    apt-get -y upgrade && \
+    apt-get -y dist-upgrade && \
+    useradd -Ums /bin/bash spring && \
+    curl -Lso /usr/local/share/ca-certificates/chain.txt ${PKI_CHAIN_DOWNLOAD_URL} || (>&2 echo -e "\ndownload failed\n" && exit 1) && \
+    sha256sum /usr/local/share/ca-certificates/chain.txt | grep -q ${PKI_CHAIN_SHA256} > /dev/null || (>&2 echo "sha256sum failed $(sha256sum /usr/local/share/ca-certificates/chain.txt)" && exit 1) && \
+    cp /usr/local/share/ca-certificates/chain.txt /usr/local/share/ca-certificates/chain.crt && \
+    chmod 644 /usr/local/share/ca-certificates/chain.txt && \
+    chmod 644 /usr/local/share/ca-certificates/chain.crt && \
+    dpkg-reconfigure ca-certificates && \
+    update-ca-certificates
+
+# Add the TrustDeck jar file
+USER spring
+WORKDIR /home/spring
+COPY target/trustdeck*.jar trustdeck.jar
+
+# Set permissions
+USER root
+RUN chmod 664 -R * && \
+    chmod 775 trustdeck.jar && \
+    chown -R spring:spring *
+
+USER spring
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "/home/spring/trustdeck.jar"]
