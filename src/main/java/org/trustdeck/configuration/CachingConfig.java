@@ -44,6 +44,12 @@ public class CachingConfig {
     public Config hazelcastConfig() {
         Config config = new Config();
         config.setInstanceName("trustdeck-hazelcast");
+        
+        // Disable network discovery for hazelcast instances as we are only using the cache locally and 
+        // discovery can lead to exceptions if the port is already in use
+        config.getNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
+        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
 
         EvictionConfig eviction = new EvictionConfig()
                 .setMaxSizePolicy(MaxSizePolicy.FREE_HEAP_SIZE)
